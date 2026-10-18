@@ -298,7 +298,7 @@ StepClear PowerUpLayer::expand_clear(const Board& board, std::span<const Cell> r
         PowerUpEffect e = power_up_effect(p.id, p.tier, board, c, marks);
         std::vector<Cell> added;
         for (const Cell t : e.cells_to_clear)
-            if (holds_at(t)) {
+            if (holds_at(t) && usable(t)) {
                 held[idx(t)] = 1;
             } else if (!in_clear[idx(t)]) {
                 in_clear[idx(t)] = 1;

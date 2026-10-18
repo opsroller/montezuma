@@ -410,8 +410,14 @@ void LevelSession::on_step_refill(MoveContext& ctx, const CascadeStep& step, int
             --shortfall;
         }
     }
-    // rule: RES-05, PWR-01, PWR-02
-    sr.power_ups_placed = power_ups_.place_for_step(step.runs, board_, rng_, power_up_tiers_, marks_);
+    // rule: RES-05, PWR-01, PWR-02, OBS-05 a run whose pieces all held
+    // cleared nothing and earns nothing.
+    std::vector<Run> earning;
+    for (const Run& run : step.runs)
+        if (std::any_of(run.cells.begin(), run.cells.end(),
+                        [&](Cell c) { return std::find(step.cleared.begin(), step.cleared.end(), c) != step.cleared.end(); }))
+            earning.push_back(run);
+    sr.power_ups_placed = power_ups_.place_for_step(earning, board_, rng_, power_up_tiers_, marks_);
     // rule: FRZ-02 Frenzy starts at the end of the step that filled the bar.
     if (ctx.frenzy_fill) {
         ctx.frenzy_fill = false;

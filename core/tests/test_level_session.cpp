@@ -1564,6 +1564,18 @@ void test_chains_hold() {
             check(all, "OBS-05 unchained pieces clear in the next step");
         }
     }
+    // An all-chained run of 4 clears nothing, so it earns no power-up
+    // (PWR-01); the same pieces earn when they clear in the next step.
+    {
+        const std::vector<std::string> rows{"........", "........", "........", "........",
+                                            "........", "........", "..112...", "11225..."};
+        LevelSession s = scene(rows, level_with_totems({}, {"tnt"}));
+        for (Cell c : {Cell{0, 7}, Cell{1, 7}, Cell{2, 6}, Cell{3, 6}}) s.set_chain(c, true);
+        auto r = s.swap({4, 6}, {4, 7});
+        check(r && r->steps.size() >= 3 && r->steps[1].cleared.empty() && r->steps[1].power_ups_placed.empty() &&
+                  r->steps[2].power_ups_placed.size() == 1,
+              "OBS-05 an all-chained run of 4 earns once, when it clears");
+    }
     // An effect that reaches a chained piece breaks the chain (tnt).
     {
         LevelSession s = scene(kSimple, level_with_totems({}, {"tnt"}));

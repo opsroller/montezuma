@@ -178,8 +178,11 @@ State: `frenzy_bar` 0..60, `frenzy_left` seconds.
    totem) breaks its chain instead and leaves the piece in place. The
    piece scores nothing then, keeps its gem and power-up (which does not
    go off), and from then on plays as a plain piece, so the next clear
-   takes it. A run made only of chained pieces clears nothing; their
-   chains break and, now plain, they match in the next step [S1, chosen].
+   takes it. A run made only of chained pieces clears nothing and earns
+   no power-up (`PWR-01`); their chains break and, now plain, they match
+   in the next step, which scores as a further step (`SCORE-01`). A run
+   with some pieces held still counts at its full length for power-ups
+   and totem charges [S1, chosen].
 6. `OBS-06` Shuffles leave steel and chained pieces where they are.
 
 ## Shuffles and hints (`SHUF-*`)
