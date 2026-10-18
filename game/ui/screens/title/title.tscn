@@ -1,0 +1,90 @@
+[gd_scene format=3]
+; SPDX-License-Identifier: GPL-2.0-or-later
+
+[node name="TitleScreen" type="Screen"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+screen_id = "title"
+default_focus = NodePath("%Play")
+back_behavior = 1
+
+[node name="Backdrop" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"ScrimPanel"
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="Center"]
+layout_mode = 2
+
+[node name="Column" type="VBoxContainer" parent="Center/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Center/Panel/Column"]
+layout_mode = 2
+text = "title.name"
+horizontal_alignment = 1
+theme_type_variation = &"TitleLabel"
+
+[node name="Tagline" type="Label" parent="Center/Panel/Column"]
+layout_mode = 2
+text = "title.tagline"
+horizontal_alignment = 1
+theme_type_variation = &"CaptionLabel"
+
+[node name="Play" type="NavButton" parent="Center/Panel/Column"]
+layout_mode = 2
+unique_name_in_owner = true
+theme_type_variation = &"PrimaryButton"
+text = "menu.play"
+action = "push"
+target = "intro"
+
+[node name="Trophies" type="NavButton" parent="Center/Panel/Column"]
+layout_mode = 2
+text = "menu.trophies"
+action = "push"
+target = "trophies"
+
+[node name="Settings" type="NavButton" parent="Center/Panel/Column"]
+layout_mode = 2
+text = "menu.settings"
+action = "push"
+target = "settings"
+
+[node name="Credits" type="NavButton" parent="Center/Panel/Column"]
+layout_mode = 2
+text = "menu.credits"
+action = "push"
+target = "credits"
+
+[node name="Quit" type="NavButton" parent="Center/Panel/Column"]
+layout_mode = 2
+text = "menu.quit"
+action = "quit"
+hidden_on = PackedStringArray("web", "ios", "android")
+
+[node name="Inspired" type="Label" parent="Center/Panel/Column"]
+layout_mode = 2
+text = "title.inspired"
+horizontal_alignment = 1
+theme_type_variation = &"CaptionLabel"
+autowrap_mode = 3
+custom_minimum_size = Vector2(360, 0)

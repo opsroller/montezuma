@@ -1,0 +1,68 @@
+[gd_scene format=3]
+; SPDX-License-Identifier: GPL-2.0-or-later
+
+[node name="PauseScreen" type="Screen"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+screen_id = "pause"
+default_focus = NodePath("%Resume")
+modal = true
+pauses_game = true
+
+[node name="Backdrop" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"ScrimPanel"
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="Center"]
+layout_mode = 2
+
+[node name="Column" type="VBoxContainer" parent="Center/Panel"]
+layout_mode = 2
+
+[node name="Heading" type="Label" parent="Center/Panel/Column"]
+layout_mode = 2
+text = "pause.title"
+horizontal_alignment = 1
+theme_type_variation = &"HeadingLabel"
+
+[node name="Resume" type="NavButton" parent="Center/Panel/Column"]
+layout_mode = 2
+unique_name_in_owner = true
+theme_type_variation = &"PrimaryButton"
+text = "pause.resume"
+action = "resume"
+
+[node name="Restart" type="NavButton" parent="Center/Panel/Column"]
+layout_mode = 2
+text = "pause.restart"
+action = "restart"
+
+[node name="Settings" type="NavButton" parent="Center/Panel/Column"]
+layout_mode = 2
+text = "menu.settings"
+action = "push"
+target = "settings"
+
+[node name="Leave" type="NavButton" parent="Center/Panel/Column"]
+layout_mode = 2
+text = "pause.quit_level"
+action = "quit_level"
+target = "episode_map"
