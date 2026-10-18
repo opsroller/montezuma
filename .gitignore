@@ -23,3 +23,5 @@ dist/
 game/assets/textures/*/T_*.png
 game/assets/textures/*/hi/T_*.png
 game/assets/textures/*/.inputs
+# CMake build folders (build/, build-ext/, build-asan/ ...).
+build-*/

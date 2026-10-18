@@ -22,6 +22,7 @@
 
 #include "../audio/game_audio.hpp"
 #include "../board/board_view_3d.hpp"
+#include "../board/feel.hpp"
 #include "display_move.hpp"
 
 using namespace godot;
@@ -251,6 +252,10 @@ void Match3Game::connect_ui() {
     if (ui->has_signal("play_requested") && !ui->is_connected("play_requested", play)) ui->connect("play_requested", play);
     if (ui->has_signal("level_quit_requested") && !ui->is_connected("level_quit_requested", quit))
         ui->connect("level_quit_requested", quit);
+    const Callable settings = callable_mp(this, &Match3Game::on_settings_changed);
+    if (ui->has_signal("settings_changed") && !ui->is_connected("settings_changed", settings))
+        ui->connect("settings_changed", settings);
+    apply_reduced_motion();
 }
 
 void Match3Game::disconnect_ui() {
@@ -261,6 +266,19 @@ void Match3Game::disconnect_ui() {
     const Callable quit = callable_mp(this, &Match3Game::on_level_quit_requested);
     if (ui->is_connected("play_requested", play)) ui->disconnect("play_requested", play);
     if (ui->is_connected("level_quit_requested", quit)) ui->disconnect("level_quit_requested", quit);
+    const Callable settings = callable_mp(this, &Match3Game::on_settings_changed);
+    if (ui->is_connected("settings_changed", settings)) ui->disconnect("settings_changed", settings);
+}
+
+void Match3Game::on_settings_changed(const String& key) {
+    if (key == "reduced_motion") apply_reduced_motion();
+}
+
+void Match3Game::apply_reduced_motion() {
+    Node* ui = get_tree()->get_root()->get_node_or_null(NodePath("UiRoot"));
+    BoardView3D* v = view();
+    if (!ui || !v || !ui->has_method("get_setting")) return;
+    v->set_animation_speed(feel::animation_speed_for(bool(ui->call("get_setting", "reduced_motion"))));
 }
 
 void Match3Game::on_play_requested(const String& level_id, const String& difficulty) {

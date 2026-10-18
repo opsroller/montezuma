@@ -2,7 +2,9 @@
 // Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
 
 // Benchmark replay and frame statistics tests. No Godot, no framework; run via ctest.
+#include <cmath>
 #include <cstdio>
+#include <optional>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -109,12 +111,116 @@ void test_bad_board_throws() {
 
 }  // namespace
 
+// A vsync-locked 60 Hz run: every frame one display period, with the jitter
+// a compositor adds. It must pass, though the frames sit just above 16.6 ms.
+std::vector<double> vsync_locked_60hz(std::size_t n) {
+    std::vector<double> v;
+    for (std::size_t i = 0; i < n; ++i) v.push_back(1000.0 / 60.0 + (i % 3 == 0 ? 0.25 : -0.1));
+    return v;
+}
+
+void test_budget_is_one_display_period() {
+    const BudgetSpec desk = budget_for_tier("desktop-standard", kDefaultTolerance, 0.0);
+    check(desk.rules.size() == 1 && desk.rules[0].percentile == 95.0, "desktop judges p95");
+    check(std::abs(desk.rules[0].budget_ms - 1000.0 / 60.0) < 1e-9, "desktop budget is one 60 Hz period");
+    const BudgetSpec web = budget_for_tier("web", kDefaultTolerance, 0.0);
+    check(web.rules.size() == 2, "web judges p95 and the median");
+    check(std::abs(web.rules[0].budget_ms - 2000.0 / 60.0) < 1e-9, "web p95 budget is two periods");
+    check(web.rules[1].percentile == 50.0 && std::abs(web.rules[1].budget_ms - 1000.0 / 60.0) < 1e-9,
+          "web median budget is one period");
+    const BudgetSpec forced = budget_for_tier("desktop-high", kDefaultTolerance, 20.0);
+    check(forced.rules[0].budget_ms == 20.0, "--bench-budget replaces the p95 budget");
+    check(std::abs(p95_limit_ms(desk) - 1000.0 / 60.0 * 1.05) < 1e-9, "the p95 limit adds the tolerance");
+}
+
+void test_vsync_locked_60fps_passes() {
+    const BudgetSpec spec = budget_for_tier("desktop-standard", kDefaultTolerance, 0.0);
+    const std::vector<double> frames = vsync_locked_60hz(600);
+    const BudgetVerdict v = judge_budget(summarize(frames, p95_limit_ms(spec)), spec, 60.0);
+    check(v.pass, "vsync-locked 60 fps is within budget: " + v.reason);
+    check(summarize(frames, p95_limit_ms(spec)).over_budget == 0, "no vsync-locked frame counts as over budget");
+    const BudgetVerdict no_tol = judge_budget(summarize(frames, 0.0), budget_for_tier("desktop-standard", 0.0, 0.0), 60.0);
+    check(!no_tol.pass, "with no tolerance the same run fails (the bug the tolerance fixes)");
+}
+
+void test_slow_frames_fail_with_a_reason() {
+    const BudgetSpec spec = budget_for_tier("desktop-high", kDefaultTolerance, 0.0);
+    const std::vector<double> frames(600, 23.0);  // the Mac mini M4 desktop-high run
+    const BudgetVerdict v = judge_budget(summarize(frames, p95_limit_ms(spec)), spec, 60.0);
+    check(!v.pass, "23 ms frames fail the 60 fps budget");
+    check(v.limits.size() == 1 && !v.limits[0].pass && v.limits[0].value_ms == 23.0, "the failing limit is reported");
+    check(v.reason.find("p95") != std::string::npos, "the reason names the percentile");
+}
+
+void test_web_median_counts() {
+    const BudgetSpec spec = budget_for_tier("web", kDefaultTolerance, 0.0);
+    const std::vector<double> frames(600, 25.0);  // p95 within 33.3 ms, median over 16.7 ms
+    const BudgetVerdict v = judge_budget(summarize(frames, p95_limit_ms(spec)), spec, 60.0);
+    check(!v.pass && v.limits[0].pass && !v.limits[1].pass, "web fails on the median alone");
+}
+
+void test_slow_display_is_not_judged() {
+    const BudgetSpec spec = budget_for_tier("desktop-standard", kDefaultTolerance, 0.0);
+    const std::vector<double> frames(600, 20.0);  // vsync-locked to a 50 Hz display
+    const BudgetVerdict v = judge_budget(summarize(frames, p95_limit_ms(spec)), spec, 50.0);
+    check(!v.pass && v.reason.find("display") != std::string::npos, "a 50 Hz display fails as display-limited");
+    const BudgetVerdict ntsc = judge_budget(summarize(vsync_locked_60hz(600), p95_limit_ms(spec)), spec, 59.94);
+    check(ntsc.pass, "a 59.94 Hz display still counts as 60 Hz");
+    const BudgetVerdict unknown = judge_budget(summarize(vsync_locked_60hz(600), p95_limit_ms(spec)), spec, -1.0);
+    check(unknown.pass, "an unknown refresh rate (headless) is not held against the run");
+}
+
+void test_empty_capture_fails() {
+    const BudgetSpec spec = budget_for_tier("desktop-standard", kDefaultTolerance, 0.0);
+    const BudgetVerdict v = judge_budget(summarize({}, 0.0), spec, 60.0);
+    check(!v.pass && !v.reason.empty(), "no frames, no pass");
+}
+
+void test_size_parsing() {
+    const auto s = parse_size("2560x1440");
+    check(s && s->w == 2560 && s->h == 1440, "WxH parses");
+    check(!parse_size("abc") && !parse_size("0x10") && !parse_size("10x") && !parse_size("") &&
+              !parse_size("1920x1080x2") && !parse_size("-5x10"),
+          "bad sizes are rejected");
+}
+
+void test_resolution_tracker() {
+    SizeTracker steady(Size2{1920, 1080});
+    for (int i = 0; i < 100; ++i) steady.add({1920, 1080});
+    check(steady.pass() && steady.mismatched == 0, "a steady capture at the requested size passes");
+
+    SizeTracker resized(Size2{2560, 1440});
+    for (int i = 0; i < 50; ++i) resized.add({2560, 1440});
+    for (int i = 0; i < 50; ++i) resized.add({2560, 1386});  // the window shrank mid-run
+    check(!resized.pass() && resized.mismatched == 50, "a mid-run resize fails and is counted");
+    check(resized.min.h == 1386 && resized.max.h == 1440, "min and max render size are kept");
+
+    SizeTracker wrong(Size2{2560, 1440});
+    for (int i = 0; i < 10; ++i) wrong.add({1920, 1080});
+    check(!wrong.pass(), "a capture at another size fails");
+
+    SizeTracker free_size(std::nullopt);
+    for (int i = 0; i < 10; ++i) free_size.add({1280, 720});
+    check(free_size.pass(), "no requested size: a steady size passes");
+    free_size.add({1280, 700});
+    check(!free_size.pass(), "no requested size: a change of size still fails");
+    check(!SizeTracker(Size2{1, 1}).pass(), "no frames, no pass");
+}
+
 int main() {
     test_nearest_rank_percentiles();
     test_replay_is_deterministic();
     test_scene_seed_is_the_busiest_board();
     test_replay_matches_a_fresh_board();
     test_bad_board_throws();
+    test_budget_is_one_display_period();
+    test_vsync_locked_60fps_passes();
+    test_slow_frames_fail_with_a_reason();
+    test_web_median_counts();
+    test_slow_display_is_not_judged();
+    test_empty_capture_fails();
+    test_size_parsing();
+    test_resolution_tracker();
     std::printf("%d checks, %d failures\n", checks, failures);
     return failures == 0 ? 0 : 1;
 }

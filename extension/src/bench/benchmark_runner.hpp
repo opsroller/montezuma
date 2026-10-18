@@ -11,6 +11,9 @@
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/node_path.hpp>
 #include <godot_cpp/variant/string.hpp>
+#include <godot_cpp/variant/vector2i.hpp>
+
+#include "frame_stats.hpp"
 
 #include "match3_board.hpp"
 #include "replay.hpp"
@@ -21,8 +24,9 @@ class BoardView3D;
 
 // The frame-time benchmark (WP-46, docs/reference/benchmark.md): replays the
 // busiest-board script through a BoardView3D, warms up, then records CPU and
-// GPU frame time from RenderingServer every frame and writes the summary and
-// the active feature list as JSON. Options come from the properties or from
+// GPU frame time from RenderingServer every frame and writes the summary, the
+// budget verdict, the render size it held and the active feature list as
+// JSON. Options come from the properties or from
 // user command-line arguments (`-- --bench-seconds=20`).
 class BenchmarkRunner : public godot::Node {
     GDCLASS(BenchmarkRunner, godot::Node)
@@ -46,6 +50,13 @@ public:
     godot::String get_tier() const { return tier_; }
     void set_budget_ms(double v) { budget_ms_ = v; }
     double get_budget_ms() const { return budget_ms_; }
+    void set_tolerance(double v) { tolerance_ = v; }
+    double get_tolerance() const { return tolerance_; }
+    // (0, 0): no size requested; the run still fails if the size changes.
+    void set_render_size(const godot::Vector2i& v) { render_size_ = v; }
+    godot::Vector2i get_render_size() const { return render_size_; }
+    void set_disable_vsync(bool v) { disable_vsync_ = v; }
+    bool get_disable_vsync() const { return disable_vsync_; }
     void set_quit_when_done(bool v) { quit_when_done_ = v; }
     bool get_quit_when_done() const { return quit_when_done_; }
 
@@ -60,6 +71,8 @@ private:
 
     BoardView3D* view() const;
     void read_command_line();
+    void lock_render_size();
+    godot::Vector2i current_render_size() const;
     void restart_replay();
     void play_next_beat();
     void sample_frame();
@@ -74,6 +87,10 @@ private:
     godot::String tier_;
     // 0: the tier's p95 budget from the visual target.
     double budget_ms_ = 0.0;
+    double tolerance_ = bench::kDefaultTolerance;
+    godot::Vector2i render_size_;
+    bool disable_vsync_ = false;
+    bool size_arg_invalid_ = false;
     bool quit_when_done_ = true;
 
     godot::Ref<Match3Board> board_;
@@ -90,12 +107,17 @@ private:
     uint64_t start_usec_ = 0;
     uint64_t measure_start_usec_ = 0;
     uint64_t last_frame_usec_ = 0;
+    std::vector<double> process_ms_;
+    std::vector<double> render_cpu_ms_;
     std::vector<double> cpu_ms_;
     std::vector<double> gpu_ms_;
     std::vector<double> frame_ms_;
     std::vector<double> draw_calls_;
     std::vector<double> primitives_;
     double video_mem_max_ = 0.0;
+    bench::SizeTracker sizes_{std::nullopt};
+    double display_hz_ = -1.0;
+    godot::String vsync_;
     godot::Dictionary features_;
     godot::Dictionary report_;
 };

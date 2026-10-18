@@ -109,6 +109,9 @@ private:
     void disconnect_ui();
     void on_play_requested(const godot::String& level_id, const godot::String& difficulty);
     void on_level_quit_requested();
+    void on_settings_changed(const godot::String& key);
+    // Board animation speed from the UI's reduced-motion setting.
+    void apply_reduced_motion();
     void on_swap_requested(godot::Vector2i a, godot::Vector2i b);
     void on_cascade_step(int step);
     void on_animation_finished();
