@@ -5,4 +5,5 @@ build/
 game/bin/*
 !game/bin/.gitkeep
 game/.godot/
+site/_site/
 __pycache__/

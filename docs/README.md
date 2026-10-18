@@ -24,6 +24,7 @@ own folder.
 - [MoveResult events](reference/move-result.md): cascade steps, falls, spawns and how to replay a move.
 - [Match3Level](reference/match3-level.md): the level timer, score, quotas and outcome in Godot.
 - [Level data](reference/level-data.md): the level file format, defaults, limits and errors.
+- [Website](reference/website.md): pages, release data, platform detection, demo hand-off contract.
 - [Board view](reference/board-view.md): the 3D board's classes, scenes, camera fit and feel constants.
 - [CI pipeline](reference/ci-pipeline.md): the tests workflow's triggers, jobs and caches.
 - [Rules spec](reference/rules-spec.md): how the game plays, with
@@ -46,6 +47,7 @@ own folder.
 - [Play a sound from code](how-to/play-a-sound-from-code.md): call a cue from C++ or a scene, start and stop music.
 - [Add a UI screen](how-to/add-a-ui-screen.md): a new menu screen or modal, opened from a button.
 - [Check UI text and layout](how-to/check-ui-text-and-layout.md): pseudo-localization, large text, window sizes, controller only.
+- [Build and preview the website](how-to/build-and-preview-the-website.md): build `site/`, preview it with or without the web demo, run its tests.
 
 ## Explanation
 
@@ -55,6 +57,7 @@ own folder.
 - [About CI caching](explanation/about-ci-caching.md): why CI uses a compiler cache and what it leaves uncached.
 - [About the build pipeline](explanation/about-the-build-pipeline.md): why builds compile natively and export once.
 - [Sound direction](explanation/sound-direction.md): why the game sounds the way it does.
+- [About the website](explanation/about-the-website.md): why the front page is the playable intro level and how it hands off to downloads.
 
 Tutorials, more how-to guides and explanations are added by the work
 packages that create what they describe.
