@@ -40,6 +40,7 @@ public:
     ~Match3Game() override;
 
     void _ready() override;
+    void _enter_tree() override;
     void _exit_tree() override;
     void _process(double delta) override;
 
@@ -99,6 +100,7 @@ private:
     };
 
     BoardView3D* view() const;
+    void connect_all();
     void connect_ui();
     void disconnect_ui();
     void on_play_requested(const godot::String& level_id, const godot::String& difficulty);

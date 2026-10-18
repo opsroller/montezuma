@@ -205,7 +205,7 @@ on the animation frame they belong to.
 | `steel_break`, `chain_break` | A steel piece is destroyed; chains on a cell break |
 | `bonus_earned` | A power-up appears on the board (a 4+ match places one) |
 | `bonus_use_<id>` | A power-up goes off when its piece is cleared |
-| `totem_charge` | A totem's charge goes from 0 to 1 |
+| `totem_charge` | A totem gains charge without firing; at most once per move |
 | `totem_fire_<id>` | A totem fires |
 | `quota_done` | A colour quota is met (levels with quotas) |
 | `time_warning` | Time left crosses the warning threshold |

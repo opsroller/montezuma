@@ -90,22 +90,34 @@ BoardView3D* Match3Game::view() const {
 
 void Match3Game::_ready() {
     if (Engine::get_singleton()->is_editor_hint()) return;
-    set_process(false);
+    set_process(session_ != nullptr);
     board_.instantiate();
-    if (BoardView3D* v = view()) {
-        v->connect("swap_requested", callable_mp(this, &Match3Game::on_swap_requested));
-        v->connect("cascade_step", callable_mp(this, &Match3Game::on_cascade_step));
-        v->connect("animation_finished", callable_mp(this, &Match3Game::on_animation_finished));
-    } else {
-        UtilityFunctions::push_error("Match3Game needs board_view_path to point at a BoardView3D.");
-    }
-    connect_ui();
+    connect_all();
     if (OS::get_singleton()->get_cmdline_user_args().has("--game-selftest")) {
         self_test_ = true;
         callable_mp(this, &Match3Game::run_self_test).call_deferred();
     } else if (!autostart_level_.is_empty()) {
         start_level(autostart_level_, autostart_difficulty_);
     }
+}
+
+void Match3Game::_enter_tree() {
+    // _ready runs once; a node moved to a new parent reconnects here.
+    if (!Engine::get_singleton()->is_editor_hint() && is_node_ready()) connect_all();
+}
+
+void Match3Game::connect_all() {
+    if (BoardView3D* v = view()) {
+        const Callable swap = callable_mp(this, &Match3Game::on_swap_requested);
+        const Callable step = callable_mp(this, &Match3Game::on_cascade_step);
+        const Callable done = callable_mp(this, &Match3Game::on_animation_finished);
+        if (!v->is_connected("swap_requested", swap)) v->connect("swap_requested", swap);
+        if (!v->is_connected("cascade_step", step)) v->connect("cascade_step", step);
+        if (!v->is_connected("animation_finished", done)) v->connect("animation_finished", done);
+    } else {
+        UtilityFunctions::push_error("Match3Game needs board_view_path to point at a BoardView3D.");
+    }
+    connect_ui();
 }
 
 void Match3Game::_exit_tree() {
@@ -123,10 +135,11 @@ void Match3Game::_exit_tree() {
 void Match3Game::connect_ui() {
     Node* ui = get_tree()->get_root()->get_node_or_null(NodePath("UiRoot"));
     if (!ui) return;
-    if (ui->has_signal("play_requested"))
-        ui->connect("play_requested", callable_mp(this, &Match3Game::on_play_requested));
-    if (ui->has_signal("level_quit_requested"))
-        ui->connect("level_quit_requested", callable_mp(this, &Match3Game::on_level_quit_requested));
+    const Callable play = callable_mp(this, &Match3Game::on_play_requested);
+    const Callable quit = callable_mp(this, &Match3Game::on_level_quit_requested);
+    if (ui->has_signal("play_requested") && !ui->is_connected("play_requested", play)) ui->connect("play_requested", play);
+    if (ui->has_signal("level_quit_requested") && !ui->is_connected("level_quit_requested", quit))
+        ui->connect("level_quit_requested", quit);
 }
 
 void Match3Game::disconnect_ui() {
@@ -264,11 +277,15 @@ bool Match3Game::request_swap(Vector2i a, Vector2i b) {
         ++step_mismatches_;
         ERR_PRINT("Match3Game: report steps do not line up with the animation's steps.");
     }
+    // totem_charge: at most once per move, when any totem gains charge
+    // without firing (a firing has its own cue).
+    bool charged = false;
     for (const TotemCharge& c : report->totem_charges) {
         const auto i = static_cast<std::size_t>(c.id);
-        if (c.charge > totem_charge_[i] && c.charge < 1.0) cue("totem_charge");
+        charged = charged || (c.charge > totem_charge_[i] && c.charge < 1.0);
         totem_charge_[i] = c.charge;
     }
+    if (charged) cue("totem_charge");
     const std::map<int, int> quotas_before = shown_.quotas;
     play_board(result);
     publish(false);

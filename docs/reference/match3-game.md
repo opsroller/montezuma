@@ -23,7 +23,8 @@ Code: `extension/src/game/match3_game.*`, registered by
 | `game/scenes/main.tscn` | `Main` | `game.tscn` instance |
 
 The group is set in the scene so the HUD finds the node as it enters the
-tree. On `_ready` the node connects to `/root/UiRoot`: `play_requested`
+tree. The node connects to the view and UiRoot on `_ready` and again
+whenever it re-enters the tree, and disconnects on leaving it. On `_ready` the node connects to `/root/UiRoot`: `play_requested`
 starts a level and `level_quit_requested` stops it. A level that fails to
 start sends UiRoot the `quit_level` action, so the episode map comes back.
 
@@ -85,9 +86,9 @@ view snaps to them at the end of the move (WP-29).
 | Cue | Played |
 |---|---|
 | `swap`, `swap_illegal` | When the request is answered |
-| `match`, `cascade_<n>` (8 and over: `cascade_8`), `gem_collect`, `bonus_use_<id>`, `steel_break`, `chain_break`, `bonus_earned` | On the view's `cascade_step` for that step |
+| `match`, `cascade_<n>` (8 and over: `cascade_8`), `gem_collect`, `bonus_use_<id>`, `steel_break`, `chain_break`, `bonus_earned` | On the view's `cascade_step` for that step. `n` counts display steps across the whole move, so a totem's first step plays `cascade_<n>`, not `match` |
 | `totem_fire_<id>` | On the totem's first step; at once for a totem that clears nothing |
-| `totem_charge` | When a totem's charge rises without firing |
+| `totem_charge` | At most once per move, when any owned totem gains charge without firing |
 | `quota_done` | When a quota reaches 0 |
 | `time_warning` | When time left crosses `warning_seconds` downwards |
 | `level_won`, `level_lost` | With `level_finished` |
