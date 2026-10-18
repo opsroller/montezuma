@@ -1,0 +1,55 @@
+[gd_scene format=3]
+; SPDX-License-Identifier: GPL-2.0-or-later
+
+[node name="CreditsScreen" type="CreditsScreen"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+screen_id = "credits"
+default_focus = NodePath("%Body")
+
+[node name="Backdrop" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"ScrimPanel"
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="Center"]
+layout_mode = 2
+
+[node name="Column" type="VBoxContainer" parent="Center/Panel"]
+layout_mode = 2
+
+[node name="Heading" type="Label" parent="Center/Panel/Column"]
+layout_mode = 2
+text = "credits.title"
+horizontal_alignment = 1
+theme_type_variation = &"HeadingLabel"
+
+[node name="Body" type="RichTextLabel" parent="Center/Panel/Column"]
+layout_mode = 2
+unique_name_in_owner = true
+custom_minimum_size = Vector2(900, 420)
+focus_mode = 2
+auto_translate_mode = 2
+bbcode_enabled = true
+
+[node name="Back" type="NavButton" parent="Center/Panel/Column"]
+layout_mode = 2
+text = "menu.back"
+action = "back"
