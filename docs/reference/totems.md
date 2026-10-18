@@ -234,6 +234,11 @@ fires.
 
 ## Open points
 
+`LevelSession` ([level-session.md](level-session.md)) now runs the firing
+loop with gems, steel, chains and power-ups; the notes below describe the
+building blocks on their own. `make_effect(id, board, rng, steel)` leaves
+steel out of paint's kinds and pool.
+
 - `Board::clear_cells` numbers its steps from 0, so the game layer offsets
   them to score a totem's clears as further steps of the move
   (`SCORE-01`, `RES-07`).

@@ -21,6 +21,10 @@ cmake --build build -j
 ctest --test-dir build --output-on-failure
 ```
 
+This also builds the balance simulator (`tools/sim/`) and runs its tests;
+add `-DMONTEZUMA_BUILD_SIM=OFF` to skip it. Running it is in
+[Run the balance simulator](run-the-balance-simulator.md).
+
 ## Run the tests under sanitizers
 
 ```sh
