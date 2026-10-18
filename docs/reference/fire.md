@@ -113,7 +113,10 @@ and the light's lumens, temperature, colour, size and range from `lighting.torch
 | `Light` | `FlickerLight3D` | `quality_shadow_light`, `quality_fog_light` | 0.42 m above the rim, turned so its dual paraboloid shadow seam lies flat; 60,000 lm at 1900 K; shadows on, blur 1.5; volumetric fog energy 2.0; bake mode dynamic |
 
 Every particle system starts full (`preprocess` = lifetime) and casts no
-shadow. Visible GPU particles for four fires: 160 counted by the
+shadow. The particles and the heat haze are on render layer 2, which
+reflection probes leave out (`cull_mask`): on Compatibility a probe that
+draws a material reading the depth texture blits its depth-only atlas into
+a depth-stencil buffer, and WebKit's WebGL rejects that blit. Visible GPU particles for four fires: 160 counted by the
 benchmark (both ember systems count, though one is hidden).
 
 ## Shaders

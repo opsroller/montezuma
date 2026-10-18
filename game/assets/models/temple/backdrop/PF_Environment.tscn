@@ -116,6 +116,7 @@ area_range = 12.0
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 1.0, 0.0)
 size = Vector3(12.0, 4.0, 12.0)
 box_projection = true
+cull_mask = 1048573
 
 [node name="VoxelGI" type="VoxelGI" parent="." groups=["quality:voxel_gi"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
