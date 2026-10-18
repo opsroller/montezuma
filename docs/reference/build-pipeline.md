@@ -72,8 +72,8 @@ no owners, and every timestamp set to the commit time
 
 | Input | Pin | Where |
 |---|---|---|
-| Godot editor and export templates | 4.4.1-stable, SHA-512 verified | `tools/release/godot.env` |
-| godot-cpp | Submodule commit | `thirdparty/godot-cpp` |
+| Godot editor and export templates | 4.7.2-stable, SHA-512 verified | `tools/release/godot.env` |
+| godot-cpp | Submodule commit (10.0.0-stable), API version 4.7 | `thirdparty/godot-cpp`, `extension/CMakeLists.txt` |
 | GitHub Actions | Full commit SHA, version in a comment | `build.yml` |
 | Runner images | Named versions (`ubuntu-22.04`, `windows-2022`, `macos-14`, `ubuntu-24.04`), not `-latest` | `build.yml` |
 
@@ -81,7 +81,7 @@ The Godot downloads are cached under the key
 `godot-<hash of godot.env>`; changing the pin changes the key.
 
 The extension jobs compile through a compiler cache, restored from and
-saved to the newest cache with the key prefix `build-extension-<platform>`
+saved to the newest cache with the key prefix `build-extension-godot-cpp-10-<platform>`
 (500 MB cap). The **Compiler cache stats** step prints hits and misses.
 
 | Platform | Cache | Generator |
@@ -103,7 +103,7 @@ compiler cache is safe for release builds.
 | `export-desktop.sh <linux\|windows\|macos> <version> <outdir>` | Exports one preset and writes the archive and `.sha256` |
 | `package.py <tar.gz\|zip> <root> <name> <archive>` | Packs a folder with stable bytes; refuses symlinks |
 | `notices.py <outdir>` | Writes `THIRD-PARTY-NOTICES.txt` and `SOURCE.txt`; add a row to its `COMPONENTS` for every library linked into the game |
-| `notices/` | Verbatim upstream notice texts (Godot 4.4.1 `LICENSE.txt`, `COPYRIGHT.txt`) |
+| `notices/` | Verbatim upstream notice texts (Godot 4.7.2 `LICENSE.txt`, `COPYRIGHT.txt`) |
 | `smoke-test.sh <archive>` | Verifies, unpacks and runs a package on its own platform |
 
 ## Export presets

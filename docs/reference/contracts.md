@@ -230,7 +230,7 @@ the autoload exists. Volumes go to audio buses `Music` and `SFX`.
 Agreed by both sides on 2026-10-18. The site's side is described in
 `docs/reference/website.md`.
 
-**Files.** The Godot 4.4.1 single-threaded web export, named `montezuma`
+**Files.** The Godot 4.7.2 single-threaded web export, named `montezuma`
 (`montezuma.js`, `montezuma.wasm`, `montezuma.pck`, plus any helper files
 the export emits). The site does not use the export's own HTML page.
 

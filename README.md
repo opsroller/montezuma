@@ -22,14 +22,14 @@ different graphics and rule variants on the same core.
   (`Match3Board`) and draws the 3D board (`BoardView3D`).
 - `game/` holds the Godot project. It has no GDScript; game logic lives in
   C++.
-- `thirdparty/godot-cpp` is the official C++ binding for Godot 4.4, included
-  as a git submodule.
+- `thirdparty/godot-cpp` is the official C++ binding for Godot (10.0, built
+  against the Godot 4.7 API), included as a git submodule.
 - `docs/` holds the rules spec and design notes.
 
 ## Building and testing
 
 You need CMake 3.22 or newer, a C++20 compiler (GCC, Clang or MSVC),
-Python 3 (godot-cpp generates its bindings with it) and Godot 4.4.
+Python 3 (godot-cpp generates its bindings with it) and Godot 4.7.2.
 
 ```sh
 git submodule update --init --recursive

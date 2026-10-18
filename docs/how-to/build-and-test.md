@@ -32,7 +32,7 @@ ctest --test-dir build-asan --output-on-failure
 
 ## Build the extension and load the game
 
-Needs the godot-cpp submodule and Godot 4.4.1. The extension is built
+Needs the godot-cpp submodule and Godot 4.7.2 (an older Godot refuses to load the extension). The extension is built
 from the root project, never from `extension/` on its own, and in its own
 build folder: CMake caches options, so reusing the core-only `build/`
 would keep the extension off. The library lands in `game/bin/`.
