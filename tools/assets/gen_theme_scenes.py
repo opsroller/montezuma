@@ -10,6 +10,7 @@ parameters and writes, as Godot text resources:
 - game/assets/materials/<theme>/MI_*.tres   one per entry in "materials"
 - game/assets/models/<theme>/**/PF_*.tscn    the scenes the manifest names
 - game/assets/lookdev/LD_<Theme>.tscn        look-dev scene: whole board, game camera
+- game/assets/lookdev/LD_<Theme>_Bake.tscn   what tools/assets/bake_lightmaps.sh bakes
 - game/assets/manifest.json                  this theme's entry (others kept)
 """
 
@@ -56,6 +57,15 @@ class Resource:
 TEXTURE_SETS = {}
 
 
+# Emission in nits per unit of authored emission energy. With physical light
+# units the renderer scales emission by the camera's exposure normalization,
+# sensitivity / 3072007 for CameraAttributesPractical (Godot 4.7), so a theme
+# authors emission as radiance at its own exposure and this undoes the scale.
+# Compatibility skips that scale (drivers/gles3 scene shader, 4.7.2), so the
+# lo/ variants it gets through the quality tier keep 1 nit per unit.
+EMISSION_NITS = {"scale": 1.0}
+
+
 def texture_path(theme, tex_set, suffix, hi):
     """res:// path of one map of a texture set; the hi/ variant when asked for and the set has one."""
     name = f"T_{tex_set}_{suffix}.png"
@@ -86,12 +96,15 @@ def shader_material(spec, theme, hi):
         r.body.append(f"shader_parameter/specular = {specular_from_ior(spec['ior'])}")
     for key, value in spec.get("params", {}).items():
         v = color(value) if isinstance(value, str) else value
+        if key == "emission_energy":  # SH_Gem's EMISSION, scaled like StandardMaterial emission
+            v = round(value * EMISSION_NITS["scale"], 3)
         r.body.append(f"shader_parameter/{key} = {v}")
     return r.text('[gd_resource type="ShaderMaterial" load_steps={steps} format=3]')
 
 
-def material(spec, theme, hi=False):
-    """One Godot material from a theme material entry; hi=True writes the desktop variant."""
+def material(spec, theme, hi=False, lo=False):
+    """One Godot material from a theme material entry; hi=True writes the desktop variant,
+    lo=True the Compatibility (web) variant of an emissive material."""
     if hi:
         spec = {k: v for k, v in spec.items() if k != "hi"} | spec.get("hi", {})
     if "shader" in spec:
@@ -111,7 +124,8 @@ def material(spec, theme, hi=False):
                   f"roughness = {spec.get('roughness', 1.0)}"]
     if "emission" in spec:
         lines += ["emission_enabled = true", f"emission = {color(spec['emission'])}",
-                  f"emission_energy_multiplier = {spec.get('emission_energy', 1.0)}"]
+                  f"emission_energy_multiplier = {spec.get('emission_energy', 1.0)}",
+                  f"emission_intensity = {1.0 if lo else round(EMISSION_NITS['scale'], 1)}"]
     if orm:
         lines += ["normal_enabled = true", f"normal_scale = {spec.get('normal_scale', 1.0)}",
                   f"normal_texture = {tex['N']}"]
@@ -146,8 +160,12 @@ def material(spec, theme, hi=False):
     return r.text(f'[gd_resource type="{kind}" load_steps={{steps}} format=3]')
 
 
-def mesh_scene(root_name, parts, theme):
-    """A Node3D with one MeshInstance3D per (mesh, material) part."""
+def mesh_scene(root_name, parts, theme, dynamic=False):
+    """A Node3D with one MeshInstance3D per (mesh, material) part.
+
+    Static parts are baked into the lightmap; dynamic ones (pieces, which
+    move) are lit by its probes and by real-time GI instead.
+    """
     r = Resource()
     r.body.append(f'[node name="{root_name}" type="Node3D"]')
     for name, mesh_path, mat in parts:
@@ -155,6 +173,8 @@ def mesh_scene(root_name, parts, theme):
         mat_ref = r.ext_id("Material", f"res://assets/materials/{theme}/{mat}.tres")
         r.body += ["", f'[node name="{name}" type="MeshInstance3D" parent="."]', f"mesh = {mesh}",
                    f"surface_material_override/0 = {mat_ref}"]
+        if dynamic:
+            r.body.append("gi_mode = 2")
     return r
 
 
@@ -168,6 +188,7 @@ def main():
     p = json.loads(params_path.read_text())
     theme = p["theme"]
     TEXTURE_SETS.update(p["textures"]["sets"])
+    EMISSION_NITS["scale"] = 3072007.0 / p["lighting"]["exposure"]["sensitivity"]
     assets = ROOT / "game/assets"
     models = f"res://assets/models/{theme}"
     entry = {}
@@ -176,10 +197,12 @@ def main():
         write(assets / "materials" / theme / f"{name}.tres", material(spec, theme))
         if "hi" in spec:
             write(assets / "materials" / theme / "hi" / f"{name}.tres", material(spec, theme, hi=True))
+        if "emission" in spec and "shader" not in spec:
+            write(assets / "materials" / theme / "lo" / f"{name}.tres", material(spec, theme, lo=True))
 
     for kind in p["artifacts"]["kinds"]:
         r = mesh_scene(kind["name"], [("Mesh", f"{models}/artifacts/SM_Artifact_{kind['name']}.obj", kind["material"])],
-                       theme)
+                       theme, dynamic=True)
         rel = f"models/{theme}/artifacts/PF_Artifact_{kind['name']}.tscn"
         write(assets / rel, r.text("[gd_scene load_steps={steps} format=3]"))
         entry[f"artifact_{kind['index']}"] = f"res://assets/{rel}"
@@ -194,6 +217,8 @@ def main():
                       ("Flame", "MI_Flame"), ("Ground", "MI_Ground"), ("Foliage", "MI_Foliage"), ("Rocks", "MI_StoneDark")]
     r = mesh_scene("Environment", [(n, f"{models}/backdrop/SM_Backdrop_{n}.obj", m) for n, m in backdrop_parts], theme)
     env = p["environment"]
+    light = p["lighting"]
+    exposure, fog = light["exposure"], light["fog"]
     sky = [
         "[sub_resource type=\"ProceduralSkyMaterial\" id=\"sky_mat\"]",
         f"sky_top_color = {color(env['sky_top'])}",
@@ -205,39 +230,92 @@ def main():
         "[sub_resource type=\"Sky\" id=\"sky\"]",
         "sky_material = SubResource(\"sky_mat\")",
         "",
+        # Physical light units (project setting): the sky in nits, lights in
+        # lux and lumens, and the camera's sensitivity sets the exposure.
+        "[sub_resource type=\"CameraAttributesPractical\" id=\"camera\"]",
+        f"exposure_sensitivity = {exposure['sensitivity']}",
+        f"exposure_multiplier = {exposure['multiplier']}",
+        "auto_exposure_enabled = true",
+        f"auto_exposure_scale = {exposure['auto_scale']}",
+        f"auto_exposure_speed = {exposure['auto_speed']}",
+        f"auto_exposure_min_sensitivity = {exposure['auto_min_sensitivity']}",
+        f"auto_exposure_max_sensitivity = {exposure['auto_max_sensitivity']}",
+        "",
         "[sub_resource type=\"Environment\" id=\"env\"]",
         "background_mode = 2",
+        f"background_intensity = {light['sky_nits']}",
         "sky = SubResource(\"sky\")",
         "ambient_light_source = 3",
         f"ambient_light_energy = {env['ambient_energy']}",
         "reflected_light_source = 2",
-        "tonemap_mode = 2",
-        f"tonemap_exposure = {env['exposure']}",
+        "tonemap_mode = 4",
+        f"tonemap_agx_white = {light['agx_white']}",
+        f"tonemap_agx_contrast = {light['agx_contrast']}",
+        # Screen-space passes are authored on; the quality tier turns them off
+        # where its renderer or budget has none (docs/reference/quality-tiers.md).
+        "ssao_enabled = true",
+        "ssil_enabled = true",
         "glow_enabled = true",
         "glow_intensity = 0.6",
         "glow_bloom = 0.05",
         "glow_hdr_threshold = 1.1",
+        # Height fog only: it starts below the platform, so the board above
+        # it stays clear (readability rule 2) while the jungle below hazes.
         "fog_enabled = true",
-        f"fog_light_color = {color(env['fog'])}",
-        f"fog_density = {env['fog_density']}",
-        "fog_sky_affect = 0.3",
+        f"fog_light_color = {color(fog['color'])}",
+        "fog_density = 0.0",
+        f"fog_height = {fog['height']}",
+        f"fog_height_density = {fog['height_density']}",
+        f"fog_sky_affect = {fog['sky_affect']}",
         "adjustment_enabled = true",
         f"adjustment_saturation = {env['saturation']}",
         "",
     ]
     r.body = sky + r.body
-    sun = env["sun"]
+    sun = light["sun"]
     r.body += ["", '[node name="WorldEnvironment" type="WorldEnvironment" parent="."]', 'environment = SubResource("env")',
-               "", '[node name="Sun" type="DirectionalLight3D" parent="."]', f"transform = {sun['transform']}",
-               f"light_color = {color(sun['color'])}", f"light_energy = {sun['energy']}", "shadow_enabled = true",
+               'camera_attributes = SubResource("camera")',
+               "", '[node name="Sun" type="DirectionalLight3D" parent="."]', f"transform = {env['sun']['transform']}",
+               f"light_intensity_lux = {sun['lux']}", f"light_temperature = {sun['kelvin']}",
+               f"light_color = {color(sun['color'])}",
+               f"light_angular_distance = {sun['angular_distance']}", "shadow_enabled = true",
                "directional_shadow_max_distance = 40.0"]
     half = p["board"]["width"] * p["cell_size"] / 2 + p["board"]["frame_width"] + 0.95
-    torch = env["torch"]
+    torch = light["torch"]
     for i, (sx, sz) in enumerate(((-1, -1), (1, -1), (-1, 1), (1, 1))):
-        r.body += ["", f'[node name="Torch{i + 1}" type="OmniLight3D" parent="."]',
-                   f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, {sx * half}, 0.85, {sz * half})",
-                   f"light_color = {color(torch['color'])}", f"light_energy = {torch['energy']}",
-                   f"omni_range = {torch['range']}", "omni_attenuation = 1.4"]
+        # Every brazier casts soft shadows where the tier allows; the tier keeps
+        # the nearest N to the camera (8, 2, 0, 0) and drops the rest. Dual
+        # paraboloid shadows take two passes instead of a cube's six; the light
+        # is turned so the seam lies flat at flame height, above the board.
+        r.body += ["", f'[node name="Torch{i + 1}" type="OmniLight3D" parent="." groups=["quality_shadow_light"]]',
+                   f"transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, {sx * half}, {torch['height']}, {sz * half})",
+                   f"light_intensity_lumens = {torch['lumens']}", f"light_temperature = {torch['kelvin']}",
+                   f"light_color = {color(torch['color'])}", f"light_size = {torch['size']}",
+                   "shadow_enabled = true", "omni_shadow_mode = 0", f"omni_range = {torch['range']}", "omni_attenuation = 1.4"]
+    fill = light["sky_fill"]
+    r.body += ["", '[node name="SkyFill" type="AreaLight3D" parent="." groups=["quality:area_light"]]',
+               f"transform = {fill['transform']}", f"light_intensity_lumens = {fill['lumens']}",
+               f"light_color = {color(fill['color'])}", "light_bake_mode = 0",
+               f"area_size = Vector2({fill['size'][0]}, {fill['size'][1]})", f"area_range = {fill['range']}"]
+    probe = light["reflection_probe"]
+    r.body += ["", '[node name="ReflectionProbe" type="ReflectionProbe" parent="."]',
+               f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, {', '.join(map(str, probe['position']))})",
+               f"size = Vector3({', '.join(map(str, probe['size']))})", "box_projection = true"]
+    vgi = light["voxel_gi"]
+    r.body += ["", '[node name="VoxelGI" type="VoxelGI" parent="." groups=["quality:voxel_gi"]]',
+               f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, {', '.join(map(str, vgi['position']))})",
+               f"subdiv = {vgi['subdiv']}", f"size = Vector3({', '.join(map(str, vgi['size']))})",
+               'camera_attributes = SubResource("camera")']
+    # Static lighting baked by tools/assets/bake_lightmaps.sh into the file the
+    # metadata names (a build output); the board view attaches it when present.
+    lm = light["lightmap"]
+    r.body += ["", '[node name="Lightmap" type="LightmapGI" parent="."]', f"quality = {lm['quality']}",
+               f"bounces = {lm['bounces']}", f"texel_scale = {lm['texel_scale']}",
+               f"max_texture_size = {lm['max_texture_size']}", f"generate_probes_subdiv = {lm['probes_subdiv']}",
+               # Bake at the theme's exposure: with physical light units the raw
+               # lux values would otherwise overflow the lightmap's range.
+               'camera_attributes = SubResource("camera")',
+               f'metadata/light_data_path = "{models}/backdrop/PF_Environment.lmbake"']
     write(assets / f"models/{theme}/backdrop/PF_Environment.tscn", r.text("[gd_scene load_steps={steps} format=3]"))
     entry["environment"] = f"{models}/backdrop/PF_Environment.tscn"
 
@@ -317,6 +395,15 @@ def main():
             hi_overrides(r, tiered + [(f"K{k}", "Mesh", kind_material[k]) for k in range(kinds)])
         write(assets / f"lookdev/LD_{theme.capitalize()}_LineUp{suffix}.tscn",
               r.text("[gd_scene load_steps={steps} format=3]"))
+
+    # Lightmap bake scene: the theme backdrop and board under one root with the
+    # node names BoardView3D gives them, so the paths the bake records from the
+    # backdrop's LightmapGI resolve the same in game. tools/assets/bake_lightmaps.sh bakes it.
+    r = Resource()
+    r.body = ['[node name="View" type="Node3D"]', "",
+              f'[node name="Environment" parent="." instance={r.ext_id("PackedScene", entry["environment"])}]', "",
+              f'[node name="Slab" parent="." instance={r.ext_id("PackedScene", entry["board"])}]']
+    write(assets / f"lookdev/LD_{theme.capitalize()}_Bake.tscn", r.text("[gd_scene load_steps={steps} format=3]"))
 
     # Piece and board colours for 2D use (HUD quota swatches), derived from the same parameters.
     names = ["red", "orange", "yellow", "green", "blue", "purple", "white"]

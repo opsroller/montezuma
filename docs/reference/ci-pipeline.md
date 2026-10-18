@@ -36,6 +36,7 @@ fixes it.
 |---|---|---|---|---|
 | Compiler cache | `extension (ubuntu-latest)` | ccache | `tests-extension-godot-cpp-10-ubuntu-latest` + timestamp | 500 MB |
 | Compiler cache | `extension (windows-latest)`, `main` only | sccache | `tests-extension-godot-cpp-10-windows-latest` + timestamp | 500 MB |
+| Lightmaps | `extension (ubuntu-latest)`; also the `build` export job and the `web` job | `.github/actions/lightmaps` | `lightmaps-` plus a hash of the bake inputs (see below) | about 1 MB per theme |
 
 - The newest cache with the key prefix is restored, and a new one is saved
   at the end of every run.
@@ -46,6 +47,19 @@ fixes it.
 - Caches written by a PR are visible only to that PR. PRs read the caches
   written on `main`.
 - Godot itself (one download of about 60 MB, a few seconds) is not cached. The job fetches the editor pinned in `tools/release/godot.env` with `tools/release/fetch-godot.sh`, the same script and checksum the build pipeline uses.
+
+- **Lightmaps.** The composite action `.github/actions/lightmaps` runs
+  after the textures action. It restores each theme's
+  `PF_Environment.lmbake`, `.exr`, `.exr.import` and `.lightmap-inputs`
+  stamp, keyed by a hash of the board and backdrop folders, the materials,
+  the textures' `.inputs` stamps, the `LD_*_Bake.tscn` scenes, the bake
+  driver `lightmap_baker.cpp`, `godot.env` and `project.godot`. Then
+  `tools/assets/bake_lightmaps.sh --check` compares the stamps; only when
+  one is stale does the action install Mesa lavapipe and xvfb, build the
+  native extension if the job has none (and delete it afterwards, so it
+  never reaches a web or desktop export), import the project and bake
+  (about 4 minutes for the temple on a runner without a GPU). See
+  [Board themes: Lighting](board-themes.md#lighting).
 
 The `core` and `sanitizers` jobs build in seconds and use no cache.
 

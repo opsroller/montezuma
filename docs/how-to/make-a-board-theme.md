@@ -16,8 +16,10 @@ With a Blender install instead of `bpy`, run the mesh step as
 
 ## Change the temple
 
-1. Edit `tools/assets/themes/temple.json`: colours under `materials`, light
-   under `environment`, sizes under `board` and `artifacts`.
+1. Edit `tools/assets/themes/temple.json`: colours under `materials`, sky
+   under `environment`, lights, exposure and fog under `lighting`
+   (physical units: [Board themes: Lighting](../reference/board-themes.md#lighting)),
+   sizes under `board` and `artifacts`.
 2. Regenerate and check:
 
    ```sh
@@ -31,6 +33,15 @@ With a Blender install instead of `bpy`, run the mesh step as
    `gen_theme_textures.py` (or build the CMake target `textures`) before
    opening the project in Godot; it does nothing when its inputs have not
    changed.
+
+   Then bake the lightmap, which is not committed either
+   ([Build and test: bake the lightmaps](build-and-test.md#bake-the-lightmaps)):
+
+   ```sh
+   tools/assets/bake_lightmaps.sh --godot "$(command -v godot)"
+   ```
+
+   The look-dev scenes have no baked light; the game and the benchmark do.
 
 3. Open `game/assets/lookdev/LD_Temple.tscn` (whole board from the game
    camera) and `LD_Temple_LineUp.tscn` (pieces close up) in Godot, or render
@@ -92,7 +103,11 @@ own: mobile and web never see the variant.
 3. Point the materials' texture paths at `res://assets/textures/<theme>/`,
    or reuse the temple's.
 4. Run the three generators with your file as the argument, then the
-   validator. Your theme is added to `manifest.json` next to the others.
+   validator, then `tools/assets/bake_lightmaps.sh`. Your theme is added to
+   `manifest.json` next to the others, and `LD_<Theme>_Bake.tscn` is
+   written for its bake. Commit the new board and backdrop `.obj.import`
+   files with `generate_lightmap_uv2=true` (Godot writes them on first
+   import; the validator checks the setting).
 5. Add a provenance record for `theme <theme>` to
    `game/assets/PROVENANCE.md` (copy the temple's and edit it).
 6. Select it in a scene by setting the board's `theme` property to

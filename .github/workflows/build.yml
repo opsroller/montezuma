@@ -116,6 +116,10 @@ jobs:
         run: >
           tools/release/fetch-godot.sh ~/godot-dl
           linux_release.x86_64 windows_release_x86_64.exe windows_release_x86_64_console.exe macos.zip
+      - name: Bake lightmaps
+        uses: ./.github/actions/lightmaps
+        with:
+          godot: /home/runner/godot-dl/godot
       - name: Export
         env:
           GODOT: /home/runner/godot-dl/godot

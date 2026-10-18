@@ -32,7 +32,7 @@ told apart at a glance.
 
 | Tier | Renderer | Platforms | Reference hardware | Resolution | Frame budget |
 |---|---|---|---|---|---|
-| `desktop-high` | Forward+ | Windows, Linux, macOS | NVIDIA RTX 3060 or AMD RX 6600 XT class (2021 mid-range); Apple M1 Pro class | 2560×1440 output, 3D at native with TAA or 0.67 with FSR 2.2 / MetalFX temporal | p95 frame time ≤ 16.6 ms (60 fps) |
+| `desktop-high` | Forward+ | Windows, Linux, macOS | NVIDIA RTX 3060 or AMD RX 6600 XT class (2021 mid-range); Apple M1 Pro class | 2560×1440 output, 3D at 720 lines (0.5) with FSR 2.2 / MetalFX temporal; native with TAA up to 720p output | p95 frame time ≤ 16.6 ms (60 fps) |
 | `desktop-standard` | Forward+ | Windows, Linux, macOS, Steam Deck | Steam Deck; Intel Iris Xe / AMD Radeon 680M integrated; Apple M1 | 1280×800 to 1920×1080 output, 3D at 0.77 with FSR 2.2 / MetalFX temporal | p95 ≤ 16.6 ms |
 | `mobile` | Mobile | Android, iOS | Pixel 7a / Galaxy A54 class; iPhone 12 | native output, 3D at 0.75 to 1.0 | p95 ≤ 16.6 ms, held for 10 minutes without thermal throttling below 55 fps |
 | `web` | Compatibility | Chrome, Firefox, Safari (WebAssembly) | 2020 laptop with Intel UHD 620 class integrated GPU | 1280×720 canvas | p95 ≤ 33.3 ms, median ≤ 16.6 ms; download ≤ 40 MB compressed; first frame ≤ 10 s on broadband |
@@ -54,11 +54,11 @@ cell · — absent
 |---|---|---|---|---|
 | Physical light units, AgX tonemapper, auto exposure | ✔ | ✔ | ✔ (no auto exposure) | ◐ AgX, fixed exposure |
 | Baked path-traced static lighting (`LightmapGI`, with probes for moving pieces) | ✔ | ✔ | ✔ | ✔ |
-| Real-time bounce light from moving lights (fire flicker, effects) | ✔ `VoxelGI` over the temple (or SDFGI if measured better) | ◐ SSIL | ◐ baked only | ◐ baked only |
+| Real-time bounce light from moving lights (fire flicker, effects) | ✔ `VoxelGI` over the temple, on the pieces (SDFGI only for a theme too big for one volume) | ◐ SSIL | ◐ baked only | ◐ baked only |
 | Screen-space indirect light (SSIL) | ✔ | ✔ | — | — |
 | Ambient occlusion | ✔ SSAO + baked | ✔ SSAO + baked | ◐ baked | ◐ baked |
 | Sun shadows | ✔ soft (PCSS), 4096 | ✔ 2048 | ✔ 2048 | ✔ 1024 |
-| Fire light with shadows | ✔ every brazier, soft | ✔ nearest two cast shadows | ◐ no shadows, flicker | ◐ no shadows, flicker |
+| Fire light with shadows | ✔ every brazier up to 8, soft, dual paraboloid | ✔ nearest two cast shadows | ◐ no shadows, flicker | ◐ no shadows, flicker |
 | Area light for sky fill (`AreaLight3D`) | ✔ | — | — | — |
 
 ### Reflections

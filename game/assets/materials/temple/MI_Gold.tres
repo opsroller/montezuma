@@ -14,6 +14,7 @@ metallic_specular = 0.5
 emission_enabled = true
 emission = Color(0.7529, 0.5412, 0.0706, 1.0000)
 emission_energy_multiplier = 1.0
+emission_intensity = 6981.8
 normal_enabled = true
 normal_scale = 1.0
 normal_texture = ExtResource("3")

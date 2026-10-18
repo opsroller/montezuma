@@ -9,6 +9,7 @@
 #include <utility>
 #include <vector>
 
+#include <godot_cpp/classes/box_mesh.hpp>
 #include <godot_cpp/classes/camera3d.hpp>
 #include <godot_cpp/classes/camera_attributes.hpp>
 #include <godot_cpp/classes/camera_attributes_practical.hpp>
@@ -16,6 +17,8 @@
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/environment.hpp>
 #include <godot_cpp/classes/light3d.hpp>
+#include <godot_cpp/classes/material.hpp>
+#include <godot_cpp/classes/mesh_instance3d.hpp>
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/classes/omni_light3d.hpp>
 #include <godot_cpp/classes/os.hpp>
@@ -216,6 +219,7 @@ void QualityTiers::switch_to(const String& choice, bool save) {
     const q::Tier next = q::resolve_tier(wanted, adapter_);
     if (next == tier_) return;
     tier_ = next;
+    material_variants_.clear();
     apply_all();
     emit_signal("tier_changed", get_tier());
 }
@@ -301,6 +305,32 @@ void QualityTiers::apply_to(Node* root) {
     for (int64_t i = 0; i < children.size(); ++i) apply_to(Object::cast_to<Node>(children[i].operator Object*()));
 }
 
+void QualityTiers::apply_materials(MeshInstance3D* mesh) {
+    // Each surface override that came from a material file is swapped for the
+    // tier's variant of that file (resolve_variant), remembering the authored
+    // path so a later switch can go back.
+    for (int32_t i = 0; i < mesh->get_surface_override_material_count(); ++i) {
+        const Ref<Material> current = mesh->get_surface_override_material(i);
+        const StringName key = String("_quality_material_") + String::num_int64(i);
+        String authored = mesh->get_meta(key, String());
+        if (authored.is_empty()) {
+            if (current.is_null() || !current->get_path().ends_with(".tres")) continue;
+            authored = current->get_path();
+            mesh->set_meta(key, authored);
+        }
+        String wanted;
+        if (const auto cached = material_variants_.find(authored); cached != material_variants_.end()) {
+            wanted = cached->second;
+        } else {
+            wanted = resolve_variant(authored);
+            material_variants_.emplace(authored, wanted);
+        }
+        if (current.is_valid() && current->get_path() == wanted) continue;
+        const Ref<Material> variant = ResourceLoader::get_singleton()->load(wanted);
+        if (variant.is_valid()) mesh->set_surface_override_material(i, variant);
+    }
+}
+
 void QualityTiers::on_node_added(Node* node) {
     apply_node(node);
     if (node->is_in_group(kShadowGroup)) request_shadow_budget();
@@ -308,6 +338,7 @@ void QualityTiers::on_node_added(Node* node) {
 
 void QualityTiers::apply_node(Node* node) {
     const q::Profile& p = get_profile();
+    if (auto* mesh = Object::cast_to<MeshInstance3D>(node)) apply_materials(mesh);
     if (auto* world = Object::cast_to<WorldEnvironment>(node)) {
         apply_environment(world->get_environment());
         apply_camera_attributes(world->get_camera_attributes());
@@ -448,6 +479,18 @@ void QualityTiers::run_self_test() {
         scratch->add_child(light);
         lights.push_back(light);
     }
+    // A theme material with hi/ and lo/ variants: the mesh must show the
+    // active tier's file and get the authored one back.
+    const String material_path = "res://assets/materials/temple/MI_Ruby.tres";
+    MeshInstance3D* gem = nullptr;
+    if (ResourceLoader::get_singleton()->exists(material_path)) {
+        gem = memnew(MeshInstance3D);
+        Ref<BoxMesh> box;
+        box.instantiate();
+        gem->set_mesh(box);
+        gem->set_surface_override_material(0, ResourceLoader::get_singleton()->load(material_path));
+        scratch->add_child(gem);
+    }
     get_tree()->get_root()->add_child(scratch);
 
     // switch_to(..., false): a test never writes the player's settings file.
@@ -471,6 +514,10 @@ void QualityTiers::run_self_test() {
         for (Light3D* light : lights) shadowed += light->has_shadow() ? 1 : 0;
         check(shadowed == std::min(3, p.shadow_casting_lights), id, "shadow-casting light budget");
         check(get_active_features().size() > 0, id, "active feature list empty");
+        if (gem) {
+            const Ref<Material> shown = gem->get_surface_override_material(0);
+            check(shown.is_valid() && shown->get_path() == resolve_variant(material_path), id, "material variant");
+        }
     }
     // Back to the first tier: everything the theme authored comes back.
     if (get_available_tiers().size() > 0) {

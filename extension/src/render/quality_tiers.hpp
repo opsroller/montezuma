@@ -7,10 +7,13 @@
 #include <godot_cpp/variant/packed_string_array.hpp>
 #include <godot_cpp/variant/string.hpp>
 
+#include <map>
+
 #include "quality.hpp"
 
 namespace godot {
 class Environment;
+class MeshInstance3D;
 class CameraAttributes;
 class Light3D;
 }  // namespace godot
@@ -82,6 +85,7 @@ private:
     void apply_engine_settings();
     void apply_viewport();
     void apply_node(godot::Node* node);
+    void apply_materials(godot::MeshInstance3D* mesh);
     void apply_environment(const godot::Ref<godot::Environment>& env);
     void apply_camera_attributes(const godot::Ref<godot::CameraAttributes>& attributes);
     void request_shadow_budget();
@@ -97,6 +101,8 @@ private:
     godot::String choice_ = "auto";
     godot::String settings_path_ = "user://quality.cfg";
     bool shadow_budget_pending_ = false;
+    // Authored material path -> the active tier's variant, cleared on switch.
+    std::map<godot::String, godot::String> material_variants_;
 };
 
 }  // namespace montezuma::godot_binding

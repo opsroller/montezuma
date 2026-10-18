@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
 
 // Quality tier table and start-up choice tests. No Godot, no framework; run via ctest.
+#include <cmath>
 #include <cstdio>
 #include <string>
 
@@ -130,11 +131,17 @@ void test_renderer_per_tier() {
 
 void test_viewport_plan() {
     const Profile& high = profile(Tier::DesktopHigh);
-    const ViewportPlan native = viewport_plan(high, 1440);
-    check(native.scaling == Scaling::Bilinear && native.render_scale == 1.0f && native.taa, "1440p native TAA");
+    const ViewportPlan native = viewport_plan(high, 720);
+    check(native.scaling == Scaling::Bilinear && native.render_scale == 1.0f && native.taa, "720p native TAA");
+    const ViewportPlan fhd = viewport_plan(high, 1080);
+    check(fhd.scaling == Scaling::TemporalUpscale && !fhd.taa && std::abs(fhd.render_scale * 1080 - 720) < 1,
+          "1080p temporal upscale to 720 lines without TAA");
+    const ViewportPlan qhd = viewport_plan(high, 1440);
+    check(qhd.scaling == Scaling::TemporalUpscale && qhd.render_scale == 0.5f && !qhd.taa,
+          "1440p temporal upscale to 720 lines");
     const ViewportPlan uhd = viewport_plan(high, 2160);
-    check(uhd.scaling == Scaling::TemporalUpscale && uhd.render_scale == 0.67f && !uhd.taa,
-          "4K temporal upscale at 0.67 without TAA");
+    check(uhd.scaling == Scaling::TemporalUpscale && uhd.render_scale == 0.5f && !uhd.taa,
+          "4K temporal upscale at the 0.5 floor");
     const ViewportPlan std_plan = viewport_plan(profile(Tier::DesktopStandard), 2160);
     check(std_plan.render_scale == 0.77f, "standard ignores output size");
 }

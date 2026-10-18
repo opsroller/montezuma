@@ -126,10 +126,14 @@ struct Profile {
 // The profile for a tier, straight from the visual target's tables.
 const Profile& profile(Tier tier);
 
-// The output resolution a temporal upscaler starts paying for itself at on
-// desktop-high: above 1440p the tier renders 3D at 0.67 with the temporal
-// upscaler; at or below it renders native with TAA.
-inline constexpr int kHighUpscaleAboveHeight = 1440;
+// desktop-high renders 3D at most this many lines high: above it the temporal
+// upscaler takes over at kHighInternalHeight / output height, never below
+// kHighMinScale; at or below it, native with TAA. Native 1440p with TAA
+// measured p95 25.1 ms on a Mac mini M4 before any WP-47 lighting
+// (docs/reference/benchmark-results.md); the cost estimate behind 720 lines
+// is in docs/explanation/about-lighting.md#costs.
+inline constexpr int kHighInternalHeight = 720;
+inline constexpr float kHighMinScale = 0.5f;
 
 // Viewport scaling for a profile at an output height; only desktop-high
 // changes with the output size.

@@ -79,6 +79,23 @@ The hashes in `assets.txt` cover every platform numpy and Pillow ship wheels for
 so the same commands work on Linux, macOS and Windows. On Windows the
 venv's programs are in `.venv\Scripts\`.
 
+## Bake the lightmaps
+
+Needs the native extension built, the textures generated and the Godot
+editor from `tools/release/godot.env`, with a Vulkan driver. Without a GPU,
+install Mesa's lavapipe and a virtual display (`sudo apt install
+mesa-vulkan-drivers xvfb` on Debian or Ubuntu) and add `--xvfb`.
+
+```sh
+godot --headless --path game --import                  # once, in a fresh checkout
+tools/assets/bake_lightmaps.sh --godot "$(command -v godot)" --xvfb
+```
+
+It skips themes whose bake inputs did not change, and prints
+`LIGHTMAP_BAKE ok res://assets/lookdev/LD_<Theme>_Bake.tscn …` for each
+bake. Without a bake the game still runs, without baked light. Details:
+[Board themes: Lighting](../reference/board-themes.md#lighting).
+
 ## Capture screenshots without a display
 
 Godot's Movie Maker renders frames to PNG files. On a machine without a

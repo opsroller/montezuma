@@ -78,7 +78,10 @@ measured on our scenes:
 | `web` (UHD 620) | sun shadow 0.6, 2× MSAA 1: about 1.6 ms | 33.3 ms p95 |
 
 The rest of each budget is the board, backdrop, particles and the game's
-own CPU work. WP-46 replaces these with measured p50 and p95, and WP-41
+own CPU work. The lighting share is broken down per item in
+[About lighting](about-lighting.md#costs); WP-47 capped `desktop-high` at 720
+internal lines with the temporal upscaler above that, after the M4
+measured p95 25.1 ms at native 1440p. WP-46 replaces these with measured p50 and p95, and WP-41
 moves any tier setting the numbers say to move.
 
 ## Consequences

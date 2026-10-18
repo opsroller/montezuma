@@ -13,6 +13,8 @@ names follow the prefixes. Texture sets: each map has the channels and
 colour space of its suffix, is wired to the matching material slot, and
 holds physically plausible values; every desktop variant under hi/ has a
 base file; mobile and web export presets leave the hi/ variants out.
+Lighting: every static board and backdrop mesh imports with a lightmap UV2,
+and every theme has the bake scene tools/assets/bake_lightmaps.sh bakes.
 Needs only the standard library and Pillow.
 """
 
@@ -242,6 +244,22 @@ def export_errors():
     return errors
 
 
+def lighting_errors(theme):
+    """Static theme meshes need lightmap UV2 from their import settings (OBJ holds one UV set)."""
+    errors = []
+    for part in ("board", "backdrop"):
+        for obj in sorted((ASSETS / "models" / theme / part).glob("*.obj")):
+            rel = obj.relative_to(ROOT)
+            imp = obj.with_name(obj.name + ".import")
+            if not imp.exists() or not re.search(r"^generate_lightmap_uv2=true$", imp.read_text(), re.M):
+                errors.append(f"{rel}: static mesh without lightmap UV2; commit {imp.name} with "
+                              "generate_lightmap_uv2=true (see docs/how-to/make-a-board-theme.md)")
+    bake = ASSETS / "lookdev" / f"LD_{theme.capitalize()}_Bake.tscn"
+    if not bake.exists():
+        errors.append(f"{bake.relative_to(ROOT)}: missing lightmap bake scene; run tools/assets/gen_theme_scenes.py")
+    return errors
+
+
 def main():
     errors, warnings = [], []
     manifest_path = ASSETS / "manifest.json"
@@ -267,6 +285,7 @@ def main():
                 errors.append(f"{res}: {tris} triangles, piece budget {PIECE_TRIS}")
             if name == "board" and tris > BOARD_TRIS:
                 errors.append(f"{res}: {tris} triangles, board budget {BOARD_TRIS}")
+        errors += lighting_errors(theme)
         if f"theme `{theme}`" not in provenance:
             errors.append(f"PROVENANCE.md: no record for theme `{theme}`; add one before merging")
 

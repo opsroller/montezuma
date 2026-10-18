@@ -84,6 +84,7 @@ private:
     bool in_bounds(godot::Vector2i c) const;
 
     void rebuild();
+    void on_tier_changed(const godot::String& tier);
     void clear_pieces();
     // Makes every cell show the board's kind; changed cells drop in when `animate`.
     void sync_to_board(bool animate);

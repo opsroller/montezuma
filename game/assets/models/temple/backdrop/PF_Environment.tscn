@@ -26,22 +26,37 @@ sun_angle_max = 20.0
 [sub_resource type="Sky" id="sky"]
 sky_material = SubResource("sky_mat")
 
+[sub_resource type="CameraAttributesPractical" id="camera"]
+exposure_sensitivity = 440
+exposure_multiplier = 1.0
+auto_exposure_enabled = true
+auto_exposure_scale = 0.4
+auto_exposure_speed = 0.5
+auto_exposure_min_sensitivity = 300
+auto_exposure_max_sensitivity = 640
+
 [sub_resource type="Environment" id="env"]
 background_mode = 2
+background_intensity = 15000
 sky = SubResource("sky")
 ambient_light_source = 3
 ambient_light_energy = 0.4
 reflected_light_source = 2
-tonemap_mode = 2
-tonemap_exposure = 0.95
+tonemap_mode = 4
+tonemap_agx_white = 16.0
+tonemap_agx_contrast = 1.25
+ssao_enabled = true
+ssil_enabled = true
 glow_enabled = true
 glow_intensity = 0.6
 glow_bloom = 0.05
 glow_hdr_threshold = 1.1
 fog_enabled = true
 fog_light_color = Color(0.4980, 0.5804, 0.4235, 1.0000)
-fog_density = 0.003
-fog_sky_affect = 0.3
+fog_density = 0.0
+fog_height = -0.6
+fog_height_density = 0.25
+fog_sky_affect = 0.0
 adjustment_enabled = true
 adjustment_saturation = 1.08
 
@@ -77,38 +92,85 @@ surface_material_override/0 = ExtResource("4")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("env")
+camera_attributes = SubResource("camera")
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.819152, 0.383798, -0.426250, 0.000000, 0.743145, 0.669131, 0.573576, -0.548120, 0.608749, 0, 8, 0)
-light_color = Color(1.0000, 0.8627, 0.6824, 1.0000)
-light_energy = 1.15
+light_intensity_lux = 11000
+light_temperature = 4500
+light_color = Color(1.0000, 1.0000, 1.0000, 1.0000)
+light_angular_distance = 0.6
 shadow_enabled = true
 directional_shadow_max_distance = 40.0
 
-[node name="Torch1" type="OmniLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.5, 0.85, -5.5)
-light_color = Color(1.0000, 0.6039, 0.2353, 1.0000)
-light_energy = 1.6
+[node name="Torch1" type="OmniLight3D" parent="." groups=["quality_shadow_light"]]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, -5.5, 0.85, -5.5)
+light_intensity_lumens = 60000
+light_temperature = 1900
+light_color = Color(1.0000, 1.0000, 1.0000, 1.0000)
+light_size = 0.12
+shadow_enabled = true
+omni_shadow_mode = 0
 omni_range = 4.5
 omni_attenuation = 1.4
 
-[node name="Torch2" type="OmniLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0.85, -5.5)
-light_color = Color(1.0000, 0.6039, 0.2353, 1.0000)
-light_energy = 1.6
+[node name="Torch2" type="OmniLight3D" parent="." groups=["quality_shadow_light"]]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 5.5, 0.85, -5.5)
+light_intensity_lumens = 60000
+light_temperature = 1900
+light_color = Color(1.0000, 1.0000, 1.0000, 1.0000)
+light_size = 0.12
+shadow_enabled = true
+omni_shadow_mode = 0
 omni_range = 4.5
 omni_attenuation = 1.4
 
-[node name="Torch3" type="OmniLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.5, 0.85, 5.5)
-light_color = Color(1.0000, 0.6039, 0.2353, 1.0000)
-light_energy = 1.6
+[node name="Torch3" type="OmniLight3D" parent="." groups=["quality_shadow_light"]]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, -5.5, 0.85, 5.5)
+light_intensity_lumens = 60000
+light_temperature = 1900
+light_color = Color(1.0000, 1.0000, 1.0000, 1.0000)
+light_size = 0.12
+shadow_enabled = true
+omni_shadow_mode = 0
 omni_range = 4.5
 omni_attenuation = 1.4
 
-[node name="Torch4" type="OmniLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0.85, 5.5)
-light_color = Color(1.0000, 0.6039, 0.2353, 1.0000)
-light_energy = 1.6
+[node name="Torch4" type="OmniLight3D" parent="." groups=["quality_shadow_light"]]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 5.5, 0.85, 5.5)
+light_intensity_lumens = 60000
+light_temperature = 1900
+light_color = Color(1.0000, 1.0000, 1.0000, 1.0000)
+light_size = 0.12
+shadow_enabled = true
+omni_shadow_mode = 0
 omni_range = 4.5
 omni_attenuation = 1.4
+
+[node name="SkyFill" type="AreaLight3D" parent="." groups=["quality:area_light"]]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 6, 0)
+light_intensity_lumens = 20000
+light_color = Color(0.7216, 0.8314, 1.0000, 1.0000)
+light_bake_mode = 0
+area_size = Vector2(10.0, 10.0)
+area_range = 12.0
+
+[node name="ReflectionProbe" type="ReflectionProbe" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 1.0, 0.0)
+size = Vector3(12.0, 4.0, 12.0)
+box_projection = true
+
+[node name="VoxelGI" type="VoxelGI" parent="." groups=["quality:voxel_gi"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+subdiv = 0
+size = Vector3(14, 4, 14)
+camera_attributes = SubResource("camera")
+
+[node name="Lightmap" type="LightmapGI" parent="."]
+quality = 1
+bounces = 3
+texel_scale = 1.0
+max_texture_size = 2048
+generate_probes_subdiv = 2
+camera_attributes = SubResource("camera")
+metadata/light_data_path = "res://assets/models/temple/backdrop/PF_Environment.lmbake"

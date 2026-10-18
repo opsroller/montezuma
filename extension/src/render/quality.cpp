@@ -3,6 +3,7 @@
 
 #include "quality.hpp"
 
+#include <algorithm>
 #include <initializer_list>
 
 namespace montezuma::godot_binding::quality {
@@ -176,8 +177,10 @@ const Profile& profile(Tier tier) {
 }
 
 ViewportPlan viewport_plan(const Profile& p, int output_height) {
-    if (p.tier == Tier::DesktopHigh && output_height > kHighUpscaleAboveHeight)
-        return {Scaling::TemporalUpscale, 0.67f, false};
+    if (p.tier == Tier::DesktopHigh && output_height > kHighInternalHeight)
+        return {Scaling::TemporalUpscale,
+                std::max(kHighMinScale, static_cast<float>(kHighInternalHeight) / static_cast<float>(output_height)),
+                false};
     return {p.scaling, p.render_scale, p.taa};
 }
 

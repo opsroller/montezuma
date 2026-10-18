@@ -47,6 +47,7 @@ Autoload `/root/QualityTiers`; from C++ `QualityTiers::get_singleton()`
 | `get_active_features()` | PackedStringArray | Feature ids of the active tier, for the benchmark's feature list |
 | `resolve_variant(path)` | String | The active tier's asset variant, `dir/hi/file` on desktop and `dir/lo/file` on web, or `path` itself when that file does not exist or the tier has none (mobile) |
 | `apply_to(node)` | — | Re-applies the tier to a subtree; nodes entering the tree are handled already |
+| (material variants) | — | Every `MeshInstance3D` surface override loaded from a `.tres` is swapped for `resolve_variant` of its authored path as the mesh enters the tree and on every switch; the authored path is kept in the `_quality_material_<surface>` metadata, so switching back restores it |
 | signal `tier_changed(tier)` | — | After a runtime switch is applied |
 
 ### Settings key
@@ -62,7 +63,7 @@ file. Hide the option when `get_available_tiers()` has one entry.
 | Argument (after `--`) | Effect |
 |---|---|
 | `--quality=<tier id or auto>` | Uses that tier for this run without saving it (benchmark captures) |
-| `--quality-selftest` | Switches through every available tier on scratch nodes, checks each switch, prints `QualityTiers self-test: N checks, F failures` |
+| `--quality-selftest` | Switches through every available tier on scratch nodes, checks each switch (environment, camera attributes, tagged nodes, shadow budget and a temple material's variant), prints `QualityTiers self-test: N checks, F failures` |
 
 ## Feature ids
 
@@ -116,7 +117,7 @@ switch. The root viewport re-applies on resize.
 
 | Setting | `desktop-high` | `desktop-standard` | `mobile` | `web` |
 |---|---|---|---|---|
-| 3D scaling | bilinear 1.0 with TAA; above 1440p output: temporal upscaler at 0.67, no TAA | temporal upscaler at 0.77 | bilinear 1.0 | bilinear 1.0 |
+| 3D scaling | at most 720 lines: up to 720p output bilinear 1.0 with TAA; above, temporal upscaler at 720 / output height (0.67 at 1080p, 0.5 at 1440p), never below 0.5, no TAA | temporal upscaler at 0.77 | bilinear 1.0 | bilinear 1.0 |
 | Temporal upscaler | MetalFX temporal on Metal, FSR 2.2 elsewhere | same | — | — |
 | MSAA (3D) | off | off | 2× | 2× |
 | Anisotropic filtering | 16× | 8× | 4× | 2× |
@@ -128,7 +129,7 @@ switch. The root viewport re-applies on resize.
 | SSR half size | no | yes | — | — |
 | Volumetric fog froxels (size × depth) | 64 × 64 | 32 × 32 | — | — |
 | Subsurface scattering quality | high | medium | off | off |
-| Texture variant folder | `hi/` | `hi/` | base only | `lo/` |
+| Texture and material variant folder | `hi/` | `hi/` | base only | `lo/` |
 
 FSR 1 and FSR 2.2 run only on Forward+ in Godot 4.7, so the Mobile
 renderer has no upscaler. Frame-time costs behind these numbers are

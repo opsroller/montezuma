@@ -182,6 +182,7 @@ Node3D* PieceLibrary::make_visual(int kind) const {
     auto* holder = memnew(Node3D);
     auto* mi = memnew(MeshInstance3D);
     mi->set_mesh(meshes_[kind]);
+    mi->set_gi_mode(GeometryInstance3D::GI_MODE_DYNAMIC);  // pieces move: lit by probes, never baked
     if (materials_[kind].is_valid()) {
         mi->set_material_override(materials_[kind]);
         mi->set_basis(placeholder_basis(kind));

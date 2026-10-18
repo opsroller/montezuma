@@ -26,6 +26,8 @@ add_library(montezuma_extension SHARED
   src/demo/register_demo.cpp
   src/game/match3_game.cpp
   src/game/register_game.cpp
+  src/render/baked_lighting.cpp
+  src/render/lightmap_baker.cpp
   src/render/quality.cpp
   src/render/quality_tiers.cpp
   src/render/register_render.cpp
