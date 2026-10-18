@@ -117,6 +117,20 @@ bonus_changed(bonus_id: String, count: int)
 level_finished(outcome: int, score: int)                # LevelState.Outcome
 ```
 
+Also emitted for the HUD (consumer: ui-developer, WP-18) — proposed:
+
+```
+gems_changed(collected: int, goal: int)                 # goal 0 hides the counter
+totem_changed(totem_id: String, charge: float, uses_left: int)   # charge 0..1
+frenzy_changed(bar: float, seconds_left: float)         # bar 0..1; seconds_left > 0 while Frenzy is on
+shuffles_changed(left: int)
+hint_cost_changed(cost: int, affordable: bool)
+```
+
+Commands the HUD calls on `Match3Game` (no arguments): `shuffle()` and
+`buy_hint()`. The HUD finds the node through group `match3_game`, which
+must be set in the scene (`node_added` fires before `_ready`).
+
 `BoardView3D` API: `show_board(board: Match3Board)`, `play(result: Dictionary)`
 (emits `animation_finished` when done), `play_illegal(a, b)`, signals `swap_requested(a: Vector2i,
 b: Vector2i)` and `animation_finished`.

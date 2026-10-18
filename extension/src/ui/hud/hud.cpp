@@ -100,7 +100,7 @@ void Hud::on_node_added(Node* node) {
 }
 
 void Hud::bind_game(Node* node) {
-    if (!node) return;
+    if (!node || node == game()) return;
     if (Node* old = game()) {
         for (const auto& b : kBindings) {
             const Callable c(this, b.method);
