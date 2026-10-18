@@ -22,6 +22,7 @@ readability capture and checks that measure a build against the
 | `tools/bench/check_features.py` | Feature list against one tier (`tiers.json`) |
 | `tools/bench/check_readability.py` | Readability rules 2, 4, 5 and 6 on the captures (Pillow) |
 | `tools/bench/tiers.json` | What each tier must have on, from the feature tables |
+| `tools/bench/tests/` | Tests of the readability checks on synthetic captures (the `assets` CI job runs them) |
 
 Both scenes hide the UI layers the autoloads draw (the menus), so the
 frame is the 3D board, its theme environment and its effects.
@@ -140,7 +141,7 @@ attributes and the visible nodes of the scene tree.
 | `screen_space_aa` | string | `none`, `fxaa`, `smaa` |
 | `scaling_3d_mode`, `scaling_3d_scale` | string, float | `bilinear`, `fsr1`, `fsr2`, `metalfx_spatial`, `metalfx_temporal`, `nearest`; render scale |
 
-`check_features.py REPORT --tier NAME` compares these, plus
+`check_features.py REPORT [--tier NAME]` (the tier defaults to the report's; a readability `layout.json` needs it) compares these, plus
 `device.rendering_method`, with the tier's rows in `tiers.json` and exits 1
 when a row is not met. Rows cover what the features can show; resolution
 of SSR, volumetric fog quality, HDR output and flipbook sizes are not in

@@ -5,8 +5,8 @@
 
 Usage: check_features.py REPORT [--tier TIER]
 
-REPORT is the JSON game/scenes/bench/bench.tscn writes (or the readability
-capture's layout.json). The tier defaults to the one the report names. The
+REPORT is the JSON game/scenes/bench/bench.tscn writes, whose tier is the
+default, or the readability capture's layout.json, which needs --tier. The
 rows come from tools/bench/tiers.json, which follows the feature tables in
 docs/reference/visual-target.md. Prints one line per row, exits 1 when any
 row is not met. Standard library only.

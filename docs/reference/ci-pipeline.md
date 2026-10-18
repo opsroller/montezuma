@@ -57,6 +57,8 @@ caches are set up this way.
 `.github/workflows/assets.yml` runs `tools/assets/validate_assets.py`
 against `game/assets/` and the theme manifest. Rules it enforces:
 [Board themes: validator rules](board-themes.md#validator-rules).
+It then runs the readability-check tests in `tools/bench/tests/` with the
+same Pillow ([Benchmark](benchmark.md#readability-checks)).
 
 | Item | Value |
 |---|---|

@@ -30,7 +30,10 @@ or a cloud machine without a GPU do not count against the
 
    Add `--driver vulkan`, `metal`, `d3d12` or `opengl3` to pick the
    rendering driver, `--size 2560x1440` for `desktop-high`, and `--godot
-   PATH` when Godot is not on `PATH`. The run takes about 70 s plus two
+   PATH` when Godot is not on `PATH`. The checks need Python 3; the
+   readability check also needs Pillow, installed as in
+   [Check the assets](build-and-test.md#check-the-assets) (run the script
+   with that venv active). The run takes about 70 s plus two
    short windows for the captures. Do not touch the window while it runs.
 
 3. Read the results in `bench-out/`:
