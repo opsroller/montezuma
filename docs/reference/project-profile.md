@@ -6,8 +6,10 @@ to do the job; this file says with what, and where.
 ## Product
 
 - A modern 3D remake of the gameplay of *The Treasures of Montezuma*
-  (Alawar, 2009). It plays like the original and looks new. Rules are in
-  `docs/rules-spec.md`.
+  (developed by Visual Shape, published by Alawar Entertainment; PC 2006,
+  iOS 2009; sources in `docs/reference/rules-sources.md`). It plays like
+  the original and looks new. Rules are in
+  `docs/reference/rules-spec.md`.
 - Targets: Windows, macOS, Linux, Android, iOS, plus a web demo. The
   website's entry is a playable intro level (the game's opening levels,
   compiled to WebAssembly); finishing it opens the download and store
@@ -52,7 +54,7 @@ Each role loads `engineering-practices` plus its own plugin from
 
 | Role plugin | Owns in this repo | Notes |
 |---|---|---|
-| `game-designer` | `docs/rules-spec.md`, `docs/design/`, `game/data/levels/` | Level files are JSON in the LevelData contract. Sim targets in `docs/design/balance.md` |
+| `game-designer` | `docs/reference/rules-*.md`, `docs/reference/progression.md`, `docs/explanation/about-the-rules.md`, `docs/explanation/about-rule-sets-and-themes.md`, `docs/reference/balance.md`, `game/data/levels/` | Level files are JSON in the LevelData contract. Sim targets in `docs/reference/balance.md` |
 | `gameplay-programmer` | `core/`, `extension/src/match3_board.*`, `tools/sim/` | Namespace `montezuma`; bindings in `montezuma::godot_binding` |
 | `graphics-programmer` | `extension/src/board/`, `extension/src/game/`, `game/scenes/` | Feel constants in `extension/src/board/feel.hpp` |
 | `technical-artist` | `game/assets/models/`, `game/assets/materials/`, `game/assets/textures/`, `game/assets/manifest.json`, `tools/assets/` | Budgets below |
@@ -64,14 +66,10 @@ Each role loads `engineering-practices` plus its own plugin from
 | `project-manager` | `docs/reference/work-packages.md` status, plan changes | Coordinator: staffs packages, holds the owner's standing rules |
 | `code-reviewer` | — (reviews every PR) | Uses the review notes below |
 
-Until opsroller/montezuma#3 (GDExtension scaffold) merges, the port
-thread ("Plan the faithful port") owns `extension/`, `game/` and
-`thirdparty/`; other roles build against the contracts and wait for it
-before touching those folders.
-
 Shared, append-only for everyone: `game/assets/PROVENANCE.md`, `CREDITS.md`,
 `CHANGELOG.md` (generated). `extension/src/register_types.cpp`: each role
-adds one `register_<area>()` call, nothing else.
+adds one `register_<area>()` call, nothing else. `game/project.godot`: each
+role adds only its own autoload, input-action or setting entries.
 
 ## Conventional Commit scopes
 
@@ -118,8 +116,7 @@ Third-party inputs under the compatible licenses listed under Provenance
 are allowed.
 
 Every PR that changes behaviour updates the matching doc kind in the same
-PR. `docs/README.md` maps the docs. `docs/rules-spec.md` moves to
-`docs/reference/` in its owner's next PR.
+PR. `docs/README.md` maps the docs.
 
 ## Credits
 

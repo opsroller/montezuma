@@ -3,11 +3,14 @@
 
 #pragma once
 
+#include <array>
 #include <cassert>
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <optional>
 #include <set>
+#include <utility>
 #include <vector>
 
 #include "montezuma/rng.hpp"
@@ -20,11 +23,57 @@ struct Cell {
     bool operator==(const Cell&) const = default;
 };
 
-// Outcome of one legal swap, ordered for the view to animate.
+// A piece moving down inside its column during a collapse.
+struct Fall {
+    Cell from;
+    Cell to;  // same x, larger y
+    int kind = -1;
+    bool operator==(const Fall&) const = default;
+};
+
+// A new piece entering from above the board. It starts `drop` rows above the
+// top edge (at y = -drop, so drop >= 1) and falls to `to`.
+struct Spawn {
+    Cell to;
+    int kind = -1;
+    int drop = 1;
+    bool operator==(const Spawn&) const = default;
+};
+
+// One straight horizontal or vertical line of 3+ pieces of the same kind.
+// Cells run left to right (horizontal) or top to bottom (vertical). Runs may
+// share a cell (L and T shapes show up as two crossing runs).
+struct Run {
+    std::vector<Cell> cells;
+    int kind = -1;
+    bool horizontal() const { return cells.size() >= 2 && cells[0].y == cells[1].y; }
+    bool operator==(const Run&) const = default;
+};
+
+// What happened in one cascade step, in the order it happens:
+// runs found -> cleared emptied -> falls move down -> spawns drop in.
+struct CascadeStep {
+    // Row-major order (y, then x). Each cell once, however many runs share it.
+    std::vector<Cell> cleared;
+    // Column by column left to right, bottom to top within a column.
+    std::vector<Fall> falls;
+    // Column by column left to right, bottom to top within a column.
+    std::vector<Spawn> spawns;
+    // Every horizontal run (rows top to bottom, left to right), then every
+    // vertical run (columns left to right, top to bottom). Empty for the
+    // effect-driven first step of Board::clear_cells.
+    std::vector<Run> runs;
+    bool operator==(const CascadeStep&) const = default;
+};
+
+// Outcome of one legal swap (or a clear_cells effect), ordered for the view to
+// animate. See docs/reference/move-result.md.
 struct MoveResult {
-    // One entry per cascade step: artifact kind -> pieces cleared.
+    // One entry per cascade step: artifact kind -> pieces cleared. Always the
+    // same length as `cascades`, and step i counts cascades[i].cleared.
     std::vector<std::map<int, int>> steps;
-    // Kind that made up most of the swap's own match; drives Power Totem streaks.
+    // Kind that made up most of the swap's own match; drives Power Totem
+    // streaks. -1 for clear_cells, which is not a player match.
     int matched_kind = -1;
     bool shuffled = false;
     // No legal move was left and no playable arrangement could be found; the
@@ -32,9 +81,43 @@ struct MoveResult {
     // boards that passed construction, but never thrown.
     bool stuck = false;
 
+    // The two cells the player swapped, as passed to try_swap. Empty for
+    // clear_cells.
+    std::optional<std::array<Cell, 2>> swap;
+    // One per cascade step; step 0 is the swap's own match (or the cells
+    // clear_cells removed).
+    std::vector<CascadeStep> cascades;
+    // When `shuffled` and not `redealt`: every piece that changed place in the
+    // shuffle as {from, to}, ordered by `to` row-major. Pieces not listed
+    // stayed where they were.
+    std::vector<std::pair<Cell, Cell>> shuffle_map;
+    // When `shuffled`: the existing pieces could not be rearranged, so a new
+    // board was dealt. `shuffle_map` is empty; read Board::cells() for the new
+    // layout.
+    bool redealt = false;
+
     std::map<int, int> cleared_by_kind() const;
     // 10 points per piece, multiplied by the cascade step (1-based).
     int score() const;
+    bool operator==(const MoveResult&) const = default;
+};
+
+class Board;
+
+// Optional per-step callbacks for rules layered on top of the board (for
+// example power-ups). The board calls them and never interprets them. Without
+// hooks a move resolves exactly as before, with the same random draws.
+struct StepHooks {
+    // Called once per step before its cells are emptied, while the board still
+    // holds those pieces. `cleared` is the step's cells so far, row-major;
+    // `step` is its index in MoveResult::cascades. Returns extra cells to
+    // clear in the same step; out-of-bounds, empty and duplicate cells are
+    // ignored. The extra cells are recorded in that step's `cleared` and
+    // counted in its `steps` entry; `runs` stays as found.
+    std::function<std::vector<Cell>(const Board& board, const std::vector<Cell>& cleared, int step)> extend_clear;
+    // Called once per step after its falls and refill, with the step as
+    // recorded.
+    std::function<void(const Board& board, const CascadeStep& step, int index)> after_refill;
 };
 
 // Pure match-3 board model. No rendering; the 3D layer observes results.
@@ -70,11 +153,21 @@ public:
     void fill_fresh();
     // Indices of every cell in a horizontal or vertical run of 3+.
     std::set<int> find_matches() const;
+    // Every run of 3+, in CascadeStep::runs order.
+    std::vector<Run> find_runs() const;
     bool is_legal_swap(Cell a, Cell b);
     bool has_legal_move();
-    // Applies a swap and resolves all cascades. Empty for an illegal swap.
-    // Never throws for game reasons (see MoveResult::stuck).
-    std::optional<MoveResult> try_swap(Cell a, Cell b);
+    // Applies a swap and resolves all cascades. Empty for an illegal swap
+    // (no hook is called then). Never throws for game reasons (see
+    // MoveResult::stuck); exceptions from `hooks` propagate. `hooks` may be
+    // null.
+    std::optional<MoveResult> try_swap(Cell a, Cell b, const StepHooks* hooks = nullptr);
+    // Clears the given cells (for totem and bonus effects), then collapses,
+    // refills, resolves cascades and shuffles exactly like a swap. Duplicate,
+    // out-of-bounds and empty cells are ignored; empty when nothing valid is
+    // left. Never throws for game reasons. `hooks` as for try_swap; step 0's
+    // extend_clear receives the given cells.
+    std::optional<MoveResult> clear_cells(const std::vector<Cell>& cells, const StepHooks* hooks = nullptr);
     // Reorders existing pieces until no match shows and a legal move exists,
     // dealing a fresh board if reordering fails. Returns false, leaving the
     // board unchanged, if neither works.
@@ -87,8 +180,15 @@ private:
     int index(int x, int y) const { return y * width_ + x; }
     int pick_non_matching(int x, int y);
     void swap_cells(Cell a, Cell b);
+    Cell cell_of(int idx) const { return {idx % width_, idx / width_}; }
     int dominant_kind(const std::set<int>& matched) const;
-    void collapse_and_refill();
+    // Empties `matched`, collapses and refills, recording it all in `step`
+    // and its per-kind counts in `result.steps`.
+    void clear_step(std::set<int> matched, CascadeStep step, MoveResult& result, const StepHooks* hooks);
+    void collapse_and_refill(CascadeStep& step);
+    // Resolves every remaining run, then shuffles if no legal move is left.
+    void resolve_and_settle(MoveResult& result, const StepHooks* hooks);
+    bool shuffle_tracked(std::vector<std::pair<Cell, Cell>>& map, bool& redealt) noexcept;
 
     int width_;
     int height_;

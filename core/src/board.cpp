@@ -107,25 +107,96 @@ bool Board::has_legal_move() {
     return false;
 }
 
-std::optional<MoveResult> Board::try_swap(Cell a, Cell b) {
+std::vector<Run> Board::find_runs() const {
+    std::vector<Run> runs;
+    for (int y = 0; y < height_; ++y) {
+        int x = 0;
+        while (x < width_) {
+            int kind = at(x, y);
+            int end = x + 1;
+            while (end < width_ && kind != kEmpty && at(end, y) == kind) ++end;
+            if (kind != kEmpty && end - x >= 3) {
+                Run run{{}, kind};
+                for (int i = x; i < end; ++i) run.cells.push_back({i, y});
+                runs.push_back(std::move(run));
+            }
+            x = end;
+        }
+    }
+    for (int x = 0; x < width_; ++x) {
+        int y = 0;
+        while (y < height_) {
+            int kind = at(x, y);
+            int end = y + 1;
+            while (end < height_ && kind != kEmpty && at(x, end) == kind) ++end;
+            if (kind != kEmpty && end - y >= 3) {
+                Run run{{}, kind};
+                for (int i = y; i < end; ++i) run.cells.push_back({x, i});
+                runs.push_back(std::move(run));
+            }
+            y = end;
+        }
+    }
+    return runs;
+}
+
+std::optional<MoveResult> Board::try_swap(Cell a, Cell b, const StepHooks* hooks) {
     if (!is_legal_swap(a, b)) return std::nullopt;
     swap_cells(a, b);
     MoveResult result;
+    result.swap = std::array<Cell, 2>{a, b};
     result.matched_kind = dominant_kind(find_matches());
-    for (auto matched = find_matches(); !matched.empty(); matched = find_matches()) {
-        std::map<int, int> step;
-        for (int idx : matched) {
-            ++step[cells_[idx]];
-            cells_[idx] = kEmpty;
-        }
-        result.steps.push_back(std::move(step));
-        collapse_and_refill();
+    resolve_and_settle(result, hooks);
+    return result;
+}
+
+std::optional<MoveResult> Board::clear_cells(const std::vector<Cell>& cells, const StepHooks* hooks) {
+    std::set<int> targets;
+    for (Cell c : cells)
+        if (in_bounds(c.x, c.y) && at(c.x, c.y) != kEmpty) targets.insert(index(c.x, c.y));
+    if (targets.empty()) return std::nullopt;
+    MoveResult result;
+    clear_step(std::move(targets), CascadeStep{}, result, hooks);
+    resolve_and_settle(result, hooks);
+    return result;
+}
+
+void Board::resolve_and_settle(MoveResult& result, const StepHooks* hooks) {
+    for (auto runs = find_runs(); !runs.empty(); runs = find_runs()) {
+        std::set<int> matched;
+        for (const Run& run : runs)
+            for (Cell c : run.cells) matched.insert(index(c.x, c.y));
+        CascadeStep step;
+        step.runs = std::move(runs);
+        clear_step(std::move(matched), std::move(step), result, hooks);
     }
     if (!has_legal_move()) {
-        result.shuffled = shuffle();
+        result.shuffled = shuffle_tracked(result.shuffle_map, result.redealt);
         result.stuck = !result.shuffled;
     }
-    return result;
+}
+
+void Board::clear_step(std::set<int> matched, CascadeStep step, MoveResult& result, const StepHooks* hooks) {
+    if (hooks && hooks->extend_clear) {
+        std::vector<Cell> so_far;
+        so_far.reserve(matched.size());
+        for (int idx : matched) so_far.push_back(cell_of(idx));
+        const int index_of_step = static_cast<int>(result.cascades.size());
+        for (Cell c : hooks->extend_clear(*this, so_far, index_of_step))
+            if (in_bounds(c.x, c.y) && at(c.x, c.y) != kEmpty) matched.insert(index(c.x, c.y));
+    }
+    std::map<int, int> counts;
+    // std::set iterates indices in ascending order, which is row-major.
+    for (int idx : matched) {
+        ++counts[cells_[idx]];
+        cells_[idx] = kEmpty;
+        step.cleared.push_back(cell_of(idx));
+    }
+    collapse_and_refill(step);
+    result.steps.push_back(std::move(counts));
+    result.cascades.push_back(std::move(step));
+    if (hooks && hooks->after_refill)
+        hooks->after_refill(*this, result.cascades.back(), static_cast<int>(result.cascades.size()) - 1);
 }
 
 int Board::dominant_kind(const std::set<int>& matched) const {
@@ -139,27 +210,55 @@ int Board::dominant_kind(const std::set<int>& matched) const {
     return best;
 }
 
-void Board::collapse_and_refill() {
+void Board::collapse_and_refill(CascadeStep& step) {
     for (int x = 0; x < width_; ++x) {
         int write = height_ - 1;
         for (int y = height_ - 1; y >= 0; --y) {
             int kind = at(x, y);
-            if (kind != kEmpty) set(x, write--, kind);
+            if (kind == kEmpty) continue;
+            if (write != y) step.falls.push_back({{x, y}, {x, write}, kind});
+            set(x, write--, kind);
         }
-        for (int y = write; y >= 0; --y) set(x, y, rng_.below(kinds_));
+        // Rows 0..write are now free; the piece for row y starts above the
+        // board at y - (write + 1), so the lowest new piece starts one row up.
+        const int fresh = write + 1;
+        for (int y = write; y >= 0; --y) {
+            int kind = rng_.below(kinds_);
+            set(x, y, kind);
+            step.spawns.push_back({{x, y}, kind, fresh - y});
+        }
     }
 }
 
 bool Board::shuffle() noexcept {
+    std::vector<std::pair<Cell, Cell>> map;
+    bool redealt = false;
+    return shuffle_tracked(map, redealt);
+}
+
+bool Board::shuffle_tracked(std::vector<std::pair<Cell, Cell>>& map, bool& redealt) noexcept {
+    map.clear();
+    redealt = false;
     const std::vector<int> before = cells_;
+    // origin[i] = where the piece now at i stood before the shuffle.
+    std::vector<int> origin(cells_.size());
+    for (std::size_t i = 0; i < origin.size(); ++i) origin[i] = static_cast<int>(i);
     for (int attempt = 0; attempt < kMaxShuffleAttempts; ++attempt) {
-        for (int i = static_cast<int>(cells_.size()) - 1; i > 0; --i)
-            std::swap(cells_[i], cells_[rng_.below(i + 1)]);
-        if (find_matches().empty() && has_legal_move()) return true;
+        for (int i = static_cast<int>(cells_.size()) - 1; i > 0; --i) {
+            int j = rng_.below(i + 1);
+            std::swap(cells_[i], cells_[j]);
+            std::swap(origin[i], origin[j]);
+        }
+        if (find_matches().empty() && has_legal_move()) {
+            for (int i = 0; i < static_cast<int>(origin.size()); ++i)
+                if (origin[i] != i) map.emplace_back(cell_of(origin[i]), cell_of(i));
+            return true;
+        }
     }
     // The current pieces can't be arranged into a playable board; deal a new one.
     try {
         fill_fresh();
+        redealt = true;
         return true;
     } catch (const std::exception&) {
         cells_ = before;

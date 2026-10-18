@@ -7,8 +7,9 @@
 #include <godot_cpp/core/defs.hpp>
 #include <godot_cpp/godot.hpp>
 
-#include "board_view_3d.hpp"
+#include "board/register_board.hpp"
 #include "match3_board.hpp"
+#include "match3_level.hpp"
 
 using namespace godot;
 
@@ -17,7 +18,8 @@ namespace {
 void initialize_montezuma(ModuleInitializationLevel level) {
     if (level != MODULE_INITIALIZATION_LEVEL_SCENE) return;
     GDREGISTER_CLASS(montezuma::godot_binding::Match3Board);
-    GDREGISTER_CLASS(montezuma::godot_binding::BoardView3D);
+    GDREGISTER_CLASS(montezuma::godot_binding::Match3Level);
+    montezuma::godot_binding::register_board();
 }
 
 void uninitialize_montezuma(ModuleInitializationLevel) {}
