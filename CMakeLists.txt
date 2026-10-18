@@ -24,6 +24,8 @@ option(MONTEZUMA_WERROR "Treat compiler warnings as errors" OFF)
 file(GLOB MONTEZUMA_CORE_SOURCES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/core/src/*.cpp")
 add_library(montezuma_core STATIC ${MONTEZUMA_CORE_SOURCES})
 target_include_directories(montezuma_core PUBLIC core/include)
+# Vendored single-header JSON library (MIT), used only inside core sources.
+target_include_directories(montezuma_core SYSTEM PRIVATE thirdparty)
 
 # Warnings for our own targets (not third-party code).
 function(montezuma_warnings target)
