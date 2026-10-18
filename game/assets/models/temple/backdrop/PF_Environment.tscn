@@ -200,6 +200,7 @@ draw_pass_1 = SubResource("dust_quad")
 material_override = ExtResource("12")
 
 [node name="LightShaftCards" type="MultiMeshInstance3D" parent="." groups=["quality_fallback:volumetric_fog"]]
+layers = 2
 cast_shadow = 0
 gi_mode = 0
 multimesh = SubResource("shafts")

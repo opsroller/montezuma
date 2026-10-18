@@ -445,9 +445,11 @@ def atmosphere(r, p, models):
             f"{2 * dust['outer_radius'] + 2}, 6, {2 * dust['outer_radius'] + 2})",
             'process_material = SubResource("dust_process")', 'draw_pass_1 = SubResource("dust_quad")',
             f"material_override = {dust_mat}",
-            # Shown only where the tier has no volumetric fog.
+            # Shown only where the tier has no volumetric fog. On the effects
+            # layer: it reads the depth texture, which the reflection probe
+            # must not draw (WebKit rejects the probe's depth blit).
             "", '[node name="LightShaftCards" type="MultiMeshInstance3D" parent="." groups=["quality_fallback:volumetric_fog"]]',
-            "cast_shadow = 0", "gi_mode = 0", 'multimesh = SubResource("shafts")', f"material_override = {shaft_mat}"]
+            f"layers = {FX_LAYER}", "cast_shadow = 0", "gi_mode = 0", 'multimesh = SubResource("shafts")', f"material_override = {shaft_mat}"]
     return subs, body
 
 
