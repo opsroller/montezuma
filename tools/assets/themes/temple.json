@@ -484,7 +484,7 @@
       "height": 0.42,
       "flicker": 0.22,
       "speed": 7.0,
-      "sway": 0.04,
+      "sway": 0.0,
       "shadow_blur": 1.5,
       "fog_energy": 2.0
     },

@@ -80,13 +80,14 @@ Several flame quads overlap at different sizes, spins and points in the
 loop, and each fades in and out over its life, so the fire never repeats
 visibly and no quad pops.
 
-## Light that moves
+## Light that pulses
 
-A flame's light pulses and its shadows shift. `FlickerLight3D` is an omni
-light whose energy follows smooth noise around the energy the scene
-gave it (mostly 1 to 3 Hz swells with faster crackle) and which drifts a
-few centimetres so its shadows sway. The noise is seeded by the light's
-position, so the four braziers never pulse together. It is C++ because the
+A flame's light pulses. `FlickerLight3D` is an omni light whose energy
+follows smooth noise around the energy the scene gave it (mostly 1 to 3 Hz
+swells with faster crackle). It can also drift a few centimetres so its
+shadows sway, but the temple keeps that off: the lighting work (WP-47)
+bakes the light's bounce into a lightmap, and a light that moves would no
+longer match it. The noise is seeded by the light's position, so the four braziers never pulse together. It is C++ because the
 project keeps game behaviour out of scripts, and its noise is a plain
 function so it is unit tested.
 

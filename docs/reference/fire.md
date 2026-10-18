@@ -198,7 +198,7 @@ stays as authored.
 |---|---|---|---|
 | `flicker` | 0 to 1 | 0.25 (scene: 0.22) | energy swing as a fraction of the authored energy |
 | `speed` | 0.5 to 20 Hz | 7 | typical flicker rate; octaves at 0.23, 1, 2.17 and 4.71 × speed |
-| `sway` | 0 to 0.2 m | 0.04 | largest drift |
+| `sway` | 0 to 0.2 m | 0.04 (scene: 0) | largest drift; the temple keeps it at 0 because a moving light would invalidate its baked bounce light |
 | `seed` | int | 0 | 0: seed from the light's global position, so no two braziers flicker in step |
 
 Shadows, volumetric fog energy and tier switches are handled by

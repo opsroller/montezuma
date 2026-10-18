@@ -181,4 +181,4 @@ omni_range = 4.5
 omni_attenuation = 1.4
 flicker = 0.22
 speed = 7.0
-sway = 0.04
+sway = 0.0
