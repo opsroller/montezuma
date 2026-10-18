@@ -56,7 +56,7 @@ Free play on one 8×8, 7-kind board with no level: answers
 `swap_requested` with `try_swap`, then calls `play` or `play_illegal`.
 Deals a new board after a `stuck` result. Properties: `board_view_path`,
 `seed`. Read-only: `get_board()`, `get_score()`. The game scene
-(`Match3Game`, WP-28) replaces it for real levels.
+([Match3Game](match3-game.md)) does this job for real levels.
 
 ### `PieceLibrary` (C++ only)
 
@@ -97,7 +97,8 @@ Placeholders differ by outline as well as colour, seen from above:
 |---|---|---|
 | `game/scenes/board/board.tscn` | `Board` (Node3D) | `View` (BoardView3D), `Camera` (BoardCamera3D). No lights: the view adds the theme's `environment` |
 | `game/scenes/board/board_playtest.tscn` | `BoardPlaytest` | `board.tscn` instance, wired to `Board/View` |
-| `game/scenes/main.tscn` | `Main` | `board_playtest.tscn` instance (until WP-28) |
+| `game/scenes/game/game.tscn` | `Game` (Match3Game) | `board.tscn` instance; see [Match3Game](match3-game.md) |
+| `game/scenes/main.tscn` | `Main` | `game.tscn` instance |
 
 Children the view adds, back to front: `Environment` (sky, lights,
 backdrop), `Slab` (the board), `CellHighlight`, `Pieces`, `Effects`
