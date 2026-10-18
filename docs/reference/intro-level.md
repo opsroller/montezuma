@@ -10,7 +10,10 @@ the web build's main scene (`application/run/main_scene.web` in
 `autostart_level = "e1-l01"`, which plays the level with the HUD, the
 results screen, the audio and the core level session. `IntroLevel` has no
 rules of its own; it listens to the game and announces the win to the
-page. The page side is the
+page. With the `UiRoot` autoload present it then starts the level again
+through the UI's `play` action, so the UI knows the level (its retry and
+restart replay it) and the level plays at the player's difficulty
+setting (normal unless they changed it). The page side is the
 [web demo hand-off contract](contracts.md#web-demo-hand-off-owner-gameplay-programmer-wp-21wp-34-consumer-frontend-web-developer-wp-35--agreed);
 how the build is made is in [Build pipeline](build-pipeline.md#web-demo).
 
@@ -53,7 +56,7 @@ String fields are JSON-escaped, including `<`, `>`, `&` and U+2028/2029
 
 | Case | Result |
 |---|---|
-| The game ends the intro level with `WON` (its gem goal, 10 gems at normal) | `level_completed` and the page event, once |
+| The game ends the intro level with `WON` (its gem goal: 10 gems at normal, 15 at hard) | `level_completed` and the page event, once |
 | The game ends it with `LOST` | Nothing; the results screen offers a retry |
 | A later win (a retry after a win) | Nothing more: the page has already been told |
 | The user argument `--complete-level` | On the first frame, with score 0. Used by the browser smoke test |
@@ -76,11 +79,13 @@ replays it too.
 ## Self-test
 
 `godot --headless --path game res://scenes/demo/intro_level.tscn -- --intro-selftest`
-plays the intro level by the first legal move until it ends, twice, and
-asks the UI for another level. It fails when the level did not start on
-load or has no gem goal, when a loss completes the demo, when the level
-is not won with its gem goal, when `level_completed` fires other than
-once or with a score other than the game's, or when the other level is
-not sent back to the intro level. It prints
+plays the intro level by the first legal move until it ends, replays it
+through the UI's restart and plays it to the end again, then asks the UI
+for another level. It fails when the level did not start on load, has no
+gem goal, is not the UI's current level or ignores the difficulty
+setting, when a loss completes the demo, when restart does not replay
+it, when it is not won with its gem goal, when `level_completed` fires
+other than once or with a score other than the game's, or when the other
+level is not sent back to the intro level. It prints
 `IntroLevel self-test: <moves> moves, outcome 1, 1 completions, 0 failures`;
 CI's `extension` job greps for that line ([CI pipeline](ci-pipeline.md)).

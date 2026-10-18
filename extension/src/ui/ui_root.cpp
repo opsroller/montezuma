@@ -228,7 +228,9 @@ void UiRoot::set_setting(const String& key, const Variant& value) {
 
 void UiRoot::start_level(const String& level_id) {
     if (level_id.is_empty()) return;
-    current_level_ = level_id;
+    // Restart passes current_level_ itself, and godot-cpp's String
+    // self-assignment empties it.
+    if (&level_id != &current_level_) current_level_ = level_id;
     if (ScreenStack* stack = get_stack()) stack->clear();
     emit_signal("play_requested", level_id, String::utf8(settings_.difficulty.c_str()));
 }

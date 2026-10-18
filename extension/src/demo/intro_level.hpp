@@ -64,6 +64,7 @@ private:
     bool completed_ = false;
 
     // Self-test (`-- --intro-selftest`).
+    godot::String started_difficulty_;
     int completions_ = 0;
     int self_test_moves_ = 0;
     int self_test_outcome_ = 0;

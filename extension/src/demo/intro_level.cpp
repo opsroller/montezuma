@@ -75,9 +75,13 @@ void IntroLevel::_ready() {
     level_id_ = g->get_autostart_level();
     ERR_FAIL_COND_MSG(level_id_.is_empty(), "IntroLevel: the game has no autostart_level.");
     connect_game(g);
-    // The demo opens on the board: close the menu the UI starts with.
-    if (UiRoot* ui = ui_root(this))
+    // The demo opens on the board. With the UI, start the level through it
+    // (this also closes the menu it starts with), so the UI knows the level:
+    // its retry and restart replay it, at the player's difficulty setting.
+    if (UiRoot* ui = ui_root(this)) {
+        if (ui->get_current_level() != level_id_) ui->perform("play", level_id_, Dictionary());
         if (ScreenStack* stack = ui->get_stack()) stack->clear();
+    }
     if (args.has(kSelfTestArg)) callable_mp(this, &IntroLevel::run_self_test).call_deferred();
 }
 
@@ -118,7 +122,8 @@ void IntroLevel::finish(int score) {
     tell_page(demo::level_completed_script(utf8(level_id_), score_));
 }
 
-void IntroLevel::on_level_started(const Variant&, const String&) {
+void IntroLevel::on_level_started(const Variant&, const String& difficulty) {
+    started_difficulty_ = difficulty;
     const Match3Game* g = game();
     // Deferred: the game is still inside start_level.
     if (g && g->get_level_id() != level_id_) callable_mp(this, &IntroLevel::back_to_intro).call_deferred();
@@ -161,13 +166,27 @@ void IntroLevel::run_self_test() {
     if (!g->is_playing() || g->get_level_id() != level_id_) fail("the intro level did not start on load");
     if (g->get_gem_goal() <= 0) fail("the intro level has no gem goal");
 
+    // The UI knows the level, so its retry and restart replay it, and the
+    // level plays at the player's difficulty setting.
+    UiRoot* ui = ui_root(this);
+    if (ui) {
+        if (ui->get_current_level() != level_id_) fail("the UI's current level is '" + ui->get_current_level() + "'");
+        if (started_difficulty_ != String(ui->get_setting("difficulty"))) fail("the level ignored the difficulty setting");
+    }
+
     // A loss is not a completion.
     on_level_finished(Match3Game::LOST, 0);
     if (completions_ != 0) fail("a lost level completed the demo");
 
     // Two wins: the first completes the demo, a replayed win does not again.
     for (int round = 0; round < 2; ++round) {
-        if (round == 1 && !g->start_level(level_id_, g->get_autostart_difficulty())) fail("the replay did not start");
+        // The replay goes through the pause menu's restart, as a player's would.
+        if (round == 1) {
+            g->stop_level();
+            if (ui) ui->perform("restart", String(), Dictionary());
+            else g->start_level(level_id_, g->get_autostart_difficulty());
+            if (!g->is_playing() || g->get_level_id() != level_id_) fail("restart did not replay the intro level");
+        }
         int moves = 0;
         while (g->is_playing() && moves < kSelfTestMaxMoves) {
             const Array legal = g->get_legal_moves();
@@ -191,7 +210,7 @@ void IntroLevel::run_self_test() {
     }
 
     // The demo plays the intro level only: another level is sent back.
-    if (UiRoot* ui = ui_root(this)) ui->perform("play", kSelfTestOtherLevel, Dictionary());
+    if (ui) ui->perform("play", kSelfTestOtherLevel, Dictionary());
     else g->start_level(kSelfTestOtherLevel, g->get_autostart_difficulty());
     if (g->get_level_id() != kSelfTestOtherLevel) fail(String("the other level did not start: ") + kSelfTestOtherLevel);
     // After the deferred redirect, which was queued first.
@@ -201,6 +220,10 @@ void IntroLevel::run_self_test() {
 void IntroLevel::finish_self_test() {
     if (const Match3Game* g = game(); !g || g->get_level_id() != level_id_ || !g->is_playing()) {
         UtilityFunctions::push_error("IntroLevel self-test: another level was not sent back to the intro level");
+        ++self_test_failures_;
+    }
+    if (UiRoot* ui = ui_root(this); ui && ui->get_current_level() != level_id_) {
+        UtilityFunctions::push_error("IntroLevel self-test: after the redirect the UI's retry would not replay the intro level");
         ++self_test_failures_;
     }
     UtilityFunctions::print("IntroLevel self-test: ", self_test_moves_, " moves, outcome ", self_test_outcome_, ", ",
