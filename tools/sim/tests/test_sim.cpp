@@ -190,14 +190,37 @@ void test_curves() {
     LevelData b = level(2, 3);
     LevelData idea = level(2, 3);
     idea.totems_unlocked = {"gift"};
-    check(!introduces_idea(b, &a) && introduces_idea(idea, &a), "new idea: a new totem id");
+    check(!introduces_idea(b, {&a}) && introduces_idea(idea, {&a}), "new idea: a new totem id");
     LevelData chains = level(2, 3);
     chains.chained_cells = {{1, 1}};
-    check(introduces_idea(chains, &a), "new idea: first chains");
+    check(introduces_idea(chains, {&a}), "new idea: first chains");
     LevelData steel = level(2, 3);
     steel.steel_rate = 0.02;
-    check(introduces_idea(steel, &a), "new idea: first steel");
-    check(introduces_idea(level(1, 4), nullptr), "new idea: Frenzy at e1-l04");
+    check(introduces_idea(steel, {&a}), "new idea: first steel");
+    check(introduces_idea(level(1, 4), {}), "new idea: Frenzy at e1-l04");
+    // Chains and steel are new only on their first level in campaign order:
+    // chains (e3-l01), then steel alone (e3-l06), then chains again (e3-l07)
+    // is not a new idea, and neither is steel again after a steel-free level.
+    LevelData e31 = level(3, 1), e36 = level(3, 6), e37 = level(3, 7), e38 = level(3, 8);
+    e31.chained_cells = {{0, 7}};
+    e36.steel_rate = 0.02;
+    e37.chained_cells = {{1, 7}};
+    e38.steel_rate = 0.03;
+    check(!introduces_idea(e37, {&e31, &e36}), "chains after a chain-free level are not new when seen before");
+    check(!introduces_idea(e38, {&e36, &e37}), "steel after a steel-free level is not new when seen before");
+    check(introduces_idea(e37, {&e36}), "chains with no earlier chains are new");
+    {
+        std::vector<Row> rows{row(3, 6, Bot::Greedy, Difficulty::Normal, 100, 100),
+                              row(3, 7, Bot::Greedy, Difficulty::Normal, 100, 95)};
+        bool seen = false;
+        for (const CurveCheck& c : curve_checks({e31, e36, e37}, rows))
+            if (c.rule == "curve-1" && c.levels == "e3-l06>e3-l07") {
+                seen = true;
+                check(c.verdict == Verdict::Pass && c.detail.find("new idea") == std::string::npos,
+                      "curve-1 treats e3-l07's chains as practice, not a new idea");
+            }
+        check(seen, "curve-1 e3-l06>e3-l07 reported");
+    }
 
     const auto run = [&](const LevelData& second, int w1, int w2) {
         std::vector<Row> rows{row(2, 2, Bot::Greedy, Difficulty::Normal, 100, w1),
@@ -231,6 +254,44 @@ void test_curves() {
                                        row(3, 3, Bot::Greedy, Difficulty::Normal, 100, 90)});
     for (const CurveCheck& c : c2f)
         if (c.rule == "curve-2") check(c.verdict == Verdict::Fail, "curve-2 opener harder fails");
+}
+
+void test_clock_rule() {
+    // balance.md clock rule: ceil(mean moves x 3.5 s x 1.15 / 10) x 10.
+    check(required_clock(0, 200) == 0, "no moves need no clock");
+    check(required_clock(49 * 200, 200) == 200, "49 moves: 197.2 s rounds up to 200");
+    check(required_clock(60 * 200, 200) == 250, "60 moves: 241.5 s rounds up to 250");
+    check(required_clock(200000, 4025) == 200, "exactly 200.0 s stays 200");
+    check(required_clock(200001, 4025) == 210, "a hair over 200 s rounds up to 210");
+    check(required_clock(1, 0) == 0, "no seeds need no clock");
+
+    LevelData l = level(2, 2);
+    const auto checks_for = [&](const LevelData& lv, long long normal_moves, long long hard_moves) {
+        Row n = row(2, 2, Bot::Greedy, Difficulty::Normal, 100, 100);
+        Row h = row(2, 2, Bot::Greedy, Difficulty::Hard, 100, 100);
+        n.total_moves = normal_moves;
+        h.total_moves = hard_moves;
+        return clock_checks({lv}, {n, h, row(2, 2, Bot::Random, Difficulty::Normal, 100, 100)});
+    };
+    // 270 s default base: 67 moves need 270 s (269.7), 68 moves need 280 s.
+    auto fit = checks_for(l, 6700, 6700);
+    check(fit.size() == 2 && fit[0].rule == "clock" && fit[0].levels == "e2-l02 normal" &&
+              fit[1].levels == "e2-l02 hard",
+          "one clock check per difficulty");
+    check(fit[0].verdict == Verdict::Pass && fit[1].verdict == Verdict::Pass, "270 s covers 67 moves");
+    auto tight = checks_for(l, 6700, 6800);
+    check(tight[0].verdict == Verdict::Pass && tight[1].verdict == Verdict::Fail, "270 s does not cover 68 moves");
+    check(tight[1].detail.find("280") != std::string::npos && tight[1].detail.find("270") != std::string::npos,
+          "the detail names the base clock and the required clock");
+    l.base_clock = BaseClock{270, 280};
+    check(checks_for(l, 6700, 6800)[1].verdict == Verdict::Pass, "a base clock of 280 covers 68 moves");
+    // The rule assumes a player with no upgrades: tier 0, no timer bonus.
+    l.base_clock = BaseClock{250, 250};
+    check(checks_for(l, 6700, 6700)[0].verdict == Verdict::Fail, "the timer tier bonus does not count");
+    // No greedy row for a difficulty: skipped.
+    auto none = clock_checks({level(2, 2)}, {row(2, 2, Bot::Random, Difficulty::Normal, 100, 100)});
+    check(none.size() == 2 && none[0].verdict == Verdict::Skipped && none[1].verdict == Verdict::Skipped,
+          "clock check without greedy rows is skipped");
 }
 
 void test_bots_and_play() {
@@ -315,6 +376,7 @@ int main() {
     test_upgrades();
     test_targets();
     test_curves();
+    test_clock_rule();
     test_bots_and_play();
     std::printf("%d checks, %d failures\n", checks, failures);
     return failures == 0 ? 0 : 1;

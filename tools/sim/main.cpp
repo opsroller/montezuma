@@ -29,7 +29,7 @@ constexpr const char* kUsage =
     "  --difficulty normal|hard|both   (default both)\n"
     "  --upgrades auto|none      (default auto)\n"
     "  --format table|csv|json   (default table)\n"
-    "  --check                   exit 1 when a target or curve rule fails\n";
+    "  --check                   exit 1 when a target, curve or clock rule fails\n";
 
 int usage(const std::string& error) {
     if (!error.empty()) std::cerr << "montezuma_sim: " << error << "\n";
@@ -192,7 +192,8 @@ int main(int argc, char** argv) {
         return kExitUsage;
     }
 
-    const std::vector<CurveCheck> curves = curve_checks(levels, rows);
+    std::vector<CurveCheck> curves = curve_checks(levels, rows);
+    for (CurveCheck& c : clock_checks(levels, rows)) curves.push_back(std::move(c));
     std::cout << format_report(rows, curves, format);
 
     bool failed = false;

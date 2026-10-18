@@ -111,17 +111,37 @@ int moves_floor(int episode, int index);
 std::string target_text(const Row& row);
 Verdict evaluate(const Row& row);
 
+// A rule over levels rather than one row: curve rules and the clock rule.
 struct CurveCheck {
-    std::string rule;    // "curve-1" or "curve-2"
-    std::string levels;  // e.g. "e1-l02>e1-l03"
+    std::string rule;    // "curve-1", "curve-2" or "clock"
+    std::string levels;  // e.g. "e1-l02>e1-l03", or "e1-l05 hard" for clock
     Verdict verdict = Verdict::Skipped;
     std::string detail;
 };
-// A level that brings a new idea (curve rule 1), against the level before.
-bool introduces_idea(const LevelData& level, const LevelData* previous);
+// A level that brings a new idea (curve rule 1): a totem or power-up id, or
+// chains or steel, that no earlier level has, or a passive idea from
+// progression's Episodes table. `earlier` holds the campaign levels before it
+// that are in the input, in campaign order.
+bool introduces_idea(const LevelData& level, const std::vector<const LevelData*>& earlier);
 // Both curve rules over the greedy/normal rows of the levels given (sorted
 // by campaign order).
 std::vector<CurveCheck> curve_checks(const std::vector<LevelData>& levels, const std::vector<Row>& rows);
+
+// --- Clock rule ---------------------------------------------------------------
+
+// rule: balance.md "Clock" a human moves every 3.5 s; the clock gets 15 %
+// on top and rounds up to the next 10 s.
+inline constexpr double kHumanMoveSeconds = 3.5;
+inline constexpr double kClockMargin = 1.15;
+inline constexpr int kClockStepSeconds = 10;
+// Seconds a level's base clock must reach for `total_moves` over `seeds`
+// runs: ceil(mean x 3.5 x 1.15 / 10) x 10, exact on the counts. 0 for no
+// seeds.
+int required_clock(long long total_moves, int seeds) noexcept;
+// One "clock" check per level and difficulty from its greedy row: the base
+// clock at timer tier 0 (a player with no upgrades) must reach
+// required_clock(). Skipped without a greedy row for that difficulty.
+std::vector<CurveCheck> clock_checks(const std::vector<LevelData>& levels, const std::vector<Row>& rows);
 
 // --- Output -----------------------------------------------------------------
 

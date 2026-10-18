@@ -36,7 +36,7 @@ const Fields kValid = {
     {"board", R"({"width": 9, "height": 7, "kinds": 6})"},
     {"gem_goal", R"({"normal": 40, "hard": 60})"},
     {"quotas", R"({"red": 10, "blue": 8, "purple": 3})"},
-    {"time_limit", R"({"normal": 240, "hard": 150.5})"},
+    {"base_clock", R"({"normal": 240, "hard": 150.5})"},
     {"totems_unlocked", R"(["fire", "time"])"},
     {"powerups_unlocked", R"(["tnt", "hint"])"},
     {"steel_rate", "0.25"},
@@ -95,8 +95,8 @@ void test_valid_full_level_parses() {
     check(l.board.width == 9 && l.board.height == 7 && l.board.kinds == 6, "board read");
     check(l.gem_goal && l.gem_goal->normal == 40 && l.gem_goal->hard == 60, "gem goal read");
     check(l.quotas == std::map<int, int>{{0, 10}, {4, 8}, {5, 3}}, "quotas mapped to kind indices");
-    check(l.time_limit && l.time_limit->normal == 240.0 && l.time_limit->hard == 150.5,
-          "time limits read, int and float");
+    check(l.base_clock && l.base_clock->normal == 240.0 && l.base_clock->hard == 150.5,
+          "base clocks read, int and float");
     check(l.totems_unlocked == std::vector<std::string>{"fire", "time"}, "totems read in order");
     check(l.powerups_unlocked == std::vector<std::string>{"tnt", "hint"}, "power-ups read in order");
     check(l.steel_rate == 0.25, "steel rate read");
@@ -127,7 +127,7 @@ void test_defaults_apply() {
     check(no_totems.ok() && no_totems.level->totems_unlocked.empty(), "empty totems_unlocked accepted");
 
     const LevelParseResult minimal = LevelData::parse(level({{"quotas", ""},
-                                                              {"time_limit", ""},
+                                                              {"base_clock", ""},
                                                               {"powerups_unlocked", ""},
                                                               {"steel_rate", ""},
                                                               {"chained_cells", ""},
@@ -136,7 +136,7 @@ void test_defaults_apply() {
     check(minimal.ok(), "level without the optional designer fields parses");
     if (minimal.ok()) {
         const LevelData& l = *minimal.level;
-        check(l.quotas.empty() && !l.time_limit, "quotas and time_limit default to absent");
+        check(l.quotas.empty() && !l.base_clock, "quotas and base_clock default to absent");
         check(l.powerups_unlocked.empty(), "powerups_unlocked defaults to empty");
         check(l.steel_rate == 0.0, "steel_rate defaults to 0");
         check(l.chained_cells.empty(), "chained_cells defaults to empty");
@@ -236,8 +236,8 @@ void test_boundary_values_accepted() {
           "multi-digit episode and three-digit index accepted");
     check(LevelData::parse(level({{"seed", "0"}})).ok(), "seed 0 accepted");
     check(LevelData::parse(level({{"seed", "18446744073709551615"}})).ok(), "largest uint64 seed accepted");
-    check(LevelData::parse(level({{"time_limit", R"({"normal": 0.5, "hard": 0.25})"}})).ok(),
-          "fractional time limits accepted");
+    check(LevelData::parse(level({{"base_clock", R"({"normal": 0.5, "hard": 0.25})"}})).ok(),
+          "fractional base clocks accepted");
     check(LevelData::parse("\n  " + level() + "\n").ok(), "surrounding whitespace accepted");
 }
 
@@ -263,8 +263,8 @@ void test_document_errors() {
 void test_required_fields() {
     for (const char* key : {"id", "episode", "index", "totems_unlocked", "seed"})
         expect_error(level({{key, ""}}), key, "required field missing");
-    expect_error(level({{"time_limit", R"({"normal": 60})"}}), "time_limit.hard", "required field missing");
-    expect_error(level({{"time_limit", R"({"hard": 60})"}}), "time_limit.normal", "required field missing");
+    expect_error(level({{"base_clock", R"({"normal": 60})"}}), "base_clock.hard", "required field missing");
+    expect_error(level({{"base_clock", R"({"hard": 60})"}}), "base_clock.normal", "required field missing");
 }
 
 void test_id_errors() {
@@ -311,16 +311,19 @@ void test_quota_errors() {
                  "kind 3 is not on a board with 3 kinds");
 }
 
-void test_time_limit_errors() {
-    expect_error(level({{"time_limit", "120"}}), "time_limit", "expected an object with normal and hard");
-    expect_error(level({{"time_limit", R"({"normal": 0, "hard": 60})"}}), "time_limit.normal",
+void test_base_clock_errors() {
+    expect_error(level({{"base_clock", "120"}}), "base_clock", "expected an object with normal and hard");
+    expect_error(level({{"base_clock", R"({"normal": 0, "hard": 60})"}}), "base_clock.normal",
                  "must be greater than 0 seconds, got 0");
-    expect_error(level({{"time_limit", R"({"normal": 60, "hard": -1.5})"}}), "time_limit.hard",
+    expect_error(level({{"base_clock", R"({"normal": 60, "hard": -1.5})"}}), "base_clock.hard",
                  "must be greater than 0 seconds");
-    expect_error(level({{"time_limit", R"({"normal": "60", "hard": 60})"}}), "time_limit.normal",
+    expect_error(level({{"base_clock", R"({"normal": "60", "hard": 60})"}}), "base_clock.normal",
                  "expected a number of seconds, got string");
-    expect_error(level({{"time_limit", R"({"relaxed": 60, "normal": 60, "hard": 30})"}}), "time_limit.relaxed",
+    expect_error(level({{"base_clock", R"({"relaxed": 60, "normal": 60, "hard": 30})"}}), "base_clock.relaxed",
                  "unknown field");
+    // The old override replaced the timer tier; it is gone, with a pointer to its successor.
+    expect_error(level({{"base_clock", ""}, {"time_limit", R"({"normal": 240, "hard": 150})"}}), "time_limit",
+                 "replaced by base_clock, which the timer tier adds to (GOAL-03)");
 }
 
 void test_totem_errors() {
@@ -389,7 +392,7 @@ std::string invalid_argument_message(F&& f) {
 }
 
 void test_timer_tiers() {
-    const LevelData untimed = LevelData::load(level({{"time_limit", ""}}));
+    const LevelData untimed = LevelData::load(level({{"base_clock", ""}}));
     check(untimed.time_limit_for(Difficulty::Normal) == 270.0 && untimed.time_limit_for(Difficulty::Hard) == 270.0,
           "tier 0 is the default: 270 s");
     const double expected[] = {270.0, 300.0, 330.0, 360.0, 390.0};
@@ -398,16 +401,30 @@ void test_timer_tiers() {
                   untimed.make_state(Difficulty::Hard, tier).time_left() == expected[tier],
               "tier " + std::to_string(tier) + " time");
 
+    check(untimed.base_clock_for(Difficulty::Normal) == 270.0 && untimed.base_clock_for(Difficulty::Hard) == 270.0,
+          "base clock defaults to 270 s");
+
+    // GOAL-03: the tier's bonus goes on top of the level's base clock, so a
+    // bought timer upgrade keeps its value on every level.
     const LevelData timed = LevelData::load(level());
-    check(timed.time_limit_for(Difficulty::Normal, 4) == 240.0 && timed.time_limit_for(Difficulty::Hard, 3) == 150.5,
-          "time_limit overrides the tier");
+    check(timed.base_clock_for(Difficulty::Normal) == 240.0 && timed.base_clock_for(Difficulty::Hard) == 150.5,
+          "base_clock_for reads the level's clock");
+    check(timed.time_limit_for(Difficulty::Normal, 4) == 360.0 && timed.time_limit_for(Difficulty::Hard, 3) == 240.5,
+          "the timer tier adds to base_clock");
+    const LevelData long_clock = LevelData::load(level({{"base_clock", R"({"normal": 200, "hard": 300})"}}));
+    check(long_clock.time_limit_for(Difficulty::Normal, 2) == 260.0 && long_clock.time_limit_for(Difficulty::Hard, 4) == 420.0,
+          "tier 2 normal and tier 4 hard on a 200/300 clock");
+    for (int tier = 0; tier <= 4; ++tier)
+        check(long_clock.time_limit_for(Difficulty::Hard, tier) - long_clock.time_limit_for(Difficulty::Hard, 0) ==
+                  30.0 * tier,
+              "tier " + std::to_string(tier) + " adds " + std::to_string(30 * tier) + " s");
 
     for (int bad : {-1, 5, 100}) {
         const std::string expect = "timer_tier must be between 0 and 4, got " + std::to_string(bad);
         check(invalid_argument_message([&] { (void)untimed.time_limit_for(Difficulty::Normal, bad); }) == expect,
               "out-of-range tier " + std::to_string(bad) + " throws");
         check(invalid_argument_message([&] { (void)timed.time_limit_for(Difficulty::Normal, bad); }) == expect,
-              "out-of-range tier " + std::to_string(bad) + " throws even with time_limit");
+              "out-of-range tier " + std::to_string(bad) + " throws even with base_clock");
         check(invalid_argument_message([&] { (void)timed.make_state(Difficulty::Normal, bad); }) == expect,
               "make_state rejects tier " + std::to_string(bad));
     }
@@ -415,8 +432,8 @@ void test_timer_tiers() {
 
 void test_load_and_level_state() {
     const LevelData l = LevelData::load(level());
-    check(l.time_limit_for(Difficulty::Normal) == 240.0, "normal time limit selected");
-    check(l.time_limit_for(Difficulty::Hard) == 150.5, "hard time limit selected");
+    check(l.time_limit_for(Difficulty::Normal) == 240.0, "normal base clock selected");
+    check(l.time_limit_for(Difficulty::Hard) == 150.5, "hard base clock selected");
     const LevelState normal = l.make_state(Difficulty::Normal);
     const LevelState hard = l.make_state(Difficulty::Hard);
     check(normal.time_left() == 240.0 && hard.time_left() == 150.5, "level state uses the difficulty's timer");
@@ -472,7 +489,7 @@ int main() {
     test_episode_and_index_errors();
     test_board_errors();
     test_quota_errors();
-    test_time_limit_errors();
+    test_base_clock_errors();
     test_totem_errors();
     test_blocked_cell_errors();
     test_seed_errors();

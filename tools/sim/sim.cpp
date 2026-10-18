@@ -288,21 +288,27 @@ Verdict evaluate(const Row& row) {
     return Verdict::None;
 }
 
-bool introduces_idea(const LevelData& level, const LevelData* previous) {
+bool introduces_idea(const LevelData& level, const std::vector<const LevelData*>& earlier) {
     // AMBIGUOUS: a new totem or power-up id, first chains, first steel, or a
     // passive idea from progression's Episodes table.
     if (std::find(kPassiveIdeaLevels.begin(), kPassiveIdeaLevels.end(), level.id) != kPassiveIdeaLevels.end())
         return true;
-    if (!previous) return false;
-    const auto has = [](const std::vector<std::string>& v, const std::string& id) {
+    if (earlier.empty()) return false;
+    const auto seen = [&](auto&& has) {
+        return std::any_of(earlier.begin(), earlier.end(), [&](const LevelData* l) { return l && has(*l); });
+    };
+    const auto lists = [](const std::vector<std::string>& v, const std::string& id) {
         return std::find(v.begin(), v.end(), id) != v.end();
     };
     for (const std::string& id : level.totems_unlocked)
-        if (!has(previous->totems_unlocked, id)) return true;
+        if (!seen([&](const LevelData& l) { return lists(l.totems_unlocked, id); })) return true;
     for (const std::string& id : level.powerups_unlocked)
-        if (!has(previous->powerups_unlocked, id)) return true;
-    if (!level.chained_cells.empty() && previous->chained_cells.empty()) return true;
-    if (level.steel_rate > 0.0 && previous->steel_rate <= 0.0) return true;
+        if (!seen([&](const LevelData& l) { return lists(l.powerups_unlocked, id); })) return true;
+    // Chains and steel are new on their first level only, not each time they
+    // come back after a level without them.
+    if (!level.chained_cells.empty() && !seen([](const LevelData& l) { return !l.chained_cells.empty(); }))
+        return true;
+    if (level.steel_rate > 0.0 && !seen([](const LevelData& l) { return l.steel_rate > 0.0; })) return true;
     return false;
 }
 
@@ -331,7 +337,10 @@ std::vector<CurveCheck> curve_checks(const std::vector<LevelData>& levels, const
             continue;
         }
         const long long diff = cross(b->wins, b->seeds, a->wins, a->seeds);  // (b - a) x seeds_a x seeds_b
-        if (introduces_idea(*next, &l)) {
+        std::vector<const LevelData*> earlier;
+        for (int p = 1; p <= pos; ++p)
+            if (const LevelData* e = by_position(p)) earlier.push_back(e);
+        if (introduces_idea(*next, earlier)) {
             // A level can be no easier than winning every run.
             const bool both_full = a->wins == a->seeds && b->wins == b->seeds;
             c.verdict = diff > 0 || both_full ? Verdict::Pass : Verdict::Fail;
@@ -367,6 +376,40 @@ std::vector<CurveCheck> curve_checks(const std::vector<LevelData>& levels, const
         }
         out.push_back(c);
     }
+    return out;
+}
+
+// ---- Clock rule ---------------------------------------------------------------
+
+int required_clock(long long total_moves, int seeds) noexcept {
+    if (seeds <= 0 || total_moves <= 0) return 0;
+    // Exact: 3.5 x 1.15 = 4025 / 1000, so the clock in tens of seconds is
+    // ceil(total x 4025 / (seeds x 10000)).
+    const long long num = total_moves * 4025;
+    const long long den = static_cast<long long>(seeds) * 1000 * kClockStepSeconds;
+    return static_cast<int>((num + den - 1) / den) * kClockStepSeconds;
+}
+
+std::vector<CurveCheck> clock_checks(const std::vector<LevelData>& levels, const std::vector<Row>& rows) {
+    std::vector<CurveCheck> out;
+    for (const LevelData& l : levels)
+        for (Difficulty d : {Difficulty::Normal, Difficulty::Hard}) {
+            CurveCheck c;
+            c.rule = "clock";
+            c.levels = l.id + " " + std::string(difficulty_name(d));
+            const Row* r = find_row(rows, l.id, Bot::Greedy, d);
+            if (!r || r->seeds <= 0) {
+                c.detail = "no greedy rows";
+                out.push_back(c);
+                continue;
+            }
+            const int need = required_clock(r->total_moves, r->seeds);
+            const double base = l.time_limit_for(d, 0);
+            c.verdict = base >= need ? Verdict::Pass : Verdict::Fail;
+            c.detail = "base " + fmt1(base) + "s must reach " + std::to_string(need) + "s (" + fmt1(r->mean_moves()) +
+                       " moves x 3.5 s x 1.15)";
+            out.push_back(c);
+        }
     return out;
 }
 
