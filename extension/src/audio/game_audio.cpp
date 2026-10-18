@@ -13,6 +13,8 @@
 #include <godot_cpp/classes/json.hpp>
 #include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/classes/resource_loader.hpp>
+#include <godot_cpp/classes/scene_tree.hpp>
+#include <godot_cpp/classes/time.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -28,6 +30,20 @@ constexpr double kDuckHoldSeconds = 0.6;
 constexpr double kDuckAttackDbPerSecond = 40.0;
 constexpr double kDuckReleaseDbPerSecond = 8.0;
 constexpr double kSilentDb = -80.0;
+// How long quit() waits for the audio server to free the stopped sounds.
+// A stopped sound needs two audio mix steps and one frame to be freed.
+constexpr uint64_t kQuitTimeoutMsec = 500;
+
+// The frame count of the `--quit-after-frames=<n>` user argument, else 0.
+uint64_t quit_after_frames() {
+    const PackedStringArray args = OS::get_singleton()->get_cmdline_user_args();
+    for (const String& arg : args) {
+        if (!arg.begins_with("--quit-after-frames=")) continue;
+        const String value = arg.trim_prefix("--quit-after-frames=");
+        if (value.is_valid_int() && value.to_int() > 0) return static_cast<uint64_t>(value.to_int());
+    }
+    return 0;
+}
 
 const char* const kBuses[] = {"Music", "Ambience", "SFX", "UI"};
 
@@ -63,6 +79,7 @@ void GameAudio::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_muted", "bus", "muted"), &GameAudio::set_muted);
     ClassDB::bind_method(D_METHOD("is_muted", "bus"), &GameAudio::is_muted);
     ClassDB::bind_method(D_METHOD("get_active_voice_count"), &GameAudio::get_active_voice_count);
+    ClassDB::bind_method(D_METHOD("quit", "exit_code"), &GameAudio::quit, DEFVAL(0));
 
     ClassDB::bind_method(D_METHOD("set_cue_table_path", "path"), &GameAudio::set_cue_table_path);
     ClassDB::bind_method(D_METHOD("get_cue_table_path"), &GameAudio::get_cue_table_path);
@@ -105,7 +122,45 @@ void GameAudio::_ready() {
     }
 
     load_cue_table();
+    // The window's close button quits through quit(), so sounds stop first.
+    get_tree()->set_auto_accept_quit(false);
+    quit_after_frames_ = quit_after_frames();
     if (OS::get_singleton()->get_cmdline_user_args().has("--audio-selftest")) run_self_test();
+}
+
+void GameAudio::_notification(int what) {
+    if (what == NOTIFICATION_WM_CLOSE_REQUEST && !Engine::get_singleton()->is_editor_hint()) quit(0);
+}
+
+void GameAudio::quit(int exit_code) {
+    if (quit_code_ >= 0) return;
+    quit_code_ = exit_code;
+    quit_started_msec_ = Time::get_singleton()->get_ticks_msec();
+    release_all();
+    // _process quits once the playbacks are gone; it runs even while the
+    // game is paused (process_mode Always in game_audio.tscn).
+    set_process(true);
+}
+
+void GameAudio::release_all() {
+    releasing_all_ = true;
+    auto release = [this](AudioStreamPlayer* player) {
+        if (player == nullptr) return;
+        if (player->has_stream_playback()) releasing_.push_back(player->get_stream_playback());
+        player->stop();
+    };
+    for (Voice& voice : voices_) release(voice.player);
+    for (LoopDeck* deck : {&music_, &ambience_}) {
+        for (AudioStreamPlayer* player : deck->players) release(player);
+    }
+    stop_loop(music_, 0.0);
+    stop_loop(ambience_, 0.0);
+}
+
+bool GameAudio::released() const {
+    // Each playback is ours alone once the audio server has freed its entry.
+    return std::all_of(releasing_.begin(), releasing_.end(),
+                       [](const Ref<AudioStreamPlayback>& p) { return p->get_reference_count() <= 1; });
 }
 
 void GameAudio::ensure_buses() {
@@ -199,6 +254,7 @@ bool GameAudio::load_cue_table() {
 }
 
 void GameAudio::play(const StringName& name) {
+    if (releasing_all_) return;  // quitting
     const auto found = cue_index_.find(name);
     if (found == cue_index_.end()) {
         if (!warned_.has(name)) {
@@ -345,6 +401,14 @@ void GameAudio::update_deck(LoopDeck& deck, double delta) {
 }
 
 void GameAudio::_process(double delta) {
+    if (quit_after_frames_ > 0 && Engine::get_singleton()->get_process_frames() >= quit_after_frames_) quit(0);
+    if (quit_code_ >= 0 &&
+        (released() || Time::get_singleton()->get_ticks_msec() - quit_started_msec_ >= kQuitTimeoutMsec)) {
+        releasing_.clear();
+        get_tree()->quit(quit_code_);
+        return;
+    }
+    if (releasing_all_) return;  // nothing plays again on the way out
     update_deck(music_, delta);
     update_deck(ambience_, delta);
 

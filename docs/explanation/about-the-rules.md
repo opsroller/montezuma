@@ -77,7 +77,7 @@ numbers within the same rules.
 ## Consequences
 
 - The LevelData contract changes: gem goals, optional quotas, optional
-  time override, `normal` and `hard`, power-up unlocks, obstacles, and
+  base clock (`base_clock`, which the timer tier adds to), `normal` and `hard`, power-up unlocks, obstacles, and
   rule-set and theme ids. See the PR that adds this page.
 - The core's totem and bonus code (WP-06, WP-07) changes model, and the
   ids change: totems `fire`, `time`, `gold`, `harvest`, `ward`, `gift`,
