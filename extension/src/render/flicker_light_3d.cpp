@@ -4,6 +4,7 @@
 #include "flicker_light_3d.hpp"
 
 #include <algorithm>
+#include <cmath>
 
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/core/class_db.hpp>
@@ -53,7 +54,9 @@ void FlickerLight3D::_ready() {
 }
 
 void FlickerLight3D::_process(double delta) {
-    time_ += delta;
+    // Wrapped hourly so the float phase keeps its precision in long
+    // sessions; the one jump an hour is a single flicker step.
+    time_ = std::fmod(time_ + delta, 3600.0);
     const auto t = static_cast<float>(time_);
     const float n = flicker::fire(t, speed_, noise_seed_);
     set_param(PARAM_ENERGY, std::max(0.0f, base_energy_ * (1.0f + flicker_ * n)));
