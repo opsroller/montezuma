@@ -15,6 +15,7 @@ own folder.
 - [Project profile](reference/project-profile.md): stack, commands, who owns what, project rules.
 - [Contracts](reference/contracts.md): interfaces between work packages.
 - [Work packages](reference/work-packages.md): the plan and its status.
+- [Power Totems](reference/totems.md): totem ids, charging, effects and tuning.
 - [MoveResult events](reference/move-result.md): cascade steps, falls, spawns and how to replay a move.
 - [Rules spec](rules-spec.md): the game's rules (moving to `reference/`).
 - [Board view](reference/board-view.md): the 3D board's classes, scenes, camera fit and feel constants.
