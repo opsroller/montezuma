@@ -2,6 +2,8 @@
 <!-- Copyright (C) 2026 Charles (opsroller) and Montezuma contributors -->
 # IntroLevel (web demo scene)
 
+Reference for programmers working on the web demo or the website hand-off.
+
 `IntroLevel` is a `Node3D` class from the montezuma GDExtension
 (`extension/src/demo/`). It is the root of `res://scenes/demo/intro_level.tscn`,
 the web build's main scene (`application/run/main_scene.web` in
@@ -89,3 +91,10 @@ other than once or with a score other than the game's, or when the other
 level is not sent back to the intro level. It prints
 `IntroLevel self-test: <moves> moves, outcome 1, 1 completions, 0 failures`;
 CI's `extension` job greps for that line ([CI pipeline](ci-pipeline.md)).
+
+## Related
+
+- How-to: [Build and test](../how-to/build-and-test.md) (runs the self-test),
+  [Export a web build](../how-to/export-a-web-build.md)
+- Explanation: [About the game scene](../explanation/about-the-game-scene.md),
+  [About the website](../explanation/about-the-website.md)
