@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
+#
+# What the assets workflow installs to run tools/assets/validate_assets.py.
+# Installed with --require-hashes. The hashes are the manylinux x86_64
+# wheels for CPython 3.12 (what ubuntu-24.04 runners have) and 3.13. Bump
+# the version and the hashes together.
+pillow==11.3.0 \
+    --hash=sha256:676b2815362456b5b3216b4fd5bd89d362100dc6f4945154ff172e206a22c024 \
+    --hash=sha256:13f87d581e71d9189ab21fe0efb5a23e9f28552d5be6979e84001d3b8505abe8

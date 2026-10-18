@@ -7,3 +7,4 @@ game/bin/*
 game/.godot/
 site/_site/
 __pycache__/
+.venv/

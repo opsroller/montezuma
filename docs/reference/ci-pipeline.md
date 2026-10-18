@@ -1,8 +1,9 @@
 <!-- SPDX-License-Identifier: GPL-2.0-or-later -->
-# CI pipeline: tests workflow
+# CI pipeline: tests and assets workflows
 
-Facts about `.github/workflows/tests.yml`. Desktop packaging is the
-separate `build` workflow. To run any check locally, use the commands in
+Facts about `.github/workflows/tests.yml` and
+`.github/workflows/assets.yml`. Desktop packaging is the separate `build`
+workflow. To run any check locally, use the commands in
 [Build and test](../how-to/build-and-test.md).
 
 ## Triggers
@@ -45,3 +46,20 @@ The `core` and `sanitizers` jobs build in seconds and use no cache.
 
 See [About CI caching](../explanation/about-ci-caching.md) for why the
 caches are set up this way.
+
+## Assets workflow
+
+`.github/workflows/assets.yml` runs `tools/assets/validate_assets.py`
+against `game/assets/` and the theme manifest. Rules it enforces:
+[Board themes: validator rules](board-themes.md#validator-rules).
+
+| Item | Value |
+|---|---|
+| Triggers | every `push` to `main` and every `pull_request`, no path filter; a new push cancels the PR's older run |
+| Job | `validate`, on `ubuntu-24.04`, 5-minute timeout |
+| Token permissions | `contents: read` |
+| Python packages | `.github/requirements/assets.txt`: Pillow 11.3.0, installed with `--require-hashes` into a virtual environment |
+| What red means | an `error:` line in the log names the file and the broken rule: a manifest path or scene reference that does not exist, a file that does not parse as its format, a piece or board over its triangle budget, a texture over 1024 px or not power-of-two, a missing provenance record or SPDX line, or a name off the naming table |
+
+The job takes seconds, so it has no path filter: a check that a PR can
+skip could never be made required.
