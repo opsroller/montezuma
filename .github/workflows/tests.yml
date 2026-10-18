@@ -97,6 +97,11 @@ jobs:
           ./godot --headless --path game --import
           ./godot --headless --path game --quit-after 120 2>&1 | tee run.log
           if grep -E "ERROR|SCRIPT ERROR|Can't open dynamic library" run.log; then exit 1; fi
+      - name: Audio self-test
+        if: runner.os == 'Linux'
+        run: |
+          ./godot --headless --path game --quit-after 120 -- --audio-selftest 2>&1 | tee audio.log
+          grep -E "GameAudio self-test: [0-9]+ cues, 0 failures" audio.log
 
   sanitizers:
     runs-on: ubuntu-latest
