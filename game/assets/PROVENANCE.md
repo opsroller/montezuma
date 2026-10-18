@@ -260,5 +260,7 @@ license: GPL-2.0-or-later
 attribution: ""
 changes: ""
 notes: >
-  Regenerate with .venv/bin/python tools/assets/gen_theme_scenes.py.
+  The fog's 3D noise is made by Godot 4.7.2's FastNoiseLite and NoiseTexture3D at load,
+  so an engine upgrade can change it. Regenerate with
+  .venv/bin/python tools/assets/gen_theme_scenes.py.
 ```

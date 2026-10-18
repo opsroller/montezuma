@@ -517,14 +517,14 @@
       "dust": {
         "amount": 320,
         "lifetime": 12.0,
-        "inner_radius": 7.0,
+        "inner_radius": 8.5,
         "outer_radius": 13.0,
         "bottom": -2.0,
         "top": 1.4,
         "size": 0.05,
         "speed": [
           0.02,
-          0.08
+          0.05
         ],
         "turbulence": 0.3
       },

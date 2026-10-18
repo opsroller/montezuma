@@ -244,7 +244,7 @@ parameter file's `lighting.atmosphere` section and the `MI_AtmosphereFog`,
 |---|---|---|---|---|
 | `WorldEnvironment` | volumetric fog on, global density 0 | `desktop-high` (64 × 64 froxels), `desktop-standard` (32 × 32) | `atmosphere.fog` (`anisotropy`, `length`, `detail_spread`, `gi_inject`, `ambient_inject`, `temporal_amount`) | isotropic (the camera looks down, the sun comes from above); 40 m; GI 0.4, ambient 0.3 |
 | `AtmosphereFog` | box `FogVolume` around the temple, group `quality:volumetric_fog`; its material path in `metadata/fog_material_path` | desktop | `atmosphere.volumes` (`clearance`, `outer`, `bottom`); `MI_AtmosphereFog` (below) | 38 × 38 m, from 2.6 m below the board to the fog's `height_top` |
-| `Dust` | `GPUParticles3D`, ring around the platform, `MI_Dust`, group `quality:volumetric_fog` | desktop | `atmosphere.dust` (`amount`, `lifetime`, `inner_radius`, `outer_radius`, `bottom`, `top`, `size`, `speed`, `turbulence`) | 320 motes, 7 to 13 m from the centre, 5 cm |
+| `Dust` | `GPUParticles3D`, ring around the platform, `MI_Dust`, group `quality:volumetric_fog` | desktop | `atmosphere.dust` (`amount`, `lifetime`, `inner_radius`, `outer_radius`, `bottom`, `top`, `size`, `speed`, `turbulence`) | 320 motes, 8.5 to 13 m from the centre, 5 cm, at most 5 cm/s |
 | `LightShaftCards/Cards` | `MultiMeshInstance3D` of quads along the sun, `MI_LightShaft`; parent in `quality_fallback:volumetric_fog`, child in `quality:light_shaft_cards` | `mobile` | `atmosphere.shafts` (`count`, `inner_radius`, `outer_radius`, `length`, `width`, `ground`) | 12 cards, 3.5 to 5.5 m long, one draw call |
 
 The fog volume covers the board too; its shader keeps it empty there.
@@ -270,11 +270,13 @@ it from the volume's metadata on tiers with volumetric fog and clears it on
 the others, because the Compatibility renderer prints an error for any fog
 shader it is handed ([Quality tiers](quality-tiers.md#node-groups)).
 
-**Placement check.** The generator refuses to write the scene when a shaft
-card corner or the dust ring's inner edge would draw over the board,
-seen from the game camera at 11, 13 and 36 m (wide window to tall phone)
-with `board_clearance` (0.5 m) of margin, unless that point is inside the
-stone platform. Cards are placed at random (seed + 51) until they pass.
+**Placement check.** The generator refuses to write the scene when any
+point of a shaft card (a 9 × 9 grid over each card), or of the ring a dust
+mote can reach (the inner radius less `lifetime` × top speed and
+`turbulence`), would draw over the board, seen from the game camera at 11,
+13 and 36 m (wide window to tall phone) with `board_clearance` (0.5 m) of
+margin, unless that point is inside the stone platform. Cards are placed at
+random (seed + 51) until they pass.
 
 ## Shaders
 
@@ -353,6 +355,8 @@ look packages compare against these.
 | [temple-lineup-desktop.jpg](../images/lookdev/temple-lineup-desktop.jpg) | `LD_Temple_LineUp_Hi` | Forward+ | desktop `hi/` |
 | [temple-board-lit-web.jpg](../images/lookdev/temple-board-lit-web.jpg) | game, benchmark board | Compatibility (`web`) | WP-47 lighting, lightmap baked |
 | [temple-board-lit-desktop-high.jpg](../images/lookdev/temple-board-lit-desktop-high.jpg) | game, benchmark board | Forward+ (`desktop-high`) | WP-47 lighting, lightmap and `VoxelGI` |
+| [temple-atmosphere-desktop-high.jpg](../images/lookdev/temple-atmosphere-desktop-high.jpg) | `LD_Temple_Hi` | Forward+ (`desktop-high`) | WP-51 volumetric fog and dust, no lightmap |
+| [temple-atmosphere-mobile.jpg](../images/lookdev/temple-atmosphere-mobile.jpg) | `LD_Temple` | Mobile (`mobile`) | WP-51 light-shaft cards, no lightmap |
 
 ## Validator rules
 

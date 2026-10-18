@@ -410,9 +410,11 @@ def atmosphere(r, p, models):
         gx, gz = rad * math.cos(ang), rad * math.sin(ang)
         # QuadMesh spans -0.5..0.5 in X and Y; Y runs toward the sun from the ground.
         cx, cy, cz = gx + ux * length / 2, shafts["ground"] + uy * length / 2, gz + uz * length / 2
-        corners = [(cx + sx * hx * width / 2 + sy * ux * length / 2, cy + sy * uy * length / 2,
-                    cz + sx * hz * width / 2 + sy * uz * length / 2) for sx in (-1, 1) for sy in (-1, 1)]
-        if any(over_board(c, keep_out) and not inside_platform(c, p) for c in corners):
+        # The whole card, not just its corners: an edge can cross a board corner.
+        steps = [i / 8 * 2 - 1 for i in range(9)]
+        points = [(cx + sx * hx * width / 2 + sy * ux * length / 2, cy + sy * uy * length / 2,
+                   cz + sx * hz * width / 2 + sy * uz * length / 2) for sx in steps for sy in steps]
+        if any(over_board(c, keep_out) and not inside_platform(c, p) for c in points):
             continue
         # Basis columns X (across, width), Y (toward the sun, length), Z (normal),
         # stored row by row with the origin, as MultiMesh expects.
@@ -424,11 +426,14 @@ def atmosphere(r, p, models):
              f"instance_count = {shafts['count']}", 'mesh = SubResource("shaft_quad")',
              f"buffer = PackedFloat32Array({', '.join(map(str, buffer))})", ""]
 
-    for y in (dust["top"], dust["bottom"]):
-        for ang in range(0, 360, 5):
-            c = (dust["inner_radius"] * math.cos(math.radians(ang)), y, dust["inner_radius"] * math.sin(math.radians(ang)))
+    # Motes drift up to lifetime x top speed (plus turbulence) from where they spawn.
+    reach = dust["inner_radius"] - dust["lifetime"] * dust["speed"][1] - dust["turbulence"]
+    for y in (dust["top"] + 0.5, dust["bottom"]):
+        for tenth in range(3600):
+            a = math.radians(tenth / 10)
+            c = (reach * math.cos(a), y, reach * math.sin(a))
             if over_board(c, keep_out) and not inside_platform(c, p):
-                raise SystemExit(f"{theme}: dust ring inner radius {dust['inner_radius']} reaches over the board")
+                raise SystemExit(f"{theme}: dust can drift over the board (inner radius {dust['inner_radius']})")
 
     body = ["", '[node name="AtmosphereFog" type="FogVolume" parent="." groups=["quality:volumetric_fog"]]',
             f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, {round((vol['bottom'] + top) / 2, 3)}, 0)",

@@ -27,7 +27,7 @@ fades out at its edge and a thin seam of clear air shows between them.
 
 So the temple has a single box over the whole scene, and its fog shader
 decides the density from the world position: zero inside a square around
-the board centre, ramping up over a metre outside it. The rule is written
+the board centre, ramping up over 1.2 m outside it. The rule is written
 in metres in world space, so it holds for every camera, window shape and
 tier, and nothing can drift onto the board. The square is the board plus
 1.6 m. That margin covers what a froxel smears sideways: at 64 froxels
@@ -69,7 +69,7 @@ in a sunbeam read. They exist only on the desktop tiers, with the fog.
 The Mobile and Compatibility renderers have no volumetric fog. The cards
 that stand in for it are twelve soft additive quads along the sun's
 direction, beside the platform, drawn as one `MultiMesh`: one draw call.
-The generator checks every card corner against the game camera at the
+The generator checks every point of every card against the game camera at the
 distances it uses from a wide window to a tall phone, and places them
 again until none draws over the board.
 
