@@ -174,7 +174,7 @@ WebAssembly. It never deploys; the package is the run's artifact.
 | Item | Value |
 |---|---|
 | Triggers | Push to `main`; pull requests touching `web.yml`, `tools/release/`, `CMakeLists.txt`, `core/`, `extension/`, `game/` or `thirdparty/`; manual |
-| Runner | `ubuntu-24.04`: job `web` builds and exports; job `browser smoke` runs the browser check in the container below |
+| Runner | `ubuntu-24.04`: job `web` builds and exports; jobs `browser smoke (chromium)`, `(firefox)` and `(webkit)` run the browser check in parallel, one engine each, in the container below |
 | Emscripten | 4.0.20 (`EMSDK_VERSION` in `godot.env`, the version Godot 4.7.2's official web templates are built with), cached under `emsdk-<hash of godot.env>` |
 | Extension build | `emcmake cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON -DMONTEZUMA_BUILD_TESTS=OFF -DMONTEZUMA_WERROR=ON -DGODOTCPP_TARGET=template_release -DGODOTCPP_THREADS=OFF`, through ccache (`EM_COMPILER_WRAPPER=ccache`, key prefix `build-web-extension`) |
 | Library | `game/bin/libmontezuma.web.template_release.wasm32.nothreads.wasm` (`web.release.wasm32` in `game/montezuma.gdextension`) |

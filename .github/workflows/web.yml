@@ -95,9 +95,15 @@ jobs:
   # browsers and their system libraries, so no run downloads them. The tag
   # must match playwright== in tools/release/web-requirements.txt; the digest
   # pins the exact image. See docs/explanation/about-ci-caching.md.
+  # One job per browser engine, in parallel, so the slowest browser sets the
+  # pace rather than the sum of all three.
   browser-smoke:
-    name: browser smoke
+    name: browser smoke (${{ matrix.browser }})
     needs: web
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     container:
@@ -121,8 +127,10 @@ jobs:
           virtualenv "$RUNNER_TEMP/web-smoke"
           "$RUNNER_TEMP/web-smoke/bin/pip" install --require-hashes -r tools/release/web-requirements.txt
       - name: Run the demo in a browser
+        env:
+          BROWSER: ${{ matrix.browser }}
         run: |
-          if ! "$RUNNER_TEMP/web-smoke/bin/python" tools/release/web-smoke.py dist/web/montezuma-*-web.zip chromium firefox webkit; then
-            echo "::error::The web demo did not hand off montezuma:ready then montezuma:level-completed in a browser. Reproduce with docs/how-to/export-a-web-build.md (check it in a browser)."
+          if ! "$RUNNER_TEMP/web-smoke/bin/python" tools/release/web-smoke.py dist/web/montezuma-*-web.zip "$BROWSER"; then
+            echo "::error::The web demo did not hand off montezuma:ready then montezuma:level-completed in $BROWSER. Reproduce with docs/how-to/export-a-web-build.md (check it in a browser)."
             exit 1
           fi
