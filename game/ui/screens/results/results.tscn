@@ -1,0 +1,72 @@
+[gd_scene format=3]
+; SPDX-License-Identifier: GPL-2.0-or-later
+
+[node name="ResultsScreen" type="ResultsScreen"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+screen_id = "results"
+default_focus = NodePath("%Next")
+back_behavior = 2
+back_action = "reset"
+back_target = "episode_map"
+
+[node name="Backdrop" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"ScrimPanel"
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="Center"]
+layout_mode = 2
+
+[node name="Column" type="VBoxContainer" parent="Center/Panel"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Center/Panel/Column"]
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+theme_type_variation = &"HeadingLabel"
+unique_name_in_owner = true
+
+[node name="Score" type="Label" parent="Center/Panel/Column"]
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+unique_name_in_owner = true
+auto_translate_mode = 2
+
+[node name="Next" type="NavButton" parent="Center/Panel/Column"]
+layout_mode = 2
+unique_name_in_owner = true
+theme_type_variation = &"PrimaryButton"
+text = "results.next"
+action = "play"
+
+[node name="Retry" type="NavButton" parent="Center/Panel/Column"]
+layout_mode = 2
+unique_name_in_owner = true
+text = "results.retry"
+action = "play"
+
+[node name="Map" type="NavButton" parent="Center/Panel/Column"]
+layout_mode = 2
+text = "results.map"
+action = "reset"
+target = "episode_map"

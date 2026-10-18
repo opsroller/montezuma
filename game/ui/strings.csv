@@ -1,0 +1,76 @@
+keys,en
+title.name,Montezuma's
+title.tagline,Match the carved stones. Wake the temple.
+title.inspired,"Inspired by The Treasures of Montezuma (Alawar Entertainment, 2009)"
+menu.play,Play
+menu.trophies,Trophies
+menu.settings,Settings
+menu.credits,Credits
+menu.quit,Quit
+menu.back,Back
+intro.title,The Temple
+intro.1,Deep in the jungle stands a temple no one has entered for centuries.
+intro.2,Its treasures are guarded by carved stones that only move in threes.
+intro.3,"Match the stones, fill every quota before time runs out, and the temple's secrets are yours."
+intro.page,{page} of {count}
+intro.next,Next
+intro.skip,Skip
+map.title,Choose a level
+map.prev,Previous episode
+map.next,Next episode
+map.level.open,{n}
+map.level.locked,{n} (locked)
+episode.1.name,Episode 1
+episode.2.name,Episode 2
+episode.3.name,Episode 3
+episode.4.name,Episode 4
+episode.5.name,Episode 5
+pause.title,Paused
+pause.resume,Resume
+pause.restart,Restart level
+pause.quit_level,Leave level
+results.won,Level complete
+results.lost,Out of time
+results.score,Score: {score}
+results.next,Next level
+results.retry,Try again
+results.map,Level map
+trophies.title,Trophies
+trophies.locked,Not earned yet
+trophy.t01.name,Trophy 1
+trophy.t01.desc,To be designed.
+trophy.t02.name,Trophy 2
+trophy.t02.desc,To be designed.
+trophy.t03.name,Trophy 3
+trophy.t03.desc,To be designed.
+trophy.t04.name,Trophy 4
+trophy.t04.desc,To be designed.
+trophy.t05.name,Trophy 5
+trophy.t05.desc,To be designed.
+trophy.t06.name,Trophy 6
+trophy.t06.desc,To be designed.
+trophy.t07.name,Trophy 7
+trophy.t07.desc,To be designed.
+trophy.t08.name,Trophy 8
+trophy.t08.desc,To be designed.
+trophy.t09.name,Trophy 9
+trophy.t09.desc,To be designed.
+settings.title,Settings
+settings.music,Music volume
+settings.sfx,Sound effects volume
+settings.text_size,Text size
+settings.reduced_motion,Reduce motion
+settings.fullscreen,Full screen
+settings.language,Language
+settings.language.system,System language
+settings.difficulty,Difficulty
+settings.difficulty.relaxed,Relaxed
+settings.difficulty.normal,Normal
+credits.title,Credits
+credits.fallback,"Montezuma's
+
+Inspired by The Treasures of Montezuma by Alawar Entertainment (2009).
+Code written by Claude (Anthropic).
+Direction by Charles (opsroller).
+
+The full list of contributors and third-party works is in CREDITS.md."

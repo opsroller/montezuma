@@ -35,3 +35,5 @@ other people's lines.
 - [godot-cpp](https://github.com/godotengine/godot-cpp): C++ bindings for
   Godot, MIT license. Copyright (c) 2017-present Godot Engine
   contributors.
+- [nlohmann/json](https://github.com/nlohmann/json) 3.11.3: JSON for
+  Modern C++, MIT license. Copyright (c) 2013-2022 Niels Lohmann.

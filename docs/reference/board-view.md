@@ -136,6 +136,8 @@ is never cropped.
 | `kRedealInSeconds` | 0.22 s | New deal growing in |
 | `kSelectedScale` | 1.18 | Size of the selected piece |
 | `kSelectedLiftCells` | 0.12 cell | Lift of the selected piece |
+| `kSwipeCellFraction` | 0.3 | Swipe threshold as a share of one cell on screen |
+| `kSwipeMinMillimetres` | 2.5 mm | Smallest swipe threshold |
 | `kCameraTiltDegrees` | 15° | Camera pitch from straight down |
 | `kCameraFovDegrees` | 40° | Vertical field of view |
 | `kCameraMargin` | 0.08 | Empty viewport fraction per side |
@@ -157,6 +159,12 @@ phases (`extension/src/board/animator.hpp`), played on one tween:
 A fall of `n` rows takes `sqrt(2n / g)` seconds: one row about 0.13 s, the
 full 8-row board about 0.37 s.
 
+`show_board`, or a `cell_size` change, during an animation stops every
+tween first, the new deal's grow included, and frees pieces on their way
+out. A test drives the real rules for hundreds of moves, shuffles and
+`clear_cells` effects included, and checks the walk always ends on the
+board.
+
 When the animation ends or is skipped, the view releases cleared pieces
 to the pool and checks every cell against the board; in debug builds a
 mismatch logs a warning, and the view resyncs either way. A result
@@ -165,8 +173,30 @@ settle beat.
 
 ![Frames 0.1 s apart: swap, pop, empty cells, fall and refill](../images/board-cascade-frames.png)
 
-## Input (until WP-14)
+## Input
 
-Tap or click a piece to select it, then an adjacent piece to ask for the
-swap. Tapping a non-adjacent piece moves the selection; tapping off the
-board clears it. Input is ignored while `is_busy()`.
+`extension/src/board/input.hpp` (`SwapGesture`, Godot-free) turns one
+pointer stream into the board's two actions; `BoardView3D` feeds it mouse
+and touch events from `_unhandled_input` and marks them handled.
+
+| Gesture | Result |
+|---|---|
+| Tap a piece | Selects it (it grows and lifts) |
+| Tap a neighbour of the selection | `swap_requested(selected, neighbour)` |
+| Tap the selected piece again | Deselects (on release) |
+| Tap a piece further away | Moves the selection there |
+| Tap off the board | Deselects |
+| Press on a piece and drag past the swipe threshold | `swap_requested(piece, neighbour)` toward the drag's main axis, at once; off the board edge it only deselects |
+
+| Rule | Value |
+|---|---|
+| Pointers | Mouse is pointer -1; touches use their finger index. Only the first pointer down counts until it lifts |
+| Touch as mouse | Mouse events Godot emulates from touch (`device == DEVICE_ID_EMULATION`) are ignored, so a tap acts once. `emulate_mouse_from_touch` stays on for Controls |
+| One action per press | A press that swaps (by tap or swipe) holds its pointer until it lifts; nothing else happens in that press |
+| Swipe threshold | `max(kSwipeCellFraction` × one cell on screen, `kSwipeMinMillimetres` at the screen's DPI)`: 0.3 cell, at least 2.5 mm |
+| Direction | Screen right is +x, screen down is +y (rows), which the fixed camera guarantees |
+| During an animation | New presses are ignored; releases and cancels still end a press |
+| Cancel | A touch cancel or the app losing focus ends the press and keeps the selection |
+| Illegal swap | The board owner answers with `play_illegal`: the pair moves `kIllegalReach` toward each other and back |
+
+Keyboard and controller play are not supported yet.

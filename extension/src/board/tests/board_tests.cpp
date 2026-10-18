@@ -3,14 +3,19 @@
 
 // Board view layout and camera framing tests. No Godot, no framework; run via ctest.
 #include <cmath>
+#include <cstdint>
 #include <cstdio>
 #include <numbers>
+#include <optional>
+#include <random>
 #include <string>
 #include <vector>
 
 #include "animator.hpp"
 #include "board_layout.hpp"
 #include "feel.hpp"
+#include "input.hpp"
+#include "montezuma/board.hpp"
 
 using namespace montezuma::godot_binding;
 
@@ -195,6 +200,91 @@ void test_walk_ends_where_the_rules_did() {
     check(hooks.clears == 3, "every cleared cell is reported once");
 }
 
+// Converts the rules' result into the view's events, as the binding's
+// Dictionary carries them.
+anim::Events events_from(const montezuma::MoveResult& r) {
+    anim::Events ev;
+    if (r.swap) ev.swap = std::array<Cell, 2>{Cell{(*r.swap)[0].x, (*r.swap)[0].y}, Cell{(*r.swap)[1].x, (*r.swap)[1].y}};
+    for (const auto& c : r.cascades) {
+        anim::Step s;
+        for (const auto& cell : c.cleared) s.cleared.push_back({cell.x, cell.y});
+        for (const auto& f : c.falls) s.falls.push_back({{f.from.x, f.from.y}, {f.to.x, f.to.y}, f.kind});
+        for (const auto& sp : c.spawns) s.spawns.push_back({{sp.to.x, sp.to.y}, sp.kind, sp.drop});
+        ev.steps.push_back(s);
+    }
+    ev.shuffled = r.shuffled;
+    ev.redealt = r.redealt;
+    for (const auto& [from, to] : r.shuffle_map) ev.shuffle_map.push_back({{from.x, from.y}, {to.x, to.y}});
+    return ev;
+}
+
+// Kinds in a grid; a redeal reads the board's new deal, as the view does.
+struct BoardHooks : KindHooks {
+    const montezuma::Board* board = nullptr;
+    std::vector<int>* grid = nullptr;
+    void on_redeal(const anim::Phase&) { *grid = board->cells(); }
+};
+
+void test_walk_matches_the_real_board() {
+    // Drives the rules for hundreds of moves; after each, walking the
+    // reported events over the old grid must give exactly the new board.
+    int moves = 0;
+    int shuffles = 0;
+    int effects = 0;
+    int redeals = 0;
+    bool all_match = true;
+    // A small board runs out of moves often, so shuffles get played too.
+    struct Size {
+        int w, h, kinds;
+    };
+    for (const Size size : {Size{8, 8, 5}, Size{4, 4, 5}}) {
+        const int w = size.w;
+        const int h = size.h;
+        for (std::uint64_t seed = 1; seed <= 20; ++seed) {
+            auto made = montezuma::Board::try_create(w, h, size.kinds, seed);
+            if (!made) continue;
+            montezuma::Board& board = *made;
+            std::mt19937 rng(static_cast<unsigned>(seed));
+            for (int turn = 0; turn < 40; ++turn) {
+                std::vector<int> grid = board.cells();
+                std::optional<montezuma::MoveResult> result;
+                if (turn % 7 == 6) {
+                    // An effect clearing three random cells (bonuses, totems).
+                    std::vector<montezuma::Cell> cells;
+                    for (int i = 0; i < 3; ++i) cells.push_back({static_cast<int>(rng() % static_cast<unsigned>(w)), static_cast<int>(rng() % static_cast<unsigned>(h))});
+                    result = board.clear_cells(cells);
+                    if (result) ++effects;
+                } else {
+                    const int n = w * h;
+                    const int start = static_cast<int>(rng() % static_cast<unsigned>(n));
+                    for (int i = 0; i < n && !result; ++i) {
+                        const int x = (start + i) % w;
+                        const int y = (start + i) % n / w;
+                        for (const montezuma::Cell to : {montezuma::Cell{x + 1, y}, montezuma::Cell{x, y + 1}}) {
+                            if (!board.in_bounds(to.x, to.y) || !board.is_legal_swap({x, y}, to)) continue;
+                            result = board.try_swap({x, y}, to);
+                            break;
+                        }
+                    }
+                }
+                if (!result || result->stuck) break;
+                if (result->shuffled) ++(result->redealt ? redeals : shuffles);
+                BoardHooks hooks;
+                hooks.board = &board;
+                hooks.grid = &grid;
+                anim::walk(anim::build_plan(events_from(*result)), grid, w, hooks);
+                all_match = all_match && grid == board.cells();
+                ++moves;
+            }
+        }
+    }
+    check(moves >= 300, "played hundreds of real moves");
+    check(effects > 0, "including clear_cells effects");
+    check(shuffles > 0, "and shuffles");
+    check(all_match, "every walk ends on the rules' board");
+    std::printf("real-board walk: %d moves, %d shuffles, %d redeals, %d effects\n", moves, shuffles, redeals, effects);
+}
+
 void test_walk_moves_falls_at_once() {
     // Falls listed top-down would overwrite each other if applied one by one.
     anim::Events ev;
@@ -249,6 +339,108 @@ void test_timing_scales_without_changing_order() {
     check(a == b, "speed never changes the outcome");
 }
 
+// ---- Input gestures ----
+
+using input::Action;
+
+input::SwapGesture gesture() {
+    input::SwapGesture g;
+    g.reset(8, 8);
+    g.set_swipe_threshold(20.0);
+    return g;
+}
+
+bool is(const input::Output& o, Action a, input::Cell ca = {}, input::Cell cb = {}) {
+    return o.action == a && o.a == ca && o.b == cb;
+}
+
+void test_tap_tap_swaps_neighbours() {
+    auto g = gesture();
+    check(is(g.press(-1, {0, 0}, {3, 3}), Action::Select, {3, 3}), "first tap selects");
+    check(is(g.release(-1), Action::None), "lifting keeps the selection");
+    check(is(g.press(-1, {50, 0}, {4, 3}), Action::Swap, {3, 3}, {4, 3}), "tapping a neighbour swaps");
+    check(!g.selected().valid(), "swap clears the selection");
+    check(is(g.release(-1), Action::None), "the swap's release does nothing");
+}
+
+void test_tap_selected_again_deselects() {
+    auto g = gesture();
+    g.press(-1, {0, 0}, {2, 2});
+    g.release(-1);
+    check(is(g.press(-1, {0, 0}, {2, 2}), Action::None), "second press on the selection waits");
+    check(is(g.release(-1), Action::Deselect), "and deselects on release");
+}
+
+void test_tap_far_piece_moves_selection() {
+    auto g = gesture();
+    g.press(-1, {0, 0}, {0, 0});
+    g.release(-1);
+    check(is(g.press(-1, {0, 0}, {5, 5}), Action::Select, {5, 5}), "a far piece takes the selection");
+    g.release(-1);
+    check(is(g.press(-1, {0, 0}, {}), Action::Deselect), "tapping off the board deselects");
+    check(is(g.press(-1, {0, 0}, {}), Action::None), "off the board with nothing selected does nothing");
+}
+
+void test_swipe_in_each_direction() {
+    struct Case {
+        double dx, dy;
+        input::Cell to;
+    };
+    for (const Case c : {Case{30, 4, {4, 3}}, Case{-30, -4, {2, 3}}, Case{3, 30, {3, 4}}, Case{-3, -30, {3, 2}}}) {
+        auto g = gesture();
+        g.press(0, {100, 100}, {3, 3});
+        check(is(g.move(0, {100 + c.dx * 0.5, 100 + c.dy * 0.5}), Action::None), "short drag is not a swipe");
+        check(is(g.move(0, {100 + c.dx, 100 + c.dy}), Action::Swap, {3, 3}, c.to), "swipe swaps toward the drag");
+        check(is(g.move(0, {100 + c.dx * 2, 100 + c.dy * 2}), Action::None), "one swipe swaps once");
+        check(is(g.release(0), Action::None), "release after a swipe does nothing");
+    }
+}
+
+void test_swipe_off_the_edge_and_from_selection() {
+    auto g = gesture();
+    g.press(0, {0, 0}, {0, 0});
+    check(is(g.move(0, {-40, 0}), Action::Deselect), "swipe off the board only deselects");
+    check(is(g.press(1, {0, 0}, {5, 5}), Action::None), "the spent press holds until it lifts");
+    g.release(0);
+    // A swipe that starts on the selected piece still swipes.
+    g.press(0, {0, 0}, {6, 6});
+    g.release(0);
+    g.press(0, {0, 0}, {6, 6});
+    check(is(g.move(0, {0, 25}), Action::Swap, {6, 6}, {6, 7}), "swipe from the selected piece");
+}
+
+void test_phone_tap_pair_counts_once() {
+    // A phone tap reaches Godot as an emulated mouse press and a touch. The
+    // view drops emulated mouse events; even if one got through, the first
+    // pointer down owns the press, so each tap acts once.
+    auto g = gesture();
+    check(is(g.press(-1, {0, 0}, {3, 3}), Action::Select, {3, 3}), "tap 1 selects");
+    check(is(g.press(0, {0, 0}, {3, 3}), Action::None), "its touch twin is ignored");
+    check(is(g.release(-1), Action::None) && is(g.release(0), Action::None), "both releases keep the selection");
+    check(is(g.press(-1, {50, 0}, {4, 3}), Action::Swap, {3, 3}, {4, 3}), "tap 2 swaps");
+    check(is(g.press(0, {50, 0}, {4, 3}), Action::None), "its touch twin does not select again");
+    g.release(-1);
+    g.release(0);
+    check(!g.selected().valid() && !g.pressing(), "nothing left selected or held");
+    // A swipe: the pair of presses, then drags from both streams.
+    check(is(g.press(-1, {100, 100}, {2, 2}), Action::Select, {2, 2}), "swipe press selects");
+    g.press(0, {100, 100}, {2, 2});
+    check(is(g.move(0, {130, 100}), Action::None), "the twin's drag is ignored");
+    check(is(g.move(-1, {130, 100}), Action::Swap, {2, 2}, {3, 2}), "one swipe, one swap");
+}
+
+void test_pointer_rules() {
+    auto g = gesture();
+    g.press(1, {0, 0}, {3, 3});
+    check(is(g.press(2, {0, 0}, {4, 3}), Action::None), "a second finger is ignored");
+    check(is(g.move(2, {50, 0}), Action::None), "the second finger cannot swipe");
+    check(is(g.release(2), Action::None), "nor release the first");
+    g.cancel();
+    check(!g.pressing() && g.selected() == input::Cell{3, 3}, "cancel ends the press, keeps the selection");
+    check(is(g.move(1, {50, 0}), Action::None), "no swipe after cancel");
+    check(is(g.press(1, {0, 0}, {3, 4}), Action::Swap, {3, 3}, {3, 4}), "tap-tap still works after cancel");
+}
+
 }  // namespace
 
 int main() {
@@ -261,9 +453,17 @@ int main() {
     test_plan_orders_phases_in_time();
     test_fall_timing_follows_gravity();
     test_walk_ends_where_the_rules_did();
+    test_walk_matches_the_real_board();
     test_walk_moves_falls_at_once();
     test_shuffle_and_redeal();
     test_timing_scales_without_changing_order();
+    test_tap_tap_swaps_neighbours();
+    test_tap_selected_again_deselects();
+    test_tap_far_piece_moves_selection();
+    test_swipe_in_each_direction();
+    test_swipe_off_the_edge_and_from_selection();
+    test_phone_tap_pair_counts_once();
+    test_pointer_rules();
     std::printf("%d checks, %d failures\n", checks, failures);
     return failures == 0 ? 0 : 1;
 }

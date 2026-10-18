@@ -14,6 +14,7 @@
 #include "match3_board.hpp"
 #include "animator.hpp"
 #include "board_layout.hpp"
+#include "input.hpp"
 #include "piece_library.hpp"
 
 namespace montezuma::godot_binding {
@@ -29,6 +30,7 @@ public:
     ~BoardView3D() override;
 
     void _unhandled_input(const godot::Ref<godot::InputEvent>& event) override;
+    void _notification(int what);
 
     // Draws `board` as it is now, without animation.
     void show_board(const godot::Ref<Match3Board>& board);
@@ -81,8 +83,14 @@ private:
     godot::Ref<godot::Tween> begin_animation();
     void settle();
     void finish_animation();
+    // Stops all animation at once, before a rebuild.
+    void stop_animation();
+    // Ends the redeal grow at once, every piece at full size.
+    void finish_grow();
 
-    void handle_press(godot::Vector2 screen_pos);
+    input::Output press(int pointer, godot::Vector2 screen_pos);
+    void apply_input(const input::Output& out);
+    double swipe_threshold_pixels() const;
     void select(godot::Vector2i cell);
     void clear_selection();
 
@@ -94,6 +102,8 @@ private:
     std::vector<godot::Node3D*> pieces_;
     std::vector<int> kinds_;
     godot::Ref<godot::Tween> tween_;
+    // The new deal growing in after a redeal; runs past tween_.
+    godot::Ref<godot::Tween> grow_tween_;
     std::vector<Slot> dying_;
     double animation_speed_ = 1.0;
     bool redealing_ = false;
@@ -101,6 +111,7 @@ private:
     bool has_selection_ = false;
     godot::Vector2i selected_;
     godot::Vector2i last_request_[2] = {godot::Vector2i(-1, -1), godot::Vector2i(-1, -1)};
+    input::SwapGesture gesture_;
 };
 
 }  // namespace montezuma::godot_binding
