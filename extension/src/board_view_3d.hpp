@@ -33,7 +33,7 @@ public:
     int get_board_height() const { return board_height_; }
     void set_seed(int64_t v) { seed_ = v; }
     int64_t get_seed() const { return seed_; }
-    void set_cell_size(double v) { cell_size_ = v; }
+    void set_cell_size(double v) { cell_size_ = static_cast<godot::real_t>(v); }
     double get_cell_size() const { return cell_size_; }
 
     godot::Ref<Match3Board> get_board() const { return board_; }
@@ -63,7 +63,7 @@ private:
     int board_width_ = 8;
     int board_height_ = 8;
     int64_t seed_ = 0;
-    double cell_size_ = 1.0;
+    godot::real_t cell_size_ = 1.0f;
     int score_ = 0;
     bool animating_ = false;
     bool has_selection_ = false;
