@@ -116,6 +116,11 @@ private:
     std::vector<double> gpu_ms_;
     std::vector<double> frame_ms_;
     std::vector<double> draw_calls_;
+    // Draw calls of the root viewport by pass: opaque and transparent scene,
+    // shadow maps, 2D canvas.
+    std::vector<double> scene_draw_calls_;
+    std::vector<double> shadow_draw_calls_;
+    std::vector<double> canvas_draw_calls_;
     std::vector<double> primitives_;
     double video_mem_max_ = 0.0;
     bench::SizeTracker sizes_{std::nullopt};

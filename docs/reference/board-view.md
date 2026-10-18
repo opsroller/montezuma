@@ -42,6 +42,7 @@ Draws a `Match3Board` and plays back results. It never applies a rule.
 | `animation_finished` | signal | A `play` or `play_illegal` finished; the view now matches the board |
 | `cascade_step(step: int)` | signal | Step `step` (0 = the swap's own match) starts clearing. Audio plays `cascade_<step+1>` and effects hook here |
 | `layout_changed` | signal | The board was (re)built; cameras refit |
+| `get_piece_draws() -> Dictionary` | method | `batches`: draws the pieces and markers take now through [batching](#draw-calls) (0 when the tier does not batch); `meshes_batched`: meshes drawn through a batch in the last frame. For tests and the benchmark |
 
 ### `BoardCamera3D` (Camera3D)
 
@@ -112,9 +113,36 @@ Placeholders differ by outline as well as colour, seen from above:
 Children the view adds, back to front: `Environment` (sky, lights,
 backdrop), `Slab` (the board), `CellHighlight`, `Pieces` (each piece
 carries its markers as a `Marks` child), `Effects` (match bursts, totem
-and power-up effects), `Hints`. Lights come from the theme's environment; the fallback is
+and power-up effects), `Hints`, `PieceBatches` (see [Draw calls](#draw-calls)). Lights come from the theme's environment; the fallback is
 one warm key light about 65° up with soft shadows (opacity 0.6) and one
 cool fill light at 0.35 energy, no shadow.
+
+## Draw calls
+
+On tiers whose profile has `batch_pieces` (`mobile` and `web`, see
+[Quality tiers](quality-tiers.md#render-settings-per-tier)), the view draws
+every `MeshInstance3D` under `Pieces` (the pieces and their `Marks`)
+through `PieceBatcher` (`extension/src/board/piece_batcher.*`): one
+`MultiMeshInstance3D` under `PieceBatches` per mesh, material, shadow
+setting and render layers. A full temple board is then 7 piece draws
+instead of 64, plus one per kind of marker shown, and the same again in
+each shadow cascade.
+
+| Rule | Detail |
+|---|---|
+| When | Once a frame on `RenderingServer.frame_pre_draw`, after every tween has moved the pieces, so a batch never trails its piece |
+| What is copied | The mesh's global transform relative to `PieceBatches` (position, scale, rotation), only while it is visible in the tree |
+| Material | The mesh's `material_override`; else the mesh's own surface materials; else the one material every surface shows. A mesh whose surfaces show different overrides stays unbatched |
+| Unbatched | Meshes with a `material_overlay`, a `transparency` above 0 or a skeleton keep drawing themselves |
+| Hiding the original | Its `layers` are set to 0 (kept in the `_batched_layers` meta), so neither the camera nor a shadow map draws it; the batch uses the saved layers |
+| Turned off | On a tier without `batch_pieces`, every mesh gets its layers back and the batches hide. A pooled piece that was batched gets its layers back the first frame it is in the tree again |
+
+The pieces stay ordinary nodes: the view and its tweens move, scale and
+hide them as before, and nothing else needs to know about the batches.
+Desktop tiers do not batch: their draw counts are far under their caps,
+and per-instance sorting keeps the refracting desktop gems (`SH_Gem`,
+alpha-blended) in back-to-front order. Measured counts:
+[Benchmark results](benchmark-results.md#draw-calls).
 
 ## Layout
 

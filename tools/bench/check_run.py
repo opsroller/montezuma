@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-2.0-or-later
 # Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
-"""Check a benchmark run: frame-time budget, render size and replay.
+"""Check a benchmark run: frame-time budget, draw calls, render size and replay.
 
 Usage: check_run.py REPORT [--size WxH] [--no-budget]
 
@@ -12,7 +12,10 @@ against the tier's rules and the numbers in the report rather than taking
 its pass flag (a display slower than 60 Hz with vsync on included), and
 never passes headless or software-rendered frames.
 --size also requires the run to have been locked at that render size.
---no-budget reports the budget without judging it (CI smoke runs). Prints
+--no-budget reports the budget without judging it (CI smoke runs). Draw
+calls are a count, the same on any GPU or a software renderer, so their
+p95 is judged against the tier's cap whenever frames were drawn, with or
+without --no-budget. Prints
 one line per check, exits 1 when any fails, 2 when the report is
 unreadable or inconsistent. Standard library only.
 """
@@ -34,6 +37,8 @@ RULES = {
     "web": {95.0: 2, 50.0: 1},
 }
 PERCENTILE_KEYS = {50.0: "p50", 95.0: "p95", 99.0: "p99"}
+# Draw calls per frame, per tier (visual-target.md, content budgets).
+DRAW_CALL_CAPS = {"desktop-high": 2000, "desktop-standard": 1000, "mobile": 300, "web": 200}
 
 
 class Unreadable(Exception):
@@ -116,6 +121,26 @@ def budget_problems(report):
     return problems
 
 
+def draw_call_line(report):
+    """(problems, text) for the draw-call cap, or None when nothing was drawn."""
+    render = report.get("render")
+    if report["device"].get("headless") or not isinstance(render, dict):
+        return None
+    p95, worst = render.get("draw_calls_p95"), render.get("draw_calls_max")
+    if not isinstance(p95, (int, float)):
+        return ["no draw_calls_p95 in the report"], ""
+    cap = DRAW_CALL_CAPS.get(report.get("tier"))
+    text = f"p95 {p95:.0f}, max {f'{worst:.0f}' if isinstance(worst, (int, float)) else '?'}"
+    passes = render.get("draw_calls_by_pass")
+    if isinstance(passes, dict):
+        text += " (" + ", ".join(f"{k.removesuffix('_p95')} {v:.0f}" for k, v in passes.items()
+                                  if isinstance(v, (int, float))) + ")"
+    if cap is None:
+        return [f"no draw-call cap for tier {report.get('tier')!r}"], text
+    text += f"; cap {cap}"
+    return ([f"p95 {p95:.0f} is over the {report.get('tier')} cap of {cap}"] if p95 > cap else []), text
+
+
 def resolution_problems(res, want):
     problems = []
     render, lo, hi = res.get("render"), res.get("min"), res.get("max")
@@ -169,6 +194,12 @@ def main(argv=None):
         print(f"SKIP budget: {summary}")
     else:
         line(budget_problems(report), "budget", summary)
+
+    draws = draw_call_line(report)
+    if draws is None:
+        print("SKIP draw calls: nothing drawn (headless) or no render numbers")
+    else:
+        line(draws[0], "draw calls", draws[1])
 
     res = report["resolution"]
     window = res.get("window") or {}
