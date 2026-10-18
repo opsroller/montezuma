@@ -3,5 +3,6 @@
 # Tests for the Godot-free parts of the board view; built with the core tests.
 add_executable(montezuma_board_tests board_tests.cpp)
 target_include_directories(montezuma_board_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/..)
+target_link_libraries(montezuma_board_tests PRIVATE montezuma_core)
 montezuma_warnings(montezuma_board_tests)
 add_test(NAME board_tests COMMAND montezuma_board_tests)

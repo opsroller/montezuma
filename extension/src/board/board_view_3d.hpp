@@ -83,6 +83,8 @@ private:
     godot::Ref<godot::Tween> begin_animation();
     void settle();
     void finish_animation();
+    // Stops all animation at once, before a rebuild.
+    void stop_animation();
 
     input::Output press(int pointer, godot::Vector2 screen_pos);
     void apply_input(const input::Output& out);
@@ -98,6 +100,8 @@ private:
     std::vector<godot::Node3D*> pieces_;
     std::vector<int> kinds_;
     godot::Ref<godot::Tween> tween_;
+    // The new deal growing in after a redeal; runs past tween_.
+    godot::Ref<godot::Tween> grow_tween_;
     std::vector<Slot> dying_;
     double animation_speed_ = 1.0;
     bool redealing_ = false;

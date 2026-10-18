@@ -142,7 +142,10 @@ BoardView3D::~BoardView3D() { library_.clear(); }
 
 void BoardView3D::set_cell_size(double v) {
     grid_.cell = Math::clamp(v, 0.25, 4.0);
-    if (board_.is_valid() && is_inside_tree()) rebuild();
+    if (board_.is_valid() && is_inside_tree()) {
+        stop_animation();
+        rebuild();
+    }
 }
 
 Vector3 BoardView3D::cell_position(int x, int y) const {
@@ -159,9 +162,20 @@ Node3D* BoardView3D::piece_at(Vector2i c) const { return in_bounds(c) ? pieces_[
 void BoardView3D::show_board(const Ref<Match3Board>& board) {
     ERR_FAIL_COND_MSG(board.is_null(), "show_board needs a Match3Board.");
     board_ = board;
-    if (tween_.is_valid()) tween_->kill();
-    busy_ = false;
+    stop_animation();
     rebuild();
+}
+
+void BoardView3D::stop_animation() {
+    // Kills every running tween and frees what it was animating away, so a
+    // rebuild never leaves shrunken pieces behind or tweens moving pooled nodes.
+    if (tween_.is_valid()) tween_->kill();
+    tween_.unref();
+    if (grow_tween_.is_valid()) grow_tween_->kill();
+    grow_tween_.unref();
+    if (pieces_root_) release_dying();
+    redealing_ = false;
+    busy_ = false;
 }
 
 void BoardView3D::rebuild() {
@@ -325,6 +339,7 @@ void BoardView3D::redeal_in() {
     // The old pieces have shrunk away; deal the board's new layout in.
     sync_to_board(false);
     Ref<Tween> grow = create_tween();
+    grow_tween_ = grow;
     grow->set_parallel(true);
     grow->set_speed_scale(static_cast<float>(animation_speed_));
     for (Node3D* piece : pieces_) {
@@ -366,12 +381,20 @@ void BoardView3D::reconcile() {
 void BoardView3D::skip_animation() {
     if (!busy_) return;
     if (tween_.is_valid()) tween_->kill();
+    if (grow_tween_.is_valid()) {
+        grow_tween_->kill();
+        grow_tween_.unref();
+        for (Node3D* piece : pieces_) {
+            if (piece) piece->set_scale(Vector3(1, 1, 1));
+        }
+    }
     finish_animation();
 }
 
 void BoardView3D::set_animation_speed(double v) {
     animation_speed_ = Math::clamp(v, 0.1, 10.0);
     if (tween_.is_valid()) tween_->set_speed_scale(static_cast<float>(animation_speed_));
+    if (grow_tween_.is_valid()) grow_tween_->set_speed_scale(static_cast<float>(animation_speed_));
 }
 
 void BoardView3D::play_illegal(Vector2i a, Vector2i b) {
