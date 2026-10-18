@@ -36,7 +36,9 @@ difficulty, with the upgrades a player would own on reaching it
   `greedy` win rate, except a level that introduces a new idea, which
   must be easier than the level before it (the rest after a spike). Two
   levels that both win every run count as easier: 100 % is the ceiling,
-  and every episode 1 level introduces an idea.
+  and every episode 1 level introduces an idea. There is no tiebreak on
+  median time left: episode 1 is a teaching ramp whose gem goal rises by
+  5 a level, so it does not follow the spike-and-rest shape.
 - The first level of each episode is a rest: its `greedy` win rate is at
   least that of the episode's third level.
 - Tuning levers, in this order: chains and `steel_rate`, then the gem
