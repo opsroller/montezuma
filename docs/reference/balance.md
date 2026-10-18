@@ -96,32 +96,33 @@ higher: with no upgrades at all, e2-l06 needs 380/570 s instead of
 ## Current results
 
 `montezuma_sim game/data/levels --check`, 200 seeds, `auto` upgrades.
-Win rates in %, median time left in seconds.
+Win rates in %, median time left and base clocks in seconds.
 
-| Level | `greedy` normal | `greedy` median | `greedy` moves | `random` normal | `planner` hard | Result |
-|---|---|---|---|---|---|---|
-| e1-l01 | 100 | 246.0 | 18.1 | 100 | 100 | pass |
-| e1-l02 | 100 | 264.0 | 26.6 | 100 | 100 | pass |
-| e1-l03 | 100 | 255.0 | 32.8 | 100 | 100 | pass |
-| e1-l04 | 100 | 241.0 | 41.9 | 100 | 100 | pass |
-| e1-l05 | 100 | 246.2 | 49.0 | 100 | 100 | pass |
-| e2-l01 | 100 | 256.5 | 59.3 | 100 | 100 | pass |
-| e2-l02 | 100 | 247.5 | 68.1 | 100 | 100 | pass |
-| e2-l03 | 100 | 237.5 | 77.0 | 99 | 100 | pass |
-| e2-l04 | 100 | 239.2 | 73.9 | 99.5 | 100 | pass |
-| e2-l05 | 100 | 242.8 | 69.9 | 100 | 100 | pass |
-| e2-l06 | 100 | 235.5 | 76.6 | 100 | 100 | pass |
-| e3-l01 | 100 | 227.8 | 82.2 | 100 | 100 | pass |
-| e3-l02 | 100 | 271.2 | 89.5 | 100 | 100 | pass |
-| e3-l03 | 100 | 251.8 | 95.1 | 100 | 100 | pass |
-| e3-l04 | 100 | 273.5 | 100.2 | 100 | 100 | pass |
-| e3-l05 | 100 | 285.2 | 105.6 | 99.5 | 100 | pass |
-| e3-l06 | 100 | 248.8 | 127.4 | 99.5 | 99.5 | pass |
-| e3-l07 | 100 | 218.0 | 144.5 | 92.5 | 98.5 | pass |
-| e3-l08 | 100 | 235.5 | 132.1 | 93.5 | 98.5 | pass |
+| Level | `greedy` normal | `greedy` median | `greedy` moves | `random` normal | `planner` hard | Base clock normal / hard | Result |
+|---|---|---|---|---|---|---|---|
+| e1-l01 | 100 | 246.0 | 18.1 | 100 | 100 | 270 / 270 | pass |
+| e1-l02 | 100 | 264.0 | 26.6 | 100 | 100 | 270 / 270 | pass |
+| e1-l03 | 100 | 255.0 | 32.8 | 100 | 100 | 270 / 270 | pass |
+| e1-l04 | 100 | 241.0 | 41.9 | 100 | 100 | 270 / 270 | pass |
+| e1-l05 | 100 | 246.2 | 49.0 | 100 | 100 | 270 / 300 | pass |
+| e2-l01 | 100 | 256.5 | 59.3 | 100 | 100 | 270 / 380 | pass |
+| e2-l02 | 100 | 257.5 | 68.1 | 100 | 100 | 280 / 420 | pass |
+| e2-l03 | 100 | 277.5 | 77.0 | 100 | 100 | 310 / 490 | pass |
+| e2-l04 | 100 | 269.2 | 73.9 | 99.5 | 100 | 300 / 450 | pass |
+| e2-l05 | 100 | 262.8 | 69.9 | 100 | 100 | 290 / 440 | pass |
+| e2-l06 | 100 | 275.5 | 76.6 | 100 | 100 | 310 / 470 | pass |
+| e3-l01 | 100 | 297.8 | 82.2 | 100 | 100 | 340 / 520 | pass |
+| e3-l02 | 100 | 371.2 | 89.5 | 100 | 100 | 370 / 550 | pass |
+| e3-l03 | 100 | 371.8 | 95.1 | 100 | 100 | 390 / 590 | pass |
+| e3-l04 | 100 | 413.5 | 100.2 | 100 | 100 | 410 / 620 | pass |
+| e3-l05 | 100 | 445.2 | 105.6 | 100 | 100 | 430 / 670 | pass |
+| e3-l06 | 100 | 498.8 | 127.4 | 100 | 100 | 520 / 800 | pass |
+| e3-l07 | 100 | 538.0 | 144.5 | 100 | 100 | 590 / 900 | pass |
+| e3-l08 | 100 | 505.5 | 132.1 | 100 | 100 | 540 / 800 | pass |
 
-Both curve rules pass for episodes 1 to 3. Each level meets its row with
-no time override. Every episode 2 level clears the moves floor of 50 (59
+Both curve rules and every clock line pass for episodes 1 to 3. Each
+level's base clock is the larger of 270 s and its [clock rule](#clock)
+value, so the medians above include that longer clock. Every episode 2 level clears the moves floor of 50 (59
 to 77) and every episode 3 level the floor of 70 (82 to 145), at the gem
 goals in [progression](progression.md); every level wins every `greedy`
 run, so the curve rule holds by the 100 % tie. Why episode 3 is built and

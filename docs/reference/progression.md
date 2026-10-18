@@ -438,6 +438,8 @@ human time at 3.5 s a move, and the level table adds an Obstacles column.
 | e3-l08 | [`l08.json`](../../game/data/levels/e3/l08.json) | 100 / 150 | every e1-e2 totem | every e1-e2 power-up | steel 0.05, 10 chains | 20090608 |
 
 Every episode 3 level has all six totems and six power-ups unlocked so
-far (`ward` arrives in e4-l01). No level has a time override. `chained_cells` and
+far (`ward` arrives in e4-l01). Each sets `base_clock` from the
+[clock rule](balance.md#clock): 340 to 590 s on normal and 520 to 900 s
+on hard, peaking at e3-l07. `chained_cells` and
 `steel_rate` are defined in [level data](level-data.md); y = 0 is the
 top row.

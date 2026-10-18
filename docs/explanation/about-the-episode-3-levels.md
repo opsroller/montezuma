@@ -52,12 +52,18 @@ therefore promises the most obstacles, not the longest level.
 ## Human time against the clock
 
 [Balance](../reference/balance.md) converts simulator moves to human time
-at 3.5 s a move. At that pace most of episode 3's levels outlast the base
-clock (270 s, 300 s with timer tier 1), so a player who buys nothing leans
-on the time totem (+60 s, one use) and clock power-ups (+15 s each). The
-simulator, which moves every 1.5 s, still has a `greedy` median of
-at least 218 s left on normal
-([current results](../reference/balance.md#current-results)). Until a
-playtest settles the real pace, the human first-try rates in the briefs are
-provisional; if players run out of time, the gem goal curve or the pace
-assumption in balance.md is what changes, not the level files alone.
+at 3.5 s a move. At that pace every episode 3 level outlasts the old
+270 s clock, so each now carries its own base clock from the
+[clock rule](../reference/balance.md#clock): the moves `greedy`'s wins
+take, at 3.5 s a move plus 15 %, without the timer upgrade. Episode 3's
+clocks run from 340 s (e3-l01 normal) to 900 s (e3-l07 hard) and follow
+the moves: they rise with the gem goal and dip on the finale, which takes
+fewer moves for the reason above. A bought timer tier adds its 30 s on
+top, so it stays worth buying.
+
+The rule assumes a player who owns the gem and item upgrades on offer.
+One who skips them makes more moves and leans on the time totem (+60 s,
+one use) and clock power-ups (+15 s each). Until a playtest settles the
+real pace, the human first-try rates in the briefs are provisional; if
+players still run out of time, the pace or margin in the clock rule is
+what changes, and every level's clock follows from it.
