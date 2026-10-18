@@ -141,9 +141,12 @@ and no retry is offered.
 progress reports; the wrapper counts its bytes into the progress bar as
 they arrive, so it is still downloaded once. Godot also leaves
 `startGame()` pending when one of its files fails; the wrapper sees the
-failed request instead.
+failed requests instead. Godot's loader tries `montezuma.wasm`,
+`montezuma.pck` and the extension 4 times, 1 second apart, so one of
+those counts as failed on its 4th failed request; the side module has
+no retry and counts as failed on its first.
 
-**Load failures.** A failed request for a demo file, or loading that
+**Load failures.** A demo file that cannot be fetched, or loading that
 makes no progress for 60 seconds (a backstop), puts the poster back in
 the stage with a "Try again" button and focuses it. Once Godot's engine has been created, "Try again" reloads the
 page; a

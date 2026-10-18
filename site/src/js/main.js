@@ -191,12 +191,23 @@ function showProgress() {
   progress.value = loaded.godot + loaded.side;
 }
 
+// Godot's loader tries each of its files this many times, 1 s apart; the
+// side module, fetched by its runtime, gets one try.
+const GODOT_ATTEMPTS = 4;
+
 // Godot does not report a failed fetch of its files (startGame() stays
 // pending), and its runtime fetches the side module, about half the
 // download, outside its loader's progress reports. Wrapping fetch for the
 // demo's files catches the first and counts the second, with one download.
+// A file fails the load only once Godot has no tries left for it.
 function watchFetches(onFailure) {
   const realFetch = window.fetch.bind(window);
+  const failures = new Map();
+  const failed = (url, error) => {
+    const count = (failures.get(url) || 0) + 1;
+    failures.set(url, count);
+    if (url.endsWith(SIDE_MODULE) || count >= GODOT_ATTEMPTS) onFailure(error);
+  };
   window.fetch = async (input, init) => {
     const url = String(input instanceof Request ? input.url : input);
     if (!url.includes("play/")) return realFetch(input, init);
@@ -204,11 +215,11 @@ function watchFetches(onFailure) {
     try {
       response = await realFetch(input, init);
     } catch (error) {
-      onFailure(error);
+      failed(url, error);
       throw error;
     }
     if (!response.ok) {
-      onFailure(new Error(`${url}: HTTP ${response.status}`));
+      failed(url, new Error(`${url}: HTTP ${response.status}`));
       return response;
     }
     if (!url.endsWith(SIDE_MODULE) || !response.body) return response;
