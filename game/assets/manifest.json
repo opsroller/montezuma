@@ -1,0 +1,18 @@
+{
+  "default_theme": "temple",
+  "themes": {
+    "temple": {
+      "artifact_0": "res://assets/models/temple/artifacts/PF_Artifact_Ruby.tscn",
+      "artifact_1": "res://assets/models/temple/artifacts/PF_Artifact_Carnelian.tscn",
+      "artifact_2": "res://assets/models/temple/artifacts/PF_Artifact_SunDisc.tscn",
+      "artifact_3": "res://assets/models/temple/artifacts/PF_Artifact_Jade.tscn",
+      "artifact_4": "res://assets/models/temple/artifacts/PF_Artifact_Lapis.tscn",
+      "artifact_5": "res://assets/models/temple/artifacts/PF_Artifact_Amethyst.tscn",
+      "artifact_6": "res://assets/models/temple/artifacts/PF_Artifact_Moonstone.tscn",
+      "board": "res://assets/models/temple/board/PF_Board.tscn",
+      "environment": "res://assets/models/temple/backdrop/PF_Environment.tscn",
+      "cell_highlight": "res://assets/models/temple/fx/PF_CellHighlight.tscn",
+      "fx_match": "res://assets/models/temple/fx/PF_MatchBurst.tscn"
+    }
+  }
+}

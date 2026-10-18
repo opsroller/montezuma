@@ -1,0 +1,158 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
+#
+# Desktop builds: compiles the GDExtension natively per OS, exports the
+# Windows, macOS and Linux games once with the pinned Godot, then runs each
+# packaged build on its own OS. The packages are the run's artifacts.
+# Reference: docs/reference/build-pipeline.md
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - .github/workflows/build.yml
+      - tools/release/**
+      - CMakeLists.txt
+      - core/**
+      - extension/**
+      - game/**
+      - thirdparty/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  extension:
+    name: extension (${{ matrix.platform }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux
+            os: ubuntu-22.04
+            cmake_args: ""
+          - platform: windows
+            os: windows-2022
+            cmake_args: ""
+          - platform: macos
+            os: macos-14
+            cmake_args: '"-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - name: Configure
+        shell: bash
+        run: >
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          -DMONTEZUMA_BUILD_EXTENSION=ON -DMONTEZUMA_BUILD_TESTS=OFF -DMONTEZUMA_WERROR=ON
+          -DGODOTCPP_TARGET=template_release ${{ matrix.cmake_args }}
+      - name: Build
+        run: cmake --build build --config Release -j4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: extension-${{ matrix.platform }}
+          path: |
+            game/bin/*.so
+            game/bin/*.dll
+            game/bin/*.dylib
+          if-no-files-found: error
+          retention-days: 3
+
+  export:
+    needs: extension
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0 # tags and commit count for the version
+          submodules: recursive # godot-cpp's license goes into the notices
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: extension-*
+          path: game/bin
+          merge-multiple: true
+      - name: Cache Godot downloads
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: ~/godot-dl
+          key: godot-${{ hashFiles('tools/release/godot.env') }}
+      - name: Fetch Godot and export templates
+        run: >
+          tools/release/fetch-godot.sh ~/godot-dl
+          linux_release.x86_64 windows_release_x86_64.exe windows_release_x86_64_console.exe macos.zip
+      - name: Export
+        env:
+          GODOT: /home/runner/godot-dl/godot
+        run: |
+          version="$(tools/release/version.sh)"
+          echo "Version $version" >> "$GITHUB_STEP_SUMMARY"
+          for platform in linux windows macos; do
+            tools/release/export-desktop.sh "$platform" "$version" "dist/$platform"
+          done
+          cat dist/*/*.sha256 | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Upload export logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: export-logs
+          path: dist/*/logs/
+          retention-days: 7
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: montezuma-linux
+          path: dist/linux/montezuma-*
+          if-no-files-found: error
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: montezuma-windows
+          path: dist/windows/montezuma-*
+          if-no-files-found: error
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: montezuma-macos
+          path: dist/macos/montezuma-*
+          if-no-files-found: error
+
+  smoke:
+    name: smoke (${{ matrix.platform }})
+    needs: export
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux
+            os: ubuntu-22.04
+          - platform: windows
+            os: windows-2022
+          - platform: macos
+            os: macos-14
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: montezuma-${{ matrix.platform }}
+          path: dist
+      - name: Run the packaged game
+        shell: bash
+        run: |
+          shopt -s nullglob
+          archives=(dist/*.tar.gz dist/*.zip)
+          [ "${#archives[@]}" -eq 1 ] || { echo "expected one archive, found: ${archives[*]}"; exit 1; }
+          tools/release/smoke-test.sh "${archives[0]}"
