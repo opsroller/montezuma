@@ -214,6 +214,19 @@ These replace the placeholders `row_clear`, `random_blast`, `color_bomb`
 
 The LevelData fields above were agreed with the LevelData owner and land with WP-05 (#7).
 
+## Quality tiers (owner: graphics-programmer, WP-45) — implemented
+
+`/root/QualityTiers` (C++: `QualityTiers::get_singleton()`). Settings
+screen (ui-developer): the key `quality_tier`, values `auto` plus
+`get_available_tiers()`, read with `get_choice()`, written with
+`set_choice(value)`, which saves and applies at once; hide it when only
+one tier is available. Content (technical-artist): node groups
+`quality:<feature id>`, `quality_fallback:<feature id>`,
+`quality_shadow_light`, `quality_fog_light`; texture variants through
+`resolve_variant(path)`. Benchmark (WP-46): `-- --quality=<tier>` and
+`get_active_features()`. Ids, groups and settings:
+[quality-tiers.md](quality-tiers.md).
+
 ## UI requests (owner: ui-developer, WP-19) — proposed
 
 `UiRoot` (autoload at `/root/UiRoot`, `extension/src/ui/ui_root.*`) is the
