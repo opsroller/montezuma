@@ -18,6 +18,7 @@
 #include "montezuma/board.hpp"
 #include "montezuma/bonuses.hpp"
 #include "montezuma/rng.hpp"
+#include "montezuma/totems.hpp"
 
 using namespace montezuma;
 
@@ -801,6 +802,22 @@ void test_swap_with_power_ups() {
         if (check(r.has_value(), "clear_cells result")) {
             check(r->cascades[0].cleared.size() == 9, "a totem's clear sets off a power-up in the same step");
             check(rep.steps[0].clear.triggered.size() == 1, "reported");
+        }
+    }
+    // A fire totem that hits a TNT piece sets it off (PWR-04).
+    {
+        Board b = plain_board();
+        PowerUpLayer layer(b);
+        layer.set({4, 4}, {PowerUpId::Tnt, 1});
+        TotemEffect fire;
+        fire.totem = TotemId::Fire;
+        fire.cells_to_clear = {{4, 4}};
+        Rng rng(5);
+        PowerUpMoveReport rep;
+        const auto r = clear_cells_with_power_ups(b, layer, prepare_board_effect(fire, b), rng, kTier1, rep);
+        if (check(r.has_value(), "fire result")) {
+            check(r->cascades[0].cleared.size() == 9, "fire on a TNT piece sets off the TNT");
+            check(rep.steps[0].clear.triggered.size() == 1 && layer.count() == 0, "TNT reported and gone");
         }
     }
 }

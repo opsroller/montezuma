@@ -34,7 +34,7 @@ row in the PR that finishes the package.
 | WP | Package | Role | Owns | Depends on | Done when | Status |
 |---|---|---|---|---|---|---|
 | 05 | Level data parser | gameplay-programmer | `core/src/level_data.*`, `core/include/montezuma/level_data.hpp`, `core/tests/test_level_data.cpp` | 01 | parses and validates the LevelData contract with clear errors | todo |
-| 06 | Power Totems | gameplay-programmer | `core/**/totems.*`, `core/tests/test_totems.cpp` | 01, 03 | each totem charges from streaks and returns a tested effect result | todo |
+| 06 | Power Totems | gameplay-programmer | `core/**/totems.*`, `core/tests/test_totems.cpp` | 01, 03 | each totem charges from streaks and returns a tested effect result | done |
 | 07 | Bonuses | gameplay-programmer | `core/**/bonuses.*`, `core/tests/test_bonuses.cpp` | 01, 03 | power-ups placed from runs of 4 and 5+, carried with their pieces, set off in the step that clears them, with each tier's effect per spec, tested | review |
 | 08 | Progress, save and trophies | gameplay-programmer | `core/**/progress.*`, `core/**/trophies.*`, tests | 05 | unlocks, best scores and 9 trophies serialise; tested | todo |
 | 09 | Artifact piece models | technical-artist | `game/assets/models/artifacts/`, `tools/assets/artifacts*` | 04 | 7 pieces, distinct colour and silhouette, in the manifest, under budget | active (placeholder style until 04) |
