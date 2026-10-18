@@ -1,0 +1,114 @@
+<!--
+SPDX-License-Identifier: GPL-2.0-or-later
+Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
+-->
+
+# MoveResult reference
+
+What `montezuma::Board` reports for a move, field by field, so a view can
+animate it without knowing the rules. Declared in
+`core/include/montezuma/board.hpp`; the contract between WP-01 and WP-13 is
+in [contracts.md](contracts.md#moveresult-events-owner-gameplay-programmer-wp-01--implemented).
+
+Coordinates: `x` runs left to right and `y` top to bottom, from 0. Pieces
+fall toward higher `y`. Kinds are artifact indices `0 .. kinds-1`;
+`Board::kEmpty` (`-1`) is an empty cell.
+
+## Producing a MoveResult
+
+| Call | Returns | Empty when |
+|---|---|---|
+| `Board::try_swap(Cell a, Cell b)` | the player's swap and everything it set off | the swap is illegal (not adjacent, out of bounds, or makes no run); the board is unchanged |
+| `Board::clear_cells(const std::vector<Cell>&)` | an effect (totem, bonus) clearing those cells and everything it set off | no in-bounds, non-empty cell is left after dropping duplicates and out-of-bounds cells; the board is unchanged |
+
+Neither throws for game reasons. Both resolve the same way: clear, collapse,
+refill, repeat while runs remain, then shuffle if no legal move is left.
+
+## Fields
+
+```cpp
+struct MoveResult {
+    std::vector<std::map<int, int>> steps;           // per step: kind -> pieces cleared
+    int  matched_kind = -1;
+    bool shuffled = false;
+    bool stuck = false;
+    std::optional<std::array<Cell, 2>> swap;
+    std::vector<CascadeStep> cascades;
+    std::vector<std::pair<Cell, Cell>> shuffle_map;  // {from, to}
+    bool redealt = false;
+    std::map<int, int> cleared_by_kind() const;
+    int  score() const;
+};
+```
+
+| Field | Meaning |
+|---|---|
+| `steps` | One map per cascade step, kind to number of pieces cleared. Same length as `cascades`; `steps[i]` counts `cascades[i].cleared` by kind. Quotas and score use it. |
+| `matched_kind` | `try_swap`: the kind that made up most of the swap's own match (drives Power Totem streaks). `clear_cells`: `-1`, because an effect is not a player match. |
+| `shuffled` | No legal move was left after resolving, and the board was reshuffled (see `shuffle_map`) or redealt (see `redealt`). |
+| `stuck` | No legal move was left and neither a reshuffle nor a fresh deal worked; the board is unchanged and the caller should end or restart the level. Practically unreachable. |
+| `swap` | `try_swap`: the two cells in the order passed. `clear_cells`: empty (`std::nullopt`). |
+| `cascades` | One `CascadeStep` per step. Step 0 is the swap's own match, or the cells `clear_cells` removed. Never empty. |
+| `shuffle_map` | When `shuffled && !redealt`: every piece that changed place, as `{from, to}`, ordered by `to` in row-major order (y, then x). Pieces not listed stayed put. Empty otherwise. |
+| `redealt` | When `shuffled`: the existing pieces could not be rearranged into a playable board, so a new board was dealt. `shuffle_map` is empty; read `Board::cells()` for the new layout (fade the old pieces out and the new ones in). |
+| `score()` | 10 points per piece times the 1-based step: `10 * count * (i + 1)`. |
+| `cleared_by_kind()` | `steps` summed over all steps. |
+
+### CascadeStep
+
+The order of events inside one step is: `runs` are found, `cleared` cells
+empty at once, `falls` move down at once, `spawns` drop in.
+
+| Field | Type | Order |
+|---|---|---|
+| `runs` | `Run { std::vector<Cell> cells; int kind; }` | Every horizontal run (rows top to bottom, left to right within a row), then every vertical run (columns left to right, top to bottom within a column). Cells inside a run go left to right or top to bottom. `Run::horizontal()` tells the two apart. |
+| `cleared` | `std::vector<Cell>` | Row-major (y, then x), each cell once. |
+| `falls` | `Fall { Cell from, to; int kind; }` | Column by column left to right; bottom to top within a column. Only pieces that move. |
+| `spawns` | `Spawn { Cell to; int kind; int drop; }` | Column by column left to right; bottom to top within a column. |
+
+- **Runs.** Each straight line of 3 or more of one kind. A cell shared by
+  two runs (L, T and plus shapes) appears in both runs but once in
+  `cleared`. A 4-run or 5-run is one run of that length. For a match step,
+  `cleared` is exactly the union of the runs. For step 0 of `clear_cells`,
+  `runs` is empty and `cleared` is the effect's cells.
+- **Falls.** `from.x == to.x` and `to.y > from.y`, always. No two falls
+  share a `from` or a `to`. Apply them simultaneously: every `to` is empty
+  once the cleared cells and every `from` are vacated.
+- **Spawns.** `drop >= 1` is how many rows above the top edge the new piece
+  starts: it starts at `y = to.y - drop`. In a column with `n` new pieces,
+  the piece landing in row `y` has `drop = n - y`, so the column's new
+  pieces enter as a solid stack (the lowest starts one row above the board,
+  the highest `n` rows above). Spawns fill exactly the cells still empty
+  after the falls.
+
+## Replaying a result
+
+Starting from a copy of `Board::cells()` taken before the call, this
+reproduces the board after every step and after the move, exactly:
+
+1. If `swap` is set, swap its two cells.
+2. For each `CascadeStep`: set every `cleared` cell to empty; lift every
+   `falls[i].from` piece, then put each at its `to`; put each spawn's `kind`
+   at its `to`.
+3. If `shuffled && !redealt`: `after[to] = before[from]` for each pair in
+   `shuffle_map`, reading from a copy taken before this stage.
+4. If `redealt`: the board is `Board::cells()`.
+
+`core/tests/test_cascade_events.cpp` checks this replay, and every
+invariant above, over thousands of random moves and effects on many seeds
+and board sizes.
+
+## Determinism
+
+The same seed and the same calls give identical `MoveResult`s (every field
+compares equal with `operator==`). Random draws happen in a fixed order:
+refills column by column left to right, bottom to top; shuffles as a
+Fisher-Yates pass from the last cell down. Adding these events did not
+change any board: a seed plays out exactly as it did before.
+
+## For the Godot binding
+
+`Match3Board::try_swap` returns the fields as a `Dictionary` with the same
+keys and `Vector2i` cells. Today (opsroller/montezuma#3) it exposes `steps`,
+`matched_kind`, `shuffled`, `stuck` and `score`; the cell-level fields are
+added in the binding by its owner.

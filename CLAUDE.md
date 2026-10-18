@@ -1,7 +1,8 @@
 # Montezuma's
 
 A cross-platform 3D remake of the gameplay of *The Treasures of Montezuma*
-(2009 match-3), built with Godot 4 and C++20, licensed GPL-2.0-or-later.
+(Visual Shape and Alawar, PC 2006), built with Godot 4 and C++20, licensed
+GPL-2.0-or-later.
 Read `docs/reference/project-profile.md` before any work: it has the
 stack, commands, paths each role owns and the project's rules.
 
