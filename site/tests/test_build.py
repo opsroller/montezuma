@@ -133,6 +133,9 @@ class BuildTest(unittest.TestCase):
         demo.mkdir()
         for name in build.DEMO_FETCHED:
             (demo / name).write_bytes(b"\0asm")
+        (demo / build.DEMO_SOURCE).write_text(
+            "Montezuma's 1.2.0-dev.3.gabc\n\nhttps://github.com/opsroller/montezuma/tree/" + "a" * 40 + "\n")
+        (demo / build.DEMO_NOTICES).write_text("notices")
         return demo
 
     def test_demo_dir_switches_to_godot_and_is_copied(self):
@@ -145,12 +148,26 @@ class BuildTest(unittest.TestCase):
     def test_demo_file_sizes_and_no_export_page(self):
         demo = self.make_export()
         (demo / "montezuma.html").write_text("<!doctype html>")
+        (demo / "montezuma.icon.png").write_bytes(b"png")
         out = self.run_build(demo_dir=demo)
         page = (out / "index.html").read_text()
         self.assertIn('data-file-sizes="{&quot;play/libmontezuma.web.template_release.wasm32.nothreads.wasm&quot;: 4, '
                       '&quot;play/montezuma.pck&quot;: 4, &quot;play/montezuma.side.wasm&quot;: 4, '
                       '&quot;play/montezuma.wasm&quot;: 4}"', page)
         self.assertFalse((out / "play/montezuma.html").exists())
+        self.assertFalse((out / "play/montezuma.icon.png").exists())
+
+    def test_license_page_names_the_demo_build_and_its_source(self):
+        page = (self.run_build(demo_dir=self.make_export()) / "license/index.html").read_text()
+        self.assertIn("version 1.2.0-dev.3.gabc", page)
+        self.assertIn('href="https://github.com/opsroller/montezuma/tree/' + "a" * 40 + '"', page)
+        self.assertIn('href="../play/THIRD-PARTY-NOTICES.txt"', page)
+
+    def test_demo_without_source_notice_fails(self):
+        demo = self.make_export()
+        (demo / build.DEMO_SOURCE).write_text("no version here")
+        with self.assertRaisesRegex(build.BuildError, "SOURCE.txt"):
+            self.run_build(demo_dir=demo)
 
     def test_stub_has_no_file_sizes(self):
         self.assertIn('data-file-sizes="{}"', (self.run_build() / "index.html").read_text())

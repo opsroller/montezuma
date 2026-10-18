@@ -43,7 +43,7 @@ Download, Credits, License and Source code.
 |---|---|---|
 | `--out DIR` | `site/_site` | Output folder; replaced on every build. An existing non-empty folder is deleted only if it holds the `.montezuma-site-build` marker an earlier build wrote |
 | `--base-url URL` | `https://opsroller.github.io/montezuma/` | Canonical URLs and sitemap |
-| `--demo-dir DIR` | none | Unzipped `montezuma-<version>-web` folder from the `web` workflow. It must hold `montezuma.js`, `montezuma.wasm`, `montezuma.side.wasm`, `montezuma.pck` and `libmontezuma.web.template_release.wasm32.nothreads.wasm`, or the build fails naming what is missing. Copied to `play/` without the export's own `montezuma.html`; the page runs the real demo, gets the byte sizes of `montezuma.wasm`, `montezuma.side.wasm`, `montezuma.pck` and the extension in `#play[data-file-sizes]` (Godot's loader needs them to report progress; the bar's total is their sum) and the play button reads "Play the intro level (N MB)", N being those five files gzipped, about what a compressing host sends. Without it the page runs the stub demo |
+| `--demo-dir DIR` | none | Unzipped `montezuma-<version>-web` folder from the `web` workflow. It must hold `montezuma.js`, `montezuma.wasm`, `montezuma.side.wasm`, `montezuma.pck`, `libmontezuma.web.template_release.wasm32.nothreads.wasm`, `SOURCE.txt` and `THIRD-PARTY-NOTICES.txt`, or the build fails naming what is missing. Copied to `play/` without the export's own `montezuma.html` and its `*.png` icons (Godot's logo); `/license/` names the demo's version and commit from `SOURCE.txt` and links both notice files; the page runs the real demo, gets the byte sizes of `montezuma.wasm`, `montezuma.side.wasm`, `montezuma.pck` and the extension in `#play[data-file-sizes]` (Godot's loader needs them to report progress; the bar's total is their sum) and the play button reads "Play the intro level (N MB)", N being those five files gzipped, about what a compressing host sends. Without it the page runs the stub demo |
 
 The build fails, naming the file and field, when release data is invalid,
 a credits link is not `https://` or `#…`, or a template placeholder has no
@@ -191,8 +191,9 @@ without the win heading. Without JavaScript it jumps to `#download`.
 
 ## Hosting
 
-**Not public yet.** There is no Pages deployment; CI builds the site as a
-downloadable preview artifact only. Going public is decided as described
+**Not public yet.** There is no Pages deployment, and no CI job builds a
+site preview yet; CI runs the site's tests (CTest `site_build_tests` and
+`site_js_tests`). Going public is decided as described
 in [About the website](../explanation/about-the-website.md).
 
 When it goes live, the target is GitHub Pages, deployed from `main` by a

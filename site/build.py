@@ -31,7 +31,12 @@ STORE_NAMES = {"app-store": "the App Store", "google-play": "Google Play"}
 DEMO_ENTRY = "montezuma.js"
 # The game's extension, which the page preloads into Godot's file system.
 DEMO_EXTENSION = "libmontezuma.web.template_release.wasm32.nothreads.wasm"
-DEMO_OWN_PAGE = "montezuma.html"
+# Files of the export the site never serves: Godot's own page and its
+# default icons (Godot's logo, not our artwork).
+DEMO_UNUSED = ("montezuma.html", "*.png")
+# The package's source and third-party notices, linked from /license/.
+DEMO_SOURCE = "SOURCE.txt"
+DEMO_NOTICES = "THIRD-PARTY-NOTICES.txt"
 # What the page fetches after the click (contract: Web demo hand-off).
 DEMO_FETCHED = (DEMO_ENTRY, "montezuma.wasm", "montezuma.side.wasm",
                 "montezuma.pck", DEMO_EXTENSION)
@@ -172,6 +177,21 @@ def render_source_line(data: dict) -> str:
     return text
 
 
+def render_demo_line(source: Path) -> str:
+    """Which build the bundled demo is and where its exact source is (GPL section 3)."""
+    text = source.read_text(encoding="utf-8")
+    version = re.match(r"Montezuma's (\S+)", text)
+    tree = re.search(r"https://\S+/tree/([0-9a-f]{40})", text)
+    if not version or not tree:
+        raise BuildError(f"{source}: expected \"Montezuma's <version>\" and a /tree/<commit> source URL")
+    url = html.escape(tree.group(0))
+    return (f'<p>The playable demo on this site is version {html.escape(version.group(1))}, '
+            f'built from commit <a href="{url}"><code>{tree.group(1)[:12]}</code></a>, where its '
+            f'complete source is. Its <a href="../play/{DEMO_SOURCE}">source notice</a> and '
+            f'<a href="../play/{DEMO_NOTICES}">complete third-party notices</a>, including the '
+            f'libraries Godot bundles, ship with it.</p>')
+
+
 # ---- Credits (a small Markdown subset) -------------------------------------
 
 _INLINE = [
@@ -310,14 +330,16 @@ def build(out: Path, base_url: str, demo_dir: Path | None,
     demo_mode = "stub"
     play_label = "Try the demo preview"
     file_sizes = {}
+    demo_line = ""
     if demo_dir is not None:
         if not (demo_dir / DEMO_ENTRY).is_file():
             raise BuildError(f"{demo_dir}: no {DEMO_ENTRY}; is this the web export?")
-        missing = [f for f in DEMO_FETCHED if not (demo_dir / f).is_file()]
+        missing = [f for f in DEMO_FETCHED + (DEMO_SOURCE, DEMO_NOTICES) if not (demo_dir / f).is_file()]
         if missing:
             raise BuildError(f"{demo_dir}: the web export is missing {', '.join(missing)}")
         demo_mode = "godot"
         play_label = f"Play the intro level ({format_size(demo_download_size(demo_dir))})"
+        demo_line = render_demo_line(demo_dir / DEMO_SOURCE)
         # Godot's loader needs the sizes up front to report progress; it
         # looks them up by the URL it fetches. main.js sums them all for the
         # progress bar, the side module (which it fetches itself) included.
@@ -351,6 +373,7 @@ def build(out: Path, base_url: str, demo_dir: Path | None,
         },
         "license/index.html": {
             "source_line": render_source_line(data),
+            "demo_line": demo_line,
             "license_text": license_text,
             "notices": notices_html,
             "footer": render_footer("../", data["source_url"]),
@@ -365,7 +388,7 @@ def build(out: Path, base_url: str, demo_dir: Path | None,
     if demo_dir is not None:
         # The export's own page is a second, unlinked way into the game
         # without the site's fallbacks; the site never uses it.
-        shutil.copytree(demo_dir, out / "play", ignore=shutil.ignore_patterns(DEMO_OWN_PAGE))
+        shutil.copytree(demo_dir, out / "play", ignore=shutil.ignore_patterns(*DEMO_UNUSED))
 
     urls = [base_url + page.removesuffix("index.html") for page in PAGES]
     (out / "sitemap.xml").write_text(
