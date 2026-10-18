@@ -16,6 +16,7 @@ own folder.
 - [Contracts](reference/contracts.md): interfaces between work packages.
 - [Work packages](reference/work-packages.md): the plan and its status.
 - [MoveResult events](reference/move-result.md): cascade steps, falls, spawns and how to replay a move.
+- [Board view](reference/board-view.md): the 3D board's classes, scenes, camera fit and feel constants.
 - [Rules spec](reference/rules-spec.md): how the game plays, with
   [Power Totems](reference/rules-totems.md), [power-ups](reference/rules-power-ups.md),
   [bonus games](reference/rules-bonus-games.md) and [sources](reference/rules-sources.md).
@@ -29,7 +30,11 @@ own folder.
 
 ## How-to guides
 
-- [Build and test](how-to/build-and-test.md): build the core and extension, run tests, load the game.
+- [Build and test](how-to/build-and-test.md): build the core and extension, run tests, load the game, capture screenshots.
+
+## Explanation
+
+- [About the board view](explanation/about-the-board-view.md): why the view never applies rules, and how the camera frames the board.
 
 Tutorials, more how-to guides and explanations are added by the work
 packages that create what they describe.
