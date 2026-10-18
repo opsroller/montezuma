@@ -40,9 +40,32 @@ runs one compiler call per file, through the launcher, on every OS.
 ## What is not cached, and why
 
 Downloads that take a second (Godot for the headless load) are left
-alone: restoring a cache costs about as much as the download. The core and
-sanitizer builds take seconds. Caches that do not pay their way are not
-added.
+alone: restoring a cache costs about as much as the download. Caches that
+do not pay their way are not added.
+
+The core, sanitizer and balance-simulator builds were once left uncached
+for that reason. As the core grew they reached 35 to 47 seconds of
+compiling on every run, the longest step in their jobs, so they now go
+through ccache like the extension builds. The Windows core job is the
+exception: it uses the Visual Studio generator, which ignores compiler
+launchers, and runs only on `main`.
+
+## Prebuilt images, and where they are not used
+
+The web browser check needs Chromium, Firefox and WebKit plus dozens of
+system libraries. Installing them with `playwright install --with-deps`
+took about 40 seconds of apt and browser downloads on every run. The
+Playwright project publishes an image with exactly those browsers for each
+release, so the check runs in that image, pinned by digest, and installs
+nothing. The image tag follows the Playwright version pinned for local
+runs in `tools/release/web-requirements.txt`, so CI and a contributor's
+machine drive the same browser builds.
+
+The compile jobs stay on the stock runner images. Those already carry
+CMake, Ninja and the compilers (the cache action adds ccache), so a
+build container would only add an image pull. Godot and Emscripten come from pinned, checksummed
+downloads restored from `actions/cache`, which is as fast as pulling an
+image and keeps the version in one file, `tools/release/godot.env`.
 
 ## Cache safety
 

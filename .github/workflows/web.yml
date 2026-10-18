@@ -4,7 +4,8 @@
 # Web demo build: compiles the GDExtension to WebAssembly with the pinned
 # Emscripten, exports the single-threaded web build of the intro level with
 # the pinned Godot, and runs it in headless Chromium, Firefox and WebKit the
-# way the site loads it. The package is the run's artifact; nothing is deployed.
+# way the site loads it, inside Playwright's prebuilt image. The package is
+# the run's artifact; nothing is deployed.
 # Reference: docs/reference/build-pipeline.md
 name: web
 
@@ -84,15 +85,38 @@ jobs:
           name: web-export-logs
           path: dist/web/logs/
           retention-days: 7
-      - name: Install the browser test tools
-        run: |
-          python3 -m venv ~/web-smoke
-          ~/web-smoke/bin/pip install --require-hashes -r tools/release/web-requirements.txt
-          ~/web-smoke/bin/python -m playwright install --with-deps chromium firefox webkit
-      - name: Run the demo in a browser
-        run: ~/web-smoke/bin/python tools/release/web-smoke.py dist/web/montezuma-*-web.zip chromium firefox webkit
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: montezuma-web
           path: dist/web/montezuma-*
           if-no-files-found: error
+
+  # The browser check runs in Playwright's own image, which ships the three
+  # browsers and their system libraries, so no run installs them. The tag
+  # must match playwright== in tools/release/web-requirements.txt; the digest
+  # pins the exact image. See docs/explanation/about-ci-caching.md.
+  browser-smoke:
+    name: browser smoke
+    needs: web
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright/python:v1.56.0-noble@sha256:a7f6cf3ae520c9d670ad956572c13747ed5abdbba5123a01526f873ed1662528
+      # The runner's user, as Playwright's CI guide advises: Firefox refuses
+      # to start as root with a home directory it does not own.
+      options: --user 1001
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          sparse-checkout: tools/release
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: montezuma-web
+          path: dist/web
+      - name: Run the demo in a browser
+        run: |
+          if ! python3 tools/release/web-smoke.py dist/web/montezuma-*-web.zip chromium firefox webkit; then
+            echo "::error::The web demo did not hand off montezuma:ready then montezuma:level-completed in a browser. Reproduce with docs/how-to/export-a-web-build.md (check it in a browser)."
+            exit 1
+          fi
