@@ -16,6 +16,7 @@ own folder.
 - [Contracts](reference/contracts.md): interfaces between work packages.
 - [Work packages](reference/work-packages.md): the plan and its status.
 - [Board themes](reference/board-themes.md): theme files, asset names, generators, budgets, validator.
+- [MoveResult events](reference/move-result.md): cascade steps, falls, spawns and how to replay a move.
 - [Rules spec](rules-spec.md): the game's rules (moving to `reference/`).
 
 ## How-to guides
