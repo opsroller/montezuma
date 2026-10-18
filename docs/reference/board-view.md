@@ -259,7 +259,7 @@ All optional; a result without them plays as before.
 |---|---|
 | `power_ups` | `[{cell, id, cells, time, multiplier, hint}]`: power-ups going off as the step clears, with the cells each clears |
 | `power_ups_placed` | `[{cell, id}]`: badges placed after the step's refill |
-| `gems_collected`, `steel_removed`, `chains_broken` | markers lost as the step clears |
+| `gems_collected`, `steel_removed`, `chains_broken` | markers lost as the step clears; a broken chain's piece stays on its cell (`OBS-05`) |
 | `gems_placed` | gems placed after the refill |
 | `steel_spawned` | new pieces that arrive as steel |
 | `totem` | `{id, targets, repaints, time, points, gems_harvested, gems_placed, chains_removed, power_ups_placed}`: the totem firing at this step's start |

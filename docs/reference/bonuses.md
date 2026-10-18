@@ -222,7 +222,7 @@ saved with a level in progress.
 |---|---|
 | `PowerUpLayer(w, h)`, `PowerUpLayer(const Board&)` | empty layer; throws `std::invalid_argument` for a size below 1 |
 | `at`, `has`, `set`, `erase`, `clear`, `count`, `entries` | lookups and edits; out-of-bounds cells read as empty and are ignored on write; `clear` also empties `pending`; `count` is on the board only |
-| `expand_clear(board, run_cells, step, marks) const` | the step's full clear with every power-up it reaches (`PWR-04`); `triggered` lists those on run cells first (row-major), then each one reached, in order |
+| `expand_clear(board, run_cells, step, marks, holds) const` | the step's full clear with every power-up it reaches (`PWR-04`); `triggered` lists those on run cells first (row-major), then each one reached, in order. Cells marked in `holds` (row-major chain marks, empty for none) go to `held` instead of `cells`, and a power-up on one does not go off (`OBS-05`) |
 | `apply_swap(a, b)`, `apply_step(step)` | follow a swap; drop power-ups on cleared cells and move the rest with the falls |
 | `apply_shuffle(result, board, rng, marks)` | follow `shuffle_map`; on a redeal, re-place every power-up |
 | `remap(result, board, rng, marks)` | `apply_swap`, `apply_step` per step, `apply_shuffle` |
