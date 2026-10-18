@@ -57,7 +57,9 @@ in a browser.
 
 ## Why the site is not public yet
 
-The site goes public only once the game is polished. The team owns that
+The site goes public only once the game is polished: its front page is
+the game itself, so it is the project's first impression, and an
+unfinished level there would undercut the downloads it leads to. The team owns that
 quality bar and decides when the site is ready; the project-manager
 takes the decision to the owner, whose only sign-off is going public.
 
