@@ -10,16 +10,20 @@ shader_type spatial;
 render_mode blend_mix, depth_draw_never, cull_disabled, shadows_disabled, diffuse_lambert_wrap, specular_disabled, skip_vertex_transform;
 
 uniform sampler2D flame_sheet : filter_linear_mipmap, repeat_disable;
-uniform int sheet_grid : hint_range(1, 16) = 4;
 uniform vec4 smoke_color : source_color = vec4(0.23, 0.21, 0.2, 1.0);
-uniform float opacity : hint_range(0.0, 1.0) = 0.5;
+uniform float opacity : hint_range(0.0, 1.0) = 0.35;
 // Light passing through the smoke from behind.
 uniform float translucency : hint_range(0.0, 1.0) = 0.5;
 uniform float soft_distance : hint_range(0.0, 2.0) = 0.3;
 uniform sampler2D depth_texture : hint_depth_texture, filter_nearest;
 
+// Written by gen_fire.py with the sheets: must match tools/assets/fx/fire.json.
+group_uniforms generated;
+// Tiles per row and column of the sheet (4 or 8).
+uniform int sheet_grid : hint_range(1, 16) = 4;
 // Length of the flipbook loop in seconds (64 frames at 30 fps = 16 at 7.5).
-uniform float loop_seconds = 2.1333;
+uniform float loop_seconds : hint_range(0.1, 10.0) = 2.1333;
+group_uniforms;
 
 varying float frame;
 

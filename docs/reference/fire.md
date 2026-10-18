@@ -92,6 +92,11 @@ cross-faded into the first, so frame 63 runs into frame 0.
 
 Both loops last 2.13 s, so the materials share `loop_seconds`.
 
+`gen_fire.py` also writes each sheet's Godot `.import` file (ignored by git,
+like the sheets): lossless, `detect_3d/compress_to=0`, mipmaps on for
+`T_Fire_Flame` (a tile is a few dozen pixels from the game camera) and off
+for `T_Fire_Motion` (averaged vectors are wrong at tile edges).
+
 ## `PF_BrazierFire`
 
 Parameters come from the theme's `fire` block (`tools/assets/themes/temple.json`)
@@ -127,14 +132,20 @@ soft edges.
 |---|---|---|---|
 | `flame_sheet`, `motion_sheet` | | | the sheets (data, not `source_color`) |
 | `sheet_grid` | 1 to 16 | 4 (8 in `hi/`) | tiles per side |
-| `motion_scale` | | 0.12 (0.03 in `hi/`) | must equal the sheet's `motion_scale` in `fire.json` |
-| `loop_seconds` | | 2.1333 | loop length |
-| `emission_gamma` | | 1.0 | must equal `render.emission_gamma` |
-| `temperature_min_k`, `temperature_max_k` | 600 to 2500, 1000 to 4000 | 1100, 1900 | kelvin for the sheet's temperature 0 and 1 |
+| `motion_scale` | 0.001 to 0.5 | 0.12 (0.03 in `hi/`) | must equal the sheet's `motion_scale` in `fire.json` |
+| `loop_seconds` | 0.1 to 10 | 2.1333 | loop length |
+| `emission_gamma` | 0.1 to 4 | 1.0 | must equal `render.emission_gamma` |
+| `temperature_min_k`, `temperature_max_k` | 600 to 2500, 1000 to 4000 | 1100, 1900 | kelvin for the sheet's temperature 0 and 1; keep min below max (a min above max inverts the colours but cannot blow out, since brightness is relative to the larger of the two) |
 | `temperature_brightness` | 0 to 4 | 1.5 | brightness grows as (T / max)^(4 × this) |
 | `intensity` | 0 to 40 | 10 | HDR brightness |
 | `foreshorten` | 0 to 1 | 0.45 | how much a quad shortens when seen from above |
 | `soft_distance` | 0 to 1 | 0.12 | metres over which the flame fades into geometry |
+
+`sheet_grid`, `motion_scale`, `loop_seconds` and `emission_gamma` sit in the
+inspector's `generated` group: they describe the sheets and change only
+with `fire.json`. The shader's own defaults are the base material's
+values, so resetting one in the inspector keeps the base sheet working.
+Below 1000 K the blackbody fit is out of range and gives plain red.
 
 Colour is a blackbody at the stored temperature (Planckian locus fit by
 Krystek, converted to linear sRGB), times emission, brightness and the
@@ -158,7 +169,9 @@ sample.
 ### `SH_Ember`, `SH_EmberTrail`
 
 Unshaded, additive. Colour from the particle ramp: yellow-white, orange,
-dull red, gone. `intensity` 0 to 40, default 8. `SH_EmberTrail` uses the
+dull red, gone. The ramp's colours reach the shader as linear values,
+so author them in linear (`Color(1, 0.55, 0.15)` displays paler than the
+same sRGB numbers). `intensity` 0 to 40, default 8. `SH_EmberTrail` uses the
 `particle_trails` render mode and fades along the trail.
 
 ### `SH_HeatHaze`
@@ -195,16 +208,22 @@ Shadows, volumetric fog energy and tier switches are handled by
 
 | | `desktop-high` | `desktop-standard` | `mobile` | `web` |
 |---|---|---|---|---|
-| Flame flipbook | 8×8, motion vectors (`hi/` materials) | 8×8 | 4×4 | 4×4 |
-| Smoke | lit, 8×8 | lit, 8×8 | lit, 4×4 | lit, 4×4 |
+| Flame flipbook | 8×8, motion vectors (`hi/` materials)\* | 8×8\* | 4×4 | 4×4 |
+| Smoke | lit, 8×8\* | lit, 8×8\* | lit, 4×4 | lit, 4×4 |
 | Embers | trails | trails | trails | dots, no trails |
 | Heat haze | yes | yes | no | no |
 | Fire light shadows | all four | nearest two | none | none |
-| Fire light in volumetric fog | yes | no | no fog | no fog |
+| Fire light in volumetric fog | yes\*\* | no | no fog | no fog |
 
-The `hi/` materials reach the game through `QualityTiers::resolve_variant`
-like every other desktop material; the look-dev scene `LD_Temple_Fire_Hi`
-sets them directly. The web export strips `hi/`, so it never carries the
+\* The `hi/` materials are chosen by `QualityTiers::resolve_variant`, which
+the board view does not call for materials yet
+([Board themes](board-themes.md)), so the game shows the 4×4 base sheets on
+every tier for now; the look-dev scene `LD_Temple_Fire_Hi` sets the `hi/`
+materials directly.
+
+\*\* The light carries `light_volumetric_fog_energy` 2.0, but the temple
+environment does not enable volumetric fog yet, so nothing shows until it
+does. The web export strips `hi/`, so it never carries the
 8×8 sheets.
 
 ## Cost
@@ -212,14 +231,16 @@ sets them directly. The web export strips `hi/`, so it never carries the
 | Item | Number |
 |---|---|
 | Particles, four fires | 4 × (10 flame + 12 smoke + 18 embers) = 160, budget 2,000 on `web` |
-| Draw calls added | 11 on `web` (268 → 279 at the benchmark's p95) |
-| Texture memory | two 1024×2048 sheets (`hi/`) and two 512×1024 (base): about 22 MB and 6 MB as RGBA8 with mipmaps, a quarter of that once Godot VRAM-compresses them on import |
-| Flame pixel | 4 texture samples + 1 depth sample, about 60 ALU |
+| Draw calls added | 11 on `web` (268 → 279 at the benchmark's p95). The web cap is 200 ([Visual target](visual-target.md)); `main` was already over it before the fire |
+| Texture memory | lossless RGBA8, no VRAM compression (block compression would quantise the temperature and motion data): base 512×1024 flame with mipmaps 2.7 MiB + motion 2 MiB; `hi/` 1024×2048 flame with mipmaps 10.7 MiB + motion 8 MiB |
+| Flame pixel | 4 texture samples + 1 depth sample, about 110 ALU (blackbody fit, four tile lookups, edge fades) |
 | Measured | Benchmark, `web` tier, llvmpipe software renderer: mean GPU frame 868 ms with the fire against 819 ms without (+6 %). Software timings only rank costs; the tier budgets are checked on reference hardware with [Run the benchmark](../how-to/run-the-benchmark.md). |
 
-The Compatibility renderer logs three warnings at start that it does not
-support particle trails; they come from the hidden `Embers` node and are
-harmless.
+`Embers` is authored without trails and with its tube mesh in
+`metadata/trail_mesh`; `QualityTiers` attaches the mesh and turns trails on
+only on tiers that have them, and `SH_EmberTrail` drops the `particle_trails`
+render mode on Compatibility, so the web build logs no trail warnings (the
+web smoke test fails on any browser console warning).
 
 ## Readability
 

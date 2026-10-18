@@ -322,6 +322,33 @@ def to_png(path, img):
     Image.fromarray(np.round(np.clip(img, 0, 1) * 255).astype(np.uint8), mode="RGBA").save(path, optimize=True)
 
 
+# Godot import settings for the sheets (git ignores both). The flame sheet
+# gets mipmaps, since the game camera shrinks a tile to a few dozen pixels;
+# the motion sheet must not, since averaged vectors are wrong at tile edges.
+# Both stay lossless: block compression would quantise the data channels.
+IMPORT = """[remap]
+
+importer="texture"
+type="CompressedTexture2D"
+
+[params]
+
+compress/mode=0
+mipmaps/generate={mipmaps}
+detect_3d/compress_to=0
+"""
+
+
+def write_import(png, mipmaps):
+    path = png.with_name(png.name + ".import")
+    flag = "true" if mipmaps else "false"
+    old = path.read_text() if path.exists() else ""
+    # Godot rewrites the file on import; keep its version once it agrees.
+    if f"mipmaps/generate={flag}" not in old or "detect_3d/compress_to=0" not in old:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(IMPORT.format(mipmaps=flag))
+
+
 def main():
     params_path = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "tools/assets/fx/fire.json"
     p = json.loads(params_path.read_text())
@@ -334,6 +361,8 @@ def main():
     h.update(params_path.read_bytes())
     h.update(f"numpy {np.__version__} Pillow {PIL.__version__}".encode())
     stamp = out_dir / ".inputs"
+    for o in outputs:
+        write_import(o, mipmaps=o.name == "T_Fire_Flame.png")
     if stamp.exists() and stamp.read_text().strip() == h.hexdigest() and all(o.exists() for o in outputs):
         print(f"{p['theme']} fire: up to date")
         return

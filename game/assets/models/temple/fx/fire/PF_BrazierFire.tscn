@@ -148,10 +148,10 @@ lifetime = 1.6
 preprocess = 1.6
 visibility_aabb = AABB(-1.5, -0.5, -1.5, 3, 4, 3)
 process_material = SubResource("ember_process")
-draw_pass_1 = SubResource("ember_tube")
+draw_pass_1 = SubResource("ember_quad")
 material_override = ExtResource("3")
-trail_enabled = true
 trail_lifetime = 0.12
+metadata/trail_mesh = SubResource("ember_tube")
 
 [node name="EmbersNoTrail" type="GPUParticles3D" parent="." groups=["quality_fallback:particle_trails"]]
 cast_shadow = 0

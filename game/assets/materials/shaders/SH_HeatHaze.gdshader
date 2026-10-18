@@ -10,7 +10,7 @@
 shader_type spatial;
 render_mode unshaded, blend_mix, depth_draw_never, cull_disabled, shadows_disabled, fog_disabled, skip_vertex_transform;
 
-uniform sampler2D screen_texture : hint_screen_texture, filter_linear_mipmap;
+uniform sampler2D screen_texture : hint_screen_texture, filter_linear;
 uniform sampler2D noise : filter_linear_mipmap, repeat_enable;
 // Largest screen shift, as a fraction of the screen.
 uniform float strength : hint_range(0.0, 0.05) = 0.006;

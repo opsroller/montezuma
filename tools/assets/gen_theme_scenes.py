@@ -255,8 +255,10 @@ def brazier_fire(p, theme):
     r.body += particles("Smoke", sm["amount"], sm["lifetime"], "smoke_process", "smoke_quad", mat["MI_FireSmoke"],
                         ["draw_order = 1"])
     r.body += particles("Flame", fl["amount"], fl["lifetime"], "flame_process", "flame_quad", mat["MI_Fire"])
-    r.body += particles("Embers", em["amount"], em["lifetime"], "ember_process", "ember_tube", mat["MI_EmberTrail"],
-                        ["trail_enabled = true", f"trail_lifetime = {em['trail_lifetime']}"],
+    # The trail mesh waits in metadata: QualityTiers attaches it and turns
+    # trails on only where the tier has them (Compatibility warns otherwise).
+    r.body += particles("Embers", em["amount"], em["lifetime"], "ember_process", "ember_quad", mat["MI_EmberTrail"],
+                        [f"trail_lifetime = {em['trail_lifetime']}", 'metadata/trail_mesh = SubResource("ember_tube")'],
                         groups="quality:particle_trails")
     r.body += particles("EmbersNoTrail", em["amount"], em["lifetime"], "ember_process", "ember_quad", mat["MI_Ember"],
                         groups="quality_fallback:particle_trails")

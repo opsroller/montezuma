@@ -21,16 +21,12 @@ render_mode unshaded, blend_add, depth_draw_never, cull_disabled, shadows_disabl
 uniform sampler2D flame_sheet : filter_linear_mipmap, repeat_disable;
 // RG: motion to the next frame in tile UV, 0.5 + motion / (2 * motion_scale).
 uniform sampler2D motion_sheet : filter_linear, repeat_disable;
-// Tiles per row and column of both sheets (4 or 8).
-uniform int sheet_grid : hint_range(1, 16) = 4;
-uniform float motion_scale = 0.05;
-uniform float emission_gamma = 0.7;
 // Temperatures (kelvin) that the sheet's 0 and 1 stand for.
 uniform float temperature_min_k : hint_range(600.0, 2500.0) = 1100.0;
 uniform float temperature_max_k : hint_range(1000.0, 4000.0) = 1900.0;
-// Hotter gas outshines cooler gas by temperature^this (relative).
+// Hotter gas outshines cooler gas by (T / hottest)^(4 x this).
 uniform float temperature_brightness : hint_range(0.0, 4.0) = 1.5;
-uniform float intensity : hint_range(0.0, 40.0) = 6.0;
+uniform float intensity : hint_range(0.0, 40.0) = 10.0;
 // 0: the quad keeps its height seen from above; 1: it shortens as a real
 // vertical sheet would.
 uniform float foreshorten : hint_range(0.0, 1.0) = 0.45;
@@ -38,8 +34,16 @@ uniform float foreshorten : hint_range(0.0, 1.0) = 0.45;
 uniform float soft_distance : hint_range(0.0, 1.0) = 0.12;
 uniform sampler2D depth_texture : hint_depth_texture, filter_nearest;
 
+// Written by gen_fire.py with the sheets: must match tools/assets/fx/fire.json.
+group_uniforms generated;
+// Tiles per row and column of both sheets (4 or 8).
+uniform int sheet_grid : hint_range(1, 16) = 4;
+// The sheet's motion_scale in fire.json.
+uniform float motion_scale : hint_range(0.001, 0.5, 0.001) = 0.12;
+uniform float emission_gamma : hint_range(0.1, 4.0) = 1.0;
 // Length of the flipbook loop in seconds (64 frames at 30 fps = 16 at 7.5).
-uniform float loop_seconds = 2.1333;
+uniform float loop_seconds : hint_range(0.1, 10.0) = 2.1333;
+group_uniforms;
 
 varying float frame;
 
@@ -112,7 +116,9 @@ void fragment() {
 
 	float emission = pow(s.r, 1.0 / emission_gamma);
 	float kelvin = mix(temperature_min_k, temperature_max_k, s.g);
-	float hot = pow(kelvin / temperature_max_k, temperature_brightness * 4.0);
+	// Relative to the hottest the sheet can be, so a min above max dims
+	// instead of blowing out.
+	float hot = pow(kelvin / max(temperature_min_k, temperature_max_k), temperature_brightness * 4.0);
 	vec3 colour = blackbody(kelvin) * emission * hot * intensity;
 
 	// Soft particle: fade where the quad cuts into the bowl or stone.

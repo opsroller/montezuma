@@ -4,9 +4,15 @@
 // Ember with a trail: the particle's tube trail mesh, brightest at the
 // head and fading along the trail, coloured by the particle's colour ramp
 // (COLOR). Additive and unshaded, in HDR for glow. Shown on tiers with
-// particle trails (quality:particle_trails). Parameters: docs/reference/fire.md.
+// particle trails (quality:particle_trails). The Compatibility renderer has
+// no trails and warns about the render mode, so it compiles without it.
+// Parameters: docs/reference/fire.md.
 shader_type spatial;
+#if CURRENT_RENDERER == RENDERER_COMPATIBILITY
+render_mode unshaded, blend_add, depth_draw_never, cull_disabled, shadows_disabled, fog_disabled;
+#else
 render_mode unshaded, blend_add, depth_draw_never, cull_disabled, shadows_disabled, fog_disabled, particle_trails;
+#endif
 
 uniform float intensity : hint_range(0.0, 40.0) = 8.0;
 
