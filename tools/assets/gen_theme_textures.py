@@ -23,6 +23,10 @@ variant is drawn once at hi size and box-filtered down for the base, so both
 show the same surface. Every texture tiles seamlessly (noise is built in the
 frequency domain, cells wrap), so materials map them triplanar without UVs.
 Same parameters and seed give the same bytes.
+
+Next to every PNG it writes the Godot .import file with the map's import
+settings (tools/assets/texture_import.py: mipmaps, VRAM compression, RGTC for
+normal maps), on every run, since git and the CI texture cache keep neither.
 """
 
 import hashlib
@@ -33,6 +37,8 @@ from pathlib import Path
 import numpy as np
 import PIL
 from PIL import Image
+
+import texture_import
 
 ROOT = Path(__file__).resolve().parents[2]
 NORMAL_REF = 1024  # normal_strength is tuned for this edge length
@@ -290,12 +296,15 @@ def generate(params_path):
     stamp = out / ".inputs"
     digest = inputs_hash(raw)
     expected = list(outputs(out, tex))
+    for png in expected:
+        texture_import.write(png, png.stem.rsplit("_", 1)[-1])
     if stamp.exists() and stamp.read_text().strip() == digest and all(f.exists() for f in expected):
         print(f"{p['theme']}: textures up to date")
         return
     for old in list(out.glob("T_*.png")) + list(out.glob("hi/T_*.png")):
         if old not in expected:
             old.unlink()
+            old.with_name(old.name + ".import").unlink(missing_ok=True)
     for index, (name, spec) in enumerate(sorted(tex["sets"].items())):
         rng = np.random.default_rng([p["seed"], index])
         recipe = RECIPES[spec["recipe"]]

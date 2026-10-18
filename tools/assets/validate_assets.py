@@ -15,6 +15,9 @@ holds physically plausible values; no material or shader filters
 anisotropically with repeat (it does not compile on 16-slot Metal GPUs);
 every desktop variant under hi/ has a
 base file; mobile and web export presets leave the hi/ variants out.
+Every texture under game/assets/textures has a .import beside it that turns
+mipmaps on (or off on purpose), sets its compression and turns detect_3d off;
+texture maps carry exactly the settings of tools/assets/texture_import.py.
 Needs only the standard library and Pillow.
 """
 
@@ -25,9 +28,12 @@ from pathlib import Path
 
 from PIL import Image, UnidentifiedImageError
 
+import texture_import
+
 ROOT = Path(__file__).resolve().parents[2]
 GAME = ROOT / "game"
 ASSETS = GAME / "assets"
+TEXTURES = ASSETS / "textures"
 REQUIRED = [f"artifact_{k}" for k in range(7)] + ["board", "environment", "cell_highlight", "fx_match"]
 PIECE_TRIS, BOARD_TRIS, MAX_TEXTURE, MAX_TEXTURE_HI = 2000, 20000, 1024, 2048
 PREFIXES = {".obj": "SM_", ".png": "T_", ".tres": "MI_", ".gdshader": "SH_", ".gdshaderinc": "SH_"}
@@ -38,10 +44,13 @@ MAPS = {
     "ORM": (("RGB",), "linear", ("orm_texture", "shader_parameter/texture_orm")),
     "H": (("L",), "linear", ("shader_parameter/texture_height",)),
     "R": (("L",), "linear", ("roughness_texture",)),
+    # Fire flipbooks (tools/assets/fx/gen_fire.py): packed data, not colour.
+    "Flame": (("RGBA",), "linear", ("shader_parameter/flame_sheet",)),
+    "Motion": (("RGBA",), "linear", ("shader_parameter/motion_sheet",)),
 }
 # Shader samplers by colour space: colour data needs source_color, data maps must not have it.
 SRGB_SAMPLERS = {"texture_albedo", "texture_emission"}
-DATA_SAMPLERS = {"texture_normal", "texture_orm", "texture_height", "texture_roughness"}
+DATA_SAMPLERS = {"texture_normal", "texture_orm", "texture_height", "texture_roughness", "flame_sheet", "motion_sheet"}
 TIERED = "hi"  # desktop variant folder; mobile and web exports leave it out
 SPDX = "SPDX-License-Identifier: GPL-2.0-or-later"
 HEADERS = {".tscn": "[gd_scene", ".tres": "[gd_resource"}
@@ -192,6 +201,28 @@ def texture_errors(path, rel):
     return errors
 
 
+def import_errors(path, rel):
+    """A texture's Godot import settings are written down, not left to the defaults
+    (no mipmaps, detect_3d switching compression); maps follow texture_import.py."""
+    fix = "run the generator that writes it (tools/assets/gen_theme_textures.py for theme maps)"
+    imp = path.with_name(path.name + ".import")
+    if not imp.exists():
+        return [f"{rel}: no {imp.name}, so Godot would import it without mipmaps; {fix}"]
+    text = imp.read_text()
+    suffix = map_suffix(path)
+    if suffix in texture_import.PARAMS:
+        wrong = texture_import.mismatches(suffix, text)
+        return [f"{rel}.import: " + ", ".join(f"{k}={have if have is not None else 'unset'} (want {want})" for k, (have, want) in wrong.items())
+                + f"; _{suffix} maps import with the settings in tools/assets/texture_import.py, {fix}"] \
+            if wrong else []
+    have = texture_import.parse(text)
+    missing = [k for k in ("compress/mode", "mipmaps/generate") if k not in have]
+    if have.get("detect_3d/compress_to") != "0":
+        missing.append("detect_3d/compress_to=0")
+    return [f"{rel}.import: does not set {', '.join(missing)}; a generated texture states its mipmaps and "
+            f"compression and turns detect_3d off; {fix}"] if missing else []
+
+
 def slot_errors(path, rel):
     """Each texture a material uses sits in the slot of its map kind (colour space follows the slot)."""
     text = path.read_text()
@@ -308,13 +339,16 @@ def main():
         if path.suffix in (".tscn", ".tres"):
             for ref in scene_refs(path):
                 if not res_to_path(ref).exists():
-                    hint = "; textures are build outputs, run tools/assets/gen_theme_textures.py first" \
+                    hint = "; textures are build outputs, run tools/assets/gen_theme_textures.py and " \
+                        "tools/assets/fx/gen_fire.py first" \
                         if "/textures/" in ref else ""
                     errors.append(f"{rel}: references missing {ref}{hint}")
         if path.suffix in (".gdshader", ".obj", ".tscn", ".tres") and SPDX not in path.read_text()[:400]:
             errors.append(f"{rel}: missing the SPDX header line")
         if path.suffix == ".png":
             errors += texture_errors(path, rel)
+            if TEXTURES in path.parents:
+                errors += import_errors(path, rel)
         if path.suffix == ".tres":
             errors += slot_errors(path, rel)
         if path.suffix == ".gdshader":

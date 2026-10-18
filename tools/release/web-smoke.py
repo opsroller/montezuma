@@ -29,7 +29,7 @@ import tempfile
 import threading
 import zipfile
 
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError, sync_playwright
 
 TIMEOUT_MS = 90_000
 LEVEL_ID = "e1-l01"
@@ -104,16 +104,23 @@ def unpack(archive, root):
 
 def run(browser_type, url):
     errors = []
+    console = []
     browser = browser_type.launch()
     try:
         page = browser.new_page()
+        page.on("console", lambda m: console.append(f"{m.type}: {m.text}"))
         page.on("console", lambda m: m.type == "error" and errors.append(m.text))
         page.on("pageerror", lambda e: errors.append(str(e)))
         page.goto(url)
-        page.wait_for_function(
-            "window.handoff && window.handoff.some(e => e.type !== 'montezuma:ready')",
-            timeout=TIMEOUT_MS)
-        events = page.evaluate("window.handoff")
+        try:
+            page.wait_for_function(
+                "window.handoff && window.handoff.some(e => e.type !== 'montezuma:ready')",
+                timeout=TIMEOUT_MS)
+        except PlaywrightTimeoutError:
+            # Report what did arrive, and the game's log, instead of a bare timeout.
+            errors.append(f"timed out after {TIMEOUT_MS // 1000} s; last console lines:\n  "
+                          + "\n  ".join(console[-40:]))
+        events = page.evaluate("window.handoff || []")
     finally:
         browser.close()
     return events, errors

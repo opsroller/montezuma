@@ -107,6 +107,9 @@ struct Profile {
 
     // Shadows.
     int sun_shadow_size = 2048;
+    // Most cascades a directional light's shadow may use (1 is orthogonal,
+    // 2 or 4 parallel splits); each cascade draws every caster again.
+    int sun_shadow_splits = 4;
     SoftShadows soft_shadows = SoftShadows::Low;
     int positional_shadow_atlas = 2048;  // 0 turns positional shadows off
     int shadow_casting_lights = 2;       // nearest lights in the quality_shadow_light group that keep shadows
@@ -116,6 +119,10 @@ struct Profile {
     int volumetric_fog_size = 64;  // froxel grid width and height
     int volumetric_fog_depth = 64;
     SubsurfaceQuality subsurface = SubsurfaceQuality::Disabled;
+
+    // Draw the board's pieces and their markers as one multimesh per mesh
+    // and material instead of one draw each (the draw-call budget).
+    bool batch_pieces = false;
 
     // Texture variant folder next to the base set ("hi", "lo", or "" for base only).
     std::string_view texture_variant;

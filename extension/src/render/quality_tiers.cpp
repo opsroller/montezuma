@@ -16,6 +16,7 @@
 #include <godot_cpp/classes/config_file.hpp>
 #include <godot_cpp/classes/cpu_particles3d.hpp>
 #include <godot_cpp/classes/csg_box3d.hpp>
+#include <godot_cpp/classes/directional_light3d.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/environment.hpp>
 #include <godot_cpp/classes/geometry_instance3d.hpp>
@@ -35,6 +36,7 @@
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/standard_material3d.hpp>
 #include <godot_cpp/classes/time.hpp>
+#include <godot_cpp/classes/tube_trail_mesh.hpp>
 #include <godot_cpp/classes/viewport.hpp>
 #include <godot_cpp/classes/window.hpp>
 #include <godot_cpp/classes/world_environment.hpp>
@@ -134,6 +136,20 @@ double authored_number(Object* owner, const char* key, double current) {
         owner->set_meta(kAuthoredMeta, memo);
     }
     return memo[key];
+}
+
+int shadow_splits(DirectionalLight3D::ShadowMode mode) {
+    switch (mode) {
+        case DirectionalLight3D::SHADOW_ORTHOGONAL: return 1;
+        case DirectionalLight3D::SHADOW_PARALLEL_2_SPLITS: return 2;
+        default: return 4;
+    }
+}
+
+DirectionalLight3D::ShadowMode shadow_mode(int splits) {
+    if (splits <= 1) return DirectionalLight3D::SHADOW_ORTHOGONAL;
+    if (splits == 2 || splits == 3) return DirectionalLight3D::SHADOW_PARALLEL_2_SPLITS;
+    return DirectionalLight3D::SHADOW_PARALLEL_4_SPLITS;
 }
 
 }  // namespace
@@ -334,11 +350,30 @@ void QualityTiers::apply_node(Node* node) {
         apply_environment(camera->get_environment());
         apply_camera_attributes(camera->get_attributes());
     }
+    if (auto* sun = Object::cast_to<DirectionalLight3D>(node)) {
+        // Each cascade draws every shadow caster again; a tier with fewer
+        // cascades than the theme authored uses its own count.
+        const int wanted = static_cast<int>(authored_number(sun, "shadow_splits", shadow_splits(sun->get_shadow_mode())));
+        sun->set_shadow_mode(shadow_mode(std::min(wanted, p.sun_shadow_splits)));
+    }
     if (auto* light = Object::cast_to<Light3D>(node); light && light->is_in_group(kFogLightGroup)) {
         const double energy = authored_number(light, "volumetric_fog_energy",
                                               light->get_param(Light3D::PARAM_VOLUMETRIC_FOG_ENERGY));
         light->set_param(Light3D::PARAM_VOLUMETRIC_FOG_ENERGY,
                          p.has(q::Feature::FogFireLight) ? static_cast<float>(energy) : 0.0f);
+    }
+
+    // Trails are authored off, with the trail mesh in metadata/trail_mesh,
+    // and switched on here: the Compatibility renderer warns as soon as a
+    // particle system has trails or a trail mesh, even a hidden one.
+    if (auto* particles = Object::cast_to<GPUParticles3D>(node);
+        particles && particles->is_in_group("quality:particle_trails")) {
+        const bool trails = p.has(q::Feature::ParticleTrails);
+        if (trails && particles->has_meta("trail_mesh")) {
+            const Ref<Mesh> mesh = particles->get_meta("trail_mesh");
+            if (mesh.is_valid()) particles->set_draw_pass_mesh(0, mesh);
+        }
+        particles->set_trail_enabled(trails);
     }
 
     const TypedArray<StringName> groups = node->get_groups();
@@ -605,6 +640,13 @@ void QualityTiers::run_self_test() {
     auto* cards = memnew(Node3D);
     cards->add_to_group("quality_fallback:volumetric_fog");
     scratch->add_child(cards);
+    auto* trails = memnew(GPUParticles3D);
+    trails->set_emitting(false);
+    trails->add_to_group("quality:particle_trails");
+    Ref<TubeTrailMesh> trail_mesh;
+    trail_mesh.instantiate();
+    trails->set_meta("trail_mesh", trail_mesh);
+    scratch->add_child(trails);
     std::vector<Light3D*> lights;
     for (int i = 0; i < 3; ++i) {
         auto* light = memnew(OmniLight3D);
@@ -613,6 +655,10 @@ void QualityTiers::run_self_test() {
         scratch->add_child(light);
         lights.push_back(light);
     }
+    auto* sun = memnew(DirectionalLight3D);
+    sun->set_shadow(true);
+    sun->set_shadow_mode(DirectionalLight3D::SHADOW_PARALLEL_4_SPLITS);
+    scratch->add_child(sun);
     // Material variants: gold has a hi/ variant, lapis has none; a material
     // made in code has no file and is never swapped.
     const String gold_path = "res://assets/materials/temple/MI_Gold.tres";
@@ -679,9 +725,13 @@ void QualityTiers::run_self_test() {
         check(attrs->is_dof_blur_far_enabled() == p.has(q::Feature::DepthOfField), id, "depth of field");
         check(voxel->is_visible() == p.has(q::Feature::VoxelGi), id, "quality:voxel_gi node");
         check(cards->is_visible() == !p.has(q::Feature::VolumetricFog), id, "fog fallback node");
+        check(trails->is_trail_enabled() == p.has(q::Feature::ParticleTrails), id, "particle trails");
+        if (p.has(q::Feature::ParticleTrails))
+            check(trails->get_draw_pass_mesh(0) == trail_mesh, id, "particle trail mesh not attached");
         int shadowed = 0;
         for (Light3D* light : lights) shadowed += light->has_shadow() ? 1 : 0;
         check(shadowed == std::min(3, p.shadow_casting_lights), id, "shadow-casting light budget");
+        check(shadow_splits(sun->get_shadow_mode()) == std::min(4, p.sun_shadow_splits), id, "sun shadow cascades");
         check(get_active_features().size() > 0, id, "active feature list empty");
         if (gold.is_valid() && lapis.is_valid()) {
             const String gold_variant = resolve_variant(gold_path);

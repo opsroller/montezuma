@@ -23,7 +23,7 @@ Token permissions: `contents: read`.
 | Job | Runners | What red means |
 |---|---|---|
 | `core` | Ubuntu, macOS; Windows too on pushes to `main` | the core or a Godot-free test fails to build with warnings as errors, or a CTest test fails, including `test_level_files`, which parses every level file and checks its id against its path on every PR (the balance check `montezuma_sim --check` also parses them), and the website's `site_build_tests` (Python) and `site_js_tests` (Node), which CTest adds when the runner has Python 3.10+ and Node |
-| `extension` | Ubuntu; Windows too on pushes to `main` | the GDExtension (with godot-cpp) or a test fails to build, or a CTest test fails (every test, including `ui_model_tests`); on Ubuntu, Godot (the version in `tools/release/godot.env`) logs an error while loading the game headless, the audio or game self-test reports a failure ([Match3Game self-test](match3-game.md#self-test)), quitting from level `e1-l01` with `--quit-after-frames` prints an error or a leak ([Audio: Quitting](audio.md#quitting)), or the quality tier self-test (`--quality-selftest`, run once each with `--rendering-method forward_plus`, `mobile` and `gl_compatibility`) reports a failure, or the [benchmark](benchmark.md) smoke run (3 s headless at a locked 640×360) logs an error, drifts from its plan, loses its render size or writes no report (`check_run.py --no-budget`) |
+| `extension` | Ubuntu; Windows too on pushes to `main` | the GDExtension (with godot-cpp) or a test fails to build, or a CTest test fails (every test, including `ui_model_tests`); on Ubuntu, Godot (the version in `tools/release/godot.env`) logs an error while loading the game headless, the audio, game or intro level self-test reports a failure ([Match3Game self-test](match3-game.md#self-test), [IntroLevel self-test](intro-level.md#self-test)), quitting from level `e1-l01` with `--quit-after-frames` prints an error or a leak ([Audio: Quitting](audio.md#quitting)), or the quality tier self-test (`--quality-selftest`, run once each with `--rendering-method forward_plus`, `mobile` and `gl_compatibility`) reports a failure, or the [benchmark](benchmark.md) smoke run (3 s headless at a locked 640×360) logs an error, drifts from its plan, loses its render size or writes no report (`check_run.py --no-budget`) |
 | `sanitizers` | Ubuntu | a CTest test fails under ASan or UBSan |
 
 Windows does not run in this workflow on PRs. Pushes to `main` run the
@@ -83,7 +83,8 @@ runs `tools/assets/validate_assets.py` against `game/assets/` and the
 theme manifest. Rules it enforces:
 [Board themes: validator rules](board-themes.md#validator-rules).
 It then runs the readability-check and `check_run.py` tests in
-`tools/bench/tests/` with the same Pillow ([Benchmark](benchmark.md#readability-checks)).
+`tools/bench/tests/` with the same Pillow ([Benchmark](benchmark.md#readability-checks)),
+and the texture import settings tests in `tools/assets/tests/`.
 
 | Item | Value |
 |---|---|
@@ -91,8 +92,8 @@ It then runs the readability-check and `check_run.py` tests in
 | Job | `validate`, on `ubuntu-24.04`, 10-minute timeout |
 | Token permissions | `contents: read` |
 | Python packages | `.github/requirements/assets.txt`: numpy 2.5.3 and Pillow 12.3.0, installed with `--require-hashes` into a virtual environment |
-| Textures | composite action `.github/actions/textures`: restores `game/assets/textures/*/T_*.png`, `*/hi/T_*.png` and `.inputs` from the Actions cache, key `textures-` plus a hash of `gen_theme_textures.py`, `tools/assets/themes/*.json` and `assets.txt`; on a miss runs `gen_theme_textures.py` (about 40 s). The `tests` extension job (Linux), the `build` export job and the `web` job use the same action before Godot imports the project |
-| What red means | a failed `Generate textures` step (a generator error), or an `error:` line in the log names the file and the broken rule: a manifest path or scene reference that does not exist, a file that does not parse as its format, a piece or board over its triangle budget, a texture over 1024 px (2048 px in `hi/`) or not power-of-two, a texture map in the wrong colour space, slot or value range, a desktop `hi/` variant without a base file, a mobile or web export preset that ships `hi/`, a missing provenance record or SPDX line, or a name off the naming table |
+| Textures | composite action `.github/actions/textures`: restores `game/assets/textures/*/T_*.png`, `*/hi/T_*.png` and `.inputs` from the Actions cache, key `textures-` plus a hash of `gen_theme_textures.py`, `tools/assets/themes/*.json` and `assets.txt`; then always runs `gen_theme_textures.py`, which on a hit only checks the stamp and writes the `.import` files the cache does not hold (about 40 s on a miss). The `tests` extension job (Linux), the `build` export job and the `web` job use the same action before Godot imports the project |
+| What red means | a failed `Generate textures` step (a generator error), or an `error:` line in the log names the file and the broken rule: a manifest path or scene reference that does not exist, a file that does not parse as its format, a piece or board over its triangle budget, a texture over 1024 px (2048 px in `hi/`) or not power-of-two, a texture map in the wrong colour space, slot or value range, a texture without its `.import` or with the wrong import settings, a desktop `hi/` variant without a base file, a mobile or web export preset that ships `hi/`, a missing provenance record or SPDX line, or a name off the naming table |
 
 The job takes seconds, so it has no path filter: a check that a PR can
 skip could never be made required.

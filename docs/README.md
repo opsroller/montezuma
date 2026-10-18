@@ -37,6 +37,7 @@ own folder.
 - [Level session](reference/level-session.md): one level by the full rules, its commands, reports and defaults.
 - [Match3Game](reference/match3-game.md): the game scene's controller, its signals, cues and self-test.
 - [Visual target](reference/visual-target.md): the look per quality tier, frame budgets and acceptance tests.
+- [Fire](reference/fire.md): the brazier fire's simulation, flipbooks, scene, shaders, flickering light and per-tier behaviour.
 - [Quality tiers](reference/quality-tiers.md): the `QualityTiers` autoload, settings key, feature ids, node groups and render settings per tier.
 - [Benchmark and readability capture](reference/benchmark.md): the benchmark replay, its JSON report, feature keys and readability checks.
 - [Benchmark results](reference/benchmark-results.md): measured frame times, feature rows and readability per machine and tier.
@@ -62,6 +63,7 @@ own folder.
 - [Make content depend on the quality tier](how-to/make-content-depend-on-the-quality-tier.md): desktop-only nodes, fallbacks, light shadows, texture variants.
 - [Capture the effects showcase](how-to/capture-the-effects-showcase.md): record every totem and power-up effect to frames.
 - [Run the benchmark](how-to/run-the-benchmark.md): measure frame time and check readability on a desktop or a phone.
+- [Tune the fire](how-to/tune-the-fire.md): change the brazier fire's simulation, colour or particles and check it.
 
 ## Explanation
 
@@ -70,6 +72,7 @@ own folder.
 - [About the game scene](explanation/about-the-game-scene.md): why the scene is a thin layer over the level session, and why a move is one animation.
 - [Art direction](explanation/art-direction.md): why the board looks the way it does, and the rules new art follows.
 - [About the visual target](explanation/about-the-visual-target.md): why a realistic high-end look, and what Godot can and cannot do with ray tracing.
+- [About the fire](explanation/about-the-fire.md): why a simulated flipbook with motion vectors, why our own simulation, how it stays off the board.
 - [About quality tiers](explanation/about-quality-tiers.md): how a tier is picked, why the renderer is fixed per platform, why tiers only switch effects off.
 - [About CI caching](explanation/about-ci-caching.md): why CI uses a compiler cache and what it leaves uncached.
 - [About level clocks](explanation/about-level-clocks.md): why each level has its own base clock, why timer upgrades add to it, and why the clock rule counts only wins.
