@@ -11,10 +11,23 @@ workflow. To run any check locally, use the commands in
 
 | Event | Runs when | Concurrency |
 |---|---|---|
-| `push` to `main` | the push changes anything outside `docs/**` and `*.md` | every run finishes |
-| `pull_request` | the PR changes anything outside `docs/**` and `*.md` | a new push cancels the PR's older run |
+| `push` to `main` | every push | every run finishes |
+| `push` to any other branch | every push | a new push cancels the branch's older run |
+| `pull_request` | the PR comes from a fork and changes anything outside `docs/**` and `*.md` | a new push cancels the PR's older run |
 
-A PR that only changes documentation gets no `tests` run.
+Every workflow in this page and in the [build pipeline](build-pipeline.md)
+follows the same rule: a push to any branch of this repository runs the
+checks on the pushed commit, and a PR from a branch of this repository
+shows those push runs. Its own `pull_request` run skips every job, so each
+commit is checked once. PRs from forks run on `pull_request`.
+
+Every head commit of a branch gets a run. A path filter on `push` would
+be matched against the files of that one push, not the branch's whole
+change, so a final docs-only push would leave the head unchecked; `push`
+therefore has no path filter in any workflow except `windows`. There the
+`pull_request` run also runs for branches of this repository, with a
+filter that covers the whole PR. Why:
+[About CI on every push](../explanation/about-ci-on-every-push.md).
 
 Token permissions: `contents: read`.
 
@@ -22,11 +35,11 @@ Token permissions: `contents: read`.
 
 | Job | Runners | What red means |
 |---|---|---|
-| `core` | Ubuntu, macOS; Windows too on pushes to `main` | the core or a Godot-free test fails to build with warnings as errors, or a CTest test fails, including `test_level_files`, which parses every level file and checks its id against its path on every PR (the balance check `montezuma_sim --check` also parses them), and the website's `site_build_tests` (Python) and `site_js_tests` (Node), which CTest adds when the runner has Python 3.10+ and Node |
-| `extension` | Ubuntu; Windows too on pushes to `main` | the GDExtension (with godot-cpp) or a test fails to build, or a CTest test fails (every test, including `ui_model_tests`); on Ubuntu, Godot (the version in `tools/release/godot.env`) logs an error while loading the game headless, the audio, game or intro level self-test reports a failure ([Match3Game self-test](match3-game.md#self-test), [IntroLevel self-test](intro-level.md#self-test)), quitting from level `e1-l01` with `--quit-after-frames` prints an error or a leak ([Audio: Quitting](audio.md#quitting)), or the quality tier self-test (`--quality-selftest`, run once each with `--rendering-method forward_plus`, `mobile` and `gl_compatibility`) reports a failure, or the [benchmark](benchmark.md) smoke run (3 s headless at a locked 640×360) logs an error, drifts from its plan, loses its render size or writes no report (`check_run.py --no-budget`) |
+| `core` | Ubuntu, macOS; Windows too on `main` and manual runs | the core or a Godot-free test fails to build with warnings as errors, or a CTest test fails, including `test_level_files`, which parses every level file and checks its id against its path on every PR (the balance check `montezuma_sim --check` also parses them), and the website's `site_build_tests` (Python) and `site_js_tests` (Node), which CTest adds when the runner has Python 3.10+ and Node |
+| `extension` | Ubuntu; Windows too on `main` and manual runs | the GDExtension (with godot-cpp) or a test fails to build, or a CTest test fails (every test, including `ui_model_tests`); on Ubuntu, Godot (the version in `tools/release/godot.env`) logs an error while loading the game headless, the audio, game or intro level self-test reports a failure ([Match3Game self-test](match3-game.md#self-test), [IntroLevel self-test](intro-level.md#self-test)), quitting from level `e1-l01` with `--quit-after-frames` prints an error or a leak ([Audio: Quitting](audio.md#quitting)), or the quality tier self-test (`--quality-selftest`, run once each with `--rendering-method forward_plus`, `mobile` and `gl_compatibility`) reports a failure, or the [benchmark](benchmark.md) smoke run (3 s headless at a locked 640×360) logs an error, drifts from its plan, loses its render size or writes no report (`check_run.py --no-budget`) |
 | `sanitizers` | Ubuntu | a CTest test fails under ASan or UBSan |
 
-Windows does not run in this workflow on PRs. Pushes to `main` run the
+Windows does not run in this workflow on feature branches or PRs. Pushes to `main` run the
 Windows `core` and `extension` jobs here, and the Windows package in the
 `build` workflow. PRs that change the build system also get the
 [`windows` workflow](#windows-workflow); any other Windows-only break
@@ -45,8 +58,8 @@ shows up on `main` after merge, and the next PR fixes it.
   cache launcher. On Windows the MSVC environment comes from
   `ilammy/msvc-dev-cmd`.
 - The **Compiler cache stats** step prints hits and misses for the run.
-- Caches written by a PR are visible only to that PR. PRs read the caches
-  written on `main`.
+- Caches written by a branch or PR are visible only to that branch or PR.
+  Branches and PRs read the caches written on `main`.
 - Godot itself (one download of about 60 MB, a few seconds) is not cached. The job fetches the editor pinned in `tools/release/godot.env` with `tools/release/fetch-godot.sh`, the same script and checksum the build pipeline uses.
 
 The `core` and `sanitizers` jobs build in seconds and use no cache.
@@ -62,7 +75,8 @@ CTest test with MSVC and warnings as errors, then runs CTest, on
 
 | Event | Runs when |
 |---|---|
-| `pull_request` | the PR changes `CMakeLists.txt`, any `**/CMakeLists.txt`, any `**/*.cmake`, `.gitmodules`, `thirdparty/**` or `windows.yml` |
+| `push` to any branch but `main` | the push changes `CMakeLists.txt`, any `**/CMakeLists.txt`, any `**/*.cmake`, `.gitmodules`, `thirdparty/**` or `windows.yml` |
+| `pull_request` | any PR, from this repository or a fork, changes the same paths; the filter covers the whole PR, so its head is always checked |
 | `workflow_dispatch` | on demand, from the Actions tab |
 
 | Job | What red means |
@@ -88,7 +102,7 @@ and the texture import settings tests in `tools/assets/tests/`.
 
 | Item | Value |
 |---|---|
-| Triggers | every `push` to `main` and every `pull_request`, no path filter; a new push cancels the PR's older run |
+| Triggers | every `push` to any branch, and `pull_request` from forks, no path filter; a new push cancels the branch's or PR's older run (not on `main`) |
 | Job | `validate`, on `ubuntu-24.04`, 10-minute timeout |
 | Token permissions | `contents: read` |
 | Python packages | `.github/requirements/assets.txt`: numpy 2.5.3 and Pillow 12.3.0, installed with `--require-hashes` into a virtual environment |
@@ -107,13 +121,13 @@ level under `game/data/levels/` against the
 
 | Item | Value |
 |---|---|
-| Triggers | `push` to `main` and `pull_request`, only when the change touches `game/data/levels/**`, `tools/sim/**`, `core/**`, `thirdparty/nlohmann/**` (the JSON library the core parses levels with), `CMakeLists.txt` or `.github/workflows/levels.yml`; a new push cancels the PR's older run |
+| Triggers | every `push` to any branch, no path filter; `pull_request` from forks only when the PR touches `game/data/levels/**`, `tools/sim/**`, `core/**`, `thirdparty/nlohmann/**` (the JSON library the core parses levels with), `CMakeLists.txt` or `.github/workflows/levels.yml`; a new push cancels the branch's or PR's older run (not on `main`) |
 | Job | `balance`, on `ubuntu-24.04`, 10-minute timeout |
 | Build | Release, `MONTEZUMA_WERROR=ON`, `MONTEZUMA_BUILD_EXTENSION=OFF`, `MONTEZUMA_BUILD_TESTS=OFF`, `MONTEZUMA_BUILD_SIM=ON`; target `montezuma_sim` only |
 | Command | `montezuma_sim game/data/levels --check` (200 seeds, all bots, both difficulties) |
 | Token permissions | `contents: read` |
 | Secrets, artifacts, caches | none |
-| Required check | no: a path-filtered check never reports on PRs it skips, so requiring it would block them |
+| Required check | no: fork PRs are path-filtered, and a filtered check never reports on PRs it skips, so requiring it would block them |
 | What red means | exit 2: a level file does not parse or uses an unsupported feature, and stderr names the file and the error; exit 1: a level misses a balance target or curve rule, shown as `FAIL` rows in the report. The log ends with the local command |
 
 Run it locally:
@@ -125,5 +139,6 @@ build-rel/tools/sim/montezuma_sim game/data/levels --check
 ```
 
 The `assets` workflow has no path filter so that it can be made required;
-`levels` is filtered because building the simulator only matters when one
-of its inputs changes.
+`levels` is filtered for fork PRs because building the simulator only
+matters when one of its inputs changes; branch pushes always run it so
+every head has a result.
