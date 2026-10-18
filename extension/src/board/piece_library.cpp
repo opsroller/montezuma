@@ -5,7 +5,10 @@
 
 #include <godot_cpp/classes/box_mesh.hpp>
 #include <godot_cpp/classes/capsule_mesh.hpp>
+#include <godot_cpp/classes/cpu_particles3d.hpp>
 #include <godot_cpp/classes/cylinder_mesh.hpp>
+#include <godot_cpp/classes/directional_light3d.hpp>
+#include <godot_cpp/classes/environment.hpp>
 #include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/classes/image.hpp>
 #include <godot_cpp/classes/image_texture.hpp>
@@ -13,10 +16,13 @@
 #include <godot_cpp/classes/mesh_instance3d.hpp>
 #include <godot_cpp/classes/plane_mesh.hpp>
 #include <godot_cpp/classes/prism_mesh.hpp>
+#include <godot_cpp/classes/procedural_sky_material.hpp>
 #include <godot_cpp/classes/resource_loader.hpp>
+#include <godot_cpp/classes/sky.hpp>
 #include <godot_cpp/classes/sphere_mesh.hpp>
 #include <godot_cpp/classes/standard_material3d.hpp>
 #include <godot_cpp/classes/torus_mesh.hpp>
+#include <godot_cpp/classes/world_environment.hpp>
 #include <godot_cpp/core/memory.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -110,16 +116,26 @@ Basis placeholder_basis(int kind) {
 
 }  // namespace
 
-void PieceLibrary::load(double cell) {
-    manifest_.clear();
+void PieceLibrary::load(double cell, const String& theme) {
+    entries_.clear();
     if (FileAccess::file_exists(kManifestPath)) {
         const Variant parsed = JSON::parse_string(FileAccess::get_file_as_string(kManifestPath));
         if (parsed.get_type() == Variant::DICTIONARY) {
-            manifest_ = parsed;
+            const Dictionary manifest = parsed;
+            const String name = theme.is_empty() ? String(manifest.get("default_theme", "")) : theme;
+            const Variant themes = manifest.get("themes", Variant());
+            const Variant entries =
+                themes.get_type() == Variant::DICTIONARY ? Dictionary(themes).get(name, Variant()) : Variant();
+            if (entries.get_type() == Variant::DICTIONARY) {
+                entries_ = entries;
+            } else {
+                UtilityFunctions::push_warning("Asset manifest has no theme '", name, "'; using placeholders.");
+            }
         } else {
             UtilityFunctions::push_warning("Asset manifest is not a JSON object; using placeholders: ", kManifestPath);
         }
     }
+    match_fx_ = load_entry("fx_match");
     const real_t s = static_cast<real_t>(cell) * 0.7f;
     piece_size_ = s;
     for (int k = 0; k < kMaxKinds; ++k) {
@@ -146,8 +162,8 @@ void PieceLibrary::load(double cell) {
 }
 
 Ref<Resource> PieceLibrary::load_entry(const String& name) const {
-    if (!manifest_.has(name)) return {};
-    const String path = manifest_[name];
+    if (!entries_.has(name)) return {};
+    const String path = entries_[name];
     if (path.is_empty() || !ResourceLoader::get_singleton()->exists(path)) {
         UtilityFunctions::push_warning("Asset manifest entry '", name, "' does not load (", path,
                                        "); using a placeholder.");
@@ -204,10 +220,85 @@ void PieceLibrary::clear() {
     }
 }
 
-Node3D* PieceLibrary::make_board(int width, int height, double cell) const {
-    if (const Ref<PackedScene> scene = load_entry("temple_board"); scene.is_valid()) {
-        if (auto* node = Object::cast_to<Node3D>(scene->instantiate())) return node;
+Node3D* PieceLibrary::instantiate_entry(const String& name) const {
+    const Ref<PackedScene> scene = load_entry(name);
+    if (scene.is_null()) return nullptr;
+    Node* node = scene->instantiate();
+    if (auto* node3d = Object::cast_to<Node3D>(node)) return node3d;
+    UtilityFunctions::push_warning("Asset manifest entry '", name, "' is not a Node3D scene; using a placeholder.");
+    if (node) memdelete(node);
+    return nullptr;
+}
+
+Node3D* PieceLibrary::make_highlight() const { return instantiate_entry("cell_highlight"); }
+
+Node3D* PieceLibrary::make_match_fx() const {
+    if (match_fx_.is_null()) return nullptr;
+    Node* node = match_fx_->instantiate();
+    auto* fx = Object::cast_to<CPUParticles3D>(node);
+    if (!fx) {
+        if (node) memdelete(node);
+        return nullptr;
     }
+    fx->set_one_shot(true);
+    fx->set_emitting(true);
+    fx->connect("finished", Callable(fx, "queue_free"), Object::CONNECT_ONE_SHOT);
+    return fx;
+}
+
+Node3D* PieceLibrary::make_environment() const {
+    if (Node3D* node = instantiate_entry("environment")) return node;
+    // The look the board scene had before themes: a soft sky, a warm key
+    // light with shadows and a cool fill. Basis values are rows, as in a .tscn.
+    Ref<ProceduralSkyMaterial> sky_mat;
+    sky_mat.instantiate();
+    sky_mat->set_sky_top_color(Color(0.2f, 0.42f, 0.55f));
+    sky_mat->set_sky_horizon_color(Color(0.62f, 0.7f, 0.62f));
+    sky_mat->set_ground_bottom_color(Color(0.16f, 0.22f, 0.12f));
+    sky_mat->set_ground_horizon_color(Color(0.62f, 0.7f, 0.62f));
+    Ref<Sky> sky;
+    sky.instantiate();
+    sky->set_material(sky_mat);
+    Ref<Environment> env;
+    env.instantiate();
+    env->set_background(Environment::BG_SKY);
+    env->set_sky(sky);
+    env->set_ambient_source(Environment::AMBIENT_SOURCE_SKY);
+    env->set_ambient_light_energy(0.45f);
+    env->set_reflection_source(Environment::REFLECTION_SOURCE_SKY);
+    env->set_tonemapper(Environment::TONE_MAPPER_ACES);
+
+    auto* root = memnew(Node3D);
+    auto* world = memnew(WorldEnvironment);
+    world->set_name("WorldEnvironment");
+    world->set_environment(env);
+    root->add_child(world);
+
+    auto* key = memnew(DirectionalLight3D);
+    key->set_name("KeyLight");
+    key->set_transform(Transform3D(Basis(0.906308f, -0.383022f, 0.178606f, 0, 0.422618f, 0.906308f, -0.422618f,
+                                         -0.821394f, 0.383022f),
+                                   Vector3(0, 6, 0)));
+    key->set_color(Color(1, 0.95f, 0.85f));
+    key->set_param(Light3D::PARAM_ENERGY, 0.9f);
+    key->set_shadow(true);
+    key->set_param(Light3D::PARAM_SHADOW_OPACITY, 0.6f);
+    key->set_shadow_mode(DirectionalLight3D::SHADOW_ORTHOGONAL);
+    key->set_param(Light3D::PARAM_SHADOW_MAX_DISTANCE, 40.0f);
+    root->add_child(key);
+
+    auto* fill = memnew(DirectionalLight3D);
+    fill->set_name("FillLight");
+    fill->set_transform(Transform3D(Basis(-0.866025f, 0.25f, -0.433013f, 0, 0.866025f, 0.5f, 0.5f, 0.433013f, -0.75f),
+                                    Vector3(0, 6, 0)));
+    fill->set_color(Color(0.75f, 0.85f, 1));
+    fill->set_param(Light3D::PARAM_ENERGY, 0.35f);
+    root->add_child(fill);
+    return root;
+}
+
+Node3D* PieceLibrary::make_board(int width, int height, double cell) const {
+    if (Node3D* node = instantiate_entry("board")) return node;
     const real_t c = static_cast<real_t>(cell);
     Ref<BoxMesh> slab;
     slab.instantiate();
