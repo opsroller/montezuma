@@ -90,8 +90,8 @@ settings.fullscreen,Full screen
 settings.language,Language
 settings.language.system,System language
 settings.difficulty,Difficulty
-settings.difficulty.relaxed,Relaxed
 settings.difficulty.normal,Normal
+settings.difficulty.hard,Hard
 credits.title,Credits
 credits.fallback,"Montezuma's
 

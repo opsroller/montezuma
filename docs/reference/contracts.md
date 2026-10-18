@@ -179,7 +179,7 @@ menus' side of the hand-off to play. Details in `docs/reference/ui.md`.
 
 ```
 # UiRoot emits, for the game scene:
-play_requested(level_id: String, difficulty: String)   # "e1-l03", "relaxed" | "normal"
+play_requested(level_id: String, difficulty: String)   # "e1-l03", "normal" | "hard"
 level_quit_requested()                                  # left from the pause menu
 # The game scene calls:
 show_results(outcome: int, score: int, level_id: String = "")   # LevelState.Outcome

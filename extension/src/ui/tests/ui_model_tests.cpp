@@ -67,11 +67,11 @@ void test_settings_sanitize() {
     check(s.music_volume == 1.0f, "volume clamps to 1");
     check(s.sfx_volume == 0.0f, "volume clamps to 0");
     check(s.text_scale == 1.0f, "non-finite text scale falls back to default");
-    check(s.difficulty == "relaxed", "unknown difficulty falls back to relaxed");
+    check(s.difficulty == "normal", "unknown difficulty falls back to normal");
     s.text_scale = 5.0f;
-    s.difficulty = "normal";
+    s.difficulty = "hard";
     s.sanitize();
-    check(s.text_scale == Settings::kMaxTextScale && s.difficulty == "normal", "text scale clamps; valid difficulty kept");
+    check(s.text_scale == Settings::kMaxTextScale && s.difficulty == "hard", "text scale clamps; valid difficulty kept");
 }
 
 void test_linear_to_db() {

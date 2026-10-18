@@ -20,7 +20,7 @@ void Settings::sanitize() {
     music_volume = clamp_finite(music_volume, 0.0f, 1.0f, defaults.music_volume);
     sfx_volume = clamp_finite(sfx_volume, 0.0f, 1.0f, defaults.sfx_volume);
     text_scale = clamp_finite(text_scale, kMinTextScale, kMaxTextScale, defaults.text_scale);
-    if (difficulty != "relaxed" && difficulty != "normal") difficulty = defaults.difficulty;
+    if (difficulty != "normal" && difficulty != "hard") difficulty = defaults.difficulty;
 }
 
 float linear_to_db(float linear) {

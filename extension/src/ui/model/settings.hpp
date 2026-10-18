@@ -19,9 +19,9 @@ struct Settings {
     std::string locale;             // empty: follow the system
     float text_scale = 1.0f;        // kMinTextScale..kMaxTextScale
     bool reduced_motion = false;
-    std::string difficulty = "relaxed";  // "relaxed" or "normal" (LevelData time_limit keys)
+    std::string difficulty = "normal";  // "normal" or "hard" (LevelData gem_goal/time_limit keys)
 
-    // Brings every field into range; unknown difficulty becomes "relaxed".
+    // Brings every field into range; unknown difficulty becomes "normal".
     void sanitize();
 };
 

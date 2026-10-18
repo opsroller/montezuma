@@ -53,7 +53,7 @@ T* unique(const Node* owner, const char* name) {
 }
 
 void clear_children(Node* node) {
-    for (int64_t i = node->get_child_count() - 1; i >= 0; --i) {
+    for (int32_t i = node->get_child_count() - 1; i >= 0; --i) {
         Node* child = node->get_child(i);
         node->remove_child(child);
         child->queue_free();
