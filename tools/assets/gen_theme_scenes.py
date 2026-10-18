@@ -362,8 +362,7 @@ def atmosphere(r, p, models):
     """Volumetric fog volume, dust and light-shaft cards for the theme's environment scene.
 
     Fog and dust need volumetric fog (desktop tiers); the cards stand in for
-    both where it is missing, and only where the tier also affords their draw
-    call (light_shaft_cards). Nothing may draw over the board: the fog shader
+    both where it is missing (mobile, web). Nothing may draw over the board: the fog shader
     has zero density over it, and dust and card positions are checked against
     every game camera here.
     """
@@ -446,10 +445,8 @@ def atmosphere(r, p, models):
             f"{2 * dust['outer_radius'] + 2}, 6, {2 * dust['outer_radius'] + 2})",
             'process_material = SubResource("dust_process")', 'draw_pass_1 = SubResource("dust_quad")',
             f"material_override = {dust_mat}",
-            # Shown only where the tier has no volumetric fog (parent) and can
-            # afford the cards' draw call (child).
-            "", '[node name="LightShaftCards" type="Node3D" parent="." groups=["quality_fallback:volumetric_fog"]]',
-            "", '[node name="Cards" type="MultiMeshInstance3D" parent="LightShaftCards" groups=["quality:light_shaft_cards"]]',
+            # Shown only where the tier has no volumetric fog.
+            "", '[node name="LightShaftCards" type="MultiMeshInstance3D" parent="." groups=["quality_fallback:volumetric_fog"]]',
             "cast_shadow = 0", "gi_mode = 0", 'multimesh = SubResource("shafts")', f"material_override = {shaft_mat}"]
     return subs, body
 

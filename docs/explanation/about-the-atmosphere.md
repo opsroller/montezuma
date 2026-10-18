@@ -3,7 +3,7 @@
 
 *Explanation. Why the temple's dusty air is one fog volume that is empty
 over the board, why its shafts come from stretched noise, and why mobile
-gets cards and web nothing yet. The parameters are in
+and web get cards. The parameters are in
 [Board themes: Atmosphere](../reference/board-themes.md#atmosphere).*
 
 ## What it has to do
@@ -64,19 +64,15 @@ platform. They are lit and additive, so a mote shows only where the sun
 or a brazier reaches it and disappears in shadow, which is what makes dust
 in a sunbeam read. They exist only on the desktop tiers, with the fog.
 
-## Cards on mobile, none on web yet
+## Cards on mobile and web
 
 The Mobile and Compatibility renderers have no volumetric fog. The cards
 that stand in for it are twelve soft additive quads along the sun's
-direction, beside the platform, drawn as one `MultiMesh`: one draw call.
-The generator checks every point of every card against the game camera at the
-distances it uses from a wide window to a tall phone, and places them
-again until none draws over the board.
-
-The web build is over its draw-call budget, and another work item is
-bringing it down. Rather than add to it, the cards have their own
-feature id, `light_shaft_cards`, which the web tier does not have yet;
-turning it on there is a one-line change once the budget has room.
+direction, beside the platform, drawn as one `MultiMesh`: one draw call,
+which the web build's draw-call budget has room for. The generator checks
+every point of every card against the game camera at the distances it
+uses from a wide window to a tall phone, and places them again until none
+draws over the board.
 
 The fog shader itself cannot even load on Compatibility (Godot prints an
 error for any fog shader there), so the fog volume names its material by

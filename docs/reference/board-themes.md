@@ -231,7 +231,7 @@ theme's sensitivity); each emissive material also gets a `lo/` copy at
 ## Atmosphere
 
 Dusty, sunlit air around the temple: volumetric fog with sun shafts and
-dust on the desktop tiers, light-shaft cards in its place on mobile.
+dust on the desktop tiers, light-shaft cards in its place on mobile and web.
 Nothing of it is ever over the board (readability rule 2 in the
 [Visual target](visual-target.md#readability-rules-every-tier)). Why it is
 built this way: [About the atmosphere](../explanation/about-the-atmosphere.md).
@@ -245,7 +245,7 @@ parameter file's `lighting.atmosphere` section and the `MI_AtmosphereFog`,
 | `WorldEnvironment` | volumetric fog on, global density 0 | `desktop-high` (64 × 64 froxels), `desktop-standard` (32 × 32) | `atmosphere.fog` (`anisotropy`, `length`, `detail_spread`, `gi_inject`, `ambient_inject`, `temporal_amount`) | isotropic (the camera looks down, the sun comes from above); 40 m; GI 0.4, ambient 0.3 |
 | `AtmosphereFog` | box `FogVolume` around the temple, group `quality:volumetric_fog`; its material path in `metadata/fog_material_path` | desktop | `atmosphere.volumes` (`clearance`, `outer`, `bottom`); `MI_AtmosphereFog` (below) | 38 × 38 m, from 2.6 m below the board to the fog's `height_top` |
 | `Dust` | `GPUParticles3D`, ring around the platform, `MI_Dust`, group `quality:volumetric_fog` | desktop | `atmosphere.dust` (`amount`, `lifetime`, `inner_radius`, `outer_radius`, `bottom`, `top`, `size`, `speed`, `turbulence`) | 320 motes, 8.5 to 13 m from the centre, 5 cm, at most 5 cm/s |
-| `LightShaftCards/Cards` | `MultiMeshInstance3D` of quads along the sun, `MI_LightShaft`; parent in `quality_fallback:volumetric_fog`, child in `quality:light_shaft_cards` | `mobile` | `atmosphere.shafts` (`count`, `inner_radius`, `outer_radius`, `length`, `width`, `ground`) | 12 cards, 3.5 to 5.5 m long, one draw call |
+| `LightShaftCards` | `MultiMeshInstance3D` of quads along the sun, `MI_LightShaft`, group `quality_fallback:volumetric_fog` | `mobile`, `web` | `atmosphere.shafts` (`count`, `inner_radius`, `outer_radius`, `length`, `width`, `ground`) | 12 cards, 3.5 to 5.5 m long, one draw call |
 
 The fog volume covers the board too; its shader keeps it empty there.
 `SH_AtmosphereFog` gives zero density inside a square of half-side
@@ -290,7 +290,7 @@ random (seed + 51) until they pass.
 | `SH_Spark` | `fx_match` | unshaded, additive; fades by `INSTANCE_CUSTOM.y` | 16 tiny spheres per burst |
 | `SH_AtmosphereFog` | the temple's `FogVolume` (`MI_AtmosphereFog`), desktop | fog shader | 1 3D-noise sample per froxel in the volume |
 | `SH_Dust` | dust motes (`MI_Dust`), desktop | lit, additive, no depth write, camera-facing | no texture samples |
-| `SH_LightShaft` | light-shaft cards (`MI_LightShaft`), mobile | unshaded, additive, no depth write; soft where it meets the ground | 1 depth sample |
+| `SH_LightShaft` | light-shaft cards (`MI_LightShaft`), mobile and web | unshaded, additive, no depth write; soft where it meets the ground | 1 depth sample |
 | `SH_TriplanarPBR` | desktop stone (`hi/MI_Stone*`) | opaque, Burley diffuse, GGX; object-space triplanar PBR set; parallax occlusion on upward faces (`height_depth` metres, 8 to 24 layers by view angle) | 9 texture samples, plus up to 25 height samples on upward faces |
 | `SH_Gem` | desktop ruby and amethyst (`hi/MI_Ruby`, `hi/MI_Amethyst`) | transparent pass (reads the screen texture), depth write; refraction with `ior` and `dispersion`, absorption by the body colour over `thickness` | 9 texture samples, 3 screen and 3 depth samples |
 | `SH_Triplanar.gdshaderinc` | included by the two above | object-space triplanar sampling, normal-map blending, Y-face parallax | none of its own |
@@ -357,6 +357,7 @@ look packages compare against these.
 | [temple-board-lit-desktop-high.jpg](../images/lookdev/temple-board-lit-desktop-high.jpg) | game, benchmark board | Forward+ (`desktop-high`) | WP-47 lighting, lightmap and `VoxelGI` |
 | [temple-atmosphere-desktop-high.jpg](../images/lookdev/temple-atmosphere-desktop-high.jpg) | `LD_Temple_Hi` | Forward+ (`desktop-high`) | WP-51 volumetric fog and dust, no lightmap |
 | [temple-atmosphere-mobile.jpg](../images/lookdev/temple-atmosphere-mobile.jpg) | `LD_Temple` | Mobile (`mobile`) | WP-51 light-shaft cards, no lightmap |
+| [temple-atmosphere-web.jpg](../images/lookdev/temple-atmosphere-web.jpg) | `LD_Temple` | Compatibility (`web`) | WP-51 light-shaft cards, no lightmap |
 
 ## Validator rules
 
