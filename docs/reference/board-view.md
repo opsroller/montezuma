@@ -133,6 +133,14 @@ board level and at piece height (0.6 cells), is inside the viewport minus
 `margin`. Portrait phones fit by width, wide screens by height; the board
 is never cropped.
 
+Each refit also places the far depth of field when the active camera
+attributes (the camera's own, else the environment's) are a
+`CameraAttributesPractical` with the theme's `dof_far_beyond_board`
+metadata: `dof_blur_far_distance` becomes the view depth of the board's
+far edge at board level (`layout::far_depth`) plus that many metres, so
+the blur stays on the backdrop at every window size
+([Board themes: Post-processing](board-themes.md#post-processing)).
+
 ![Board on a 9:19.5 phone](../images/board-view-phone.png)
 
 ## Feel constants

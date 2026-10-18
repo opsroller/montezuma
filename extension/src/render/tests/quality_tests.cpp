@@ -114,6 +114,10 @@ void test_profiles_match_visual_target() {
               mobile.shadow_casting_lights == 0 && web.shadow_casting_lights == 0,
           "shadow-casting light budget 8/2/0/0");
     check(standard.ssr_half_size && !high.ssr_half_size, "SSR half resolution on standard only");
+    check(high.dof_quality == DofQuality::Medium && standard.dof_quality == DofQuality::Low,
+          "depth of field medium on high, low on standard");
+    check(high.dof_jitter == high.taa && standard.dof_jitter == (standard.scaling == Scaling::TemporalUpscale),
+          "jittered depth of field only with a temporal pass");
     check(standard.scaling == Scaling::TemporalUpscale && standard.render_scale == 0.77f, "standard at 0.77");
     check(web.scaling == Scaling::Bilinear && web.msaa == 2, "web 2x MSAA, no upscaler");
     check(mobile.msaa == 2 || mobile.smaa, "mobile SMAA or 2x MSAA");

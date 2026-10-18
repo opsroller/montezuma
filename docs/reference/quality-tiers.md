@@ -122,7 +122,7 @@ target names.
 | `volumetric_fog` | `Environment.volumetric_fog_enabled` | ✔ | ✔ | — | — |
 | `fog_fire_light` | volumetric fog energy of lights in `quality_fog_light` | ✔ | — | — | — |
 | `auto_exposure` | `CameraAttributes.auto_exposure_enabled` | ✔ | ✔ | — | — |
-| `depth_of_field` | `CameraAttributesPractical` far and near blur | ✔ | ✔ | — | — |
+| `depth_of_field` | `CameraAttributesPractical` far and near blur (the board camera places the far blur behind the board, [Board view](board-view.md#camera-fit)) | ✔ | ✔ | — | — |
 | `glow` | `Environment.glow_enabled` | ✔ | ✔ | ✔ | ✔ |
 | `subsurface_scattering` | nodes in `quality:subsurface_scattering`; SSS quality high, medium, off | ✔ | ✔ | — | — |
 | `parallax_occlusion` | nodes in `quality:parallax_occlusion` | ✔ | ✔ | — | — |
@@ -170,6 +170,7 @@ switch. The root viewport re-applies on resize.
 | SSR half size | no | yes | — | — |
 | Volumetric fog froxels (size × depth) | 64 × 64 | 32 × 32 | — | — |
 | Subsurface scattering quality | high | medium | off | off |
+| Depth of field blur quality, jitter | medium, jittered | low, jittered | — | — |
 | Texture and material variant folder | `hi/` | `hi/` | base only | `lo/` |
 
 FSR 1 and FSR 2.2 run only on Forward+ in Godot 4.7, so the Mobile

@@ -75,6 +75,7 @@ own folder.
 - [About the fire](explanation/about-the-fire.md): why a simulated flipbook with motion vectors, why our own simulation, how it stays off the board.
 - [About quality tiers](explanation/about-quality-tiers.md): how a tier is picked, why the renderer is fixed per platform, why tiers only switch effects off.
 - [About lighting](explanation/about-lighting.md): baked and real-time GI per tier, why VoxelGI over SDFGI, physical units, height fog and the lighting costs.
+- [About post-processing and the colour grade](explanation/about-post-processing.md): glow before tonemapping, the CDL grade as a LUT and its palette check, backdrop depth of field that follows the camera, and their costs.
 - [About CI caching](explanation/about-ci-caching.md): why CI uses a compiler cache and what it leaves uncached.
 - [About level clocks](explanation/about-level-clocks.md): why each level has its own base clock, why timer upgrades add to it, and why the clock rule counts only wins.
 - [About the episode 3 levels](explanation/about-the-episode-3-levels.md): why chains then steel, what the simulator measures for chains, and human time against the clock.

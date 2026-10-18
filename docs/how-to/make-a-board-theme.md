@@ -19,6 +19,7 @@ With a Blender install instead of `bpy`, run the mesh step as
 1. Edit `tools/assets/themes/temple.json`: colours under `materials`, sky
    under `environment`, lights, exposure and fog under `lighting`
    (physical units: [Board themes: Lighting](../reference/board-themes.md#lighting)),
+   the colour grade under `grade` and glow and depth of field under `post`,
    sizes under `board` and `artifacts`.
 2. Regenerate and check:
 
@@ -57,6 +58,38 @@ With a Blender install instead of `bpy`, run the mesh step as
    materials; render them with the Forward+ renderer (`--rendering-driver
    vulkan`) and compare them with the base scenes.
 4. Commit the parameter file and every regenerated file together.
+
+## Grade a theme
+
+1. Set the `grade` section of the parameter file
+   ([Board themes: Colour grade](../reference/board-themes.md#colour-grade)).
+   Start from the identity (slope 1, offset 0, power 1, saturation 1) and
+   move one thing at a time: `slope` per channel tints the highlights,
+   `offset` the shadows, `power` the mid-tones.
+2. Check it against the palette before rendering anything:
+
+   ```sh
+   python3 tools/assets/grade_lut.py
+   ```
+
+   Each line is one colour's shift or the closest piece pair in one view.
+   An `ERROR` names the limit it broke. Keep the limits; change the grade.
+3. Write the table and render the readability capture on every renderer
+   ([Run the benchmark](run-the-benchmark.md)):
+
+   ```sh
+   python3 tools/assets/gen_theme_textures.py
+   godot --headless --path game --import
+   tools/bench/run_bench.sh --tier web --driver opengl3 --readability --seconds 5 --xvfb
+   tools/bench/run_bench.sh --tier desktop-high --driver vulkan --readability --seconds 5 --xvfb
+   ```
+
+   Rules 4 and 6 must still pass. Look at `all_on.png` beside the
+   palette: the board should read as the same colours, only warmer or
+   cooler.
+4. If you change glow under `post`, run the same captures: rule 6 fails
+   when the threshold lets lit stone bloom or a wide mip level spreads
+   past a quarter cell.
 
 ## Add a texture set
 

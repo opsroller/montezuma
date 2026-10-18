@@ -102,6 +102,16 @@ RenderingServer::SubSurfaceScatteringQuality sss_quality(q::SubsurfaceQuality s)
     return RenderingServer::SUB_SURFACE_SCATTERING_QUALITY_DISABLED;
 }
 
+RenderingServer::DOFBlurQuality dof_quality(q::DofQuality d) {
+    switch (d) {
+        case q::DofQuality::VeryLow: return RenderingServer::DOF_BLUR_QUALITY_VERY_LOW;
+        case q::DofQuality::Low: return RenderingServer::DOF_BLUR_QUALITY_LOW;
+        case q::DofQuality::Medium: return RenderingServer::DOF_BLUR_QUALITY_MEDIUM;
+        case q::DofQuality::High: return RenderingServer::DOF_BLUR_QUALITY_HIGH;
+    }
+    return RenderingServer::DOF_BLUR_QUALITY_VERY_LOW;
+}
+
 Viewport::MSAA msaa_mode(int samples) {
     if (samples >= 8) return Viewport::MSAA_8X;
     if (samples >= 4) return Viewport::MSAA_4X;
@@ -287,6 +297,7 @@ void QualityTiers::apply_engine_settings() {
     rs->sub_surface_scattering_set_quality(sss_quality(p.subsurface));
     rs->environment_set_ssr_half_size(p.ssr_half_size);
     rs->environment_set_volumetric_fog_volume_size(p.volumetric_fog_size, p.volumetric_fog_depth);
+    rs->camera_attributes_set_dof_blur_quality(dof_quality(p.dof_quality), p.dof_jitter);
 }
 
 void QualityTiers::apply_viewport() {

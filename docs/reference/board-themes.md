@@ -53,6 +53,7 @@ to the view's placeholder.
 | `game/assets/materials/shaders/` | `SH_*.gdshader` and `SH_*.gdshaderinc`, shared by all themes |
 | `game/assets/textures/<theme>/` | `T_<Set>_{BC,N,ORM,H}.png` base texture sets, at most 1024²; build outputs, ignored by git (see below) |
 | `game/assets/textures/<theme>/hi/` | desktop variants of the hero sets, same file names, at most 2048²; build outputs too |
+| `game/assets/textures/<theme>/grade/` | `T_Grade_LUT.png`, the colour grade as a 3D LUT (see [Colour grade](#colour-grade)); build output too |
 | `game/assets/lookdev/` | `LD_*.tscn` look-dev scenes (game camera, line-up) and `LD_<Theme>_Bake.tscn`, the scene each lightmap is baked from |
 | `game/assets/models/<theme>/backdrop/PF_Environment.lmbake` and `.exr` | the baked lightmap; build output, ignored by git (see [Lighting](#lighting)) |
 | `game/assets/PROVENANCE.md` | one record per theme or asset family |
@@ -68,6 +69,7 @@ to the view's placeholder.
 | `T_` + `_N` | normal: tangent space, OpenGL (green up), RGB |
 | `T_` + `_ORM` | occlusion, roughness, metallic in R, G, B: linear |
 | `T_` + `_H` | height: linear, greyscale, white is high (parallax) |
+| `T_Grade_LUT` | colour grade lookup table in `grade/`: display-space RGB, imported as a 3D texture |
 
 Names use `A-Z a-z 0-9 _` only. Code refers to logical names in the
 manifest, never to these paths.
@@ -113,22 +115,24 @@ byte-identical files.
 | Command | Writes | Needs |
 |---|---|---|
 | `python3 tools/assets/gen_theme_meshes.py [params]` | `SM_*.obj`, prints triangle counts, fails over budget | Blender 4.2+ as `bpy` (`pip install bpy`) or `blender -b --factory-startup -P <script> -- [params]` |
-| `python3 tools/assets/gen_theme_textures.py [params]` | `T_*_{BC,N,ORM,H}.png` (tiling), base and `hi/` | numpy, Pillow |
+| `python3 tools/assets/gen_theme_textures.py [params]` | `T_*_{BC,N,ORM,H}.png` (tiling), base and `hi/`; `grade/T_Grade_LUT.png` and its `.import` for a theme with a `grade` ([Colour grade](#colour-grade)) | numpy, Pillow |
 | `python3 tools/assets/gen_theme_scenes.py [params]` | `MI_*.tres`, `hi/MI_*.tres` and `lo/MI_*.tres`, `PF_*.tscn`, `LD_*.tscn` (with `LD_<Theme>_Bake.tscn`), the theme's manifest entry, `design/tokens/<theme>-board.json` | standard library |
 | `tools/assets/bake_lightmaps.sh [--godot PATH] [--xvfb] [--force] [--check]` | each theme's `PF_Environment.lmbake` and `.exr`, and a `.lightmap-inputs` stamp; skips themes whose stamp matches (`--check` only reports, exit 3 when stale) | Godot 4.7.2 editor, the native extension built, the textures generated, a Vulkan driver (Mesa lavapipe works without a GPU) |
-| `python3 tools/assets/validate_assets.py` | nothing; exits 1 on errors | Pillow |
+| `python3 tools/assets/validate_assets.py` | nothing; exits 1 on errors | Pillow, numpy (colour grade) |
+| `python3 tools/assets/grade_lut.py [params]` | nothing; prints each theme's palette check ([Colour grade](#colour-grade)) | numpy, Pillow |
 
 `params` defaults to `tools/assets/themes/temple.json`
 (`gen_theme_textures.py` with no argument does every theme in
 `tools/assets/themes/`).
 
 The `T_*` texture sets are build outputs, not committed: git ignores
-`game/assets/textures/*/T_*.png`, `*/hi/T_*.png` and the `.inputs` stamp.
+`game/assets/textures/*/T_*.png`, `*/hi/T_*.png`, `*/grade/T_*.png` and the `.inputs` stamp.
 Hand-made textures elsewhere in `game/assets/textures/` are still
 committed. `gen_theme_textures.py` writes a theme's `.inputs` stamp, a
 SHA-256 of the script, the theme's parameters and the numpy and Pillow
 versions, and skips the theme when the stamp matches and every file
-exists. Three things run it: the CMake target `textures` (part of `all`
+exists. The grade LUT takes milliseconds, so it is compared and rewritten
+on every run, stamp or not. Three things run it: the CMake target `textures` (part of `all`
 when CMake finds Python 3 with numpy and Pillow; otherwise configure
 prints how to run it), the CI action `.github/actions/textures` (see
 [CI pipeline](ci-pipeline.md#assets-workflow)), and you, before opening
@@ -146,8 +150,10 @@ the project in Godot from a fresh checkout.
 | `textures.size`, `textures.hi_size` | base and desktop texture edge in pixels (powers of two, ≤ 1024 and ≤ 2048) |
 | `textures.sets.<Set>` | one PBR set `T_<Set>_*`: `recipe` (a function in `gen_theme_textures.py`: `stone`, `ground`, `gold`, `gem`, `lapis`, `jade`, `moonstone`), `normal_strength` (slope at 1024 px), `hi` (also write a `hi/` set at `hi_size`; the base is filtered down from it), `height` (also write `_H`) |
 | `materials.<MI_name>` | `albedo` (the colour the kind reads as; also the HUD token), optional `albedo_tint` (multiplies the texture instead, for sets that carry their own colour), `set` (a texture set: makes an `ORMMaterial3D` whose roughness, metallic and occlusion come from `_ORM`) with `triplanar_scale`, `normal_scale`, `world_triplanar`; without `set`, `metallic` and `roughness`; `ior` (index of refraction; sets the dielectric reflectance) or `specular`; `emission` + `emission_energy`, `rim` + `rim_tint`, `clearcoat` + `clearcoat_roughness`, `anisotropy`, `subsurface` (`strength`, `transmittance`, `depth`, `boost`), `backlight`, `double_sided`. Or a ShaderMaterial: `shader` + `params`, optional `textures` (uniform to a path under `textures/<theme>/`; the `hi` variant takes the file's `hi/` copy), `noise_textures` (uniform to a `NoiseTexture2D`: `seed`, `frequency`, `size`) and `render_priority` (with `set`, the shader gets `texture_albedo`, `texture_normal`, `texture_orm`, `texture_height`, `albedo`, `triplanar_scale`, `normal_scale`). `hi`: keys that replace these for the desktop variant in `hi/` |
-| `environment` | sky colours, `ambient_energy`, `saturation`, `sun.transform` (as written in a `.tscn`, basis rows first) |
+| `environment` | sky colours, `ambient_energy`, `sun.transform` (as written in a `.tscn`, basis rows first) |
 | `lighting` | physical light values, see [Lighting](#lighting); `lighting.torch` also sets each brazier's fire light |
+| `grade` | the colour grade and its palette limits, see [Colour grade](#colour-grade) |
+| `post` | glow and depth of field, see [Post-processing](#post-processing) |
 | `lookdev` | game camera `camera_transform` and `fov`, `highlight_cell`; `fire_camera_transform` and `fire_fov` for the brazier close-up `LD_<Theme>_Fire` |
 | `fire` | brazier fire: `rim_height` and the `flame`, `smoke`, `embers`, `light` and `haze` settings of `PF_BrazierFire` ([Fire](fire.md#pf_brazierfire)) |
 | `surface_tokens`, `extra_tokens` | palette entries exported to `design/tokens/<theme>-board.json`: token name to material (its `albedo`) or to a hex value |
@@ -164,7 +170,7 @@ the parameter file's `lighting` section:
 
 | Node | Type | Tiers | Parameters (`lighting.*`) | Temple |
 |---|---|---|---|---|
-| `WorldEnvironment` | sky, AgX tonemapper, SSAO, SSIL, glow, optional height fog | all (switches per [Quality tiers](quality-tiers.md)) | `sky_nits`, `agx_white`, `agx_contrast`, optional `fog` (`color`, `height`, `height_density`, `sky_affect`) | 15,000 nits; white 16, contrast 1.25; no fog (backdrop haze is WP-51's `FogVolume`s) |
+| `WorldEnvironment` | sky, AgX tonemapper, SSAO, SSIL, optional height fog; glow and the grade LUT from [Post-processing](#post-processing) and [Colour grade](#colour-grade) | all (switches per [Quality tiers](quality-tiers.md)) | `sky_nits`, `agx_white`, `agx_contrast`, optional `fog` (`color`, `height`, `height_density`, `sky_affect`) | 15,000 nits; white 16, contrast 1.25; no fog (backdrop haze is WP-51's `FogVolume`s) |
 | `camera` (`CameraAttributesPractical`) | exposure, on the environment, `LightmapGI` and `VoxelGI` | auto exposure on desktop only | `exposure` (`sensitivity`, `multiplier`, `auto_scale`, `auto_speed`, `auto_min_sensitivity`, `auto_max_sensitivity`) | ISO 440 (auto 300 to 640) |
 | `Sun` | `DirectionalLight3D`, shadows | all | `sun` (`lux`, `kelvin`, `color`, `angular_distance`) | 11,000 lux, 4500 K, 0.6° |
 | `Fire1`…`Fire4/Light` | `FlickerLight3D` in each brazier's `PF_BrazierFire` ([Fire](fire.md)), dual paraboloid shadows (seam flat above the board), group `quality_shadow_light` | all; shadows on the nearest 8 or 2 | `torch` (`lumens`, `kelvin`, `color`, `size`, `range`) | 60,000 lm, 1900 K, range 4.5 m |
@@ -202,6 +208,51 @@ emission in nits (`emission_intensity`, or the `emission_energy` of
 `SH_Gem`, scaled so the theme's `emission_energy` reads the same at the
 theme's sensitivity); each emissive material also gets a `lo/` copy at
 1 nit for web, which `QualityTiers` loads there.
+
+## Colour grade
+
+A theme's `grade` section is an ASC CDL applied in display space after
+tonemapping: per channel `out = clamp(in × slope + offset) ^ power`, then
+`saturation` around Rec. 709 luma. `gen_theme_textures.py` bakes it with
+`tools/assets/grade_lut.py` into
+`game/assets/textures/<theme>/grade/T_Grade_LUT.png`, a `lut_size`³ table
+laid out as `lut_size` slices side by side (red across, green down, blue
+by slice), and writes its `.import` (`importer="3d_texture"`, lossless,
+no mipmaps, `slices/horizontal` = `lut_size`). The theme's
+`WorldEnvironment` uses it as `adjustment_color_correction` on every tier.
+Why a CDL and a LUT: [About post-processing](../explanation/about-post-processing.md).
+
+| Key (`grade.*`) | Meaning | Temple |
+|---|---|---|
+| `lut_size` | lattice points per axis | 32 (a 1024 × 32 PNG, 96 KB in memory) |
+| `slope`, `offset`, `power` | CDL per channel, sRGB-encoded values in 0 to 1 | slope 1.03, 1.0, 0.96; offset 0, 0, 0.01; power 1 |
+| `saturation` | CDL saturation, 1 keeps it | 1.06 |
+| `check.max_shift_pieces`, `check.max_shift_surfaces` | most a piece colour (`materials.<kind>.albedo`) or palette colour (`surface_tokens`, `extra_tokens`) may move, OKLab distance | 0.04, 0.05 |
+| `check.max_separation_drop` | most the closest pair of piece colours may come closer, OKLab distance, in normal vision, greyscale, protanopia, deuteranopia and tritanopia (Machado et al. 2009, severity 1) | 0.005 |
+
+`python3 tools/assets/grade_lut.py` prints the check for each theme;
+`validate_assets.py` fails a grade outside its limits, a LUT that does
+not match the parameters, and a LUT that does not import as a 3D
+texture.
+
+## Post-processing
+
+`gen_theme_scenes.py` writes the theme environment's glow and depth of
+field from the `post` section. The quality tier turns them off where the
+tier has no `glow` or `depth_of_field` ([Quality tiers](quality-tiers.md#feature-ids)).
+
+| Key (`post.*`) | Writes | Temple |
+|---|---|---|
+| `glow.levels` | `glow_levels/1` to `/7` (mip weights; higher levels spread wider) | 0, 1, 0.5, 0, 0, 0, 0 |
+| `glow.intensity`, `glow.strength`, `glow.bloom` | `glow_intensity`, `glow_strength`, `glow_bloom` | 0.5, 1.0, 0 |
+| `glow.blend` | `glow_blend_mode`: `additive`, `screen`, `softlight`, `replace` or `mix` | additive |
+| `glow.hdr_threshold`, `glow.hdr_scale`, `glow.hdr_luminance_cap` | the exposed scene value glow starts at (before tonemapping, Godot 4.6+), its gain, its cap | 8, 2, 12 |
+| `depth_of_field.beyond_board` | far blur start, metres past the board's far edge; written as `dof_blur_far_distance` and as the `dof_far_beyond_board` metadata `BoardCamera3D` reads ([Board view](board-view.md#camera-fit)) | 0.5 |
+| `depth_of_field.transition`, `depth_of_field.amount` | `dof_blur_far_transition`, `dof_blur_amount` | 2.0 m, 0.1 |
+
+Leave `depth_of_field` out for a theme without backdrop blur. Glow and
+blur are checked by readability rules 6 and 2 with the readability
+capture ([Benchmark](benchmark.md#readability-checks)).
 
 ## Shaders
 
@@ -305,6 +356,10 @@ each as `error: <file>: <rule and fix>`:
   filtering above.
 - Every file in a `hi/` folder has a base file of the same name; a `hi/`
   texture is the same map at the same or a larger size.
+- A theme's `grade` keeps its palette within its `check` limits, its
+  `grade/T_Grade_LUT.png` matches the parameters, and its `.import`
+  imports it as a 3D texture ([Colour grade](#colour-grade)). Grade LUTs
+  are exempt from the texture map rules above.
 - Android, iOS and Web export presets list `*/hi/*` in `exclude_filter`;
   desktop presets do not.
 - `PROVENANCE.md` has a record for each theme.

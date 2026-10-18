@@ -53,6 +53,8 @@ Profile make_desktop_high() {
     p.volumetric_fog_size = 64;
     p.volumetric_fog_depth = 64;
     p.subsurface = SubsurfaceQuality::High;
+    p.dof_quality = DofQuality::Medium;
+    p.dof_jitter = true;
     p.texture_variant = "hi";
     return p;
 }
@@ -76,6 +78,8 @@ Profile make_desktop_standard() {
     p.volumetric_fog_size = 32;
     p.volumetric_fog_depth = 32;
     p.subsurface = SubsurfaceQuality::Medium;
+    p.dof_quality = DofQuality::Low;
+    p.dof_jitter = true;
     p.texture_variant = "hi";
     return p;
 }

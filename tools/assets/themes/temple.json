@@ -388,7 +388,6 @@
     "sky_horizon": "#b7ae86",
     "ground_bottom": "#1d2a16",
     "ambient_energy": 0.4,
-    "saturation": 1.08,
     "sun": {
       "transform": "Transform3D(0.819152, 0.383798, -0.426250, 0.000000, 0.743145, 0.669131, 0.573576, -0.548120, 0.608749, 0, 8, 0)"
     }
@@ -460,6 +459,37 @@
       "texel_scale": 1.0,
       "max_texture_size": 2048,
       "probes_subdiv": 2
+    }
+  },
+  "grade": {
+    "_comment": "Colour grade as an ASC CDL in display space, baked into a 3D LUT by gen_theme_textures.py; check limits for validate_assets.py. docs/reference/board-themes.md#colour-grade.",
+    "lut_size": 32,
+    "slope": [1.03, 1.0, 0.96],
+    "offset": [0.0, 0.0, 0.01],
+    "power": [1.0, 1.0, 1.0],
+    "saturation": 1.06,
+    "check": {
+      "max_shift_pieces": 0.04,
+      "max_shift_surfaces": 0.05,
+      "max_separation_drop": 0.005
+    }
+  },
+  "post": {
+    "_comment": "Glow and depth of field of the theme environment. docs/reference/board-themes.md#post-processing.",
+    "glow": {
+      "levels": [0.0, 1.0, 0.5, 0.0, 0.0, 0.0, 0.0],
+      "intensity": 0.5,
+      "strength": 1.0,
+      "bloom": 0.0,
+      "blend": "additive",
+      "hdr_threshold": 8.0,
+      "hdr_scale": 2.0,
+      "hdr_luminance_cap": 12.0
+    },
+    "depth_of_field": {
+      "beyond_board": 0.5,
+      "transition": 2.0,
+      "amount": 0.1
     }
   },
   "lookdev": {

@@ -22,6 +22,7 @@ dist/
 # Hand-made textures elsewhere under game/assets/textures/ are still tracked.
 game/assets/textures/*/T_*.png
 game/assets/textures/*/hi/T_*.png
+game/assets/textures/*/grade/T_*.png
 game/assets/textures/*/.inputs
 # Lightmaps baked by tools/assets/bake_lightmaps.sh in the build (CI action
 # .github/actions/lightmaps); never committed. Godot's UV2 unwrap cache too.

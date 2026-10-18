@@ -158,7 +158,12 @@ it.
 
 `ReadabilityCapture`: `seed` (`--capture-seed=N`, 52), `output_dir`
 (`--capture-out=DIR`, `user://bench/readability`), `settle_frames` (45,
-frames each effect set renders before its capture).
+frames each effect set renders before its capture), `average_frames`
+(`--capture-average=N`, 64, frames averaged into each capture after it
+settles: temporal anti-aliasing and upscaling jitter each frame and the
+fire lights flicker, which on desktop tiers made two captures of the same
+board differ by more than rules 2 and 6 allow). The capture also holds
+every `FlickerLight3D` at its authored energy and position.
 
 ## Report
 
@@ -232,7 +237,8 @@ the list.
 ## Readability capture
 
 `ReadabilityCapture` deals the board for its seed, then renders it under
-four effect sets, `settle_frames` frames each, and saves the viewport:
+four effect sets, `settle_frames` frames each, and saves the mean of the
+next `average_frames` frames of the viewport:
 
 | File | Effects on |
 |---|---|

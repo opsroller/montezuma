@@ -24,6 +24,7 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 #include "board/board_view_3d.hpp"
+#include "render/flicker_light_3d.hpp"
 
 using namespace godot;
 
@@ -43,6 +44,14 @@ constexpr std::array<EffectSet, 4> kSets{{
     {"atmosphere_only", bench::kAtmosphere},
     {"glow_only", bench::kGlow},
 }};
+
+// Holds every flickering fire light at its authored energy and rest
+// position: the rules compare effect sets, and a light that changes between
+// captures reads as one of them.
+void hold_flicker(Node* node) {
+    if (auto* light = Object::cast_to<FlickerLight3D>(node)) light->set_process(false);
+    for (int64_t i = 0; i < node->get_child_count(); ++i) hold_flicker(node->get_child(i));
+}
 
 Array rect(Vector2 a, Vector2 b) {
     Array r;
@@ -66,6 +75,7 @@ void ReadabilityCapture::_ready() {
         const String a = args[i];
         if (a.begins_with("--capture-out=")) output_dir_ = a.get_slice("=", 1);
         if (a.begins_with("--capture-seed=")) seed_ = a.get_slice("=", 1).to_int();
+        if (a.begins_with("--capture-average=")) average_frames_ = std::max(1, int(a.get_slice("=", 1).to_int()));
     }
     BoardView3D* v = view();
     ERR_FAIL_NULL_MSG(v, "ReadabilityCapture: board_view_path does not point at a BoardView3D.");
@@ -73,6 +83,7 @@ void ReadabilityCapture::_ready() {
     board_.instantiate();
     board_->setup(8, 8, 7, seed_);
     v->show_board(board_);
+    hold_flicker(get_tree()->get_root());
     effects_.capture(get_tree()->get_root(), get_viewport());
     DirAccess::make_dir_recursive_absolute(ProjectSettings::get_singleton()->globalize_path(output_dir_));
     running_ = true;
@@ -86,15 +97,38 @@ void ReadabilityCapture::fail(const String& why) {
     get_tree()->quit(1);
 }
 
-void ReadabilityCapture::save_frame(const char* name) {
+bool ReadabilityCapture::accumulate_frame() {
     const Ref<ViewportTexture> tex = get_viewport()->get_texture();
     const Ref<Image> image = tex.is_valid() ? tex->get_image() : Ref<Image>();
     if (image.is_null() || image->is_empty()) {
         fail("the viewport gave no image; run with a rendering driver, not --headless.");
-        return;
+        return false;
     }
+    if (image->get_format() != Image::FORMAT_RGB8) image->convert(Image::FORMAT_RGB8);
+    const PackedByteArray data = image->get_data();
+    if (averaged_ == 0) {
+        frame_width_ = image->get_width();
+        frame_height_ = image->get_height();
+        sum_.assign(static_cast<std::size_t>(data.size()), 0);
+    } else if (image->get_width() != frame_width_ || image->get_height() != frame_height_) {
+        fail("the viewport changed size during a capture.");
+        return false;
+    }
+    const uint8_t* src = data.ptr();
+    for (std::size_t i = 0; i < sum_.size(); ++i) sum_[i] += src[i];
+    ++averaged_;
+    return true;
+}
+
+void ReadabilityCapture::save_frame(const char* name) {
+    PackedByteArray mean;
+    mean.resize(static_cast<int64_t>(sum_.size()));
+    uint8_t* dst = mean.ptrw();
+    const auto n = static_cast<std::uint32_t>(averaged_);
+    for (std::size_t i = 0; i < sum_.size(); ++i) dst[i] = static_cast<uint8_t>((sum_[i] + n / 2) / n);
+    const Ref<Image> image = Image::create_from_data(frame_width_, frame_height_, false, Image::FORMAT_RGB8, mean);
     const String path = output_dir_.path_join(String(name) + ".png");
-    if (image->save_png(path) != OK) fail("cannot write " + path);
+    if (image.is_null() || image->save_png(path) != OK) fail("cannot write " + path);
 }
 
 void ReadabilityCapture::write_layout() {
@@ -160,9 +194,11 @@ void ReadabilityCapture::_process(double) {
     if (!running_) return;
     if (frames_in_set_ == 0) effects_.apply(kSets[static_cast<std::size_t>(set_index_)].on);
     if (++frames_in_set_ < settle_frames_) return;
+    if (!accumulate_frame() || averaged_ < average_frames_) return;
     save_frame(kSets[static_cast<std::size_t>(set_index_)].name);
     if (!running_) return;
     frames_in_set_ = 0;
+    averaged_ = 0;
     if (++set_index_ < static_cast<int>(kSets.size())) return;
 
     // The features the scene runs with, recorded with every effect back on.
@@ -185,11 +221,14 @@ void ReadabilityCapture::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_output_dir"), &ReadabilityCapture::get_output_dir);
     ClassDB::bind_method(D_METHOD("set_settle_frames", "frames"), &ReadabilityCapture::set_settle_frames);
     ClassDB::bind_method(D_METHOD("get_settle_frames"), &ReadabilityCapture::get_settle_frames);
+    ClassDB::bind_method(D_METHOD("set_average_frames", "frames"), &ReadabilityCapture::set_average_frames);
+    ClassDB::bind_method(D_METHOD("get_average_frames"), &ReadabilityCapture::get_average_frames);
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "board_view_path", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "BoardView3D"),
                  "set_board_view_path", "get_board_view_path");
     ADD_PROPERTY(PropertyInfo(Variant::INT, "seed"), "set_seed", "get_seed");
     ADD_PROPERTY(PropertyInfo(Variant::STRING, "output_dir"), "set_output_dir", "get_output_dir");
     ADD_PROPERTY(PropertyInfo(Variant::INT, "settle_frames"), "set_settle_frames", "get_settle_frames");
+    ADD_PROPERTY(PropertyInfo(Variant::INT, "average_frames"), "set_average_frames", "get_average_frames");
 }
 
 }  // namespace montezuma::godot_binding
