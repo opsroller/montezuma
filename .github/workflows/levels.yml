@@ -11,7 +11,7 @@ name: levels
 # result. A filtered check cannot be required.
 on:
   push:
-    branches: [main]
+    branches: ["**"]
     paths:
       - "game/data/levels/**"
       - "tools/sim/**"
@@ -33,10 +33,13 @@ permissions:
 
 concurrency:
   group: levels-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   balance:
+    # A branch of this repository is checked by its push run on the same
+    # commit; pull_request runs only for forks.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
