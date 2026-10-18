@@ -12,8 +12,8 @@ namespace montezuma::godot_binding {
 
 // A button whose press is data: an action, a target and params set in the
 // scene, routed through the enclosing Screen (or UiRoot when outside one).
-// Actions: push, replace, reset, back (ScreenStack); play, resume, restart,
-// quit_level, quit, url (UiRoot). Plays the ui_click / ui_back cue.
+// Actions: push, replace, reset, back (ScreenStack); play, pause, resume,
+// restart, quit_level, quit, url (UiRoot). Plays the ui_click / ui_back cue.
 class NavButton : public godot::Button {
     GDCLASS(NavButton, godot::Button)
 

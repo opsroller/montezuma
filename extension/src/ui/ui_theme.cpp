@@ -229,7 +229,7 @@ Ref<Theme> UiTheme::build(const Dictionary& tokens, double text_scale) {
         {"TitleLabel", p.title, p.accent, true},
         {"HeadingLabel", p.heading, p.text, true},
         {"CaptionLabel", p.caption, p.text_muted, false},
-        {"DangerLabel", p.body, p.danger, false},
+        {"DangerLabel", p.heading, p.danger, true},
     };
     for (const auto& v : labels) {
         t->set_type_variation(v.name, "Label");

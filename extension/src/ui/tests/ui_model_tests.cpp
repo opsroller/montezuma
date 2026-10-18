@@ -9,6 +9,7 @@
 #include <string>
 
 #include "model/format.hpp"
+#include "model/hud_model.hpp"
 #include "model/nav_stack.hpp"
 #include "model/settings.hpp"
 
@@ -94,6 +95,43 @@ void test_level_id() {
     check(level_id(5, 12) == "e5-l12", "two-digit level");
 }
 
+void test_hud_time() {
+    HudModel h;
+    check(h.time_fraction() == 1.0, "full bar before any time is known");
+    check(h.set_time(90.0) && h.clock() == "1:30", "first time sets clock");
+    check(h.time_fraction() == 1.0, "first time seen is the full time");
+    check(!h.set_time(89.5), "same displayed second is not a change");
+    check(h.set_time(45.0) && std::fabs(h.time_fraction() - 0.5) < 1e-9, "half time, half bar");
+    check(!h.time_warning(), "no warning above threshold");
+    check(h.set_time(9.2) && h.time_warning(), "warning at 10 s or less");
+    check(h.set_time(0.0) && !h.time_warning() && h.clock() == "0:00", "time out ends warning");
+    HudModel g;
+    g.set_time_limit(120.0);
+    g.set_time(60.0);
+    check(std::fabs(g.time_fraction() - 0.5) < 1e-9, "explicit limit wins over first value");
+}
+
+void test_hud_values() {
+    HudModel h;
+    check(h.set_gems(3, 40) && h.gems() == 3 && h.gem_goal() == 40, "gem counter");
+    check(!h.set_gems(3, 40), "unchanged gems is not a change");
+    check(h.set_quota(2, 12) && !h.set_quota(2, 12), "quota changes once");
+    check(h.set_quota(2, -3) && h.quotas().at(2) == 0, "quota clamps to 0");
+    check(h.set_score(100) && !h.set_score(100), "score changes once");
+    check(h.set_totem("time", 0.5, 2), "totem set");
+    check(!h.set_totem("time", 0.505, 2), "sub-step charge change ignored");
+    check(h.set_totem("time", 0.505, 1), "uses left change redraws");
+    check(h.set_totem("time", 2.0, 1) && h.totems().at("time").charge == 1.0, "charge clamps to full and redraws");
+    check(h.set_frenzy(0.5, 0.0) && !h.frenzy_on(), "frenzy filling");
+    check(h.set_frenzy(1.0, 14.2) && h.frenzy_on() && h.frenzy_seconds() == 15, "frenzy on, seconds round up");
+    check(!h.set_frenzy(1.0, 14.1), "same shown second is not a change");
+    check(h.set_frenzy(0.0, 0.0) && !h.frenzy_on(), "frenzy ends");
+    check(h.set_shuffles(2) && !h.set_shuffles(2), "shuffles left");
+    check(h.set_hint(300, false) && h.set_hint(300, true) && h.hint_affordable(), "hint cost and affordability");
+    h.reset();
+    check(h.quotas().empty() && h.score() == 0 && h.time_fraction() == 1.0 && h.totems().empty(), "reset clears everything");
+}
+
 }  // namespace
 
 int main() {
@@ -103,6 +141,8 @@ int main() {
     test_linear_to_db();
     test_format_clock();
     test_level_id();
+    test_hud_time();
+    test_hud_values();
     std::printf("%d checks, %d failures\n", checks, failures);
     return failures == 0 ? 0 : 1;
 }

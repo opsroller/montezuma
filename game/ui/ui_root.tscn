@@ -1,5 +1,7 @@
-[gd_scene format=3]
+[gd_scene load_steps=2 format=3]
 ; SPDX-License-Identifier: GPL-2.0-or-later
+
+[ext_resource type="PackedScene" path="res://ui/hud/hud.tscn" id="1"]
 
 [node name="UiRoot" type="UiRoot"]
 layer = 10
@@ -16,6 +18,9 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+
+[node name="Hud" parent="Scaled/SafeArea" instance=ExtResource("1")]
+layout_mode = 2
 
 [node name="ScreenStack" type="ScreenStack" parent="Scaled/SafeArea"]
 layout_mode = 2

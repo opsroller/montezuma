@@ -59,7 +59,7 @@ void NavButton::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_hidden_on", "features"), &NavButton::set_hidden_on);
     ClassDB::bind_method(D_METHOD("get_hidden_on"), &NavButton::get_hidden_on);
     ADD_PROPERTY(PropertyInfo(Variant::STRING, "action", PROPERTY_HINT_ENUM_SUGGESTION,
-                              "push,replace,reset,back,play,resume,restart,quit_level,quit,url"),
+                              "push,replace,reset,back,play,pause,resume,restart,quit_level,quit,url"),
                  "set_action", "get_action");
     ADD_PROPERTY(PropertyInfo(Variant::STRING, "target"), "set_target", "get_target");
     ADD_PROPERTY(PropertyInfo(Variant::DICTIONARY, "params"), "set_params", "get_params");
