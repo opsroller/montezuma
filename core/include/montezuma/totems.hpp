@@ -258,6 +258,11 @@ public:
     // order (TOT-17, docs/reference/totems.md). The use is the one just spent
     // (uses_spent, at least 1).
     TotemEffect make_effect(TotemId id, const Board& board, Rng& rng) const;
+    // The same on a board with steel: `steel` marks steel pieces row-major
+    // (empty: none). Steel pieces are left out of paint's kinds and pool
+    // (TOT-16); fire still targets them (TOT-10, OBS-03). Same draws as the
+    // overload above when there is no steel.
+    TotemEffect make_effect(TotemId id, const Board& board, Rng& rng, const std::vector<bool>& steel) const;
 
     // record_move under the name the firing loop reads with. Returns the fired
     // totems in kind order; the caller then builds and resolves them one at a

@@ -118,6 +118,19 @@ struct StepHooks {
     // Called once per step after its falls and refill, with the step as
     // recorded.
     std::function<void(const Board& board, const CascadeStep& step, int index)> after_refill;
+    // May the piece at `c` be part of a run? Null: every piece can. A piece
+    // that cannot ends a run (steel, OBS-01, RES-01). Used by run finding,
+    // legality and shuffles whenever these hooks are passed.
+    std::function<bool(const Board& board, Cell c)> matchable;
+    // May the piece at `c` take part in a swap or move in a shuffle? Null:
+    // every piece can (steel and chained pieces cannot, MOVE-03, OBS-06).
+    std::function<bool(const Board& board, Cell c)> movable;
+    // When false, a move never shuffles at its end, even with no legal move
+    // left: the caller reshuffles once its own rules have run (RES-08).
+    bool settle_shuffle = true;
+    // Cap on the cascade steps of one move; 0 means no cap. Reaching it stops
+    // resolving and sets MoveResult::stuck (see Board::kMaxCascadeSteps).
+    int max_steps = 0;
 };
 
 // Pure match-3 board model. No rendering; the 3D layer observes results.
@@ -126,6 +139,8 @@ public:
     static constexpr int kEmpty = -1;
     static constexpr int kMinSize = 3;
     static constexpr int kMinKinds = 3;
+    // Safe bound on the cascade steps of one move, for StepHooks::max_steps.
+    static constexpr int kMaxCascadeSteps = 100;
 
     // Throws std::invalid_argument for a board smaller than 3x3 or fewer than
     // 3 kinds, and std::runtime_error if no playable board can be dealt.
@@ -155,8 +170,13 @@ public:
     std::set<int> find_matches() const;
     // Every run of 3+, in CascadeStep::runs order.
     std::vector<Run> find_runs() const;
+    // The same, honouring hooks->matchable (null hooks: as find_runs()).
+    std::vector<Run> find_runs(const StepHooks* hooks) const;
     bool is_legal_swap(Cell a, Cell b);
     bool has_legal_move();
+    // The same, honouring hooks->matchable and hooks->movable.
+    bool is_legal_swap(Cell a, Cell b, const StepHooks* hooks);
+    bool has_legal_move(const StepHooks* hooks);
     // Applies a swap and resolves all cascades. Empty for an illegal swap
     // (no hook is called then). Never throws for game reasons (see
     // MoveResult::stuck); exceptions from `hooks` propagate. `hooks` may be
@@ -172,6 +192,12 @@ public:
     // dealing a fresh board if reordering fails. Returns false, leaving the
     // board unchanged, if neither works.
     bool shuffle() noexcept;
+    // The same, honouring `hooks` (matchable, movable): pieces that are not
+    // movable keep their cells, and a redeal deals only the movable cells.
+    // Fills `map` ({from, to} of every moved piece, ordered by `to`
+    // row-major) and `redealt` as MoveResult does. `hooks` callbacks must not
+    // throw. Returns false, leaving the board unchanged, if nothing works.
+    bool shuffle(const StepHooks* hooks, std::vector<std::pair<Cell, Cell>>& map, bool& redealt) noexcept;
 
 private:
     static constexpr int kMaxFillAttempts = 1000;
@@ -189,6 +215,9 @@ private:
     // Resolves every remaining run, then shuffles if no legal move is left.
     void resolve_and_settle(MoveResult& result, const StepHooks* hooks);
     bool shuffle_tracked(std::vector<std::pair<Cell, Cell>>& map, bool& redealt) noexcept;
+    bool shuffle_movable(const StepHooks& hooks, std::vector<std::pair<Cell, Cell>>& map, bool& redealt) noexcept;
+    // Kind for run finding: kEmpty for a piece hooks->matchable rejects.
+    int match_kind(int x, int y, const StepHooks* hooks) const;
 
     int width_;
     int height_;
