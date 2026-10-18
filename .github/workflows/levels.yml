@@ -6,19 +6,15 @@
 # Reference: docs/reference/ci-pipeline.md
 name: levels
 
-# Path-filtered: only level files, the simulator, the core it plays, the JSON
-# library the core parses levels with and the build files can change the
-# result. A filtered check cannot be required.
+# Fork PRs are path-filtered: only level files, the simulator, the core it
+# plays, the JSON library the core parses levels with and the build files
+# can change the result. Every push runs it.
 on:
+  # No path filter on push: GitHub would match it against the files of
+  # that push alone, so a push that skips the levels would leave its head
+  # unchecked.
   push:
-    branches: [main]
-    paths:
-      - "game/data/levels/**"
-      - "tools/sim/**"
-      - "core/**"
-      - "thirdparty/nlohmann/**"
-      - "CMakeLists.txt"
-      - ".github/workflows/levels.yml"
+    branches: ["**"]
   pull_request:
     paths:
       - "game/data/levels/**"
@@ -33,10 +29,13 @@ permissions:
 
 concurrency:
   group: levels-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   balance:
+    # A branch of this repository is checked by its push run on the same
+    # commit; pull_request runs only for forks.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:

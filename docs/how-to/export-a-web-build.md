@@ -58,10 +58,15 @@ To build a branch, run the **web** workflow from the Actions tab with
 5. Run it in headless Chromium the way the site loads it:
 
    ```sh
-   python3 -m pip install playwright==1.56.0
-   python3 -m playwright install chromium
-   python3 tools/release/web-smoke.py dist/web/montezuma-*-web.zip
+   python3 -m venv ~/web-smoke
+   ~/web-smoke/bin/pip install --require-hashes -r tools/release/web-requirements.txt
+   ~/web-smoke/bin/python -m playwright install chromium
+   ~/web-smoke/bin/python tools/release/web-smoke.py dist/web/montezuma-*-web.zip
    ```
+
+   The hashes cover CPython 3.12 and 3.13 on Linux x86_64. On another
+   Python or platform, install `playwright==1.56.0` without
+   `--require-hashes` instead.
 
    Add `firefox` or `webkit` after the archive to try those browsers
    (install them the same way).
