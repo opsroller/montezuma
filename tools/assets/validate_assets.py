@@ -231,9 +231,13 @@ def anisotropic_repeat_errors(path, rel):
             if "anisotropic" in (hints or "") and "repeat_disable" not in hints:
                 errors.append(f"{rel}: sampler {name} filters anisotropically with repeat, which does not compile "
                               "on 16-slot Metal GPUs; use repeat_disable and wrap in the shader (tri_tex)")
-    elif re.search(r"^texture_filter = [45]$", text, re.M) and not re.search(r"^texture_repeat = false$", text, re.M):
-        errors.append(f"{rel}: anisotropic texture_filter with repeat does not compile on 16-slot Metal GPUs; "
-                      "use the default trilinear filter")
+    else:
+        # One check per resource block, so a texture_repeat in one material does not excuse another.
+        for block in re.split(r"^\[", text, flags=re.M):
+            if re.search(r"^texture_filter = [45]$", block, re.M) and \
+                    not re.search(r"^texture_repeat = false$", block, re.M):
+                errors.append(f"{rel}: anisotropic texture_filter with repeat does not compile on 16-slot Metal "
+                              "GPUs; use the default trilinear filter")
     return errors
 
 
