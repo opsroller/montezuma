@@ -15,7 +15,16 @@ own folder.
 - [Project profile](reference/project-profile.md): stack, commands, who owns what, project rules.
 - [Contracts](reference/contracts.md): interfaces between work packages.
 - [Work packages](reference/work-packages.md): the plan and its status.
-- [Rules spec](rules-spec.md): the game's rules (moving to `reference/`).
+- [Rules spec](reference/rules-spec.md): how the game plays, with
+  [Power Totems](reference/rules-totems.md), [power-ups](reference/rules-power-ups.md),
+  [bonus games](reference/rules-bonus-games.md) and [sources](reference/rules-sources.md).
+- [Progression](reference/progression.md): episodes, levels, unlocks, upgrades, trophies, intro level.
+- [Balance targets](design/balance.md): what the simulator checks each level against.
+
+## Explanation
+
+- [About the rules](explanation/about-the-rules.md): which original we follow, and every choice and deviation.
+- [About rule sets and themes](explanation/about-rule-sets-and-themes.md): how mini games fit the design.
 
 ## How-to guides
 

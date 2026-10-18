@@ -118,9 +118,30 @@ Played by name with `GameAudio::play(name)`; a missing cue warns and is silent.
 `ui_back`, `trophy`, `music_menu`, `music_play_<episode>`,
 `ambience_jungle`.
 
-## Totem and bonus ids (owner: game-designer, WP-03) — proposed
+## Totem and power-up ids (owner: game-designer, WP-03) — settled
 
-Totems: `row_clear`, `random_blast`, `time`, `lightning`, `color_bomb`,
-`multiplier`. Bonuses: `hammer`, `lightning`, `extra_time`, `shuffle`,
-`dynamite`, `freeze`. Placeholders until WP-03 settles the originals'
-behaviour; ids may be renamed then.
+Rules: [rules-totems.md](rules-totems.md), [rules-power-ups.md](rules-power-ups.md).
+
+Totems, one per kind, in kind order: `fire` (red), `time` (orange),
+`gold` (yellow), `harvest` (green), `ward` (blue), `gift` (purple),
+`paint` (white).
+
+Power-ups (the original's bonuses): `tnt`, `color_clear`, `lightning`,
+`clock`, `multiplier`, `hint`.
+
+Bonus games: `bg_accuracy`, `bg_memory`, `bg_reaction`, `bg_attention`.
+
+Rule sets: `classic`. Themes: `temple`.
+
+These replace the placeholders `row_clear`, `random_blast`, `color_bomb`
+(totems) and `hammer`, `extra_time`, `shuffle`, `dynamite`, `freeze`
+(bonuses). Asset and audio names follow: `totem_<id>`, `bonus_<id>`,
+`totem_fire_<id>`, `bonus_use_<id>` use these ids.
+
+**Proposed LevelData change** (to the LevelData owner): add `gem_goal`
+`{normal: int, hard: int}`; `quotas` optional (a level needs `gem_goal`
+or `quotas`); `time_limit` optional, keys `normal` and `hard` (default:
+the player's timer tier); difficulty names `normal` and `hard` (no
+`relaxed`); optional `powerups_unlocked` `[power-up id]`, `steel_rate`
+(0 to 1, default 0), `chained_cells` `[[x, y]]`, `rules` (default
+`classic`) and `theme` (default `temple`).
