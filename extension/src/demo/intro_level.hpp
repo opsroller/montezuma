@@ -13,7 +13,7 @@ namespace montezuma::godot_binding {
 class Match3Game;
 
 // The web demo's scene root: a thin wrapper over the game scene. Its
-// Match3Game child plays the intro level (its autostart_level, e1-l01) with
+// Match3Game child plays the intro level (level_id, e1-l01) with
 // the HUD, the core level session and every rule; IntroLevel holds none of
 // its own. Once, when that level is won, it emits level_completed(level_id,
 // score). On the web build it also dispatches the page events from the web
@@ -35,7 +35,8 @@ public:
     void set_game_path(const godot::NodePath& p) { game_path_ = p; }
     godot::NodePath get_game_path() const { return game_path_; }
 
-    // The intro level's id: the game's autostart_level, e.g. e1-l01.
+    // The intro level's id, e1-l01 by default.
+    void set_level_id(const godot::String& v) { level_id_ = v; }
     godot::String get_level_id() const { return level_id_; }
     // The game's score, or the winning score once completed.
     int get_score() const;
@@ -57,7 +58,7 @@ private:
     void finish_self_test();
 
     godot::NodePath game_path_;
-    godot::String level_id_;
+    godot::String level_id_ = "e1-l01";
     int score_ = 0;
     bool first_frame_ = true;
     bool complete_on_start_ = false;

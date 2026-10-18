@@ -30,6 +30,8 @@ constexpr const char* kCompleteLevelArg = "--complete-level";
 constexpr const char* kSelfTestArg = "--intro-selftest";
 // The self-test gives up on a level that has not ended after this many moves.
 constexpr int kSelfTestMaxMoves = 500;
+// Without the UI (and its difficulty setting) the level plays at this one.
+constexpr const char* kDefaultDifficulty = "normal";
 // The self-test's other level: any level but the intro one.
 constexpr const char* kSelfTestOtherLevel = "e1-l02";
 
@@ -71,17 +73,19 @@ void IntroLevel::_ready() {
     complete_on_start_ = args.has(kCompleteLevelArg);
     Match3Game* g = game();
     ERR_FAIL_NULL_MSG(g, "IntroLevel needs game_path to point at a Match3Game.");
-    // The game started its autostart level in its own _ready, before this one.
-    level_id_ = g->get_autostart_level();
-    ERR_FAIL_COND_MSG(level_id_.is_empty(), "IntroLevel: the game has no autostart_level.");
+    ERR_FAIL_COND_MSG(level_id_.is_empty(), "IntroLevel needs a level_id.");
     connect_game(g);
     // The demo opens on the board. With the UI, start the level through it
     // (this also closes the menu it starts with), so the UI knows the level:
     // its retry and restart replay it, at the player's difficulty setting.
+    // IntroLevel starts it rather than the game's autostart_level: an
+    // override on the instanced game node is dropped when the web export
+    // runs without the desktop library to know Match3Game's properties.
     if (UiRoot* ui = ui_root(this)) {
-        if (ui->get_current_level() != level_id_) ui->perform("play", level_id_, Dictionary());
+        ui->perform("play", level_id_, Dictionary());
         if (ScreenStack* stack = ui->get_stack()) stack->clear();
     }
+    if (g->get_level_id() != level_id_) g->start_level(level_id_, kDefaultDifficulty);
     if (args.has(kSelfTestArg)) callable_mp(this, &IntroLevel::run_self_test).call_deferred();
 }
 
@@ -137,7 +141,7 @@ void IntroLevel::back_to_intro() {
         ui->perform("play", level_id_, Dictionary());
         if (g->get_level_id() == level_id_) return;
     }
-    g->start_level(level_id_, g->get_autostart_difficulty());
+    g->start_level(level_id_, kDefaultDifficulty);
 }
 
 void IntroLevel::on_level_finished(int outcome, int score) {
@@ -184,7 +188,7 @@ void IntroLevel::run_self_test() {
         if (round == 1) {
             g->stop_level();
             if (ui) ui->perform("restart", String(), Dictionary());
-            else g->start_level(level_id_, g->get_autostart_difficulty());
+            else g->start_level(level_id_, kDefaultDifficulty);
             if (!g->is_playing() || g->get_level_id() != level_id_) fail("restart did not replay the intro level");
         }
         int moves = 0;
@@ -211,7 +215,7 @@ void IntroLevel::run_self_test() {
 
     // The demo plays the intro level only: another level is sent back.
     if (ui) ui->perform("play", kSelfTestOtherLevel, Dictionary());
-    else g->start_level(kSelfTestOtherLevel, g->get_autostart_difficulty());
+    else g->start_level(kSelfTestOtherLevel, kDefaultDifficulty);
     if (g->get_level_id() != kSelfTestOtherLevel) fail(String("the other level did not start: ") + kSelfTestOtherLevel);
     // After the deferred redirect, which was queued first.
     callable_mp(this, &IntroLevel::finish_self_test).call_deferred();
@@ -233,6 +237,7 @@ void IntroLevel::finish_self_test() {
 void IntroLevel::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_game_path", "path"), &IntroLevel::set_game_path);
     ClassDB::bind_method(D_METHOD("get_game_path"), &IntroLevel::get_game_path);
+    ClassDB::bind_method(D_METHOD("set_level_id", "level_id"), &IntroLevel::set_level_id);
     ClassDB::bind_method(D_METHOD("get_level_id"), &IntroLevel::get_level_id);
     ClassDB::bind_method(D_METHOD("get_score"), &IntroLevel::get_score);
     ClassDB::bind_method(D_METHOD("is_completed"), &IntroLevel::is_completed);
@@ -240,6 +245,7 @@ void IntroLevel::_bind_methods() {
 
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "game_path", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "Match3Game"),
                  "set_game_path", "get_game_path");
+    ADD_PROPERTY(PropertyInfo(Variant::STRING, "level_id"), "set_level_id", "get_level_id");
 
     ADD_SIGNAL(MethodInfo("level_completed", PropertyInfo(Variant::STRING, "level_id"), PropertyInfo(Variant::INT, "score")));
 }

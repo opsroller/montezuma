@@ -8,14 +8,19 @@ Reference for programmers working on the web demo or the website hand-off.
 (`extension/src/demo/`). It is the root of `res://scenes/demo/intro_level.tscn`,
 the web build's main scene (`application/run/main_scene.web` in
 `game/project.godot`). It is a thin wrapper over the game scene: its
-`Game` child is the [Match3Game](match3-game.md) scene (`game.tscn`) with
-`autostart_level = "e1-l01"`, which plays the level with the HUD, the
-results screen, the audio and the core level session. `IntroLevel` has no
-rules of its own; it listens to the game and announces the win to the
-page. With the `UiRoot` autoload present it then starts the level again
-through the UI's `play` action, so the UI knows the level (its retry and
-restart replay it) and the level plays at the player's difficulty
-setting (normal unless they changed it). The page side is the
+`Game` child is the [Match3Game](match3-game.md) scene (`game.tscn`),
+which plays the level with the HUD, the results screen, the audio and the
+core level session. `IntroLevel` has no rules of its own; it starts the
+level, listens to the game and announces the win to the page. With the
+`UiRoot` autoload present it starts the level through the UI's `play`
+action, so the UI knows the level (its retry and restart replay it) and
+the level plays at the player's difficulty setting (normal unless they
+changed it); without it, at normal.
+
+The level id is a property of `IntroLevel`, not the game node's
+`autostart_level`: the web export runs with only the WebAssembly library,
+so the editor cannot load `Match3Game` and drops property overrides on the
+instanced game node. The page side is the
 [web demo hand-off contract](contracts.md#web-demo-hand-off-owner-gameplay-programmer-wp-21wp-34-consumer-frontend-web-developer-wp-35--agreed);
 how the build is made is in [Build pipeline](build-pipeline.md#web-demo).
 
@@ -23,13 +28,14 @@ how the build is made is in [Build pipeline](build-pipeline.md#web-demo).
 
 | Property | Default | Description |
 |---|---|---|
-| `game_path: NodePath` | `Game` in the scene | The `Match3Game` that plays the intro level. Its `autostart_level` is the intro level |
+| `game_path: NodePath` | `Game` in the scene | The `Match3Game` that plays the intro level |
+| `level_id: String` | `e1-l01` | The intro level |
 
 ## Methods
 
 | Method | Description |
 |---|---|
-| `get_level_id() -> String` | The intro level's id, the game's `autostart_level` (`e1-l01`) |
+| `get_level_id() -> String` | The intro level's id (`level_id`) |
 | `get_score() -> int` | The game's score so far; the winning score once completed |
 | `is_completed() -> bool` | Whether the intro level was won |
 | `complete()` | Wins now with the current score: emits `level_completed` and tells the page. Only the first completion does anything |

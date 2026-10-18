@@ -5,6 +5,6 @@
 
 [node name="IntroLevel" type="IntroLevel"]
 game_path = NodePath("Game")
+level_id = "e1-l01"
 
 [node name="Game" parent="." instance=ExtResource("1_game")]
-autostart_level = "e1-l01"
