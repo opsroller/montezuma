@@ -586,3 +586,169 @@ Every episode 4 level has all seven totems and six power-ups unlocked.
 y = 0 is the top row. Each sets `base_clock` from the
 [clock rule](balance.md#clock): 560 to 710 s on normal and 870 to 1080 s
 on hard, peaking at e4-l08.
+
+## Episode 5 levels
+
+Briefs for episode 5 (WP-27), the last episode: twelve levels and no new
+rule, so every level develops, twists, tests or rests on what episodes 1
+to 4 taught. Difficulty comes from goals and obstacles: the gem goal
+climbs to its cap of 200 / 300 at e5-l10, and steel and chains reach
+their guidance maximums on the spike (e5-l08) and the finale (e5-l12).
+Simulator targets are the e5 row of [balance](balance.md), including the
+moves floor of 110; `random` is informational. Every tier above tier 1
+is optional (`PROG-04`). Why the episode is ordered this way and what
+the simulator measures here are in
+[about the episode 5 levels](../explanation/about-the-episode-5-levels.md).
+
+### e5-l01: Return to the temple
+
+- **Idea:** Return to the temple: steel and chains together at a light load, where one ward and blasts on the bottom-row links are still enough.
+- **Feeling:** confidence.
+- **Duration:** Sim `greedy` 159 to 180 mean moves on normal (155 gems), 243 to 274 on hard (235 gems); about 556 to 630 s of play on normal and 850 to 959 s on hard at 3.5 s a move.
+- **Target success rate:** Normal: at least 75 % of players win on the first try; hard: at least 60 %. Human rates are provisional until a playtest and kept within 10 points of the next level's. The human targets are for a player who has bought the tiers that were on offer, except the optional obstacle removers (ward tiers 2 and 3, harvest tiers 3 and 4); a player who owns those finds the level lighter, which is their reward. Simulator: the e5 row of balance.md (`random` informational) and the curve rules as `--check` runs them; `greedy` wins 100 % on the draft.
+- **Takeaway:** The player knows the episode 4 play still wins at a bigger goal: one ward once steel has gathered, and blasts or runs through the bottom-row links.
+- **Role and levers:** rest; goal size: 155 gems; complexity: steel_rate 0.03 and 4 chained cells on the bottom two rows (two on the bottom row near the edges, two above the centre).
+- **First contact:** Mixes every totem, power-up and both obstacles from episodes 1 to 4 at a light load (steel 0.03, 4 chains on the bottom two rows, well below e4-l10's maximums) after the Memory 2 bonus level. As the episode opener it is a rest by obstacle load, not by length: its goal is the curve's next step, and it must be at least as easy as e5-l03 (the curve rule ties each opener to its third level). Gold tier 4 becomes buyable here; optional.
+- **Clock:** Normal 593 s (169.5 draft mean moves x 3.5), hard 905 s (258.6 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. The opener; moves sit above e5-l02's because the simulator buys gems on board tier 3 (8 gems) only at e5-l02.
+
+### e5-l02: The stair
+
+- **Idea:** A diagonal stair of chains, one link in each of columns 2 to 7, whose upper links drift down first.
+- **Feeling:** curiosity.
+- **Duration:** Sim `greedy` 145 to 163 mean moves on normal (160 gems), 221 to 249 on hard (240 gems); about 508 to 570 s of play on normal and 774 to 872 s on hard at 3.5 s a move.
+- **Target success rate:** Normal: at least 72 % of players win on the first try; hard: at least 57 %. Human rates are provisional until a playtest and kept within 10 points of the next level's. The human targets are for a player who has bought the tiers that were on offer, except the optional obstacle removers (ward tiers 2 and 3, harvest tiers 3 and 4); a player who owns those finds the level lighter, which is their reward. Simulator: the e5 row of balance.md (`random` informational) and the curve rules as `--check` runs them; `greedy` wins 100 % on the draft.
+- **Takeaway:** The player knows a link falls each time a piece under it clears, so the upper links of the diagonal, with the most pieces under them, drift down first and the stair flattens toward the floor.
+- **Role and levers:** develop; goal size: 160 gems; complexity: steel_rate 0.04 and 6 chained cells, one in each of columns 2 to 7, on a diagonal that rises one row per column from the bottom row.
+- **First contact:** Develops falling chains (e3-l02, e4-l10) with a new shape: one link in each of columns 2 to 7 on a diagonal from the bottom row up to row 2, so no column has more than one lock. The bottom link cannot fall; the upper ones have more pieces under them and drift first. Steel at 0.04 stays below the episode's maximum. Fire tier 4 and gems on board tier 3 (8) become buyable here; optional.
+- **Clock:** Normal 539 s (154.1 draft mean moves x 3.5), hard 822 s (235.0 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Simulated moves drop from e5-l01: 8 gems on the board (gems on board tier 3, bought here by the simulator) bring each gem goal closer.
+
+### e5-l03: Falling crown
+
+- **Idea:** A whole top row of chains falling through every row of the board.
+- **Feeling:** surprise.
+- **Duration:** Sim `greedy` 148 to 167 mean moves on normal (165 gems), 228 to 257 on hard (250 gems); about 518 to 584 s of play on normal and 798 to 900 s on hard at 3.5 s a move.
+- **Target success rate:** Normal: at least 68 % of players win on the first try; hard: at least 53 %. Human rates are provisional until a playtest and kept within 10 points of the next level's. The human targets are for a player who has bought the tiers that were on offer, except the optional obstacle removers (ward tiers 2 and 3, harvest tiers 3 and 4); a player who owns those finds the level lighter, which is their reward. Simulator: the e5 row of balance.md (`random` informational) and the curve rules as `--check` runs them; `greedy` wins 100 % on the draft.
+- **Takeaway:** The player knows chains that start on the top row fall through the whole board and land at different heights, so they are freed where they land, by runs and blasts in the lower half.
+- **Role and levers:** twist; goal size: 165 gems; complexity: steel_rate 0.03 and 8 chained cells filling the top row (y = 0).
+- **First contact:** Twists falling chains: e3-l02 had a single link on the top row; here the whole top row is chained, so every link has seven pieces under it and the row breaks up within the first moves. Steel stays light (0.03) so the falling links are the point, and so the twist is no harder than e5-l04's test. Hint tier 3 becomes buyable here; optional.
+- **Clock:** Normal 550 s (157.1 draft mean moves x 3.5), hard 848 s (242.4 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Top-row chains barely change the simulated length; the simulator owns harvest tier 3, which removes every chain.
+
+### e5-l04: The middle wall
+
+- **Idea:** Test: a full row of chains across the middle with heavy steel, before Reaction 2.
+- **Feeling:** pressure.
+- **Duration:** Sim `greedy` 152 to 171 mean moves on normal (170 gems), 231 to 261 on hard (255 gems); about 532 to 598 s of play on normal and 808 to 914 s on hard at 3.5 s a move.
+- **Target success rate:** Normal: at least 60 % of players win on the first try; hard: at least 45 %. Human rates are provisional until a playtest and kept within 10 points of the next level's. The human targets are for a player who has bought the tiers that were on offer, except the optional obstacle removers (ward tiers 2 and 3, harvest tiers 3 and 4); a player who owns those finds the level lighter, which is their reward. Simulator: the e5 row of balance.md (`random` informational) and the curve rules as `--check` runs them; `greedy` wins 100 % on the draft.
+- **Takeaway:** The player knows a full row of chained pieces cannot be swapped, so no swap moves a piece into or along row 4 until a link is matched, blasted or drops, and that blasts on the row open it faster than single runs.
+- **Role and levers:** test; goal size: 170 gems; complexity: steel_rate 0.05 and 8 chained cells filling row 4 (y = 4).
+- **First contact:** Tests the episode so far: a full row of chains across the middle of the board (row 4) with steel at 0.05. Chained pieces cannot be swapped (OBS-05), so no swap can move a piece into or along row 4 until links clear; a vertical run through a link still clears it, and links fall when a piece under them clears. Obstacles stay below the maximums so the spike (e5-l08) can ask more. Clock tier 3 becomes buyable here; optional. The Reaction 2 bonus level follows.
+- **Clock:** Normal 565 s (161.4 draft mean moves x 3.5), hard 861 s (246.0 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. First test of the episode.
+
+### e5-l05: Open court
+
+- **Idea:** Rest: with 8 gems on the board and almost no obstacles, play for gem-carrying runs of 4 or more.
+- **Feeling:** relief.
+- **Duration:** Sim `greedy` 154 to 174 mean moves on normal (175 gems), 238 to 268 on hard (265 gems); about 539 to 609 s of play on normal and 833 to 938 s on hard at 3.5 s a move.
+- **Target success rate:** Normal: at least 70 % of players win on the first try; hard: at least 55 %. Human rates are provisional until a playtest and kept within 10 points of the next level's. The human targets are for a player who has bought the tiers that were on offer, except the optional obstacle removers (ward tiers 2 and 3, harvest tiers 3 and 4); a player who owns those finds the level lighter, which is their reward. Simulator: the e5 row of balance.md (`random` informational) and the curve rules as `--check` runs them; `greedy` wins 100 % on the draft.
+- **Takeaway:** The player knows that with gems on board at tier 3 (8 gems) a run of 4 or more that includes gems both collects them and leaves a power-up, so on a light board those runs are worth waiting for.
+- **Role and levers:** rest; goal size: 175 gems; complexity: steel_rate 0.02 and 2 chained cells, the two bottom corners.
+- **First contact:** A rest after the first test and the Reaction 2 bonus level: the lightest load of the episode (guidance minimums: steel 0.02, 2 chains in the bottom corners) at the curve's next goal, so the relief is in fewer obstacles, not a shorter level. Unlike e4-l05's open board, the board now carries 8 gems for a player who bought gems on board tier 3 at e5-l02 (the simulator does), so gem-carrying runs of 4 come up often. Time tier 4 becomes buyable here; optional.
+- **Clock:** Normal 573 s (163.8 draft mean moves x 3.5), hard 885 s (252.8 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. A rest by load, not by length.
+
+### e5-l06: The cradle
+
+- **Idea:** A U of chains on the lower half: the lower side columns joined at the bottom corners, where a link has no neighbour on its outer side.
+- **Feeling:** frustration, then release.
+- **Duration:** Sim `greedy` 162 to 182 mean moves on normal (180 gems), 249 to 281 on hard (270 gems); about 567 to 637 s of play on normal and 872 to 984 s on hard at 3.5 s a move.
+- **Target success rate:** Normal: at least 60 % of players win on the first try; hard: at least 45 %. Human rates are provisional until a playtest and kept within 10 points of the next level's. The human targets are for a player who has bought the tiers that were on offer, except the optional obstacle removers (ward tiers 2 and 3, harvest tiers 3 and 4); a player who owns those finds the level lighter, which is their reward. Simulator: the e5 row of balance.md (`random` informational) and the curve rules as `--check` runs them; `greedy` wins 100 % on the draft.
+- **Takeaway:** The player knows a link in a side column has no neighbour on its outer side, so it is freed by a vertical run along the edge, a run reaching in from the board, or a blast next to it.
+- **Role and levers:** twist; goal size: 180 gems; complexity: steel_rate 0.04 and 10 chained cells: the bottom four cells of both side columns (x = 0 and x = 7) and the bottom-row cells next to each corner.
+- **First contact:** Twists the chained columns of e4-l06: the columns move to the board's edges, where a link has no partner on its outer side and fewer runs can reach it; the bottom-row cells next to each corner are chained too. Steel at 0.04. Paint tier 4 becomes buyable here; optional.
+- **Clock:** Normal 602 s (172.1 draft mean moves x 3.5), hard 927 s (264.9 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Edge links barely change the simulated length.
+
+### e5-l07: Iron neighbours
+
+- **Idea:** Steel beside chains: with ward tier 3, fire the ward when steel sits next to the chains, so it frees them too.
+- **Feeling:** satisfaction.
+- **Duration:** Sim `greedy` 166 to 188 mean moves on normal (185 gems), 255 to 288 on hard (280 gems); about 581 to 658 s of play on normal and 892 to 1008 s on hard at 3.5 s a move.
+- **Target success rate:** Normal: at least 58 % of players win on the first try; hard: at least 43 %. Human rates are provisional until a playtest and kept within 10 points of the next level's. The human targets are for a player who has bought the tiers that were on offer, except the optional obstacle removers (ward tiers 2 and 3, harvest tiers 3 and 4); a player who owns those finds the level lighter, which is their reward. Without ward tier 3 the same steel is cleared by tnt and lightning, which also reach the chain beside it; ward tier 3 makes the lesson a single well-timed ward. Simulator: the e5 row of balance.md (`random` informational) and the curve rules as `--check` runs them; `greedy` wins 100 % on the draft.
+- **Takeaway:** The player knows to hold the ward until steel sits beside the chains, because with ward tier 3 that ward frees those chains too, and without it a tnt or lightning on that steel does the same.
+- **Role and levers:** develop; goal size: 185 gems; complexity: steel_rate 0.06 and 6 chained cells spread over rows 3 to 7, no two orthogonally adjacent.
+- **First contact:** Develops ward with its optional tier 3 (buyable here, TOT-14: the ward also clears every piece orthogonally next to a destroyed steel piece): steel at the maximum 0.06 lands among six chains spread over rows 3 to 7, so steel often ends beside a link. At tier 3 the ward has two uses a level (TOT-06), but tier 2's effect stays (no new steel after the first ward), so only the first ward meets real steel and the lesson is timing: fire it when steel crowds the chains, not at the first steel. A player without tier 3 meets the same choice with tnt (its 3x3 and more) and lightning, which clear steel and the cells around or in line with it. Ward tier 3 and Score Frenzy tier 4 (30 s) become buyable here; optional.
+- **Clock:** Normal 620 s (177.1 draft mean moves x 3.5), hard 950 s (271.5 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. The simulator buys ward tier 3 here as it becomes available.
+
+### e5-l08: Chessboard floor
+
+- **Idea:** Episode spike: both obstacles at their maximums with chains on one colour of a chessboard floor, before Attention 2.
+- **Feeling:** pressure.
+- **Duration:** Sim `greedy` 168 to 190 mean moves on normal (190 gems), 258 to 291 on hard (285 gems); about 588 to 665 s of play on normal and 903 to 1018 s on hard at 3.5 s a move.
+- **Target success rate:** Normal: at least 50 % of players win on the first try; hard: at least 35 %. Human rates are provisional until a playtest and kept within 10 points of the next level's. The human targets are for a player who has bought the tiers that were on offer, except the optional obstacle removers (ward tiers 2 and 3, harvest tiers 3 and 4); a player who owns those finds the level lighter, which is their reward. Simulator: the e5 row of balance.md (`random` informational) and the curve rules as `--check` runs them; `greedy` wins 100 % on the draft.
+- **Takeaway:** The player knows that with both obstacles at their maximums the blasts must be shared, and that a blast on the floor frees several links while a run of 3 or 4 frees at most two.
+- **Role and levers:** test; goal size: 190 gems; complexity: steel_rate 0.06 and 10 chained cells on one colour of a chessboard over the bottom three rows: alternate cells of rows 7 and 6, and two cells of row 5 (x = 0 and x = 6), so no two links touch.
+- **First contact:** The episode spike: both obstacles at the guidance maximums (steel 0.06, 10 chains) on one colour of a chessboard over the bottom three rows, before the Attention 2 bonus level. No two links touch, so a run of 3 or 4 frees at most two links (a run of 5 along a row can free three), but a blast on the floor frees several. One ward cannot cover the level for a player without ward tier 2. Timer tier 4 (+120 s) becomes buyable here; optional.
+- **Clock:** Normal 627 s (179.2 draft mean moves x 3.5), hard 959 s (274.1 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. The spike; timer tier 4 (+120 s) arrives on top for a player who buys it.
+
+### e5-l09: Still water
+
+- **Idea:** Rest: a light board with the chains held up in the centre, leaving room to plan totems two moves ahead.
+- **Feeling:** relaxed.
+- **Duration:** Sim `greedy` 174 to 196 mean moves on normal (195 gems), 268 to 302 on hard (295 gems); about 609 to 686 s of play on normal and 938 to 1057 s on hard at 3.5 s a move.
+- **Target success rate:** Normal: at least 60 % of players win on the first try; hard: at least 45 %. Human rates are provisional until a playtest and kept within 10 points of the next level's. The human targets are for a player who has bought the tiers that were on offer, except the optional obstacle removers (ward tiers 2 and 3, harvest tiers 3 and 4); a player who owns those finds the level lighter, which is their reward. Simulator: the e5 row of balance.md (`random` informational) and the curve rules as `--check` runs them; `greedy` wins 100 % on the draft.
+- **Takeaway:** The player knows that two swaps in a row whose own matches both have runs of the same two colours fire both of those totems (TOT-03, TOT-04), and that a light board is where they can afford to look for them.
+- **Role and levers:** rest; goal size: 195 gems; complexity: steel_rate 0.03 and 4 chained cells in the centre of rows 3 and 4.
+- **First contact:** A rest after the e5-l08 spike and the Attention 2 bonus level, at e4-l09's obstacle load (steel 0.03, 4 chains) with the chains in the centre of rows 3 and 4 instead of the floor, and the curve's next goal. With the obstacles light, the level leaves room, without setting it up, for the hardest totem plan in the rules: a swap whose step 0 has runs of two kinds charges both totems (TOT-04), and a second swap in a row with runs of the same two kinds fires both (TOT-03, TOT-05). Gift tier 4 and harvest tier 4 become buyable here; optional.
+- **Clock:** Normal 646 s (184.6 draft mean moves x 3.5), hard 998 s (285.1 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. A rest by load at the curve's next goal; simulated moves still rise with the goal.
+
+### e5-l10: The locked heart
+
+- **Idea:** The goal reaches its cap: a centre block of chains with heavy steel.
+- **Feeling:** determination.
+- **Duration:** Sim `greedy` 178 to 201 mean moves on normal (200 gems), 275 to 310 on hard (300 gems); about 623 to 704 s of play on normal and 962 to 1085 s on hard at 3.5 s a move.
+- **Target success rate:** Normal: at least 50 % of players win on the first try; hard: at least 35 %. Human rates are provisional until a playtest and kept within 10 points of the next level's. The human targets are for a player who has bought the tiers that were on offer, except the optional obstacle removers (ward tiers 2 and 3, harvest tiers 3 and 4); a player who owns those finds the level lighter, which is their reward. Simulator: the e5 row of balance.md (`random` informational) and the curve rules as `--check` runs them; `greedy` wins 100 % on the draft.
+- **Takeaway:** The player knows the game's largest goal (200 gems) can be met with the board's centre locked: runs below the block make its links fall, and runs through it or blasts on it clear them.
+- **Role and levers:** test; goal size: 200 gems; complexity: steel_rate 0.05 and 10 chained cells in a centre block: a 4 x 2 block over rows 3 and 4 plus the two centre cells of row 5.
+- **First contact:** Tests the episode at the gem goal's cap (200 normal, 300 hard): a block of 10 chains in the centre of the board with steel at 0.05. The centre is where most runs happen, so the block takes those cells away, and its links fall as pieces under them clear. Every tier is now buyable; nothing new unlocks.
+- **Clock:** Normal 662 s (189.2 draft mean moves x 3.5), hard 1025 s (292.8 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. The gem goal reaches its cap; the longest level of the episode in simulated moves.
+
+### e5-l11: Last light
+
+- **Idea:** Rest before the finale at the capped goal: two top-row links fall the whole board while the player works the open lower half.
+- **Feeling:** unhurried.
+- **Duration:** Sim `greedy` 177 to 199 mean moves on normal (200 gems), 270 to 304 on hard (300 gems); about 620 to 696 s of play on normal and 945 to 1064 s on hard at 3.5 s a move.
+- **Target success rate:** Normal: at least 60 % of players win on the first try; hard: at least 45 %. Human rates are provisional until a playtest and kept within 10 points of the next level's. The human targets are for a player who has bought the tiers that were on offer, except the optional obstacle removers (ward tiers 2 and 3, harvest tiers 3 and 4); a player who owns those finds the level lighter, which is their reward. Simulator: the e5 row of balance.md (`random` informational) and the curve rules as `--check` runs them; `greedy` wins 100 % on the draft.
+- **Takeaway:** The player knows to spend a light 200-gem level building power-ups on the lower half instead of chasing the two top-row links, which fall to them anyway.
+- **Role and levers:** rest; goal size: 200 gems; complexity: steel_rate 0.03 and 3 chained cells: two on the top row (x = 1 and x = 6) and one in the centre of row 5.
+- **First contact:** A rest between the e5-l10 test and the finale, at the same 200 / 300 goal: light obstacles (steel 0.03, 3 chains, two on the top row that fall and one low in the centre), so the relief is in the load and the goal stays the cap. It mixes everything at its lightest since e5-l05.
+- **Clock:** Normal 658 s (188.1 draft mean moves x 3.5), hard 1005 s (287.2 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Same goal as e5-l10 at a lighter load, so slightly fewer simulated moves.
+
+### e5-l12: The treasure
+
+- **Idea:** Finale: both obstacles at their maximums with chains in five rows from row 1 to the bottom, the campaign's last level.
+- **Feeling:** triumph.
+- **Duration:** Sim `greedy` 177 to 200 mean moves on normal (200 gems), 273 to 308 on hard (300 gems); about 620 to 700 s of play on normal and 956 to 1078 s on hard at 3.5 s a move.
+- **Target success rate:** Normal: at least 45 % of players win on the first try; hard: at least 30 %. Human rates are provisional until a playtest and kept within 10 points of the next level's. The human targets are for a player who has bought the tiers that were on offer, except the optional obstacle removers (ward tiers 2 and 3, harvest tiers 3 and 4); a player who owns those finds the level lighter, which is their reward. Simulator: the e5 row of balance.md (`random` informational) and the curve rules as `--check` runs them; `greedy` wins 100 % on the draft.
+- **Takeaway:** The player knows they can win the campaign's last level, at the game's largest goal and heaviest load, with chains falling from five rows at once: the Explorer trophy on normal and Legend on hard.
+- **Role and levers:** test; goal size: 200 gems; complexity: steel_rate 0.06 and 10 chained cells, two in each of rows 1, 2, 4, 5 and 7, mirrored left to right.
+- **First contact:** The finale and the campaign's last level (the Explorer and Legend trophies are for winning it on normal and hard): both obstacles at the guidance maximums with chains in five rows from row 1 to the bottom row, so the upper links fall into the steel while the bottom ones hold. It mixes every lesson of episodes 3 to 5 at the capped goal (200 / 300).
+- **Clock:** Normal 661 s (188.8 draft mean moves x 3.5), hard 1018 s (290.9 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. The finale; the simulator's owned obstacle removers keep it close to e5-l10 in moves, and the human targets carry the step up.
+
+| Level | File | Gems normal / hard | Totems | Power-ups | Obstacles | Seed |
+|---|---|---|---|---|---|---|
+| e5-l01 | [`l01.json`](../../game/data/levels/e5/l01.json) | 155 / 235 | all seven | all six | steel 0.03, 4 chains | 20090801 |
+| e5-l02 | [`l02.json`](../../game/data/levels/e5/l02.json) | 160 / 240 | all seven | all six | steel 0.04, 6 chains | 20090802 |
+| e5-l03 | [`l03.json`](../../game/data/levels/e5/l03.json) | 165 / 250 | all seven | all six | steel 0.03, 8 chains | 20090803 |
+| e5-l04 | [`l04.json`](../../game/data/levels/e5/l04.json) | 170 / 255 | all seven | all six | steel 0.05, 8 chains | 20090804 |
+| e5-l05 | [`l05.json`](../../game/data/levels/e5/l05.json) | 175 / 265 | all seven | all six | steel 0.02, 2 chains | 20090805 |
+| e5-l06 | [`l06.json`](../../game/data/levels/e5/l06.json) | 180 / 270 | all seven | all six | steel 0.04, 10 chains | 20090806 |
+| e5-l07 | [`l07.json`](../../game/data/levels/e5/l07.json) | 185 / 280 | all seven | all six | steel 0.06, 6 chains | 20090807 |
+| e5-l08 | [`l08.json`](../../game/data/levels/e5/l08.json) | 190 / 285 | all seven | all six | steel 0.06, 10 chains | 20090808 |
+| e5-l09 | [`l09.json`](../../game/data/levels/e5/l09.json) | 195 / 295 | all seven | all six | steel 0.03, 4 chains | 20090809 |
+| e5-l10 | [`l10.json`](../../game/data/levels/e5/l10.json) | 200 / 300 | all seven | all six | steel 0.05, 10 chains | 20090810 |
+| e5-l11 | [`l11.json`](../../game/data/levels/e5/l11.json) | 200 / 300 | all seven | all six | steel 0.03, 3 chains | 20090811 |
+| e5-l12 | [`l12.json`](../../game/data/levels/e5/l12.json) | 200 / 300 | all seven | all six | steel 0.06, 10 chains | 20090812 |
+
+Every episode 5 level has all seven totems and six power-ups unlocked.
+`chained_cells` and `steel_rate` are defined in [level data](level-data.md);
+y = 0 is the top row. Each sets `base_clock` from the
+[clock rule](balance.md#clock): 630 to 770 s on normal and 950 to 1180 s
+on hard, peaking at e5-l10 (and e5-l12 on hard).
