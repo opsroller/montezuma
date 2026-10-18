@@ -131,25 +131,41 @@ Win rates in %, median time left and base clocks in seconds.
 | e4-l08 | 100 | 838.2 | 176.1 | 100 (info) | 100 | 710 / 1080 | pass |
 | e4-l09 | 100 | 840.2 | 161.3 | 100 (info) | 100 | 650 / 990 | pass |
 | e4-l10 | 100 | 868.0 | 165.4 | 100 (info) | 100 | 670 / 1010 | pass |
+| e5-l01 | 100 | 895.0 | 169.5 | 100 (info) | 100 | 690 / 1050 | pass |
+| e5-l02 | 100 | 821.0 | 154.1 | 100 (info) | 100 | 630 / 950 | pass |
+| e5-l03 | 100 | 859.2 | 157.1 | 100 (info) | 100 | 640 / 980 | pass |
+| e5-l04 | 100 | 855.5 | 161.4 | 100 (info) | 100 | 650 / 1000 | pass |
+| e5-l05 | 100 | 997.2 | 163.8 | 100 (info) | 100 | 660 / 1020 | pass |
+| e5-l06 | 100 | 1004.2 | 172.1 | 100 (info) | 100 | 700 / 1070 | pass |
+| e5-l07 | 100 | 1040.5 | 177.1 | 100 (info) | 100 | 720 / 1100 | pass |
+| e5-l08 | 100 | 1069.8 | 179.2 | 100 (info) | 100 | 730 / 1110 | pass |
+| e5-l09 | 100 | 1101.0 | 184.6 | 100 (info) | 100 | 750 / 1150 | pass |
+| e5-l10 | 100 | 1113.0 | 189.2 | 100 (info) | 100 | 770 / 1180 | pass |
+| e5-l11 | 100 | 1115.5 | 188.1 | 100 (info) | 100 | 760 / 1160 | pass |
+| e5-l12 | 100 | 1109.0 | 188.8 | 100 (info) | 100 | 760 / 1180 | pass |
 
-Both curve rules and every clock line pass for episodes 1 to 4. Each
+Both curve rules and every clock line pass for episodes 1 to 5. Each
 level's base clock is the larger of 270 s and its [clock rule](#clock)
 value. Medians are time left on the base clock plus the `auto` timer
-tier (+30 s from e1-l02, +60 s from e3-l04, +90 s from e4-l06; the [time
-totem](rules-totems.md#numbers) gains a second use from e4-l08). Every
+tier (+30 s from e1-l02, +60 s from e3-l04, +90 s from e4-l06, +120 s
+from e5-l08; the [time totem](rules-totems.md#numbers) gains a second
+use from e4-l08 and +240 s per use (tier 4) from e5-l05). Every
 episode 2 level clears the moves floor of 50 (59 to 77) and every
 episode 3 level the floor of 70 (82 to 145), at the gem goals in
 [progression](progression.md); every level wins every `greedy` run, so
 the curve rule holds by the 100 % tie. Every episode 4 level clears the
 moves floor of 90 (137 to 176) and wins every `greedy` run; `random` is
-informational there and wins every run on the human-pace clocks. Why
-episodes 3 and 4 are built and measured this way is in [about the
-episode 3 levels](../explanation/about-the-episode-3-levels.md) and
-[about the episode 4
-levels](../explanation/about-the-episode-4-levels.md).
+informational there and wins every run on the human-pace clocks. Every
+episode 5 level clears the moves floor of 110 (154 to 189) and wins
+every `greedy` run; its base clocks run 630 to 770 s on normal and 950
+to 1180 s on hard. Why episodes 3, 4 and 5 are built and measured this
+way is in [about the episode 3
+levels](../explanation/about-the-episode-3-levels.md), [about the
+episode 4 levels](../explanation/about-the-episode-4-levels.md) and
+[about the episode 5
+levels](../explanation/about-the-episode-5-levels.md).
 
 `greedy` on normal and `planner` on hard win every run on every level,
 so the curve rules pass only by the 100 % tie: the win-rate curve is
 unverified, and the human targets in [progression](progression.md) carry
 it until a playtest. The moves floor and the clocks are still measured.
-There are no episode 5 levels yet.

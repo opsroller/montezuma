@@ -9,11 +9,12 @@ Tests run separately in `.github/workflows/tests.yml`.
 | Event | Runs |
 |---|---|
 | Push to `main` | Every time |
-| Pull request | Linux and macOS only, when it changes `build.yml`, `tools/release/`, `CMakeLists.txt`, `core/`, `extension/`, `game/` or `thirdparty/` (docs-only PRs skip it) |
+| Push to any other branch | Linux and macOS only, every time; a new push cancels the branch's older run |
+| Pull request from a fork | Linux and macOS only, when it changes `build.yml`, `tools/release/`, `CMakeLists.txt`, `core/`, `extension/`, `game/` or `thirdparty/` (docs-only PRs skip it). A PR from a branch of this repository shows its push runs instead; see [CI pipeline: Triggers](ci-pipeline.md#triggers) |
 | Manual (`workflow_dispatch`) | On demand, from the Actions tab |
 
 Windows (`extension (windows)`, the Windows export and `smoke (windows)`)
-runs only on pushes to `main` and manual runs, to keep PR feedback fast.
+runs only on pushes to `main` and manual runs, to keep branch and PR feedback fast.
 PRs that change the build system also build and test on Windows in the
 [`windows` workflow](ci-pipeline.md#windows-workflow); any other
 Windows-only break shows up on `main` after merge, and the next PR fixes it.
@@ -152,7 +153,7 @@ compiler cache is safe for release builds.
 | `web-fetch-emsdk.sh <dir>` | Installs the pinned Emscripten (`EMSDK_VERSION` in `godot.env`) into `<dir>` and prints its `emsdk_env.sh` |
 | `web-export.sh <version> <outdir>` | Exports the `Web` preset, checks the download budget and writes the zip and `.sha256` |
 | `web-smoke.py <archive> [browser...]` | Verifies and serves a web package, starts it the way the site does and checks the hand-off events |
-| `web-requirements.txt` | Hash-pinned Python packages for `web-smoke.py` (Playwright) |
+| `web-requirements.txt` | Hash-pinned Python packages for `web-smoke.py` (Playwright), for CPython 3.12 and 3.13 on Linux x86_64 |
 
 ## Export presets
 
@@ -173,8 +174,8 @@ WebAssembly. It never deploys; the package is the run's artifact.
 
 | Item | Value |
 |---|---|
-| Triggers | Push to `main`; pull requests touching `web.yml`, `tools/release/`, `CMakeLists.txt`, `core/`, `extension/`, `game/` or `thirdparty/`; manual |
-| Runner | `ubuntu-24.04`: job `web` builds and exports; jobs `browser smoke (chromium)`, `(firefox)` and `(webkit)` run the browser check in parallel, one engine each, in the container below |
+| Triggers | Push to any branch (every time); pull requests from forks touching `web.yml`, `tools/release/`, `CMakeLists.txt`, `core/`, `extension/`, `game/` or `thirdparty/`; manual |
+| Runner | `ubuntu-24.04`, one job `web` |
 | Emscripten | 4.0.20 (`EMSDK_VERSION` in `godot.env`, the version Godot 4.7.2's official web templates are built with), cached under `emsdk-<hash of godot.env>` |
 | Extension build | `emcmake cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON -DMONTEZUMA_BUILD_TESTS=OFF -DMONTEZUMA_WERROR=ON -DGODOTCPP_TARGET=template_release -DGODOTCPP_THREADS=OFF`, through ccache (`EM_COMPILER_WRAPPER=ccache`, key prefix `build-web-extension`) |
 | Library | `game/bin/libmontezuma.web.template_release.wasm32.nothreads.wasm` (`web.release.wasm32` in `game/montezuma.gdextension`) |
@@ -183,8 +184,8 @@ WebAssembly. It never deploys; the package is the run's artifact.
 | Renderer | Compatibility (`rendering/renderer/rendering_method.web`), 2× MSAA, 1024 directional shadow map: the `web` tier of the [visual target](visual-target.md) |
 | Main scene | `res://scenes/demo/intro_level.tscn` (`application/run/main_scene.web`); see [IntroLevel](intro-level.md) |
 | Budget | All files gzipped at most 40 MB, checked by `web-export.sh` |
-| Browser check | `web-smoke.py` on the `montezuma-web` artifact in headless Chromium 141, Firefox 142 and WebKit 26 (Playwright 1.56.0): `montezuma:ready`, then `montezuma:level-completed` for `e1-l01` with `--complete-level`, and no browser errors |
-| Browser container | `mcr.microsoft.com/playwright/python:v1.56.0-noble`, pinned by digest, run as the runner's user (`--user 1001`); it ships the browsers and their system libraries; the job installs only the Python package from `web-requirements.txt` into a virtualenv. Its tag matches `playwright==` in `web-requirements.txt`; bump both together |
+| Browser check | `web-smoke.py` in headless Chromium 141, Firefox 142 and WebKit 26 (Playwright 1.56.0): `montezuma:ready`, then `montezuma:level-completed` for `e1-l01` with `--complete-level`, and no browser errors |
+| Browser cache | Playwright's browser downloads (`~/.cache/ms-playwright`) cached under `playwright-<hash of web-requirements.txt>`; a hit skips the downloads, and `playwright install --with-deps` still installs the system libraries |
 
 | Artifact | Contents | Kept |
 |---|---|---|

@@ -48,24 +48,28 @@ for that reason. As the core grew they reached 35 to 47 seconds of
 compiling on every run, the longest step in their jobs, so they now go
 through ccache like the extension builds. The Windows core job is the
 exception: it uses the Visual Studio generator, which ignores compiler
-launchers, and runs only on `main`.
+launchers, and runs only on `main` and manual runs.
 
-## Prebuilt images, and where they are not used
+## Why the jobs run on the stock runner images
 
 The web browser check needs Chromium, Firefox and WebKit plus dozens of
-system libraries. Installing them with `playwright install --with-deps`
-took about 40 seconds of apt and browser downloads on every run. The
-Playwright project publishes an image with exactly those browsers for each
-release, so the check runs in that image, pinned by digest, and installs
-only the small hash-pinned Python package that drives them. The image tag follows the Playwright version pinned for local
-runs in `tools/release/web-requirements.txt`, so CI and a contributor's
-machine drive the same browser builds.
+system libraries; installing them took about 40 seconds of every `web`
+run. Playwright publishes an image with exactly those browsers for each
+release, and running the check in it was tried and measured: starting the
+container took about 26 seconds, and the browsers ran slower inside it
+(WebKit alone took about as long as all three on the runner), so the
+check took longer than installing on the runner, even split into one job
+per browser. Instead the browser downloads are cached with
+`actions/cache`, keyed on the pinned Playwright version in
+`tools/release/web-requirements.txt`; only the system libraries are
+installed on each run.
 
-The compile jobs stay on the stock runner images. Those already carry
-CMake, Ninja and the compilers (the cache action adds ccache), so a
-build container would only add an image pull. Godot and Emscripten come from pinned, checksummed
-downloads restored from `actions/cache`, which is as fast as pulling an
-image and keeps the version in one file, `tools/release/godot.env`.
+The compile jobs stay on the stock runner images for the same reason.
+Those already carry CMake, Ninja and the compilers (the cache action adds
+ccache), so a build container would only add an image pull. Godot and
+Emscripten come from pinned, checksummed downloads restored from
+`actions/cache`, which keeps the version in one file,
+`tools/release/godot.env`.
 
 ## Cache safety
 
