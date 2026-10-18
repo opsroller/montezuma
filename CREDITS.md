@@ -8,7 +8,7 @@ other people's lines.
 
 ## Inspiration
 
-- *The Treasures of Montezuma* (2007), the match-3 game developed by
+- *The Treasures of Montezuma* (PC 2006, iOS 2009), the match-3 game developed by
   Visual Shape and published by Alawar Entertainment, that Montezuma's is
   modelled on. None of its files are used.
 
