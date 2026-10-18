@@ -32,4 +32,3 @@ backlight = Color(0.3686, 0.1373, 0.0235, 1.0000)
 uv1_scale = Vector3(2.0, 2.0, 2.0)
 uv1_triplanar = true
 uv1_triplanar_sharpness = 4.0
-texture_filter = 5

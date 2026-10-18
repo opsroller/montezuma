@@ -116,6 +116,13 @@ jobs:
         run: |
           ./godot --headless --path game --quit-after 120 -- --game-selftest 2>&1 | tee game.log
           grep -E "Match3Game self-test: [0-9]+ moves, outcome 1, [0-9]+ cues, 0 failures" game.log
+      # Quits from inside a level, with music and ambience playing, the way
+      # a player does: no resources may be left in use at exit.
+      - name: In-level quit
+        if: runner.os == 'Linux'
+        run: |
+          ./godot --headless --path game --quit-after 600 -- --start-level=e1-l01 --quit-after-frames=60 2>&1 | tee level.log
+          if grep -E "ERROR|SCRIPT ERROR|leaked at exit" level.log; then exit 1; fi
       # Each rendering method offers different quality tiers (desktop pair,
       # mobile, web); switch through them on every method.
       - name: Quality tier self-test

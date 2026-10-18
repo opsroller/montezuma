@@ -4,7 +4,8 @@
 *Reference. The benchmark scene, its replay, its report, and the
 readability capture and checks that measure a build against the
 [Visual target](visual-target.md#acceptance-tests). Running them:
-[Run the benchmark](../how-to/run-the-benchmark.md).*
+[Run the benchmark](../how-to/run-the-benchmark.md). Measured numbers:
+[Benchmark results](benchmark-results.md).*
 
 ## Files
 
@@ -53,8 +54,10 @@ beats of four or more cascade steps in the first three rounds, about the
 first 70 s; `bench_tests` holds it to at least five.
 
 `BenchmarkRunner` emits `bench_event(label: String, cells: Array)` as each
-beat starts, so totem and power-up effect scenes (WP-29, WP-53) can play
-on it; until they exist, a beat shows only its board change.
+beat starts. `bench.tscn` connects it to the board view's `play_effect`
+(WP-29), so every totem and power-up beat plays its effect and the
+capture measures it; WP-53's `fx_*` scenes replace the placeholders
+through the same call.
 
 ## Measurement
 

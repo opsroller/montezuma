@@ -25,6 +25,9 @@ one: [Make a board theme](../how-to/make-a-board-theme.md).*
 | `environment` | `Node3D` | added once; brings `WorldEnvironment`, the sun and other lights, and the backdrop |
 | `cell_highlight` | `Node3D` | shown at the selected cell |
 | `fx_match` | `CPUParticles3D` | one-shot at each cleared cell; freed after `lifetime` |
+| `bonus_<power-up id>` | `Node3D` | badge on a piece carrying that power-up; origin at the badge centre, about 0.35 cell across |
+| `marker_gem`, `marker_steel`, `marker_chain` | `Node3D` | gem (the view places it at the far-left corner, at piece-top height), steel and chain (origin at the cell centre on the board plane) on a piece |
+| `fx_totem_<totem id>`, `fx_power_up_<power-up id>`, `fx_gem_collect`, `fx_steel_break`, `fx_chain_break`, `fx_power_up_placed`, `fx_hint` | `Node3D` | one effect; particles restart when it starts, and it is freed when its beat ends or its particles finish ([Board view, Effects](board-view.md#effects)) |
 
 All values are `res://` paths to `PackedScene`s. A missing name falls back
 to the view's placeholder.
@@ -76,13 +79,14 @@ same name in a `hi/` folder next to the base one. The base file is what
 `mobile` and `web` load and what every tier falls back to; `desktop-high`
 and `desktop-standard` load the `hi/` file when it exists:
 `QualityTiers::resolve_variant` maps a path to it and falls back to the
-base ([Quality tiers](quality-tiers.md)). `QualityTiers` swaps every mesh's
-material files for the tier's variant as the mesh enters the tree and on
-every tier switch, so the game and both look-dev scenes show the tier's
-look. Mobile and web export presets list `*/hi/*` in `exclude_filter`, so
-those builds carry only their own sizes. The web tier's `lo/` folder holds
-only the emissive materials (see [Lighting](#lighting)); the temple's base
-texture sets fit the web texture budget.
+base ([Quality tiers](quality-tiers.md)). `QualityTiers` swaps the
+materials of every mesh as it enters the tree, so prefabs and the
+manifest name the base files and the game shows the `hi/` look on
+desktop; `LD_<Theme>_Hi.tscn` names the `hi/` files directly. Mobile and web export presets
+list `*/hi/*` in `exclude_filter`, so those builds carry only their own
+sizes. The web tier's `lo/` folder holds only the emissive materials (see
+[Lighting](#lighting)); the temple's base texture sets fit the web
+texture budget.
 
 | Material | Base (mobile, web) | `hi/` (desktop) |
 |---|---|---|
@@ -91,6 +95,15 @@ texture sets fit the web texture budget.
 | Ruby, amethyst | `ORMMaterial3D`, `Gem_01` tinted, opaque, Fresnel from the real index of refraction, rim | `SH_Gem`: refraction of the scene behind with dispersion and absorption by the body colour |
 | Carnelian, jade, moonstone | `ORMMaterial3D` with backlight for cheap translucency | sub-surface scattering with a transmittance colour; moonstone adds a stronger clearcoat |
 | Lapis | `ORMMaterial3D`, `Lapis_01` (blue, calcite, metallic pyrite flecks) | none; the base is used everywhere |
+
+Texture filtering: the `ORMMaterial3D` set uses Godot's default trilinear
+filter with repeat. `SH_TriplanarPBR` and `SH_Gem` filter anisotropically
+(the tier's 2× to 16×) through a clamped sampler and wrap the coordinates
+in `SH_Triplanar.gdshaderinc` (`tri_tex`). No material filters
+anisotropically with repeat: Godot's Metal backend gives that sampler slot
+17, and Metal GPUs without argument buffers (Apple5 family and older, such
+as the macOS CI runner) address slots 0 to 15 only, so the material fails
+to compile there.
 
 ## Generators
 
@@ -280,6 +293,10 @@ each as `error: <file>: <rule and fix>`:
   30-240 sRGB and metal (where `_ORM` blue ≥ 0.5) at 180 or more; normals
   unit length, facing out, averaging flat; metallic 0 or 1 except at most
   5% of pixels; roughness ≥ 0.02; height spans a real range.
+- No `.tres`, `.tscn` or `.gdshader` filters anisotropically with repeat
+  (`texture_filter = 4` or `5` without `texture_repeat = false`, or a
+  `filter_*_anisotropic` sampler without `repeat_disable`); see texture
+  filtering above.
 - Every file in a `hi/` folder has a base file of the same name; a `hi/`
   texture is the same map at the same or a larger size.
 - Android, iOS and Web export presets list `*/hi/*` in `exclude_filter`;

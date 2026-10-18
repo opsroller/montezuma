@@ -195,4 +195,19 @@ std::string variant_path(std::string_view path, std::string_view variant) {
     return out;
 }
 
+std::string base_path(std::string_view path) {
+    const std::size_t slash = path.rfind('/');
+    if (slash == std::string_view::npos) return std::string(path);
+    const std::size_t prev = slash == 0 ? std::string_view::npos : path.rfind('/', slash - 1);
+    const std::size_t start = prev == std::string_view::npos ? 0 : prev + 1;
+    const std::string_view folder = path.substr(start, slash - start);
+    for (Tier t : kTiers) {
+        const std::string_view variant = profile(t).texture_variant;
+        if (!variant.empty() && folder == variant) {
+            return std::string(path.substr(0, start)) + std::string(path.substr(slash + 1));
+        }
+    }
+    return std::string(path);
+}
+
 }  // namespace montezuma::godot_binding::quality

@@ -61,6 +61,29 @@ godot --headless --path game --quit-after 120 -- --game-selftest
 
 It ends with `Match3Game self-test: <n> moves, outcome 1, <n> cues, 0 failures`.
 
+Quit from inside a level, with music playing, as CI does; nothing may
+print an error or a leak at exit:
+
+```sh
+godot --headless --path game --quit-after 600 -- --start-level=e1-l01 --quit-after-frames=60
+```
+
+## Build and test on Windows
+
+Needs Visual Studio 2022 with the C++ workload, CMake 3.22+ and Ninja
+(both come with Visual Studio). From an **x64 Native Tools Command Prompt**,
+so MSVC is on the path:
+
+```bat
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_WERROR=ON
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
+
+This is what the `windows` workflow runs on PRs that change the build
+system. Every target links the static MSVC runtime, as godot-cpp does;
+the root `CMakeLists.txt` sets it before the first target.
+
 ## Check the assets
 
 Needs Python 3, numpy and Pillow. This is the `assets` CI job. The board
@@ -115,8 +138,16 @@ rm game/override.cfg
 Each frame lands as `/tmp/shots/frameNNNNNNNN.png`. Change the two sizes
 to check a phone (`540x1170`) and a desktop (`960x540` or `1280x720`)
 framing. The menu overlay (the `UiRoot` autoload) draws over the board;
-`docs/images/board-view-desktop.png` was captured from a scratch copy of
-`game/` with that autoload line removed from `project.godot`.
+add `-- --start-level=e1-l01` to go straight into a level, or
+`-- --start-screen=settings` to open on another screen.
+
+To screenshot a packaged build the way CI does (title screen and the
+first level at 1280×720, saved as `title.png` and `board.png`):
+
+```sh
+xvfb-run -a -s "-screen 0 1280x720x24" \
+  tools/release/smoke-test.sh dist/linux/montezuma-<version>-linux-x86_64.tar.gz /tmp/screens
+```
 
 ## Export a build
 

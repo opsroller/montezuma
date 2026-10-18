@@ -148,4 +148,9 @@ ViewportPlan viewport_plan(const Profile& profile, int output_height);
 // Returns the path unchanged when the profile has no variant folder.
 std::string variant_path(std::string_view path, std::string_view variant);
 
+// The base asset a variant path stands for: "dir/<variant>/file" becomes
+// "dir/file" when <variant> is any tier's variant folder. Other paths come
+// back unchanged, so base_path(variant_path(p, v)) == p for every tier.
+std::string base_path(std::string_view path);
+
 }  // namespace montezuma::godot_binding::quality

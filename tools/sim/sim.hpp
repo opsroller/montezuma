@@ -57,6 +57,9 @@ struct RunResult {
 std::uint64_t run_seed(std::uint64_t level_seed, int i) noexcept;
 // Plays one level to the end: tick(1.5), then one move while Playing.
 RunResult play(const LevelData& level, Difficulty d, const Upgrades& up, Bot bot, std::uint64_t seed);
+struct Row;
+// `seeds` runs of play() (run i on run_seed(level.seed, i)) as one Row.
+Row simulate(const LevelData& level, Difficulty d, const Upgrades& up, Bot bot, int seeds);
 
 // --- Upgrades ---------------------------------------------------------------
 
@@ -67,6 +70,9 @@ inline constexpr int kCampaignLevels = 41;
 // Every tier a player owns on reaching the level (balance.md; stars never
 // bind when bonus levels are passed).
 Upgrades auto_upgrades(const LevelData& level);
+// auto_upgrades() without the timer tier: the clock rule's player owns
+// every other tier on offer but judges the base clock alone (balance.md).
+Upgrades clock_upgrades(const LevelData& level);
 // Base upgrades: timer 0, gems 5, listed ids at tier 1, Frenzy tier 1 from
 // e1-l04 on (it is free, PROG-03).
 Upgrades no_upgrades(const LevelData& level);
@@ -87,6 +93,7 @@ struct Row {
     int stuck = 0;
     std::vector<double> win_times;  // time left at each win, run order
     long long total_moves = 0;
+    long long win_moves = 0;        // moves over the winning runs only
 
     std::optional<double> median_time_left() const;
     double win_rate_pct() const { return seeds > 0 ? 100.0 * wins / seeds : 0.0; }
@@ -111,17 +118,43 @@ int moves_floor(int episode, int index);
 std::string target_text(const Row& row);
 Verdict evaluate(const Row& row);
 
+// A rule over levels rather than one row: curve rules and the clock rule.
 struct CurveCheck {
-    std::string rule;    // "curve-1" or "curve-2"
-    std::string levels;  // e.g. "e1-l02>e1-l03"
+    std::string rule;    // "curve-1", "curve-2" or "clock"
+    std::string levels;  // e.g. "e1-l02>e1-l03", or "e1-l05 hard" for clock
     Verdict verdict = Verdict::Skipped;
     std::string detail;
 };
-// A level that brings a new idea (curve rule 1), against the level before.
-bool introduces_idea(const LevelData& level, const LevelData* previous);
+// A level that brings a new idea (curve rule 1): a totem or power-up id, or
+// chains or steel, that no earlier level has, or a passive idea from
+// progression's Episodes table. `earlier` holds the campaign levels before it
+// that are in the input, in campaign order.
+bool introduces_idea(const LevelData& level, const std::vector<const LevelData*>& earlier);
 // Both curve rules over the greedy/normal rows of the levels given (sorted
 // by campaign order).
 std::vector<CurveCheck> curve_checks(const std::vector<LevelData>& levels, const std::vector<Row>& rows);
+
+// --- Clock rule ---------------------------------------------------------------
+
+// rule: balance.md "Clock" a human moves every 3.5 s; the clock gets 15 %
+// on top and rounds up to the next 10 s. Integers keep the rule exact.
+inline constexpr int kHumanMoveMillis = 3500;
+inline constexpr int kClockMarginPercent = 115;
+inline constexpr int kClockStepSeconds = 10;
+// Seconds a level's base clock must reach for `moves` over `runs` runs:
+// ceil(mean x 3.5 x 1.15 / 10) x 10, exact on the counts. 0 for no runs or
+// no moves; capped at INT_MAX.
+int required_clock(long long moves, int runs) noexcept;
+// The rows the clock rule reads: greedy on normal and hard with
+// clock_upgrades(), `seeds` runs each, for every level, whatever the run's
+// --bots, --difficulty and --upgrades.
+std::vector<Row> clock_rows(const std::vector<LevelData>& levels, int seeds);
+// One "clock" check per level and difficulty from its greedy row (pass
+// clock_rows()): the base clock at timer tier 0 must reach
+// required_clock() of the moves greedy's wins took. Losses are left out:
+// they last as long as the clock, so they would make it chase itself.
+// Fails when greedy never won; skipped without a greedy row.
+std::vector<CurveCheck> clock_checks(const std::vector<LevelData>& levels, const std::vector<Row>& rows);
 
 // --- Output -----------------------------------------------------------------
 

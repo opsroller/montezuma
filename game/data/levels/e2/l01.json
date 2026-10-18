@@ -1,0 +1,13 @@
+{
+  "id": "e2-l01",
+  "episode": 2,
+  "index": 1,
+  "rules": "classic",
+  "theme": "temple",
+  "board": { "width": 8, "height": 8, "kinds": 7 },
+  "gem_goal": { "normal": 35, "hard": 55 },
+  "base_clock": { "normal": 270, "hard": 380 },
+  "totems_unlocked": ["fire", "time", "gold"],
+  "powerups_unlocked": ["tnt", "color_clear", "lightning", "clock"],
+  "seed": 20090501
+}

@@ -54,6 +54,10 @@ public:
     // done; nullptr when the theme has none.
     godot::Node3D* make_match_fx() const;
 
+    // The theme's scene for `name` (effects and markers look theirs up here);
+    // null when the theme has none.
+    godot::Ref<godot::PackedScene> entry(const godot::String& name) const { return load_entry(name); }
+
     bool uses_manifest(int kind) const { return kind >= 0 && kind < kMaxKinds && scenes_[kind].is_valid(); }
 
 private:

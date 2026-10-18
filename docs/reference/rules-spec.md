@@ -109,10 +109,12 @@ State: `gem_goal` (from the level and difficulty), `time_left` seconds.
 2. `GOAL-02` The goal is checked when a move has fully resolved. A move
    that started before time ran out finishes, and wins if it reaches the
    goal [chosen].
-3. `GOAL-03` `time_left` starts at the player's timer tier
-   ([progression](progression.md#upgrades): 270 s base) unless the level
-   data overrides it. The time limit does not change with the level; the
-   gem goal does [S1, S4].
+3. `GOAL-03` `time_left` starts at the level's base clock (270 s unless
+   the level data sets `base_clock`) plus the player's timer tier bonus
+   ([progression](progression.md#upgrades): +30 s a tier). The bonus
+   applies on every level, so a timer upgrade never loses its value. A
+   level's base clock covers a human's pace by the
+   [clock rule](balance.md#clock) [S1, S4, chosen].
 4. `GOAL-04` Time counts down in real time while the board is shown,
    including while moves resolve. It stops while paused and while a
    result or upgrade screen is open.

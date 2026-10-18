@@ -4,18 +4,20 @@
 #pragma once
 
 #include <godot_cpp/classes/node.hpp>
+#include <godot_cpp/classes/packed_scene.hpp>
+#include <godot_cpp/classes/ref.hpp>
+#include <godot_cpp/classes/material.hpp>
+#include <godot_cpp/templates/hash_map.hpp>
 #include <godot_cpp/variant/packed_string_array.hpp>
 #include <godot_cpp/variant/string.hpp>
-
-#include <map>
 
 #include "quality.hpp"
 
 namespace godot {
 class Environment;
-class MeshInstance3D;
 class CameraAttributes;
 class Light3D;
+class GeometryInstance3D;
 }  // namespace godot
 
 namespace montezuma::godot_binding {
@@ -35,7 +37,13 @@ namespace montezuma::godot_binding {
 // - nodes in group "quality:<feature>" show only where the tier has the
 //   feature, nodes in "quality_fallback:<feature>" only where it lacks it;
 // - Light3Ds in group "quality_shadow_light": the nearest N to the camera
-//   keep their shadows, N per tier.
+//   keep their shadows, N per tier;
+// - materials loaded from files on every GeometryInstance3D (override,
+//   overlay, CSG material, surface overrides and the mesh's own surface
+//   materials; for particles and multimeshes the one material their meshes
+//   share) show the tier's variant (resolve_variant), and the base again on
+//   a tier without one; so the board view, look-dev and benchmark need no
+//   code. A node given a new mesh while in the tree needs apply_to().
 class QualityTiers : public godot::Node {
     GDCLASS(QualityTiers, godot::Node)
 
@@ -72,6 +80,11 @@ public:
     // and then moved in; nodes entering the tree are handled already.
     void apply_to(godot::Node* root);
 
+    // Loads the tier's variants of every material in `scene` ahead of use,
+    // so the first copy entering the tree does not load them mid-frame.
+    // Loaders call it when a theme loads.
+    void preload_variants(const godot::Ref<godot::PackedScene>& scene);
+
     const quality::Profile& get_profile() const { return quality::profile(tier_); }
 
 protected:
@@ -85,9 +98,12 @@ private:
     void apply_engine_settings();
     void apply_viewport();
     void apply_node(godot::Node* node);
-    void apply_materials(godot::MeshInstance3D* mesh);
     void apply_environment(const godot::Ref<godot::Environment>& env);
     void apply_camera_attributes(const godot::Ref<godot::CameraAttributes>& attributes);
+    void apply_materials(godot::GeometryInstance3D* geometry);
+    godot::Ref<godot::Material> variant_of(const godot::Ref<godot::Material>& material);
+    static godot::Ref<godot::Material> shared_mesh_material(godot::GeometryInstance3D* geometry);
+    void apply_materials_to(godot::Node* root);
     void request_shadow_budget();
     void apply_shadow_budget();
     void on_node_added(godot::Node* node);
@@ -101,8 +117,9 @@ private:
     godot::String choice_ = "auto";
     godot::String settings_path_ = "user://quality.cfg";
     bool shadow_budget_pending_ = false;
-    // Authored material path -> the active tier's variant, cleared on switch.
-    std::map<godot::String, godot::String> material_variants_;
+    // Material path shown -> material to show on this tier; cleared on a
+    // tier change. One lookup per surface as pieces enter the tree.
+    godot::HashMap<godot::String, godot::Ref<godot::Material>> variant_cache_;
 };
 
 }  // namespace montezuma::godot_binding

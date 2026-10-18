@@ -1,0 +1,14 @@
+{
+  "id": "e3-l02",
+  "episode": 3,
+  "index": 2,
+  "rules": "classic",
+  "theme": "temple",
+  "board": { "width": 8, "height": 8, "kinds": 7 },
+  "gem_goal": { "normal": 70, "hard": 105 },
+  "base_clock": { "normal": 370, "hard": 550 },
+  "totems_unlocked": ["fire", "time", "gold", "gift", "harvest", "paint"],
+  "powerups_unlocked": ["tnt", "color_clear", "lightning", "clock", "multiplier", "hint"],
+  "chained_cells": [[0, 1], [2, 2], [4, 1], [6, 2], [1, 3], [3, 0], [5, 3], [7, 1]],
+  "seed": 20090602
+}

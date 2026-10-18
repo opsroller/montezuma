@@ -3,7 +3,8 @@
 #
 # Desktop builds: compiles the GDExtension natively per OS, exports the
 # Windows, macOS and Linux games once with the pinned Godot, then runs each
-# packaged build on its own OS. The packages are the run's artifacts.
+# packaged build on its own OS and screenshots its title screen and board.
+# The packages and screenshots are the run's artifacts.
 # Reference: docs/reference/build-pipeline.md
 name: build
 
@@ -163,7 +164,7 @@ jobs:
       matrix:
         platform: ${{ fromJSON(github.event_name == 'pull_request' && '["linux","macos"]' || '["linux","windows","macos"]') }}
     runs-on: ${{ fromJSON('{"linux":"ubuntu-22.04","windows":"windows-2022","macos":"macos-14"}')[matrix.platform] }}
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -172,10 +173,20 @@ jobs:
         with:
           name: montezuma-${{ matrix.platform }}
           path: dist
-      - name: Run the packaged game
+      - name: Install a virtual display
+        if: runner.os == 'Linux'
+        run: command -v xvfb-run || { sudo apt-get update && sudo apt-get install -y xvfb; }
+      - name: Run the packaged game and capture screenshots
         shell: bash
         run: |
           shopt -s nullglob
           archives=(dist/*.tar.gz dist/*.zip)
           [ "${#archives[@]}" -eq 1 ] || { echo "expected one archive, found: ${archives[*]}"; exit 1; }
-          tools/release/smoke-test.sh "${archives[0]}"
+          display=()
+          if [ "$RUNNER_OS" = Linux ]; then display=(xvfb-run -a -s "-screen 0 1280x720x24"); fi
+          ${display[@]+"${display[@]}"} tools/release/smoke-test.sh "${archives[0]}" screenshots
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: screenshots-${{ matrix.platform }}
+          path: screenshots/*.png
+          if-no-files-found: error

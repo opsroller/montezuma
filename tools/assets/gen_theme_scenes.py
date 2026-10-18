@@ -153,8 +153,10 @@ def material(spec, theme, hi=False, lo=False):
                   "uv1_triplanar_sharpness = 4.0"]
         if spec.get("world_triplanar"):
             lines.append("uv1_world_triplanar = true")
-    if orm:
-        lines.append("texture_filter = 5")
+    # The default trilinear repeat filter, not anisotropic: Godot's Metal
+    # backend puts the anisotropic repeat sampler at slot 17, which GPUs
+    # without argument buffers (16 sampler slots) cannot address. The desktop
+    # shaders keep anisotropy through a clamped sampler (SH_Triplanar).
     r.body = lines
     kind = "ORMMaterial3D" if orm else "StandardMaterial3D"
     return r.text(f'[gd_resource type="{kind}" load_steps={{steps}} format=3]')

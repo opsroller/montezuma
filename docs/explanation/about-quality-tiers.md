@@ -78,11 +78,12 @@ measured on our scenes:
 | `web` (UHD 620) | sun shadow 0.6, 2× MSAA 1: about 1.6 ms | 33.3 ms p95 |
 
 The rest of each budget is the board, backdrop, particles and the game's
-own CPU work. The lighting share is broken down per item in
-[About lighting](about-lighting.md#costs); WP-47 capped `desktop-high` at 720
-internal lines with the temporal upscaler above that, after the M4
-measured p95 25.1 ms at native 1440p. WP-46 replaces these with measured p50 and p95, and WP-41
-moves any tier setting the numbers say to move.
+own CPU work. Measured p50 and p95 from the WP-46 benchmark are in
+[Benchmark results](../reference/benchmark-results.md); WP-41 moves any
+tier setting the numbers say to move. The lighting share is broken down
+per item in [About lighting](about-lighting.md#costs); WP-47 capped
+`desktop-high` at 720 internal lines with the temporal upscaler above
+that, after the M4 measured p95 25.1 ms at native 1440p.
 
 ## Consequences
 
@@ -90,6 +91,13 @@ moves any tier setting the numbers say to move.
   environments for `desktop-high`.
 - The settings screen adds one option, `quality_tier`, shown only on
   desktop.
+- Material variants are swapped by `QualityTiers` on every mesh as it
+  enters the tree, not by each loader. The board view, the benchmark and
+  look-dev scenes get the desktop materials without their own code, and
+  a runtime switch reaches meshes already on screen; the cost is one
+  cached lookup per surface as a node enters the tree. Loading the
+  desktop files is the expensive part, so it happens when a theme loads
+  (`preload_variants`), not when a piece first appears.
 - The benchmark (WP-46) runs each tier with `--quality=` and records
   `get_active_features()`.
 - A new tier means a new row in `quality.cpp`, its tests and the tables

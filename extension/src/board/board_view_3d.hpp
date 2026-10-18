@@ -11,9 +11,14 @@
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/vector2i.hpp>
 
+#include <godot_cpp/variant/array.hpp>
+#include <godot_cpp/variant/packed_int32_array.hpp>
+
 #include "match3_board.hpp"
 #include "animator.hpp"
 #include "board_layout.hpp"
+#include "effects/board_effects.hpp"
+#include "effects/effect_plan.hpp"
 #include "input.hpp"
 #include "piece_library.hpp"
 
@@ -35,8 +40,25 @@ public:
     // Draws `board` as it is now, without animation.
     void show_board(const godot::Ref<Match3Board>& board);
     // Plays a try_swap result, then emits `animation_finished`. Afterwards the
-    // view matches the board it was shown.
+    // view matches the board it was shown. Optional keys add effects (WP-29):
+    // per cascade `lead`, `repaints` and `fx`, and `marks` for the markers
+    // after the move (docs/reference/board-view.md, Effects).
     void play(const godot::Dictionary& result);
+    // Markers on every cell, row-major (fx::marks: gem, steel, chain bits and
+    // a power-up badge); drawn now, or when the playing animation ends.
+    void show_marks(const godot::PackedInt32Array& marks);
+    godot::PackedInt32Array get_marks() const;
+    // Highlights each [a, b] swap in `pairs` until the next move, or for
+    // `seconds` when above 0.
+    void show_hints(const godot::Array& pairs, double seconds);
+    void clear_hints();
+    bool has_hints() const { return !hints_.empty(); }
+    // Plays one totem or power-up effect on its own, outside a move:
+    // `label` is "totem:<id>" or "powerup:<id>", `cells` what it touches.
+    // For the benchmark's bench_event (WP-46) and look-dev.
+    void play_effect(const godot::String& label, const godot::Array& cells);
+    // Effect beats scheduled since the board was built, by name (tests).
+    godot::Dictionary get_effects_played() const;
     // Bounces two pieces toward each other and back, then emits `animation_finished`.
     void play_illegal(godot::Vector2i a, godot::Vector2i b);
     bool is_busy() const { return busy_; }
@@ -68,6 +90,7 @@ private:
     struct Slot {
         godot::Node3D* node = nullptr;
         int kind = -1;
+        int marks = fx::marks::kNone;
     };
     struct PlanHooks;
 
@@ -76,6 +99,13 @@ private:
     void emit_cascade_step(int step);
     void spawn_match_fx(godot::Vector3 position);
     void redeal_in();
+    // Returns a piece to the pool without its markers.
+    void release_piece(int kind, godot::Node3D* node);
+    // Replaces a piece's markers; `pop` grows the new ones in.
+    void set_piece_marks(godot::Object* piece, int marks, bool pop);
+    // Makes every piece's markers match `marks_target_`.
+    void sync_marks();
+    void clear_effects();
     void release_dying();
     // Releases cleared pieces and makes every cell show the board's kind.
     void reconcile();
@@ -113,8 +143,21 @@ private:
     double board_padding_ = 0.0;
     godot::Node3D* pieces_root_ = nullptr;
     godot::Node3D* fx_root_ = nullptr;
+    // Worst seconds a move's effects ran past its plan, since load (0: none).
+    double effects_overrun_ = 0.0;
     std::vector<godot::Node3D*> pieces_;
     std::vector<int> kinds_;
+    // Markers each cell should show once the playing animation ends.
+    std::vector<int> marks_;
+    std::vector<int> marks_target_;
+    bool has_marks_target_ = false;
+    BoardEffects effects_;
+    // The playing move's effects, parallel to its steps.
+    std::vector<fx::StepFx> fx_steps_;
+    godot::Node3D* hints_root_ = nullptr;
+    std::vector<godot::Node3D*> hints_;
+    godot::Ref<godot::Tween> hint_pulse_;
+    godot::Ref<godot::Tween> hint_timer_;
     godot::Ref<godot::Tween> tween_;
     // The new deal growing in after a redeal; runs past tween_.
     godot::Ref<godot::Tween> grow_tween_;
