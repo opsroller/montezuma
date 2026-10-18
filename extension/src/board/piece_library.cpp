@@ -26,6 +26,8 @@
 #include <godot_cpp/core/memory.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
+#include "../render/quality_tiers.hpp"
+
 using namespace godot;
 
 namespace montezuma::godot_binding {
@@ -134,6 +136,12 @@ void PieceLibrary::load(double cell, const String& theme) {
         } else {
             UtilityFunctions::push_warning("Asset manifest is not a JSON object; using placeholders: ", kManifestPath);
         }
+    }
+    // Load the tier's material variants now, with the theme, so a piece or
+    // effect first shown mid-level does not load them in its frame.
+    if (QualityTiers* tiers = QualityTiers::get_singleton()) {
+        const Array names = entries_.keys();
+        for (int64_t i = 0; i < names.size(); ++i) tiers->preload_variants(load_entry(names[i]));
     }
     match_fx_ = load_entry("fx_match");
     const real_t s = static_cast<real_t>(cell) * 0.7f;
