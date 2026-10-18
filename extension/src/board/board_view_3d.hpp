@@ -104,7 +104,7 @@ private:
     bool busy_ = false;
     bool has_selection_ = false;
     godot::Vector2i selected_;
-    godot::Vector2i last_request_[2];
+    godot::Vector2i last_request_[2] = {godot::Vector2i(-1, -1), godot::Vector2i(-1, -1)};
     input::SwapGesture gesture_;
 };
 

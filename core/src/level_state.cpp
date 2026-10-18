@@ -25,11 +25,15 @@ void LevelState::apply_move(const MoveResult& result) {
         auto it = cleared.find(kind);
         if (it != cleared.end()) needed = std::max(0, needed - it->second);
     }
-    if (result.matched_kind == streak_kind_) {
-        ++streak_;
-    } else {
-        streak_kind_ = result.matched_kind;
-        streak_ = 1;
+    // Effect results (Board::clear_cells) have no matched kind and leave the
+    // streak alone.
+    if (result.matched_kind != Board::kEmpty) {
+        if (result.matched_kind == streak_kind_) {
+            ++streak_;
+        } else {
+            streak_kind_ = result.matched_kind;
+            streak_ = 1;
+        }
     }
     if (std::all_of(quotas_.begin(), quotas_.end(), [](const auto& q) { return q.second == 0; }))
         outcome_ = Outcome::Won;
