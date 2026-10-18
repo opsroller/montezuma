@@ -6,7 +6,8 @@ lands. Each section has an owner (see `docs/reference/work-packages.md`); to cha
 one, message the owner (coordinate skill), and the owner lands it as a
 `feat(contracts):` commit.
 
-Status: **proposed** until the package that implements it merges.
+Status: **proposed** until the package that implements it merges;
+**agreed** when both sides have confirmed it before that.
 
 Each contract gives the C++ shape (namespace `montezuma`) and, where Godot
 sees it, the surface the binding exposes (`Dictionary`, `Array`,
@@ -30,7 +31,7 @@ uses are unchanged.
 namespace montezuma {
 struct Cell  { int x, y; };                      // x left to right, y top to bottom, from 0
 struct Fall  { Cell from, to; int kind; };       // to.x == from.x, to.y > from.y
-struct Spawn { Cell to; int kind; int drop; };   // starts at y = to.y - drop, drop >= 1
+struct Spawn { Cell to; int kind; int drop; };   // starts at y = -drop, drop >= 1
 struct Run   { std::vector<Cell> cells; int kind; bool horizontal() const; };
 
 struct CascadeStep {
@@ -69,8 +70,9 @@ Differences from the proposal, and why:
 - `steps` and `stuck` stay for the binding and `LevelState`.
 
 `Match3Board` (GDExtension) exposes the same as a `Dictionary` with keys
-matching the field names and `Vector2i` cells; until the binding adds the
-cell-level keys it returns `{ steps, matched_kind, shuffled, stuck, score }`.
+matching the field names, `Vector2i` cells and plain `Array`s, from
+`try_swap(a, b)` and from `clear_cells(cells)` (no `swap` key). The key table
+is in [move-result.md](move-result.md#for-the-godot-binding).
 
 ## LevelData (owner: gameplay-programmer, WP-02; content: game-designer) — proposed
 
@@ -110,6 +112,9 @@ level_finished(outcome: int, score: int)                # LevelState.Outcome
 `BoardView3D` API: `show_board(board: Match3Board)`, `play(result: Dictionary)`
 (emits `animation_finished` when done), `play_illegal(a, b)`, signals `swap_requested(a: Vector2i,
 b: Vector2i)` and `animation_finished`.
+**Implemented** in WP-12 (`extension/src/board/`), plus `is_busy()`,
+`cell_at_screen(pos)` and a `layout_changed` signal; see
+[Board view](board-view.md).
 
 ## Asset manifest (owner: technical-artist, WP-07/08) — proposed
 
@@ -119,15 +124,23 @@ falls back to a placeholder primitive when a name is missing.
 `artifact_0` … `artifact_6` (by kind index), `temple_board`, `temple_env`,
 `cell_highlight`, `fx_match`, `fx_cascade`, `totem_<id>`, `bonus_<id>`.
 
-## Audio cues (owner: sound-designer, WP-14) — proposed
+## Audio cues (owner: sound-designer, WP-15 to 17) — proposed
 
-Played by name with `GameAudio::play(name)`; a missing cue warns and is silent.
+Played by name with `GameAudio::play(name)` (C++:
+`GameAudio::get_singleton()`; scenes: the `/root/GameAudio` autoload); a
+missing cue warns and is silent. Volume per bus with
+`set_volume(bus, linear)`. Full API and when each cue plays:
+[audio.md](audio.md#audio-system).
 
 `swap`, `swap_illegal`, `match`, `cascade_1` … `cascade_8`, `piece_land`,
-`bonus_earned`, `bonus_use_<id>`, `totem_charge`, `totem_fire_<id>`,
-`quota_done`, `time_warning`, `level_won`, `level_lost`, `ui_click`,
-`ui_back`, `trophy`, `music_menu`, `music_play_<episode>`,
-`ambience_jungle`.
+`gem_collect`, `steel_break`, `chain_break`, `bonus_earned` (a power-up
+appears on the board), `bonus_use_<power-up id>`, `totem_charge`,
+`totem_fire_<totem id>`, `quota_done`, `time_warning`, `level_won`,
+`level_lost`, `ui_click`, `ui_back`, `trophy`, `music_menu`,
+`music_play_<episode>`, `ambience_jungle`.
+
+Ids are the settled totem and power-up ids below. Files, levels and
+status per cue: [audio.md](audio.md).
 
 ## Totem and bonus ids (owner: game-designer, WP-03) — proposed
 
@@ -135,3 +148,35 @@ Totems: `row_clear`, `random_blast`, `time`, `lightning`, `color_bomb`,
 `multiplier`. Bonuses: `hammer`, `lightning`, `extra_time`, `shuffle`,
 `dynamite`, `freeze`. Placeholders until WP-03 settles the originals'
 behaviour; ids may be renamed then.
+
+## Web demo hand-off (owner: gameplay-programmer, WP-21/WP-34; consumer: frontend-web-developer, WP-35) — agreed
+
+Agreed by both sides on 2026-10-18. The site's side is described in
+`docs/reference/website.md`.
+
+**Files.** The Godot 4.4.1 single-threaded web export, named `montezuma`
+(`montezuma.js`, `montezuma.wasm`, `montezuma.pck`, plus any helper files
+the export emits). The site does not use the export's own HTML page.
+
+**Loading.** On the visitor's click, the page loads `play/montezuma.js`
+and starts it with Godot's `Engine` API:
+
+```js
+new Engine({
+  executable: "play/montezuma",
+  canvas,                      // created by the page inside #stage
+  canvasResizePolicy: 0,       // the page sizes the canvas
+  ensureCrossOriginIsolationHeaders: false,
+  onProgress(current, total) { /* updates the <progress> bar */ },
+}).startGame();
+```
+
+**Events, game to page.** Dispatched on `window` as `CustomEvent`s (from
+`JavaScriptBridge`). Unknown events and extra fields are ignored.
+
+| Event | `detail` | When |
+|---|---|---|
+| `montezuma:level-completed` | `{ v: 1, level: "<level id>", score: <int> }` | Once, when the intro level is won |
+| `montezuma:ready` (optional) | `{ v: 1, version: "<game version>" }` | First frame shown |
+
+**Events, page to game.** None.
