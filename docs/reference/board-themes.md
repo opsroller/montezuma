@@ -204,6 +204,8 @@ look packages compare against these.
 | [temple-lineup-before-wp48.jpg](../images/lookdev/temple-lineup-before-wp48.jpg) | `LD_Temple_LineUp` | Forward+ | first pass, before WP-48 |
 | [temple-lineup-base-forward.jpg](../images/lookdev/temple-lineup-base-forward.jpg) | `LD_Temple_LineUp` | Forward+ | base PBR |
 | [temple-lineup-desktop.jpg](../images/lookdev/temple-lineup-desktop.jpg) | `LD_Temple_LineUp_Hi` | Forward+ | desktop `hi/` |
+| [temple-board-water-desktop.jpg](../images/lookdev/temple-board-water-desktop.jpg) | `LD_Temple` | Forward+ | desktop `hi/`, with the water channel (WP-50) |
+| [temple-water-desktop.jpg](../images/lookdev/temple-water-desktop.jpg), [-mobile](../images/lookdev/temple-water-mobile.jpg), [-compatibility](../images/lookdev/temple-water-compatibility.jpg) | `LD_Temple_Water` | Forward+, Mobile, Compatibility | water close-up ([Water](water.md)) |
 
 ## Validator rules
 

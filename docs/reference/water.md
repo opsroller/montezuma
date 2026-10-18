@@ -9,6 +9,15 @@ Owner: technical-artist (WP-50).*
 
 ![The east channel on desktop (Forward+)](../images/lookdev/temple-water-desktop.jpg)
 
+| Look-dev frame | Scene | Renderer |
+|---|---|---|
+| [temple-water-desktop.jpg](../images/lookdev/temple-water-desktop.jpg) | `LD_Temple_Water` | Forward+ (`SH_Water`) |
+| [temple-water-mobile.jpg](../images/lookdev/temple-water-mobile.jpg) | `LD_Temple_Water` | Mobile (`SH_WaterSimple`) |
+| [temple-water-compatibility.jpg](../images/lookdev/temple-water-compatibility.jpg) | `LD_Temple_Water` | Compatibility, web (`SH_WaterSimple`) |
+| [temple-board-water-desktop.jpg](../images/lookdev/temple-board-water-desktop.jpg) | `LD_Temple`, game camera | Forward+ |
+
+Rendered in Godot 4.7.2 at 1280×720 on software Vulkan and OpenGL; regenerate them the way the board frames are made ([Board themes](board-themes.md#look-dev-reference-frames)).
+
 ## Where it is
 
 A moat round the temple's lowest tier, cut into the jungle floor, with a
@@ -64,12 +73,12 @@ desktop variant. The generator adds `floor_height` to materials marked
 | Parameter | Shaders | Range | Temple | Meaning |
 |---|---|---|---|---|
 | `water_color` | both | colour | `#1d4a40` | colour deep water scatters back, lit by the scene |
-| `absorption` | both | 0 to 4 per metre, per channel | (1.6, 0.55, 0.45) | light lost per metre, red, green, blue; red goes first, so depth turns the water green-teal |
-| `wave_scale` | both | 0.2 to 4 | 1.0 | ripple size; larger is broader |
-| `wave_strength` | both | 0 to 1 | 0.35 | ripple slope |
+| `absorption` | both | 0 to 4 per metre, per channel | (1.1, 0.34, 0.28) | light lost per metre, red, green, blue; red goes first, so depth turns the water green-teal |
+| `wave_scale` | both | 0.2 to 4 | 1.4 | ripple size; larger is broader |
+| `wave_strength` | both | 0 to 1 | 0.18 | ripple slope |
 | `flow_speed` | both | 0 to 0.5 m/s | 0.05 | drift of the ripples |
 | `roughness` | both | 0 to 0.3 | 0.04 | surface roughness of the reflections |
-| `caustic_strength` | both | 0 to 4 | 1.4 | brightness of the caustic lines on the floor |
+| `caustic_strength` | both | 0 to 4 | 2.2 | brightness of the caustic lines on the floor |
 | `caustic_scale` | both | 0.2 to 4 | 1.3 | caustic pattern size |
 | `refraction_strength` | `SH_Water` | 0 to 0.15 | 0.04 | screen-space bend per metre of water |
 | `ssr_max_distance` | `SH_Water` | 1 to 30 m | 10 | how far a reflection ray travels |
@@ -114,6 +123,6 @@ repeatable at a fixed frame rate.
 |---|---|
 | Budget | `SH_WaterSimple` ≤ 0.3 ms at 1280×720 on an Intel UHD 620 class GPU; `SH_Water` ≤ 0.5 ms at 1440p on the benchmark Mac (M4) |
 | Measured | not on a real GPU yet: the [benchmark](benchmark.md) (WP-46) measures it with the rest of the scene, see [Benchmark results](benchmark-results.md) |
-| Estimate | look-dev frame time with and without the water nodes on lavapipe and llvmpipe (software), in the WP-50 pull request |
+| Estimate | software rendering (lavapipe, llvmpipe) runs the look-dev scene at 1 to 2 fps with or without the water, so it cannot resolve the cost; by count, `SH_WaterSimple` is 3 noise evaluations and no samples, `SH_Water` 5 noise evaluations and up to 26 depth and 3 screen samples |
 | Triangles | 12 per strip slab (60 in all); the channel adds about 400 to the backdrop |
 | Reflection probes | 4, rendered once at load |
