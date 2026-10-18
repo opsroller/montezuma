@@ -4,6 +4,7 @@
 #include "sim.hpp"
 
 #include <algorithm>
+#include <climits>
 #include <array>
 #include <cstdio>
 #include <set>
@@ -195,6 +196,27 @@ RunResult play(const LevelData& level, Difficulty d, const Upgrades& up, Bot bot
     return out;
 }
 
+Row simulate(const LevelData& level, Difficulty d, const Upgrades& up, Bot bot, int seeds) {
+    Row row;
+    row.level = level.id;
+    row.episode = level.episode;
+    row.index = level.index;
+    row.bot = bot;
+    row.difficulty = d;
+    row.seeds = seeds;
+    for (int i = 0; i < seeds; ++i) {
+        const RunResult r = play(level, d, up, bot, run_seed(level.seed, i));
+        row.total_moves += r.moves;
+        if (r.won) {
+            ++row.wins;
+            row.win_moves += r.moves;
+            row.win_times.push_back(r.time_left);
+        }
+        if (r.stuck) ++row.stuck;
+    }
+    return row;
+}
+
 // ---- Upgrades -----------------------------------------------------------------
 
 int campaign_position(int episode, int index) noexcept {
@@ -214,6 +236,12 @@ Upgrades auto_upgrades(const LevelData& level) {
     u.frenzy_tier = tiers_owned(kFrenzyTiers, pos);
     for (std::size_t i = 0; i < kPowerUpCount; ++i) u.power_up_tiers[i] = tiers_owned(kPowerUpTiers[i], pos);
     for (std::size_t i = 0; i < kTotemCount; ++i) u.totem_tiers[i] = tiers_owned(kTotemTiers[i], pos);
+    return u;
+}
+
+Upgrades clock_upgrades(const LevelData& level) {
+    Upgrades u = auto_upgrades(level);
+    u.timer_tier = 0;
     return u;
 }
 
@@ -293,7 +321,6 @@ bool introduces_idea(const LevelData& level, const std::vector<const LevelData*>
     // passive idea from progression's Episodes table.
     if (std::find(kPassiveIdeaLevels.begin(), kPassiveIdeaLevels.end(), level.id) != kPassiveIdeaLevels.end())
         return true;
-    if (earlier.empty()) return false;
     const auto seen = [&](auto&& has) {
         return std::any_of(earlier.begin(), earlier.end(), [&](const LevelData* l) { return l && has(*l); });
     };
@@ -381,13 +408,25 @@ std::vector<CurveCheck> curve_checks(const std::vector<LevelData>& levels, const
 
 // ---- Clock rule ---------------------------------------------------------------
 
-int required_clock(long long total_moves, int seeds) noexcept {
-    if (seeds <= 0 || total_moves <= 0) return 0;
-    // Exact: 3.5 x 1.15 = 4025 / 1000, so the clock in tens of seconds is
-    // ceil(total x 4025 / (seeds x 10000)).
-    const long long num = total_moves * 4025;
-    const long long den = static_cast<long long>(seeds) * 1000 * kClockStepSeconds;
-    return static_cast<int>((num + den - 1) / den) * kClockStepSeconds;
+int required_clock(long long moves, int runs) noexcept {
+    if (runs <= 0 || moves <= 0) return 0;
+    // Clock in tens of seconds: ceil(moves x millis x percent /
+    // (runs x 1000 x 100 x 10)). Past this many moves the product would
+    // overflow; no run gets near it.
+    constexpr long long kFactor = static_cast<long long>(kHumanMoveMillis) * kClockMarginPercent;
+    if (moves > LLONG_MAX / kFactor) return INT_MAX;
+    const long long num = moves * kFactor;
+    const long long den = static_cast<long long>(runs) * 1000 * 100 * kClockStepSeconds;
+    const long long tens = (num + den - 1) / den;
+    return tens > INT_MAX / kClockStepSeconds ? INT_MAX : static_cast<int>(tens) * kClockStepSeconds;
+}
+
+std::vector<Row> clock_rows(const std::vector<LevelData>& levels, int seeds) {
+    std::vector<Row> rows;
+    for (const LevelData& l : levels)
+        for (Difficulty d : {Difficulty::Normal, Difficulty::Hard})
+            rows.push_back(simulate(l, d, clock_upgrades(l), Bot::Greedy, seeds));
+    return rows;
 }
 
 std::vector<CurveCheck> clock_checks(const std::vector<LevelData>& levels, const std::vector<Row>& rows) {
@@ -403,11 +442,17 @@ std::vector<CurveCheck> clock_checks(const std::vector<LevelData>& levels, const
                 out.push_back(c);
                 continue;
             }
-            const int need = required_clock(r->total_moves, r->seeds);
             const double base = l.time_limit_for(d, 0);
+            if (r->wins <= 0) {
+                c.verdict = Verdict::Fail;
+                c.detail = "base " + fmt1(base) + "s: greedy never won, so no clock can be set";
+                out.push_back(c);
+                continue;
+            }
+            const int need = required_clock(r->win_moves, r->wins);
             c.verdict = base >= need ? Verdict::Pass : Verdict::Fail;
-            c.detail = "base " + fmt1(base) + "s must reach " + std::to_string(need) + "s (" + fmt1(r->mean_moves()) +
-                       " moves x 3.5 s x 1.15)";
+            c.detail = "base " + fmt1(base) + "s must reach " + std::to_string(need) + "s (" +
+                       fmt1(static_cast<double>(r->win_moves) / r->wins) + " moves a win x 3.5 s x 1.15)";
             out.push_back(c);
         }
     return out;

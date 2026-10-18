@@ -119,7 +119,8 @@ struct LevelData {
     double base_clock_for(Difficulty difficulty) const;
     // Seconds the level starts with: base_clock_for() plus
     // kTimerTierStepSeconds per timer tier. Throws std::invalid_argument when
-    // timer_tier is outside kMinTimerTier..kMaxTimerTier.
+    // timer_tier is outside kMinTimerTier..kMaxTimerTier, or when the base
+    // clock is not a number greater than 0 (set in code; the parser rejects it).
     double time_limit_for(Difficulty difficulty, int timer_tier = 0) const;
     // Fresh level state for this level's quotas and time_limit_for()'s timer.
     // Throws std::invalid_argument for a bad timer_tier, and for a level with

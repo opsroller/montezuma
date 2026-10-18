@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
 
 // LevelData parser tests. No framework dependency; run via ctest.
+#include <cmath>
 #include <cstdio>
 #include <map>
 #include <stdexcept>
@@ -418,6 +419,19 @@ void test_timer_tiers() {
         check(long_clock.time_limit_for(Difficulty::Hard, tier) - long_clock.time_limit_for(Difficulty::Hard, 0) ==
                   30.0 * tier,
               "tier " + std::to_string(tier) + " adds " + std::to_string(30 * tier) + " s");
+
+    // Attack (edge cases): a base clock set in code is checked like a parsed one.
+    const std::pair<BaseClock, Difficulty> bad_clocks[] = {{BaseClock{-100, 270}, Difficulty::Normal},
+                                                           {BaseClock{270, 0}, Difficulty::Hard},
+                                                           {BaseClock{std::nan(""), 270}, Difficulty::Normal}};
+    for (const auto& [clock, d] : bad_clocks) {
+        LevelData l = timed;
+        l.base_clock = clock;
+        check(invalid_argument_message([&] { (void)l.time_limit_for(d, 4); }) ==
+                  std::string("base_clock must be a number of seconds greater than 0"),
+              "a base clock of 0, below 0 or not a number throws");
+    }
+    check(LevelData(timed).time_limit_for(Difficulty::Normal, 0) == 240.0, "a valid base clock does not throw");
 
     for (int bad : {-1, 5, 100}) {
         const std::string expect = "timer_tier must be between 0 and 4, got " + std::to_string(bad);

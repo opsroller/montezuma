@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
 
 // Balance simulator tests (WP-22, docs/reference/balance.md). Run via ctest.
+#include <climits>
 #include <cstdio>
 #include <string>
 #include <vector>
@@ -269,8 +270,8 @@ void test_clock_rule() {
     const auto checks_for = [&](const LevelData& lv, long long normal_moves, long long hard_moves) {
         Row n = row(2, 2, Bot::Greedy, Difficulty::Normal, 100, 100);
         Row h = row(2, 2, Bot::Greedy, Difficulty::Hard, 100, 100);
-        n.total_moves = normal_moves;
-        h.total_moves = hard_moves;
+        n.win_moves = normal_moves;
+        h.win_moves = hard_moves;
         return clock_checks({lv}, {n, h, row(2, 2, Bot::Random, Difficulty::Normal, 100, 100)});
     };
     // 270 s default base: 67 moves need 270 s (269.7), 68 moves need 280 s.
@@ -292,6 +293,92 @@ void test_clock_rule() {
     auto none = clock_checks({level(2, 2)}, {row(2, 2, Bot::Random, Difficulty::Normal, 100, 100)});
     check(none.size() == 2 && none[0].verdict == Verdict::Skipped && none[1].verdict == Verdict::Skipped,
           "clock check without greedy rows is skipped");
+    // Only wins count: 50 wins of 60 moves and 50 losses of 200 moves need
+    // the clock of 60 moves (250 s), not of the 130-move mean.
+    {
+        Row n = row(2, 2, Bot::Greedy, Difficulty::Normal, 100, 50);
+        n.win_moves = 50 * 60;
+        n.total_moves = 50 * 60 + 50 * 200;
+        LevelData lw = level(2, 2);
+        lw.base_clock = BaseClock{250, 270};
+        check(clock_checks({lw}, {n})[0].verdict == Verdict::Pass, "losses do not raise the clock");
+        n.wins = 0;
+        n.win_moves = 0;
+        const CurveCheck never = clock_checks({lw}, {n})[0];
+        check(never.verdict == Verdict::Fail && never.detail.find("never won") != std::string::npos,
+              "a difficulty greedy never wins fails the clock rule");
+    }
+    // Bounds: no overflow on huge counts.
+    check(required_clock(1000000000000LL, 1) == INT_MAX, "a huge requirement is capped, not wrapped");
+    check(required_clock(LLONG_MAX, 1) == INT_MAX, "the largest count is capped, not undefined");
+}
+
+void test_clock_rows_ignore_upgrades() {
+    // Attack (determinism): the clock rule's rows do not depend on the run's
+    // --upgrades: greedy with clock_upgrades() (auto, timer tier 0), so the
+    // base clock is judged with no timer bonus.
+    LevelData l = level(2, 6);
+    l.gem_goal = GemGoal{30, 45};
+    l.totems_unlocked = {"fire", "time"};
+    l.powerups_unlocked = {"tnt", "clock"};
+    const std::vector<Row> rows = clock_rows({l}, 10);
+    check(rows.size() == 2 && rows[0].bot == Bot::Greedy && rows[0].difficulty == Difficulty::Normal &&
+              rows[1].difficulty == Difficulty::Hard,
+          "clock rows: greedy on normal and hard");
+    for (const Row& r : rows) {
+        const Row want = simulate(l, r.difficulty, clock_upgrades(l), Bot::Greedy, 10);
+        check(r.total_moves == want.total_moves && r.wins == want.wins && r.win_moves == want.win_moves,
+              "clock rows play with clock_upgrades()");
+    }
+    const LevelData late = level(5, 10);
+    Upgrades want = auto_upgrades(late);
+    check(want.timer_tier > 0, "a late level owns timer tiers on auto");
+    want.timer_tier = 0;
+    const Upgrades got = clock_upgrades(late);
+    check(got.timer_tier == 0 && got.gems_tier == want.gems_tier && got.frenzy_tier == want.frenzy_tier &&
+              got.power_up_tiers == want.power_up_tiers && got.totem_tiers == want.totem_tiers,
+          "clock_upgrades is auto without the timer tier");
+}
+
+void test_clock_rule_settles() {
+    // Attack (determinism, edge cases): losing runs last as long as the
+    // clock, so a rule that counted them would chase the clock forever.
+    // Counting only wins, setting the clock from the rule settles.
+    LevelData l = level(2, 2);
+    l.gem_goal = GemGoal{40, 60};
+    int base = 270;
+    bool settled = false;
+    std::string last;
+    for (int pass = 0; pass < 6 && !settled; ++pass) {
+        l.base_clock = BaseClock{static_cast<double>(base), static_cast<double>(base)};
+        const std::vector<CurveCheck> c = clock_checks({l}, clock_rows({l}, 20));
+        last = c[1].detail;
+        if (c[0].verdict == Verdict::Pass && c[1].verdict == Verdict::Pass) settled = true;
+        for (const CurveCheck& k : c) {
+            const auto at = k.detail.find("reach ");
+            if (at != std::string::npos) base = std::max(base, std::stoi(k.detail.substr(at + 6)));
+        }
+    }
+    check(settled, "the clock settles within 6 passes; last: " + last);
+    // A difficulty greedy can never win fails at any clock instead of
+    // asking for ever more time.
+    LevelData never = level(2, 2);
+    never.gem_goal = GemGoal{10, 100000};
+    for (double b : {270.0, 2400.0}) {
+        never.base_clock = BaseClock{270, b};
+        const std::vector<CurveCheck> c = clock_checks({never}, clock_rows({never}, 3));
+        check(c[1].verdict == Verdict::Fail && c[1].detail.find("never won") != std::string::npos,
+              "an unwinnable difficulty fails at base " + std::to_string(static_cast<int>(b)));
+    }
+}
+
+void test_introduces_idea_without_earlier_levels() {
+    // Attack (edge cases): "no earlier level has" holds for an empty list too.
+    LevelData idea = level(2, 3);
+    idea.totems_unlocked = {"gift"};
+    check(introduces_idea(idea, {}) == introduces_idea(idea, {nullptr}),
+          "no earlier levels and only a missing earlier level give the same answer");
+    check(introduces_idea(idea, {}), "a totem with no earlier level listing it is a new idea");
 }
 
 void test_bots_and_play() {
@@ -377,6 +464,9 @@ int main() {
     test_targets();
     test_curves();
     test_clock_rule();
+    test_clock_rows_ignore_upgrades();
+    test_clock_rule_settles();
+    test_introduces_idea_without_earlier_levels();
     test_bots_and_play();
     std::printf("%d checks, %d failures\n", checks, failures);
     return failures == 0 ? 0 : 1;

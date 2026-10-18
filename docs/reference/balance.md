@@ -71,16 +71,26 @@ every 1.5 s; a human takes about 3.5 s a move. For each difficulty:
 required clock = ceil(greedy mean moves × 3.5 s × 1.15 / 10) × 10
 ```
 
-with `greedy`'s mean moves from the `--check` run (200 seeds, `auto`
-upgrades) and a 15 % margin, rounded up to whole 10 s. The level's base
-clock at timer tier 0, a player who bought no timer upgrade, must reach
-it. Each level's `base_clock` is the larger of 270 s and the required
-clock; a level whose requirement fits in 270 s leaves `base_clock` out.
-Timer upgrades add 30 s a tier on top (`GOAL-03`), so they always buy
-time. A longer clock lets losing runs play longer, which raises the mean
-moves, so a level's clock is set again until it stops changing.
+with a 15 % margin, rounded up to whole 10 s. The simulator plays its own
+`greedy` runs for this rule (200 seeds by default, both difficulties),
+whatever `--bots`, `--difficulty` and `--upgrades` say: with the `auto`
+upgrades except the timer, which stays at tier 0, because the rule judges
+the base clock of a player who bought no timer upgrade. The mean is over
+the winning runs: a losing run lasts as long as the clock, so counting it
+would make the requirement grow with the clock and never settle. A
+difficulty that `greedy` never wins fails the rule outright.
+
+Each level's `base_clock` is the larger of 270 s and the required clock;
+a level whose requirement fits in 270 s leaves `base_clock` out. Timer
+upgrades add 30 s a tier on top (`GOAL-03`), so they always buy time. A
+longer clock can turn a narrow loss into a long win, so a level's clock
+is set again until it stops changing (one more pass at most so far).
 `--check` fails a level and difficulty whose base clock is below the
 required clock (the `clock` lines).
+
+For a player who also skips the gem and item upgrades the requirement is
+higher: with no upgrades at all, e2-l06 needs 380/570 s instead of
+310/470 s and e3-l08 730/1100 s instead of 540/800 s.
 
 ## Current results
 

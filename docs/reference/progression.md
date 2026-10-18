@@ -246,7 +246,7 @@ the player's timer tier and 5 gems on the board.
 | e1-l04 | [`l04.json`](../../game/data/levels/e1/l04.json) | 25 / 40 | `fire` | `tnt`, `color_clear`, `lightning` | 20090404 |
 | e1-l05 | [`l05.json`](../../game/data/levels/e1/l05.json) | 30 / 45 | `fire`, `time` | `tnt`, `color_clear`, `lightning` | 20090405 |
 
-No episode 1 level has chains, steel or a time override.
+No episode 1 level has chains or steel. e1-l05 sets `base_clock` 270/300 from the [clock rule](balance.md#clock).
 
 ## Episode 2 levels
 
@@ -329,5 +329,7 @@ contact rests on those draws.
 | e2-l05 | [`l05.json`](../../game/data/levels/e2/l05.json) | 55 / 85 | `fire`, `time`, `gold`, `gift`, `harvest`, `paint` | `tnt`, `color_clear`, `lightning`, `clock`, `multiplier` | 20090505 |
 | e2-l06 | [`l06.json`](../../game/data/levels/e2/l06.json) | 60 / 90 | `fire`, `time`, `gold`, `gift`, `harvest`, `paint` | `tnt`, `color_clear`, `lightning`, `clock`, `multiplier`, `hint` | 20090506 |
 
-No episode 2 level has chains, steel or a time override: chains arrive
-in e3-l01 and steel in e3-l06.
+No episode 2 level has chains or steel: chains arrive in e3-l01 and steel
+in e3-l06. Every episode 2 level sets `base_clock` from the
+[clock rule](balance.md#clock), 270 to 310 s on normal and 380 to 490 s
+on hard.

@@ -163,37 +163,23 @@ int main(int argc, char** argv) {
     });
 
     std::vector<Row> rows;
+    std::vector<Row> clocks;
     try {
         for (const LevelData& level : levels) {
             const Upgrades up = auto_up ? auto_upgrades(level) : no_upgrades(level);
             for (Bot bot : bots)
-                for (Difficulty d : difficulties) {
-                    Row row;
-                    row.level = level.id;
-                    row.episode = level.episode;
-                    row.index = level.index;
-                    row.bot = bot;
-                    row.difficulty = d;
-                    row.seeds = seeds;
-                    for (int i = 0; i < seeds; ++i) {
-                        const RunResult r = play(level, d, up, bot, run_seed(level.seed, i));
-                        row.total_moves += r.moves;
-                        if (r.won) {
-                            ++row.wins;
-                            row.win_times.push_back(r.time_left);
-                        }
-                        if (r.stuck) ++row.stuck;
-                    }
-                    rows.push_back(std::move(row));
-                }
+                for (Difficulty d : difficulties) rows.push_back(simulate(level, d, up, bot, seeds));
         }
+        // The clock rule has its own runs: greedy, both difficulties,
+        // clock_upgrades(), whatever --bots, --difficulty and --upgrades say.
+        clocks = clock_rows(levels, seeds);
     } catch (const std::exception& e) {
         std::cerr << "montezuma_sim: " << e.what() << "\n";
         return kExitUsage;
     }
 
     std::vector<CurveCheck> curves = curve_checks(levels, rows);
-    for (CurveCheck& c : clock_checks(levels, rows)) curves.push_back(std::move(c));
+    for (CurveCheck& c : clock_checks(levels, clocks)) curves.push_back(std::move(c));
     std::cout << format_report(rows, curves, format);
 
     bool failed = false;

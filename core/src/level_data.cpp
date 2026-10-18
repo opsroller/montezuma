@@ -557,7 +557,11 @@ double LevelData::time_limit_for(Difficulty difficulty, int timer_tier) const {
     if (timer_tier < kMinTimerTier || timer_tier > kMaxTimerTier)
         throw std::invalid_argument("timer_tier must be between " + std::to_string(kMinTimerTier) + " and " +
                                     std::to_string(kMaxTimerTier) + ", got " + std::to_string(timer_tier));
-    return base_clock_for(difficulty) + kTimerTierStepSeconds * timer_tier;
+    const double base = base_clock_for(difficulty);
+    // The parser rejects these; a base_clock set in code is checked here.
+    if (!std::isfinite(base) || base <= 0.0)
+        throw std::invalid_argument("base_clock must be a number of seconds greater than 0");
+    return base + kTimerTierStepSeconds * timer_tier;
 }
 
 LevelState LevelData::make_state(Difficulty difficulty, int timer_tier) const {

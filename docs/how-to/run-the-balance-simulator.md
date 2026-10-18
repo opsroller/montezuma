@@ -62,8 +62,11 @@ is a totem or power-up id, chains or steel that no earlier level in the
 run has, so chains returning after a steel-only level are practice, not
 a new idea. Then one `clock` line per level and difficulty: the level's
 base clock (timer tier 0) must reach the [clock rule](../reference/balance.md#clock)'s
-seconds for `greedy`'s mean moves on that difficulty, for example
-`clock e2-l03 hard FAIL base 270.0s must reach 490s (119.7 moves x 3.5 s x 1.15)`.
+seconds for the moves `greedy`'s wins take on that difficulty, for example
+`clock e2-l03 hard FAIL base 270.0s must reach 490s (119.7 moves a win x 3.5 s x 1.15)`.
+The simulator plays these `greedy` runs itself, so the `clock` lines are
+the same whatever `--bots`, `--difficulty` and `--upgrades` say; they
+follow `--seeds`.
 A rule whose levels or rows are not all in the run is `skipped`.
 
 ## How the bots play
