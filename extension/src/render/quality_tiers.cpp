@@ -35,6 +35,7 @@
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/standard_material3d.hpp>
 #include <godot_cpp/classes/time.hpp>
+#include <godot_cpp/classes/tube_trail_mesh.hpp>
 #include <godot_cpp/classes/viewport.hpp>
 #include <godot_cpp/classes/window.hpp>
 #include <godot_cpp/classes/world_environment.hpp>
@@ -341,6 +342,19 @@ void QualityTiers::apply_node(Node* node) {
                          p.has(q::Feature::FogFireLight) ? static_cast<float>(energy) : 0.0f);
     }
 
+    // Trails are authored off, with the trail mesh in metadata/trail_mesh,
+    // and switched on here: the Compatibility renderer warns as soon as a
+    // particle system has trails or a trail mesh, even a hidden one.
+    if (auto* particles = Object::cast_to<GPUParticles3D>(node);
+        particles && particles->is_in_group("quality:particle_trails")) {
+        const bool trails = p.has(q::Feature::ParticleTrails);
+        if (trails && particles->has_meta("trail_mesh")) {
+            const Ref<Mesh> mesh = particles->get_meta("trail_mesh");
+            if (mesh.is_valid()) particles->set_draw_pass_mesh(0, mesh);
+        }
+        particles->set_trail_enabled(trails);
+    }
+
     const TypedArray<StringName> groups = node->get_groups();
     for (int64_t i = 0; i < groups.size(); ++i) {
         const String group = groups[i];
@@ -605,6 +619,13 @@ void QualityTiers::run_self_test() {
     auto* cards = memnew(Node3D);
     cards->add_to_group("quality_fallback:volumetric_fog");
     scratch->add_child(cards);
+    auto* trails = memnew(GPUParticles3D);
+    trails->set_emitting(false);
+    trails->add_to_group("quality:particle_trails");
+    Ref<TubeTrailMesh> trail_mesh;
+    trail_mesh.instantiate();
+    trails->set_meta("trail_mesh", trail_mesh);
+    scratch->add_child(trails);
     std::vector<Light3D*> lights;
     for (int i = 0; i < 3; ++i) {
         auto* light = memnew(OmniLight3D);
@@ -679,6 +700,9 @@ void QualityTiers::run_self_test() {
         check(attrs->is_dof_blur_far_enabled() == p.has(q::Feature::DepthOfField), id, "depth of field");
         check(voxel->is_visible() == p.has(q::Feature::VoxelGi), id, "quality:voxel_gi node");
         check(cards->is_visible() == !p.has(q::Feature::VolumetricFog), id, "fog fallback node");
+        check(trails->is_trail_enabled() == p.has(q::Feature::ParticleTrails), id, "particle trails");
+        if (p.has(q::Feature::ParticleTrails))
+            check(trails->get_draw_pass_mesh(0) == trail_mesh, id, "particle trail mesh not attached");
         int shadowed = 0;
         for (Light3D* light : lights) shadowed += light->has_shadow() ? 1 : 0;
         check(shadowed == std::min(3, p.shadow_casting_lights), id, "shadow-casting light budget");

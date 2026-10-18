@@ -73,7 +73,23 @@ def specular_from_ior(ior):
 def shader_material(spec, theme, hi):
     r = Resource()
     shader = r.ext_id("Shader", spec["shader"])
+    # Procedural noise textures (heat haze), built by Godot at load time.
+    for key, n in spec.get("noise_textures", {}).items():
+        r.body += [f'[sub_resource type="FastNoiseLite" id="{key}_noise"]', f"seed = {n['seed']}",
+                   f"frequency = {n['frequency']}", "",
+                   f'[sub_resource type="NoiseTexture2D" id="{key}"]', f"width = {n['size']}", f"height = {n['size']}",
+                   "seamless = true", f'noise = SubResource("{key}_noise")', ""]
     r.body += ["[resource]", f"shader = {shader}"]
+    if "render_priority" in spec:
+        r.body.append(f"render_priority = {spec['render_priority']}")
+    for key in spec.get("noise_textures", {}):
+        r.body.append(f'shader_parameter/{key} = SubResource("{key}")')
+    # Build-output textures (fire flipbooks) by path under textures/<theme>/;
+    # the desktop variant of a material takes the file's hi/ variant.
+    for key, rel in spec.get("textures", {}).items():
+        folder, _, name = rel.rpartition("/")
+        rel = f"{folder}/hi/{name}" if hi else rel
+        r.body.append(f"shader_parameter/{key} = {r.ext_id('Texture2D', f'res://assets/textures/{theme}/{rel}')}")
     if "set" in spec:
         for key, suffix in (("texture_albedo", "BC"), ("texture_normal", "N"), ("texture_orm", "ORM"), ("texture_height", "H")):
             if suffix != "H" or TEXTURE_SETS.get(spec["set"], {}).get("height"):
@@ -160,6 +176,106 @@ def mesh_scene(root_name, parts, theme):
     return r
 
 
+def vec3(x, y, z):
+    return f"Vector3({x}, {y}, {z})"
+
+
+def fade_ramp(name, stops):
+    """A Gradient and its texture for a particle colour ramp; stops are (offset, Color text)."""
+    offsets = ", ".join(str(o) for o, _ in stops)
+    colors = ", ".join(c.removeprefix("Color(").removesuffix(")") for _, c in stops)
+    return [f'[sub_resource type="Gradient" id="{name}"]', f"offsets = PackedFloat32Array({offsets})",
+            f"colors = PackedColorArray({colors})", "",
+            f'[sub_resource type="GradientTexture1D" id="{name}_tex"]', f'gradient = SubResource("{name}")', ""]
+
+
+def brazier_fire(p, theme):
+    """PF_BrazierFire: flame, smoke and embers on GPU particles, heat haze and a flickering light.
+
+    The origin sits at the centre of the bowl's rim. Tier switches are node
+    groups read by QualityTiers (docs/reference/quality-tiers.md).
+    """
+    f, torch = p["fire"], p["environment"]["torch"]
+    fl, sm, em, li, hz = f["flame"], f["smoke"], f["embers"], f["light"], f["haze"]
+    r = Resource()
+    mat = {n: r.ext_id("Material", f"res://assets/materials/{theme}/{n}.tres")
+           for n in ("MI_Fire", "MI_FireSmoke", "MI_EmberTrail", "MI_Ember", "MI_HeatHaze")}
+    white0, white1 = "Color(1, 1, 1, 0)", "Color(1, 1, 1, 1)"
+    subs = []
+    subs += fade_ramp("flame_fade", [(0.0, white0), (0.25, white1), (0.7, white1), (1.0, white0)])
+    subs += fade_ramp("smoke_fade", [(0.0, white0), (0.3, "Color(1, 1, 1, 0.8)"), (1.0, white0)])
+    subs += fade_ramp("ember_fade", [(0.0, "Color(1, 0.9, 0.6, 1)"), (0.35, "Color(1, 0.55, 0.15, 1)"),
+                                      (0.8, "Color(0.7, 0.15, 0.03, 0.8)"), (1.0, "Color(0.4, 0.05, 0.0, 0)")])
+    subs += ['[sub_resource type="Curve" id="smoke_grow"]',
+             "_data = [Vector2(0, 0.45), 0.0, 0.0, 0, 0, Vector2(1, 1), 0.0, 0.0, 0, 0]", "point_count = 2", "",
+             '[sub_resource type="CurveTexture" id="smoke_grow_tex"]', 'curve = SubResource("smoke_grow")', ""]
+    subs += ['[sub_resource type="ParticleProcessMaterial" id="flame_process"]', "emission_shape = 1",
+             f"emission_sphere_radius = {fl['emission_radius']}", f"emission_shape_offset = {vec3(0, fl['offset'], 0)}",
+             f"direction = {vec3(0, 1, 0)}", "spread = 5.0",
+             f"initial_velocity_min = {fl['velocity'][0]}", f"initial_velocity_max = {fl['velocity'][1]}",
+             f"gravity = {vec3(0, 0, 0)}", f"angle_min = {-fl['angle']}", f"angle_max = {fl['angle']}",
+             f"scale_min = {fl['scale'][0]}", f"scale_max = {fl['scale'][1]}",
+             'color_ramp = SubResource("flame_fade_tex")', "",
+             '[sub_resource type="QuadMesh" id="flame_quad"]', f"size = Vector2({fl['size'][0]}, {fl['size'][1]})",
+             f"center_offset = {vec3(0, fl['size'][1] / 2, 0)}", ""]
+    subs += ['[sub_resource type="ParticleProcessMaterial" id="smoke_process"]', "emission_shape = 1",
+             f"emission_sphere_radius = {sm['emission_radius']}", f"emission_shape_offset = {vec3(0, sm['offset'], 0)}",
+             f"direction = {vec3(0, 1, 0)}", "spread = 12.0",
+             f"initial_velocity_min = {sm['velocity'][0]}", f"initial_velocity_max = {sm['velocity'][1]}",
+             f"gravity = {vec3(0, 0.05, 0)}", "damping_min = 0.05", "damping_max = 0.1",
+             "angle_min = -30.0", "angle_max = 30.0",
+             f"scale_min = {sm['scale'][0]}", f"scale_max = {sm['scale'][1]}", 'scale_curve = SubResource("smoke_grow_tex")',
+             'color_ramp = SubResource("smoke_fade_tex")', "turbulence_enabled = true",
+             f"turbulence_noise_strength = {sm['turbulence']}", "turbulence_noise_scale = 4.0",
+             "turbulence_influence_min = 0.02", "turbulence_influence_max = 0.06", "",
+             '[sub_resource type="QuadMesh" id="smoke_quad"]', f"size = Vector2({sm['size'][0]}, {sm['size'][1]})", ""]
+    subs += ['[sub_resource type="ParticleProcessMaterial" id="ember_process"]', "emission_shape = 1",
+             f"emission_sphere_radius = {em['emission_radius']}", f"emission_shape_offset = {vec3(0, 0.1, 0)}",
+             f"direction = {vec3(0, 1, 0)}", f"spread = {em['spread']}",
+             f"initial_velocity_min = {em['velocity'][0]}", f"initial_velocity_max = {em['velocity'][1]}",
+             f"gravity = {vec3(0, -0.25, 0)}", "damping_min = 0.3", "damping_max = 0.6",
+             "scale_min = 0.6", "scale_max = 1.2", 'color_ramp = SubResource("ember_fade_tex")',
+             "turbulence_enabled = true", f"turbulence_noise_strength = {em['turbulence']}",
+             "turbulence_noise_scale = 2.5", "turbulence_noise_speed = Vector3(0, 0.6, 0)",
+             "turbulence_influence_min = 0.05", "turbulence_influence_max = 0.15", "",
+             '[sub_resource type="TubeTrailMesh" id="ember_tube"]', f"radius = {em['size'] / 2}",
+             "radial_steps = 4", "sections = 4", "section_length = 0.05", "section_rings = 1", "cap_top = false",
+             "cap_bottom = false", "",
+             '[sub_resource type="QuadMesh" id="ember_quad"]', f"size = Vector2({em['size'] * 2}, {em['size'] * 2})", "",
+             '[sub_resource type="QuadMesh" id="haze_quad"]', f"size = Vector2({hz['size'][0]}, {hz['size'][1]})",
+             f"center_offset = {vec3(0, hz['size'][1] / 2, 0)}", ""]
+    aabb = "AABB(-1.5, -0.5, -1.5, 3, 4, 3)"
+
+    def particles(name, amount, lifetime, process, mesh, material, extra=(), groups=None):
+        head = f'[node name="{name}" type="GPUParticles3D" parent="."'
+        head += f' groups=["{groups}"]]' if groups else "]"
+        return ["", head, "cast_shadow = 0", f"amount = {amount}", f"lifetime = {lifetime}", f"preprocess = {lifetime}",
+                f"visibility_aabb = {aabb}", f'process_material = SubResource("{process}")',
+                f'draw_pass_1 = SubResource("{mesh}")', f"material_override = {material}", *extra]
+
+    r.body = subs + ['[node name="BrazierFire" type="Node3D"]']
+    r.body += particles("Smoke", sm["amount"], sm["lifetime"], "smoke_process", "smoke_quad", mat["MI_FireSmoke"],
+                        ["draw_order = 1"])
+    r.body += particles("Flame", fl["amount"], fl["lifetime"], "flame_process", "flame_quad", mat["MI_Fire"])
+    # The trail mesh waits in metadata: QualityTiers attaches it and turns
+    # trails on only where the tier has them (Compatibility warns otherwise).
+    r.body += particles("Embers", em["amount"], em["lifetime"], "ember_process", "ember_quad", mat["MI_EmberTrail"],
+                        [f"trail_lifetime = {em['trail_lifetime']}", 'metadata/trail_mesh = SubResource("ember_tube")'],
+                        groups="quality:particle_trails")
+    r.body += particles("EmbersNoTrail", em["amount"], em["lifetime"], "ember_process", "ember_quad", mat["MI_Ember"],
+                        groups="quality_fallback:particle_trails")
+    r.body += ["", '[node name="HeatHaze" type="MeshInstance3D" parent="." groups=["quality:heat_haze"]]',
+               f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, {hz['offset']}, 0)", "cast_shadow = 0",
+               'mesh = SubResource("haze_quad")', f"surface_material_override/0 = {mat['MI_HeatHaze']}"]
+    r.body += ["", '[node name="Light" type="FlickerLight3D" parent="." groups=["quality_shadow_light", "quality_fog_light"]]',
+               f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, {li['height']}, 0)",
+               f"light_color = {color(torch['color'])}", f"light_energy = {torch['energy']}",
+               f"light_volumetric_fog_energy = {li['fog_energy']}", "light_bake_mode = 2", "shadow_enabled = true",
+               f"shadow_blur = {li['shadow_blur']}", f"omni_range = {torch['range']}", "omni_attenuation = 1.4",
+               f"flicker = {li['flicker']}", f"speed = {li['speed']}", f"sway = {li['sway']}"]
+    return r.text("[gd_scene load_steps={steps} format=3]")
+
+
 def write(path, text):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text)
@@ -193,7 +309,7 @@ def main():
     entry["board"] = f"{models}/board/PF_Board.tscn"
 
     backdrop_parts = [("Stone", "MI_StoneFrame"), ("StoneDark", "MI_StoneDark"), ("Bronze", "MI_Bronze"),
-                      ("Flame", "MI_Flame"), ("Ground", "MI_Ground"), ("Foliage", "MI_Foliage"), ("Rocks", "MI_StoneDark")]
+                      ("Ground", "MI_Ground"), ("Foliage", "MI_Foliage"), ("Rocks", "MI_StoneDark")]
     r = mesh_scene("Environment", [(n, f"{models}/backdrop/SM_Backdrop_{n}.obj", m) for n, m in backdrop_parts], theme)
     env = p["environment"]
     sky = [
@@ -233,13 +349,14 @@ def main():
                "", '[node name="Sun" type="DirectionalLight3D" parent="."]', f"transform = {sun['transform']}",
                f"light_color = {color(sun['color'])}", f"light_energy = {sun['energy']}", "shadow_enabled = true",
                "directional_shadow_max_distance = 40.0"]
+    # A fire in each brazier (the braziers stand on pillars at the corners,
+    # gen_theme_meshes.py); each carries its own flickering light.
     half = p["board"]["width"] * p["cell_size"] / 2 + p["board"]["frame_width"] + 0.95
-    torch = env["torch"]
+    fire_scene = f"{models}/fx/fire/PF_BrazierFire.tscn"
+    write(assets / f"models/{theme}/fx/fire/PF_BrazierFire.tscn", brazier_fire(p, theme))
     for i, (sx, sz) in enumerate(((-1, -1), (1, -1), (-1, 1), (1, 1))):
-        r.body += ["", f'[node name="Torch{i + 1}" type="OmniLight3D" parent="."]',
-                   f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, {sx * half}, 0.85, {sz * half})",
-                   f"light_color = {color(torch['color'])}", f"light_energy = {torch['energy']}",
-                   f"omni_range = {torch['range']}", "omni_attenuation = 1.4"]
+        r.body += ["", f'[node name="Fire{i + 1}" parent="." instance={r.ext_id("PackedScene", fire_scene)}]',
+                   f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, {sx * half}, {p['fire']['rim_height']}, {sz * half})"]
     write(assets / f"models/{theme}/backdrop/PF_Environment.tscn", r.text("[gd_scene load_steps={steps} format=3]"))
     entry["environment"] = f"{models}/backdrop/PF_Environment.tscn"
 
@@ -319,6 +436,23 @@ def main():
             hi_overrides(r, tiered + [(f"K{k}", "Mesh", kind_material[k]) for k in range(kinds)])
         write(assets / f"lookdev/LD_{theme.capitalize()}_LineUp{suffix}.tscn",
               r.text("[gd_scene load_steps={steps} format=3]"))
+
+    # Look-dev close-up of one brazier fire (three-quarter view from outside the
+    # platform, board behind), base and desktop (hi/ fire materials).
+    for suffix in ("", "_Hi"):
+        r = Resource()
+        r.body = [f'[node name="LookDevFire_{theme}" type="Node3D"]', "",
+                  f'[node name="Environment" parent="." instance={r.ext_id("PackedScene", entry["environment"])}]', "",
+                  f'[node name="Board" parent="." instance={r.ext_id("PackedScene", entry["board"])}]', "",
+                  '[node name="Camera" type="Camera3D" parent="."]',
+                  f"transform = {p['lookdev']['fire_camera_transform']}", f"fov = {p['lookdev']['fire_fov']}"]
+        if suffix:
+            hi_overrides(r, tiered)
+            for i in range(4):
+                for node, mat in (("Flame", "MI_Fire"), ("Smoke", "MI_FireSmoke")):
+                    ref = r.ext_id("Material", f"res://assets/materials/{theme}/hi/{mat}.tres")
+                    r.body += ["", f'[node name="{node}" parent="Environment/Fire{i + 1}"]', f"material_override = {ref}"]
+        write(assets / f"lookdev/LD_{theme.capitalize()}_Fire{suffix}.tscn", r.text("[gd_scene load_steps={steps} format=3]"))
 
     # Piece and board colours for 2D use (HUD quota swatches), derived from the same parameters.
     names = ["red", "orange", "yellow", "green", "blue", "purple", "white"]

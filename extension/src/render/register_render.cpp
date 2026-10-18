@@ -5,12 +5,14 @@
 
 #include <godot_cpp/core/class_db.hpp>
 
+#include "flicker_light_3d.hpp"
 #include "quality_tiers.hpp"
 
 namespace montezuma::godot_binding {
 
 void register_render() {
     GDREGISTER_CLASS(QualityTiers);
+    GDREGISTER_CLASS(FlickerLight3D);
 }
 
 }  // namespace montezuma::godot_binding
