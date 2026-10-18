@@ -12,6 +12,7 @@
 #include <godot_cpp/variant/vector2i.hpp>
 
 #include "match3_board.hpp"
+#include "animator.hpp"
 #include "board_layout.hpp"
 #include "piece_library.hpp"
 
@@ -37,6 +38,11 @@ public:
     // Bounces two pieces toward each other and back, then emits `animation_finished`.
     void play_illegal(godot::Vector2i a, godot::Vector2i b);
     bool is_busy() const { return busy_; }
+    // Jumps to the end of the playing animation; the view then matches the board.
+    void skip_animation();
+    // Playback speed for animations (1 = feel targets); outcomes never change.
+    void set_animation_speed(double v);
+    double get_animation_speed() const { return animation_speed_; }
 
     int get_board_width() const { return grid_.width; }
     int get_board_height() const { return grid_.height; }
@@ -51,7 +57,19 @@ protected:
     static void _bind_methods();
 
 private:
+    struct Slot {
+        godot::Node3D* node = nullptr;
+        int kind = -1;
+    };
+    struct PlanHooks;
+
     godot::Vector3 cell_position(int x, int y) const;
+    void play_events(const anim::Events& events);
+    void emit_cascade_step(int step);
+    void redeal_in();
+    void release_dying();
+    // Releases cleared pieces and makes every cell show the board's kind.
+    void reconcile();
     godot::Node3D* piece_at(godot::Vector2i c) const;
     int index(godot::Vector2i c) const { return c.y * grid_.width + c.x; }
     bool in_bounds(godot::Vector2i c) const;
@@ -76,6 +94,9 @@ private:
     std::vector<godot::Node3D*> pieces_;
     std::vector<int> kinds_;
     godot::Ref<godot::Tween> tween_;
+    std::vector<Slot> dying_;
+    double animation_speed_ = 1.0;
+    bool redealing_ = false;
     bool busy_ = false;
     bool has_selection_ = false;
     godot::Vector2i selected_;
