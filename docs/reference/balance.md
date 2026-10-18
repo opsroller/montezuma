@@ -3,8 +3,9 @@
 
 # Balance targets
 
-Reference for the balance simulator (WP-22, `tools/sim/`) and the level
-packages (WP-23 to WP-27). A level ships only when it meets its row.
+Reference, for game designers tuning levels and programmers working on
+the balance simulator (WP-22, `tools/sim/`) and the level packages (WP-23
+to WP-27). A level ships only when it meets its row.
 Rules are in the [rules spec](rules-spec.md); levels in
 [progression](progression.md).
 
@@ -72,9 +73,19 @@ Win rates in %, median time left in seconds.
 | e2-l04 | 100 | 239.2 | 73.9 | 99.5 | 100 | pass |
 | e2-l05 | 100 | 242.8 | 69.9 | 100 | 100 | pass |
 | e2-l06 | 100 | 235.5 | 76.6 | 100 | 100 | pass |
+| e3-l01 | 100 | 227.8 | 82.2 | 100 | 100 | pass |
+| e3-l02 | 100 | 271.2 | 89.5 | 100 | 100 | pass |
+| e3-l03 | 100 | 251.8 | 95.1 | 100 | 100 | pass |
+| e3-l04 | 100 | 273.5 | 100.2 | 100 | 100 | pass |
+| e3-l05 | 100 | 285.2 | 105.6 | 99.5 | 100 | pass |
+| e3-l06 | 100 | 248.8 | 127.4 | 99.5 | 99.5 | pass |
+| e3-l07 | 100 | 218.0 | 144.5 | 92.5 | 98.5 | pass |
+| e3-l08 | 100 | 235.5 | 132.1 | 93.5 | 98.5 | pass |
 
-Both curve rules pass for episodes 1 and 2. Each level meets its row with
-no obstacles and no time override, so no lever was used. Every episode 2
-level clears the moves floor of 50 (59 to 77) at the gem goals in
-[progression](progression.md); every level wins every `greedy` run, so
-the curve rule holds by the 100 % tie.
+Both curve rules pass for episodes 1 to 3. Each level meets its row with
+no time override. Every episode 2 level clears the moves floor of 50 (59
+to 77) and every episode 3 level the floor of 70 (82 to 145), at the gem
+goals in [progression](progression.md); every level wins every `greedy`
+run, so the curve rule holds by the 100 % tie. Why episode 3 is built and
+measured this way is in
+[about the episode 3 levels](../explanation/about-the-episode-3-levels.md).

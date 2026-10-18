@@ -331,3 +331,111 @@ contact rests on those draws.
 
 No episode 2 level has chains, steel or a time override: chains arrive
 in e3-l01 and steel in e3-l06.
+
+## Episode 3 levels
+
+Briefs for episode 3 (WP-25): chains from e3-l01, steel from e3-l06.
+Simulator targets are the e3 row of [balance](balance.md), including the
+moves floor of 70; `greedy` is expected to win every run on each level.
+Each level also makes one or two tier-2 upgrades buyable, all optional
+(`PROG-04`). Why the episode is ordered this way, what the simulator
+measures for chains, and the open question of human time against the
+clock are in [about the episode 3 levels](../explanation/about-the-episode-3-levels.md).
+From this episode on, **Duration** gives simulator moves first, then the
+human time at 3.5 s a move, and the level table adds an Obstacles column.
+
+### e3-l01: Locked in
+
+- **Idea:** Chains: a chained piece cannot be swapped but still matches when a run forms through it, and the chain goes with it.
+- **Feeling:** curiosity.
+- **Duration:** Sim `greedy` 75 to 90 mean moves on normal (65 gems), about 112 to 135 on hard (100 gems); about 262 to 315 s of play at 3.5 s a move.
+- **Target success rate:** Normal: at least 75 % of players win on the first try; hard: at least 60 %. Human rates are provisional until a playtest ([why](../explanation/about-the-episode-3-levels.md#human-time-against-the-clock)). Simulator: the e3 row of [balance](balance.md). It introduces chains after e2-l06, which wins every greedy run, so `greedy` must win every run here too (the 100 % tie); that also makes it at least as easy as e3-l03.
+- **Takeaway:** The player knows a chained piece can't be moved but can be freed by lining up its colour next to it, and that it then plays like any piece.
+- **Role and levers:** introduce; goal size: 65 gems; complexity: 6 chained cells, all on the bottom row.
+- **First contact:** Chains only stop swaps: they cost no time or gems and still match. On the bottom row nothing lies below them, so they stay where the player first sees them, a fixed and readable lock, until a run through them or a blast clears them; the rest of the board plays as in episode 2. tnt tier 2 (a diamond of radius 2) becomes buyable here; it helps but is optional (PROG-04).
+
+### e3-l02: Falling locks
+
+- **Idea:** Falling chains: chains start high and fall into play as the pieces under them clear.
+- **Feeling:** watchfulness.
+- **Duration:** Sim `greedy` 80 to 95 mean moves on normal (70 gems), about 120 to 142 on hard (105 gems); about 280 to 332 s of play at 3.5 s a move.
+- **Target success rate:** Normal: at least 75 % first try; hard: at least 60 %. Human rates are provisional until a playtest ([why](../explanation/about-the-episode-3-levels.md#human-time-against-the-clock)). Simulator: the e3 row of [balance](balance.md), `greedy` expected to win every run, so the curve rules hold by the 100 % tie.
+- **Takeaway:** The player knows chains fall like other pieces, so a lock can land in the middle of a planned move.
+- **Role and levers:** develop; goal size: 70 gems; complexity: 8 chained cells in the top half.
+- **First contact:** Builds on e3-l01: the same lock, now moving. The time totem's tier 2 (+120 s) becomes buyable here; optional.
+
+### e3-l03: The band
+
+- **Idea:** A band of chains: two adjacent rows packed with chains, where one blast frees several at once.
+- **Feeling:** satisfaction (when one blast frees several chains).
+- **Duration:** Sim `greedy` 85 to 100 mean moves on normal (75 gems), about 128 to 150 on hard (115 gems); about 298 to 350 s of play at 3.5 s a move.
+- **Target success rate:** Normal: at least 70 % first try; hard: at least 55 %. Human rates are provisional until a playtest ([why](../explanation/about-the-episode-3-levels.md#human-time-against-the-clock)). Simulator: the e3 row of [balance](balance.md), `greedy` expected to win every run, so the curve rules hold by the 100 % tie.
+- **Takeaway:** The player knows any blast that reaches the band (tnt, lightning's row from tier 2, fire) frees several chains at once.
+- **Role and levers:** twist; goal size: 75 gems; complexity: 8 chained cells in two adjacent middle rows, in pairs side by side.
+- **First contact:** Chains are known from e3-l01 and e3-l02; the twist is their density: a power-up lands on a random piece, and whenever one goes off in or beside the band (tier-1 tnt's 3x3 covers both rows) it frees several chains together. Fire tier 2 and Score Frenzy tier 2 become buyable here; optional.
+
+### e3-l04: Bound centre
+
+- **Idea:** Chain test: the most chains of the episode, packed in the centre where most swaps happen, before the Reaction 1 bonus level.
+- **Feeling:** tension.
+- **Duration:** Sim `greedy` 90 to 110 mean moves on normal (80 gems), about 135 to 165 on hard (120 gems); about 315 to 385 s of play at 3.5 s a move.
+- **Target success rate:** Normal: at least 65 % first try; hard: at least 50 %. Human rates are provisional until a playtest ([why](../explanation/about-the-episode-3-levels.md#human-time-against-the-clock)). Simulator: the e3 row of [balance](balance.md), `greedy` expected to win every run, so the curve rules hold by the 100 % tie.
+- **Takeaway:** The player knows how to open a locked centre: line up runs through the chained pieces and set off power-ups next to them.
+- **Role and levers:** test; goal size: 80 gems; complexity: 10 chained cells (the guidance maximum) in the four centre columns, on the bottom three rows so they last.
+- **First contact:** Tests chains with every earlier tool; nothing new arrives in the level. Timer tier 2 (330 s) becomes buyable here; optional, and the brief's human time does not assume it.
+
+### e3-l05: Loose ends
+
+- **Idea:** Rest after the spike: the curve's next goal with only 2 chains, so the board is open again.
+- **Feeling:** relief.
+- **Duration:** Sim `greedy` 95 to 115 mean moves on normal (85 gems), about 142 to 172 on hard (130 gems); about 332 to 402 s of play at 3.5 s a move.
+- **Target success rate:** Normal: at least 75 % first try; hard: at least 60 %. Human rates are provisional until a playtest ([why](../explanation/about-the-episode-3-levels.md#human-time-against-the-clock)). Simulator: the e3 row of [balance](balance.md), `greedy` expected to win every run, so the curve rules hold by the 100 % tie.
+- **Takeaway:** The player knows they can read and free chains on sight: two locks on an open board are no longer a problem.
+- **Role and levers:** rest; goal size: 85 gems (the progression curve); complexity: 2 chained cells (the guidance minimum).
+- **First contact:** Mixes everything from episodes 1 and 2 with a light touch of chains; the relief is in fewer locks, not a shorter level (the +5 goal still rises). Multiplier tier 2 and gift tier 2 become buyable here; optional.
+
+### e3-l06: Cold iron
+
+- **Idea:** Steel: some new pieces fall as steel, which can't be swapped or matched wherever it lands, and only fire, tnt and lightning break it (and color_clear from tier 2, its kind only).
+- **Feeling:** wariness.
+- **Duration:** Sim `greedy` 115 to 135 mean moves on normal (90 gems), about 172 to 202 on hard (135 gems); about 402 to 472 s of play at 3.5 s a move.
+- **Target success rate:** Normal: at least 75 % first try; hard: at least 60 %, the same as e3-l05 (it sits at the same difficulty). Human rates are provisional until a playtest ([why](../explanation/about-the-episode-3-levels.md#human-time-against-the-clock)). Simulator: the e3 row of [balance](balance.md). It introduces steel, so `greedy` must win every run here and on e3-l05 (the 100 % tie the curve rule allows).
+- **Takeaway:** The player knows steel can't be swapped or matched wherever it falls, and that only fire, tnt, lightning and color_clear from tier 2 (its colour only) break it, so power-ups are worth keeping for steel.
+- **Role and levers:** introduce; goal size: 90 gems; complexity: steel_rate 0.02 (the guidance minimum), no chains.
+- **First contact:** Steel is rare: at 2 % of refills, a level of this length (several hundred refills) brings about a dozen steel pieces spread over the whole level, and at most 8 can stand at once (OBS-02). The level has no chains, so the player meets one obstacle at a time. Tier-1 fire, tnt and lightning, owned since episode 1, already break steel. Color_clear tier 2 and gold tier 2 become buyable here; optional purchases, not ideas the level teaches.
+
+### e3-l07: Iron and chain
+
+- **Idea:** Steel with chains: both obstacles on the board together, each with its own answer.
+- **Feeling:** juggling.
+- **Duration:** Sim `greedy` 130 to 150 mean moves on normal (95 gems), about 195 to 225 on hard (145 gems); about 455 to 525 s of play at 3.5 s a move.
+- **Target success rate:** Normal: at least 70 % first try; hard: at least 55 %. Human rates are provisional until a playtest ([why](../explanation/about-the-episode-3-levels.md#human-time-against-the-clock)). Simulator: the e3 row of [balance](balance.md), `greedy` expected to win every run, so the curve rules hold by the 100 % tie.
+- **Takeaway:** The player knows chains are freed by matching through them and steel only by fire, tnt, lightning or a tier-2 color_clear of its colour, and picks the tool for each.
+- **Role and levers:** develop; goal size: 95 gems; complexity: steel_rate 0.03 and 4 chained cells on the bottom row, away from the centre, so they last while steel builds up.
+- **First contact:** Both obstacles have been met alone (chains e3-l01 to e3-l05, steel e3-l06); bottom-row chains have nothing below them and stay until matched, so they are still there when steel starts to fall. Harvest tier 2 and paint tier 2 become buyable here; optional.
+
+### e3-l08: The vault
+
+- **Idea:** Episode finale: the most chains and the most steel of the episode together at the 100-gem goal, before the Attention 1 bonus level.
+- **Feeling:** triumph.
+- **Duration:** Sim `greedy` 125 to 145 mean moves on normal (100 gems), about 188 to 218 on hard (150 gems); about 438 to 508 s of play at 3.5 s a move.
+- **Target success rate:** Normal: at least 65 % first try; hard: at least 50 %. Human rates are provisional until a playtest ([why](../explanation/about-the-episode-3-levels.md#human-time-against-the-clock)). Simulator: the e3 row of [balance](balance.md), `greedy` expected to win every run, so the curve rules hold by the 100 % tie.
+- **Takeaway:** The player knows every obstacle of episode 3 and has beaten the episode's biggest goal with the most obstacles on the board.
+- **Role and levers:** test; goal size: 100 gems; complexity: steel_rate 0.05 and 10 chained cells (equal to e3-l04's maximum) on the bottom two rows, so they last while steel builds up.
+- **First contact:** Mixes chains, steel and every totem and power-up so far; bottom-row chains stay until matched, so both obstacles share the board through the middle of the level. Gems on board tier 2 (7) becomes buyable here; optional. The rest that follows is the Attention 1 bonus level and episode 4's opener.
+
+| Level | File | Gems normal / hard | Totems | Power-ups | Obstacles | Seed |
+|---|---|---|---|---|---|---|
+| e3-l01 | [`l01.json`](../../game/data/levels/e3/l01.json) | 65 / 100 | every e1-e2 totem | every e1-e2 power-up | 6 chains | 20090601 |
+| e3-l02 | [`l02.json`](../../game/data/levels/e3/l02.json) | 70 / 105 | every e1-e2 totem | every e1-e2 power-up | 8 chains | 20090602 |
+| e3-l03 | [`l03.json`](../../game/data/levels/e3/l03.json) | 75 / 115 | every e1-e2 totem | every e1-e2 power-up | 8 chains | 20090603 |
+| e3-l04 | [`l04.json`](../../game/data/levels/e3/l04.json) | 80 / 120 | every e1-e2 totem | every e1-e2 power-up | 10 chains | 20090604 |
+| e3-l05 | [`l05.json`](../../game/data/levels/e3/l05.json) | 85 / 130 | every e1-e2 totem | every e1-e2 power-up | 2 chains | 20090605 |
+| e3-l06 | [`l06.json`](../../game/data/levels/e3/l06.json) | 90 / 135 | every e1-e2 totem | every e1-e2 power-up | steel 0.02 | 20090606 |
+| e3-l07 | [`l07.json`](../../game/data/levels/e3/l07.json) | 95 / 145 | every e1-e2 totem | every e1-e2 power-up | steel 0.03, 4 chains | 20090607 |
+| e3-l08 | [`l08.json`](../../game/data/levels/e3/l08.json) | 100 / 150 | every e1-e2 totem | every e1-e2 power-up | steel 0.05, 10 chains | 20090608 |
+
+Every episode 3 level has all six totems and six power-ups unlocked so
+far (`ward` arrives in e4-l01). No level has a time override. `chained_cells` and
+`steel_rate` are defined in [level data](level-data.md); y = 0 is the
+top row.
