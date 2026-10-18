@@ -15,9 +15,9 @@ render_mode blend_mix, depth_draw_always, cull_back, diffuse_burley, specular_sc
 #include "res://assets/materials/shaders/SH_Triplanar.gdshaderinc"
 
 uniform vec4 albedo : source_color = vec4(1.0);
-uniform sampler2D texture_albedo : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
-uniform sampler2D texture_normal : hint_roughness_normal, filter_linear_mipmap_anisotropic, repeat_enable;
-uniform sampler2D texture_orm : hint_default_white, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2D texture_albedo : source_color, filter_linear_mipmap_anisotropic, repeat_disable;
+uniform sampler2D texture_normal : hint_roughness_normal, filter_linear_mipmap_anisotropic, repeat_disable;
+uniform sampler2D texture_orm : hint_default_white, filter_linear_mipmap_anisotropic, repeat_disable;
 uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_linear_mipmap;
 uniform sampler2D depth_texture : hint_depth_texture, repeat_disable, filter_nearest;
 uniform float triplanar_scale : hint_range(0.01, 8.0) = 1.0;
