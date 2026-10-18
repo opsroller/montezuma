@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "montezuma/board.hpp"
+#include "montezuma/level_state.hpp"
 #include "montezuma/rng.hpp"
 
 using namespace montezuma;
@@ -424,6 +425,20 @@ void test_random_play_replays_exactly() {
 
 }  // namespace
 
+void test_effect_results_keep_the_streak() {
+    LevelState state({{0, 100}}, 60.0);
+    MoveResult swap;
+    swap.matched_kind = 2;
+    swap.steps = {{{2, 3}}};
+    state.apply_move(swap);
+    state.apply_move(swap);
+    MoveResult effect;
+    effect.steps = {{{0, 4}}};
+    state.apply_move(effect);
+    check(state.streak_kind() == 2 && state.streak() == 2, "effect result keeps the streak");
+    check(state.quotas().at(0) == 96, "effect result still counts toward quotas");
+}
+
 int main() {
     test_swap_events_on_a_known_board();
     test_vertical_clear_makes_pieces_fall();
@@ -434,6 +449,7 @@ int main() {
     test_shuffle_reports_a_permutation();
     test_unshufflable_board_reports_a_redeal();
     test_random_play_replays_exactly();
+    test_effect_results_keep_the_streak();
     std::printf("%d checks, %d failures\n", checks, failures);
     return failures == 0 ? 0 : 1;
 }
