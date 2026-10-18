@@ -1,0 +1,303 @@
+{
+  "bonus_earned.wav": {
+    "category": "feedback",
+    "cue": "bonus_earned",
+    "momentary_lufs": -19.0,
+    "seconds": 1.29,
+    "true_peak_dbtp": -8.4
+  },
+  "bonus_use_dynamite.wav": {
+    "category": "feedback",
+    "cue": "bonus_use_dynamite",
+    "momentary_lufs": -19.0,
+    "seconds": 2.097,
+    "true_peak_dbtp": -3.5
+  },
+  "bonus_use_extra_time.wav": {
+    "category": "feedback",
+    "cue": "bonus_use_extra_time",
+    "momentary_lufs": -19.0,
+    "seconds": 1.685,
+    "true_peak_dbtp": -8.6
+  },
+  "bonus_use_freeze.wav": {
+    "category": "feedback",
+    "cue": "bonus_use_freeze",
+    "momentary_lufs": -19.0,
+    "seconds": 2.426,
+    "true_peak_dbtp": -9.5
+  },
+  "bonus_use_hammer.wav": {
+    "category": "feedback",
+    "cue": "bonus_use_hammer",
+    "momentary_lufs": -20.3,
+    "seconds": 1.8,
+    "true_peak_dbtp": -1.4
+  },
+  "bonus_use_lightning.wav": {
+    "category": "feedback",
+    "cue": "bonus_use_lightning",
+    "momentary_lufs": -19.0,
+    "seconds": 2.1,
+    "true_peak_dbtp": -5.4
+  },
+  "bonus_use_shuffle.wav": {
+    "category": "feedback",
+    "cue": "bonus_use_shuffle",
+    "momentary_lufs": -19.0,
+    "seconds": 0.75,
+    "true_peak_dbtp": -1.6
+  },
+  "cascade_1.wav": {
+    "category": "feedback",
+    "cue": "cascade_1",
+    "momentary_lufs": -19.0,
+    "seconds": 1.238,
+    "true_peak_dbtp": -9.3
+  },
+  "cascade_2.wav": {
+    "category": "feedback",
+    "cue": "cascade_2",
+    "momentary_lufs": -19.0,
+    "seconds": 1.327,
+    "true_peak_dbtp": -8.4
+  },
+  "cascade_3.wav": {
+    "category": "feedback",
+    "cue": "cascade_3",
+    "momentary_lufs": -19.0,
+    "seconds": 1.22,
+    "true_peak_dbtp": -8.5
+  },
+  "cascade_4.wav": {
+    "category": "feedback",
+    "cue": "cascade_4",
+    "momentary_lufs": -19.0,
+    "seconds": 1.183,
+    "true_peak_dbtp": -11.7
+  },
+  "cascade_5.wav": {
+    "category": "feedback",
+    "cue": "cascade_5",
+    "momentary_lufs": -19.0,
+    "seconds": 1.273,
+    "true_peak_dbtp": -11.5
+  },
+  "cascade_6.wav": {
+    "category": "feedback",
+    "cue": "cascade_6",
+    "momentary_lufs": -19.0,
+    "seconds": 1.363,
+    "true_peak_dbtp": -9.0
+  },
+  "cascade_7.wav": {
+    "category": "feedback",
+    "cue": "cascade_7",
+    "momentary_lufs": -19.0,
+    "seconds": 1.803,
+    "true_peak_dbtp": -9.7
+  },
+  "cascade_8.wav": {
+    "category": "feedback",
+    "cue": "cascade_8",
+    "momentary_lufs": -19.0,
+    "seconds": 1.826,
+    "true_peak_dbtp": -10.4
+  },
+  "level_lost.wav": {
+    "category": "stinger",
+    "cue": "level_lost",
+    "momentary_lufs": -16.0,
+    "seconds": 4.15,
+    "true_peak_dbtp": -7.1
+  },
+  "level_won.wav": {
+    "category": "stinger",
+    "cue": "level_won",
+    "momentary_lufs": -16.0,
+    "seconds": 3.797,
+    "true_peak_dbtp": -9.1
+  },
+  "match_01.wav": {
+    "category": "feedback",
+    "cue": "match",
+    "momentary_lufs": -19.0,
+    "seconds": 1.066,
+    "true_peak_dbtp": -6.8
+  },
+  "match_02.wav": {
+    "category": "feedback",
+    "cue": "match",
+    "momentary_lufs": -19.0,
+    "seconds": 1.4,
+    "true_peak_dbtp": -6.2
+  },
+  "match_03.wav": {
+    "category": "feedback",
+    "cue": "match",
+    "momentary_lufs": -19.0,
+    "seconds": 1.021,
+    "true_peak_dbtp": -7.3
+  },
+  "match_04.wav": {
+    "category": "feedback",
+    "cue": "match",
+    "momentary_lufs": -19.0,
+    "seconds": 0.956,
+    "true_peak_dbtp": -7.6
+  },
+  "piece_land_01.wav": {
+    "category": "frequent",
+    "cue": "piece_land",
+    "momentary_lufs": -24.1,
+    "seconds": 0.1,
+    "true_peak_dbtp": -8.5
+  },
+  "piece_land_02.wav": {
+    "category": "frequent",
+    "cue": "piece_land",
+    "momentary_lufs": -24.1,
+    "seconds": 0.1,
+    "true_peak_dbtp": -8.6
+  },
+  "piece_land_03.wav": {
+    "category": "frequent",
+    "cue": "piece_land",
+    "momentary_lufs": -24.1,
+    "seconds": 0.1,
+    "true_peak_dbtp": -8.6
+  },
+  "piece_land_04.wav": {
+    "category": "frequent",
+    "cue": "piece_land",
+    "momentary_lufs": -24.1,
+    "seconds": 0.1,
+    "true_peak_dbtp": -8.2
+  },
+  "quota_done.wav": {
+    "category": "alert",
+    "cue": "quota_done",
+    "momentary_lufs": -17.0,
+    "seconds": 1.72,
+    "true_peak_dbtp": -4.8
+  },
+  "swap_01.wav": {
+    "category": "frequent",
+    "cue": "swap",
+    "momentary_lufs": -24.0,
+    "seconds": 0.23,
+    "true_peak_dbtp": -10.4
+  },
+  "swap_02.wav": {
+    "category": "frequent",
+    "cue": "swap",
+    "momentary_lufs": -24.0,
+    "seconds": 0.23,
+    "true_peak_dbtp": -9.9
+  },
+  "swap_03.wav": {
+    "category": "frequent",
+    "cue": "swap",
+    "momentary_lufs": -24.0,
+    "seconds": 0.23,
+    "true_peak_dbtp": -9.7
+  },
+  "swap_illegal.wav": {
+    "category": "feedback",
+    "cue": "swap_illegal",
+    "momentary_lufs": -19.0,
+    "seconds": 0.33,
+    "true_peak_dbtp": -6.5
+  },
+  "time_warning.wav": {
+    "category": "alert",
+    "cue": "time_warning",
+    "momentary_lufs": -17.1,
+    "seconds": 0.32,
+    "true_peak_dbtp": -5.2
+  },
+  "totem_charge.wav": {
+    "category": "feedback",
+    "cue": "totem_charge",
+    "momentary_lufs": -19.0,
+    "seconds": 1.239,
+    "true_peak_dbtp": -8.3
+  },
+  "totem_fire_color_bomb.wav": {
+    "category": "stinger",
+    "cue": "totem_fire_color_bomb",
+    "momentary_lufs": -16.0,
+    "seconds": 2.979,
+    "true_peak_dbtp": -3.9
+  },
+  "totem_fire_lightning.wav": {
+    "category": "stinger",
+    "cue": "totem_fire_lightning",
+    "momentary_lufs": -16.0,
+    "seconds": 2.7,
+    "true_peak_dbtp": -5.2
+  },
+  "totem_fire_multiplier.wav": {
+    "category": "stinger",
+    "cue": "totem_fire_multiplier",
+    "momentary_lufs": -16.0,
+    "seconds": 2.98,
+    "true_peak_dbtp": -4.4
+  },
+  "totem_fire_random_blast.wav": {
+    "category": "stinger",
+    "cue": "totem_fire_random_blast",
+    "momentary_lufs": -16.0,
+    "seconds": 2.74,
+    "true_peak_dbtp": -5.2
+  },
+  "totem_fire_row_clear.wav": {
+    "category": "stinger",
+    "cue": "totem_fire_row_clear",
+    "momentary_lufs": -16.0,
+    "seconds": 2.7,
+    "true_peak_dbtp": -5.7
+  },
+  "totem_fire_time.wav": {
+    "category": "stinger",
+    "cue": "totem_fire_time",
+    "momentary_lufs": -16.0,
+    "seconds": 2.7,
+    "true_peak_dbtp": -5.1
+  },
+  "trophy.wav": {
+    "category": "stinger",
+    "cue": "trophy",
+    "momentary_lufs": -16.0,
+    "seconds": 3.186,
+    "true_peak_dbtp": -4.7
+  },
+  "ui_back.wav": {
+    "category": "frequent",
+    "cue": "ui_back",
+    "momentary_lufs": -24.2,
+    "seconds": 0.12,
+    "true_peak_dbtp": -10.1
+  },
+  "ui_click_01.wav": {
+    "category": "frequent",
+    "cue": "ui_click",
+    "momentary_lufs": -24.3,
+    "seconds": 0.06,
+    "true_peak_dbtp": -6.8
+  },
+  "ui_click_02.wav": {
+    "category": "frequent",
+    "cue": "ui_click",
+    "momentary_lufs": -24.3,
+    "seconds": 0.06,
+    "true_peak_dbtp": -7.3
+  },
+  "ui_click_03.wav": {
+    "category": "frequent",
+    "cue": "ui_click",
+    "momentary_lufs": -24.3,
+    "seconds": 0.06,
+    "true_peak_dbtp": -7.0
+  }
+}

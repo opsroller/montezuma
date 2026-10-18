@@ -108,7 +108,7 @@ falls back to a placeholder primitive when a name is missing.
 `artifact_0` … `artifact_6` (by kind index), `temple_board`, `temple_env`,
 `cell_highlight`, `fx_match`, `fx_cascade`, `totem_<id>`, `bonus_<id>`.
 
-## Audio cues (owner: sound-designer, WP-14) — proposed
+## Audio cues (owner: sound-designer, WP-15 to 17) — proposed
 
 Played by name with `GameAudio::play(name)`; a missing cue warns and is silent.
 
