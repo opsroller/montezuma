@@ -284,9 +284,11 @@ void GameAudio::start_one_shot(int cue_index) {
     player->stop();
     player->set_stream(cue.streams[pick_variation(cue)]);
     player->set_bus(cue.bus);
-    player->set_volume_db(cue.volume_db + rng_->randf_range(-cue.volume_random_db, cue.volume_random_db));
-    const double semitones = rng_->randf_range(-cue.pitch_random_semitones, cue.pitch_random_semitones);
-    player->set_pitch_scale(std::pow(2.0, semitones / 12.0));
+    const auto spread_db = static_cast<float>(cue.volume_random_db);
+    player->set_volume_db(static_cast<float>(cue.volume_db + rng_->randf_range(-spread_db, spread_db)));
+    const auto spread_st = static_cast<float>(cue.pitch_random_semitones);
+    const double semitones = rng_->randf_range(-spread_st, spread_st);
+    player->set_pitch_scale(static_cast<float>(std::pow(2.0, semitones / 12.0)));
     player->play();
     voice->cue = cue_index;
     voice->priority = cue.priority;
@@ -311,7 +313,7 @@ void GameAudio::start_loop(LoopDeck& deck, int cue_index, double fade_seconds) {
     deck.fade = fade_seconds;
     deck.current = next;
     deck.cue = cue_index;
-    player->set_volume_db(deck.base_db[next] + to_db(deck.gain[next]));
+    player->set_volume_db(static_cast<float>(deck.base_db[next] + to_db(deck.gain[next])));
     player->play();
 }
 
@@ -337,7 +339,7 @@ void GameAudio::update_deck(LoopDeck& deck, double delta) {
         if (deck.gain[i] <= 0.0) {
             player->stop();
         } else {
-            player->set_volume_db(deck.base_db[i] + to_db(deck.gain[i]));
+            player->set_volume_db(static_cast<float>(deck.base_db[i] + to_db(deck.gain[i])));
         }
     }
 }
@@ -363,7 +365,7 @@ void GameAudio::apply_bus_volume(int bus_index) {
     const auto found = volumes_.find(name);
     const double linear = found == volumes_.end() ? 1.0 : found->value;
     const bool ducked = bus_index == music_bus_ || bus_index == ambience_bus_;
-    server->set_bus_volume_db(bus_index, to_db(linear) + (ducked ? duck_db_ : 0.0));
+    server->set_bus_volume_db(bus_index, static_cast<float>(to_db(linear) + (ducked ? duck_db_ : 0.0)));
 }
 
 void GameAudio::set_volume(const StringName& bus, double linear) {
