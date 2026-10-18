@@ -125,7 +125,9 @@ tools/assets/bake_lightmaps.sh --godot "$(command -v godot)" --xvfb
 
 It skips themes whose bake inputs did not change, and prints
 `LIGHTMAP_BAKE ok res://assets/lookdev/LD_<Theme>_Bake.tscn …` for each
-bake. Without a bake the game still runs, without baked light. Details:
+bake. If the editor starts an import of its own during a bake, the bake
+fails, prints `LIGHTMAP_BAKE retry …` and runs once more. Without a bake
+the game still runs, without baked light. Details:
 [Board themes: Lighting](../reference/board-themes.md#lighting).
 
 ## Capture screenshots without a display
