@@ -17,49 +17,60 @@ Coordinates: `x` runs left to right and `y` top to bottom, from 0; pieces
 fall toward higher `y`. The 3D view maps `y` to depth or height, never
 the reverse.
 
-## MoveResult events (owner: gameplay-programmer, WP-01) — proposed
+## MoveResult events (owner: gameplay-programmer, WP-01) — implemented
 
-**Today** (`core/include/montezuma/board.hpp`, merged): a legal swap
-returns a `MoveResult` with one entry per cascade step mapping artifact
-kind to pieces cleared, plus `matched_kind`, `shuffled` and `score()`.
-`Match3Board::try_swap` returns it as a `Dictionary`
-`{ steps, matched_kind, shuffled, score }`, or an empty one for an
-illegal swap.
-
-**Proposed** for WP-13 (animation needs cells, not counts): extend it
-with cell-level events so the board view animates without knowing rules.
-The code is the truth for field names once WP-13 lands.
+Implemented in `core/include/montezuma/board.hpp` (field-by-field
+reference, ordering rules and the replay recipe:
+[move-result.md](move-result.md)). Every legal swap, and every effect
+through `Board::clear_cells`, reports cell-level events so the board view
+animates without knowing the rules. The count fields the binding already
+uses are unchanged.
 
 ```cpp
 namespace montezuma {
-struct Cell { int x, y; };                 // x left to right, y top to bottom, from 0
-struct Fall  { Cell from, to; int kind; };
-struct Spawn { Cell to; int kind; int drop; };   // drop = rows above the board it starts
-struct Run   { std::vector<Cell> cells; int kind; };
+struct Cell  { int x, y; };                      // x left to right, y top to bottom, from 0
+struct Fall  { Cell from, to; int kind; };       // to.x == from.x, to.y > from.y
+struct Spawn { Cell to; int kind; int drop; };   // starts at y = to.y - drop, drop >= 1
+struct Run   { std::vector<Cell> cells; int kind; bool horizontal() const; };
 
 struct CascadeStep {
-    std::vector<Cell>  cleared;
-    std::vector<Fall>  falls;
-    std::vector<Spawn> spawns;
-    std::vector<Run>   runs;               // for bonus pickups and effects
+    std::vector<Cell>  cleared;                  // row-major, each cell once
+    std::vector<Fall>  falls;                    // by column left to right, bottom to top
+    std::vector<Spawn> spawns;                   // by column left to right, bottom to top
+    std::vector<Run>   runs;                     // horizontal runs, then vertical; empty for clear_cells step 0
 };
 
 struct MoveResult {
-    std::array<Cell, 2>      swap;
-    std::vector<CascadeStep> cascades;     // step 0 is the swap's own match
-    int  matched_kind = -1;                // drives Power Totem streaks
+    std::vector<std::map<int, int>> steps;       // per step: kind -> pieces cleared (== cascades[i].cleared)
+    int  matched_kind = -1;                      // drives Power Totem streaks; -1 for clear_cells
     bool shuffled = false;
-    std::vector<std::pair<Cell, Cell>> shuffle_map;
-    int  score() const;                    // 10 x pieces x (step + 1)
+    bool stuck = false;                          // no playable board could be made; board unchanged
+    std::optional<std::array<Cell, 2>> swap;     // as passed to try_swap; empty for clear_cells
+    std::vector<CascadeStep> cascades;           // step 0 is the swap's own match (or the cleared cells)
+    std::vector<std::pair<Cell, Cell>> shuffle_map;  // {from, to} for each moved piece, by `to` row-major
+    bool redealt = false;                        // shuffle fell back to a fresh deal; shuffle_map empty
+    int  score() const;                          // 10 x pieces x (step + 1)
     std::map<int, int> cleared_by_kind() const;
 };
 
-std::optional<MoveResult> Board::try_swap(Cell a, Cell b);
+std::optional<MoveResult> Board::try_swap(Cell a, Cell b);                 // empty if illegal
+std::optional<MoveResult> Board::clear_cells(const std::vector<Cell>&);    // empty if no valid cell
+std::vector<Run> Board::find_runs() const;
 }
 ```
 
+Differences from the proposal, and why:
+
+- `swap` is `std::optional`: `clear_cells` results have no swap, and an
+  empty optional says so without a sentinel cell.
+- `redealt` is new: when the pieces cannot be rearranged the shuffle deals
+  a new board, which no `{from, to}` map can describe. The view reads
+  `Board::cells()` for the new layout.
+- `steps` and `stuck` stay for the binding and `LevelState`.
+
 `Match3Board` (GDExtension) exposes the same as a `Dictionary` with keys
-matching the field names and `Vector2i` cells.
+matching the field names and `Vector2i` cells; until the binding adds the
+cell-level keys it returns `{ steps, matched_kind, shuffled, stuck, score }`.
 
 ## LevelData (owner: gameplay-programmer, WP-02; content: game-designer) — proposed
 

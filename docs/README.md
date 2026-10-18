@@ -15,6 +15,7 @@ own folder.
 - [Project profile](reference/project-profile.md): stack, commands, who owns what, project rules.
 - [Contracts](reference/contracts.md): interfaces between work packages.
 - [Work packages](reference/work-packages.md): the plan and its status.
+- [MoveResult events](reference/move-result.md): cascade steps, falls, spawns and how to replay a move.
 - [Rules spec](reference/rules-spec.md): how the game plays, with
   [Power Totems](reference/rules-totems.md), [power-ups](reference/rules-power-ups.md),
   [bonus games](reference/rules-bonus-games.md) and [sources](reference/rules-sources.md).
