@@ -7,8 +7,9 @@
 Rules (docs/reference/board-themes.md): every theme in the manifest names
 each required logical name; every path resolves; meshes stay inside the
 triangle budgets; textures are power-of-two and at most 1024 px; scenes and
-materials only reference files that exist; every theme has a provenance
-record; source files carry the SPDX header; names follow the prefixes.
+materials only reference files that exist; every file parses as its format;
+every theme has a provenance record; source files carry the SPDX header;
+names follow the prefixes.
 Needs only the standard library and Pillow.
 """
 
@@ -17,7 +18,7 @@ import re
 import sys
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
 ROOT = Path(__file__).resolve().parents[2]
 GAME = ROOT / "game"
@@ -26,6 +27,7 @@ REQUIRED = [f"artifact_{k}" for k in range(7)] + ["board", "environment", "cell_
 PIECE_TRIS, BOARD_TRIS, MAX_TEXTURE = 2000, 20000, 1024
 PREFIXES = {".obj": "SM_", ".png": "T_", ".tres": "MI_", ".gdshader": "SH_"}
 SPDX = "SPDX-License-Identifier: GPL-2.0-or-later"
+HEADERS = {".tscn": "[gd_scene", ".tres": "[gd_resource"}
 
 
 def res_to_path(res):
@@ -38,6 +40,26 @@ def obj_tris(path):
         if line.startswith("f "):
             tris += len(line.split()) - 3
     return tris
+
+
+def obj_format_error(path):
+    """None if the OBJ has vertices and faces whose indices are in range."""
+    verts, faces = 0, 0
+    for n, line in enumerate(path.read_text().splitlines(), 1):
+        if line.startswith("v "):
+            verts += 1
+        elif line.startswith("f "):
+            faces += 1
+            for corner in line.split()[1:]:
+                try:
+                    index = int(corner.split("/")[0])
+                except ValueError:
+                    return f"line {n}: face corner '{corner}' is not a vertex index"
+                if index == 0 or abs(index) > verts:
+                    return f"line {n}: face index {index} out of range (1..{verts})"
+    if not verts or not faces:
+        return f"{verts} vertices, {faces} faces; a mesh needs both"
+    return None
 
 
 def scene_refs(path):
@@ -97,6 +119,10 @@ def main():
             errors.append(f"{rel}: name must start with {prefix} (see naming table in docs/reference/board-themes.md)")
         if path.suffix == ".tscn" and not re.match(r"(PF|LD)_", path.name):
             errors.append(f"{rel}: scene names start with PF_ (asset scene) or LD_ (look-dev)")
+        if path.suffix in HEADERS and not path.read_text().lstrip().startswith(HEADERS[path.suffix]):
+            errors.append(f"{rel}: not a Godot text {path.suffix} (must start with {HEADERS[path.suffix]})")
+        if path.suffix == ".obj" and (problem := obj_format_error(path)):
+            errors.append(f"{rel}: invalid OBJ: {problem}")
         if path.suffix in (".tscn", ".tres"):
             for ref in scene_refs(path):
                 if not res_to_path(ref).exists():
@@ -104,10 +130,18 @@ def main():
         if path.suffix in (".gdshader", ".obj", ".tscn", ".tres") and SPDX not in path.read_text()[:400]:
             errors.append(f"{rel}: missing the SPDX header line")
         if path.suffix == ".png":
-            w, h = Image.open(path).size
+            try:
+                with Image.open(path) as image:
+                    if image.format != "PNG":
+                        raise UnidentifiedImageError(f"{image.format} data")
+                    (w, h), mode = image.size, image.mode
+                    image.load()
+            except (UnidentifiedImageError, OSError, SyntaxError) as problem:
+                errors.append(f"{rel}: not a readable PNG ({problem}); regenerate it")
+                continue
             if w > MAX_TEXTURE or h > MAX_TEXTURE or w & (w - 1) or h & (h - 1):
                 errors.append(f"{rel}: {w}x{h}; textures must be power-of-two and at most {MAX_TEXTURE}px")
-            if path.stem.endswith("_N") and Image.open(path).mode != "RGB":
+            if path.stem.endswith("_N") and mode != "RGB":
                 errors.append(f"{rel}: normal map must be RGB")
 
     tokens_path = ROOT / "design/tokens/temple-board.json"

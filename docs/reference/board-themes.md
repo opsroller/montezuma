@@ -128,7 +128,9 @@ is not measured yet; that is WP-41.
 
 ## Validator rules
 
-`validate_assets.py` reports each as `error: <file>: <rule and fix>`:
+CI runs `validate_assets.py` on every push and PR (the `assets`
+workflow, see [CI pipeline](ci-pipeline.md#assets-workflow)). It reports
+each as `error: <file>: <rule and fix>`:
 
 - `default_theme` names a theme in the manifest; every manifest path exists.
 - Every required name is present (missing ones are warnings, since the view
@@ -136,6 +138,9 @@ is not measured yet; that is WP-41.
 - Triangles of every OBJ a scene pulls in: pieces < 2,000, board < 20,000.
 - Prefixes per the naming table; scenes start `PF_` or `LD_`.
 - Every `res://` reference in a `.tscn` or `.tres` exists.
+- Every file parses as its format: PNGs decode, OBJs have vertices and
+  faces with in-range indices, `.tscn` and `.tres` are Godot text
+  resources.
 - `.gdshader`, `.obj`, `.tscn`, `.tres` carry the SPDX line.
 - PNGs are power-of-two, ≤ 1024 px; `_N` maps are RGB.
 - `PROVENANCE.md` has a record for each theme.

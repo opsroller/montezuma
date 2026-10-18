@@ -44,6 +44,20 @@ godot --headless --path game --import
 godot --headless --path game --quit-after 120    # errors show here
 ```
 
+## Check the assets
+
+Needs Python 3 and Pillow. This is the `assets` CI job.
+
+```sh
+python3 -m venv .venv
+.venv/bin/pip install --require-hashes -r .github/requirements/assets.txt
+.venv/bin/python tools/assets/validate_assets.py    # exits 1 on any error
+```
+
+The hashes in `assets.txt` cover Linux x86_64 only. On macOS, Windows or
+ARM Linux, install with `.venv/bin/pip install pillow==11.3.0` instead.
+On Windows the venv's programs are in `.venv\Scripts\`.
+
 ## Capture screenshots without a display
 
 Godot's Movie Maker renders frames to PNG files. On a machine without a
