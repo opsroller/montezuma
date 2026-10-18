@@ -78,8 +78,9 @@ measured on our scenes:
 | `web` (UHD 620) | sun shadow 0.6, 2× MSAA 1: about 1.6 ms | 33.3 ms p95 |
 
 The rest of each budget is the board, backdrop, particles and the game's
-own CPU work. WP-46 replaces these with measured p50 and p95, and WP-41
-moves any tier setting the numbers say to move.
+own CPU work. Measured p50 and p95 from the WP-46 benchmark are in
+[Benchmark results](../reference/benchmark-results.md); WP-41 moves any
+tier setting the numbers say to move.
 
 ## Consequences
 

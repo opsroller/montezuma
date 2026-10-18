@@ -21,6 +21,12 @@ or a cloud machine without a GPU do not count against the
    godot --headless --path game --import
    ```
 
+   On a Mac, add `-DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+   -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15` to the configure line: the game
+   only loads a universal library, and without it Godot reports `Can't
+   open dynamic library` and every game class is missing. The Godot app's
+   binary is `/Applications/Godot.app/Contents/MacOS/Godot`.
+
 2. Run the benchmark and the readability capture for the tier the machine
    stands for (on Windows, use Git Bash or WSL for the script):
 
@@ -47,6 +53,13 @@ or a cloud machine without a GPU do not count against the
      `bench-out/readability/` to see what failed.
 
    The script exits 1 if any run or check failed.
+
+   Check that `device.resolution` in `benchmark.json` matches `--size`.
+   On macOS the window has been seen to change size during a run; run
+   again if it differs.
+
+4. Add the numbers to [Benchmark results](../reference/benchmark-results.md):
+   the machine once, then a row per tier in each table.
 
 To run the benchmark alone, without the script:
 

@@ -1,0 +1,87 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+# Benchmark results
+
+*Reference. Frame times and readability results measured with the
+[benchmark and readability capture](benchmark.md), per machine, tier,
+driver and resolution, against the
+[tier budgets](visual-target.md#quality-tiers). How to run it and add a
+row: [Run the benchmark](../how-to/run-the-benchmark.md).*
+
+All times are milliseconds, nearest-rank percentiles over a 60 s capture
+after a 10 s warm-up, unless a row says otherwise. "Over budget" counts
+frames over the tier's `budget_ms`.
+
+## Machines
+
+| Machine | CPU and GPU | Memory | Display | OS | Godot | Build |
+|---|---|---|---|---|---|---|
+| Mac mini (Mac16,10) | Apple M4, 10-core GPU (Metal 4, Apple9) | 16 GB | Studio Display, 5K, 60 Hz | macOS 27 | 4.7.2-stable editor binary | `main` at 1b780d1 (WP-29 effects, WP-46 benchmark); universal extension, `CMAKE_BUILD_TYPE=Release`; textures from `gen_theme_textures.py` |
+
+## Frame time
+
+Mac mini M4, Metal, Forward+, 2026-10-18.
+
+| Tier | Resolution | 3D scaling | `frame_ms` p50 | p95 | p99 | max | Over budget | Budget p95 | Verdict |
+|---|---|---|---|---|---|---|---|---|---|
+| `desktop-high` | 2560×1440 | native, TAA | 22.97 | 25.06 | 25.58 | 3561 (one hitch) | 2326 of 2326 | 16.6 | over budget, about 40 fps |
+| `desktop-high` (second run) | 2560×1440 | native, TAA | 23.09 | 25.14 | 25.66 | 29.4 | 2574 of 2574 | 16.6 | over budget |
+| `desktop-standard` | 1920×1080 | MetalFX temporal, 0.77 | 16.66 | 16.87 | 17.39 | 26.0 | 2761 of 3599 | 16.6 | holds 60 Hz; over only by the display period (below) |
+
+| Tier | `cpu_ms` p50 | p95 | p99 | `gpu_timing` | Draw calls p95 (max) | Primitives p95 (max) | Video memory max | `replay.diverged` |
+|---|---|---|---|---|---|---|---|---|
+| `desktop-high` | 25.55 | 26.20 | 2215 | false | 129 (165) | 143 396 (217 548) | 454 MB | false |
+| `desktop-high` (second run) | 25.61 | 26.46 | 29.66 | false | 129 (170) | 144 630 (217 548) | 452 MB | false |
+| `desktop-standard` | 17.63 | 17.86 | 26.35 | false | 137 (192) | 131 586 (202 686) | 364 MB | false |
+
+What the numbers mean on this machine:
+
+- **No GPU time on Metal.** Every `viewport_get_measured_render_time_gpu`
+  sample is 0 with Godot 4.7.2's Metal driver, so `gpu_timing` is false
+  and `gpu_ms` means nothing.
+- **`cpu_ms` includes waiting for the GPU.** On Metal its p50 is above
+  `frame_ms` p50, so it counts the wait for the next drawable, not only
+  CPU work.
+- **`desktop-high` is GPU-bound.** Rerun for 30 s with `--disable-vsync`
+  it gives the same p95 (25.27), and the same scene at 1920×1080 keeps up
+  with the display. This is inferred from those two runs, not from a GPU
+  timer.
+- **`desktop-standard` is capped by the display.** At 60 Hz each frame
+  is 16.67 ms, just above the 16.6 ms budget, so frames that keep up still
+  count as over budget. Godot's Metal driver stays display-synced with
+  `--disable-vsync` (30 s runs: p50 16.66 to 16.67, p95 16.98 to 16.99),
+  so how much headroom there is under 16.6 ms is unknown.
+- **The window can change size mid-run.** In three of six
+  `desktop-standard` runs the report's `device.resolution` was 3140×2104,
+  5120×2576 or 5120×2880 instead of 1920×1080. Those runs are not in the
+  table; only runs whose `device.resolution` matches `--size` count.
+
+## WP-29 effects
+
+The busiest-board replay plays every totem and power-up effect, so the
+numbers above include them. On this machine they fit `desktop-standard`
+(it keeps 60 Hz) and do not fit `desktop-high` (p95 25.1 ms against
+16.6 ms). The cost of the effects alone was not isolated: the benchmark
+has no switch to turn them off.
+
+## Feature rows
+
+`check_features.py` on the same reports. Rows that fail are the
+lighting, reflection and atmosphere work in WP-47 to WP-53, still to do.
+
+| Tier | Rows met | Met | Not met |
+|---|---|---|---|
+| `desktop-high` | 6 of 18 | Forward+, sun shadows 4096, depth and height fog, glow, TAA, GPU particles under the limit | AgX, auto exposure, LightmapGI, VoxelGI or SDFGI, SSIL, SSAO, shadowed fire lights, SSR, reflection probes, volumetric fog, colour-grade LUT, depth of field |
+| `desktop-standard` | 8 of 19 | Forward+, no VoxelGI, no SDFGI, sun shadows (4096, need 2048), depth and height fog, glow, MetalFX temporal, GPU particles under the limit | AgX, auto exposure, LightmapGI, SSIL, SSAO, shadowed fire lights, SSR, reflection probes, volumetric fog, colour-grade LUT, depth of field |
+
+## Readability
+
+Captured at 540×1170 with each tier's settings; default thresholds from
+[Readability checks](benchmark.md#readability-checks). Both tiers fail
+the same four rules.
+
+| Rule | `desktop-high` | `desktop-standard` | Pass |
+|---|---|---|---|
+| 2 Persistent effects leave the board alone | FAIL: mean 12.56, p99 30 | FAIL: mean 12.66, p99 29 | mean ≤ 1.0, p99 ≤ 4 |
+| 4 Piece-to-tile contrast holds | FAIL: worst change 21.6% | FAIL: worst change 21.2% | ≤ 10% |
+| 5 Kinds tell apart (closest pair, shade 0 / shade 1) | FAIL: greyscale 10.34 / 6.18, protanopia 14.86 / 11.40, deuteranopia 14.84 / 11.78, tritanopia 17.59 / 16.27 | FAIL: greyscale 9.96 / 5.90, protanopia 14.40 / 11.19, deuteranopia 15.04 / 11.16, tritanopia 17.53 / 15.81 | ≥ 12 and ≥ 1.5 × the in-kind spread |
+| 6 Bloom stays within a quarter cell | FAIL: 5946 px, 4.18% of the board | FAIL: 4220 px, 2.97% of the board | ≤ 0.1% |
