@@ -3,7 +3,9 @@
 
 *Explanation. Why Montezuma's looks the way it does, and the rules that keep
 new art consistent with it. For file formats and commands see
-[Board themes](../reference/board-themes.md).*
+[Board themes](../reference/board-themes.md). This page describes the
+first-pass temple; the high-end look it grows into is the
+[Visual target](../reference/visual-target.md).*
 
 ![The temple board in the running game (Forward+)](../images/temple-board.jpg)
 
