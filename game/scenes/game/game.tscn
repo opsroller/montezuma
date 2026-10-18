@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://bmzgamescene"]
+; SPDX-License-Identifier: GPL-2.0-or-later
+
+[ext_resource type="PackedScene" uid="uid://bmzboardview3d" path="res://scenes/board/board.tscn" id="1_board"]
+
+[node name="Game" type="Match3Game" groups=["match3_game"]]
+board_view_path = NodePath("Board/View")
+
+[node name="Board" parent="." instance=ExtResource("1_board")]

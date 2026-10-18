@@ -22,6 +22,11 @@ add_library(montezuma_extension SHARED
   src/board/register_board.cpp
   src/audio/game_audio.cpp
   src/audio/register_audio.cpp
+  src/game/match3_game.cpp
+  src/game/register_game.cpp
+  src/render/quality.cpp
+  src/render/quality_tiers.cpp
+  src/render/register_render.cpp
 )
 target_include_directories(montezuma_extension PRIVATE src)
 target_link_libraries(montezuma_extension PRIVATE montezuma_core godot-cpp)

@@ -238,23 +238,29 @@ std::optional<double> Row::median_time_left() const {
 std::optional<TargetRow> target_row(int episode, int index) {
     // balance.md Targets.
     static constexpr std::array<TargetRow, 6> kRows{{
-        {"e1-l01", 100, 150.0, 95, false, 99},
-        {"e1", 98, 100.0, 70, false, 90},
-        {"e2", 95, 70.0, 40, false, 80},
-        {"e3", 90, 50.0, 20, false, 70},
-        {"e4", 85, 35.0, 20, true, 60},
-        {"e5", 80, 25.0, 10, true, 50},
+        {"e1-l01", 100, 150.0, 95, false, 99, 0},
+        {"e1", 98, 100.0, 70, false, 90, 0},
+        {"e2", 95, 70.0, 40, false, 80, 50},
+        {"e3", 90, 50.0, 20, false, 70, 70},
+        {"e4", 85, 35.0, 20, true, 60, 90},
+        {"e5", 80, 25.0, 10, true, 50, 110},
     }};
     if (episode == 1) return index == 1 ? kRows[0] : kRows[1];
     if (episode >= 2 && episode <= 5) return kRows[static_cast<std::size_t>(episode)];
     return std::nullopt;
 }
 
+int moves_floor(int episode, int index) {
+    const auto t = target_row(episode, index);
+    return t ? t->greedy_min_moves : 0;
+}
+
 std::string target_text(const Row& row) {
     const auto t = target_row(row.episode, row.index);
     if (!t) return "-";
     if (row.bot == Bot::Greedy && row.difficulty == Difficulty::Normal)
-        return "win>=" + std::to_string(t->greedy_win_pct) + "% median>=" + fmt1(t->greedy_median) + "s";
+        return "win>=" + std::to_string(t->greedy_win_pct) + "% median>=" + fmt1(t->greedy_median) + "s" +
+               (t->greedy_min_moves > 0 ? " moves>=" + std::to_string(t->greedy_min_moves) : std::string());
     if (row.bot == Bot::Random && row.difficulty == Difficulty::Normal)
         return std::string(t->random_at_most ? "win<=" : "win>=") + std::to_string(t->random_pct) + "%";
     if (row.bot == Bot::Planner && row.difficulty == Difficulty::Hard)
@@ -272,7 +278,9 @@ Verdict evaluate(const Row& row) {
     const auto verdict = [](bool ok) { return ok ? Verdict::Pass : Verdict::Fail; };
     if (row.bot == Bot::Greedy && row.difficulty == Difficulty::Normal) {
         const auto median = row.median_time_left();
-        return verdict(at_least(t->greedy_win_pct) && median && *median >= t->greedy_median);
+        // Exact: total moves against floor x seeds.
+        const bool enough_moves = row.total_moves >= static_cast<long long>(t->greedy_min_moves) * row.seeds;
+        return verdict(at_least(t->greedy_win_pct) && median && *median >= t->greedy_median && enough_moves);
     }
     if (row.bot == Bot::Random && row.difficulty == Difficulty::Normal)
         return verdict(t->random_at_most ? at_most(t->random_pct) : at_least(t->random_pct));
@@ -324,8 +332,11 @@ std::vector<CurveCheck> curve_checks(const std::vector<LevelData>& levels, const
         }
         const long long diff = cross(b->wins, b->seeds, a->wins, a->seeds);  // (b - a) x seeds_a x seeds_b
         if (introduces_idea(*next, &l)) {
-            c.verdict = diff > 0 ? Verdict::Pass : Verdict::Fail;
-            c.detail = "new idea: " + fmt1(b->win_rate_pct()) + "% must be above " + fmt1(a->win_rate_pct()) + "%";
+            // A level can be no easier than winning every run.
+            const bool both_full = a->wins == a->seeds && b->wins == b->seeds;
+            c.verdict = diff > 0 || both_full ? Verdict::Pass : Verdict::Fail;
+            c.detail = "new idea: " + fmt1(b->win_rate_pct()) + "% must be above " + fmt1(a->win_rate_pct()) + "%" +
+                       (both_full ? " (both 100%)" : "");
         } else {
             // 100 (b/sb - a/sa) <= 10.
             c.verdict = diff * 100 <= 10LL * a->seeds * b->seeds ? Verdict::Pass : Verdict::Fail;
@@ -406,11 +417,11 @@ std::string format_report(const std::vector<Row>& rows, const std::vector<CurveC
         return out;
     }
     char line[512];
-    std::snprintf(line, sizeof line, "%-8s %-8s %-7s %6s %6s %7s %8s %8s %6s  %-26s %s\n", "level", "bot", "diff",
+    std::snprintf(line, sizeof line, "%-8s %-8s %-7s %6s %6s %7s %8s %8s %6s  %-34s %s\n", "level", "bot", "diff",
                   "seeds", "wins", "win%", "median", "moves", "stuck", "target", "result");
     out += line;
     for (const Row& r : rows) {
-        std::snprintf(line, sizeof line, "%-8s %-8s %-7s %6d %6d %7s %8s %8s %6d  %-26s %s\n", r.level.c_str(),
+        std::snprintf(line, sizeof line, "%-8s %-8s %-7s %6d %6d %7s %8s %8s %6d  %-34s %s\n", r.level.c_str(),
                       std::string(bot_name(r.bot)).c_str(), std::string(difficulty_name(r.difficulty)).c_str(),
                       r.seeds, r.wins, fmt1(r.win_rate_pct()).c_str(), median_text(r, "-").c_str(),
                       fmt1(r.mean_moves()).c_str(), r.stuck, target_text(r).c_str(),
