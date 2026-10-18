@@ -31,7 +31,7 @@ to do the job; this file says with what, and where.
 | Errors | Exceptions ON for every target (`GODOTCPP_DISABLE_EXCEPTIONS=OFF`); core reports errors by exception, binding uses noexcept `Board::try_create` and `MoveResult::stuck` |
 | Godot project | `game/`: `project.godot`, `scenes/`, `assets/`, `ui/`, `data/`; built extension libraries land in `game/bin/` (not committed) |
 | Build | CMake (core, extension, tools), Godot export presets for packaging |
-| Tests | Core unit tests via CTest in `core/tests/`: one CTest test per `core/tests/*.cpp`, each a standalone program with its own `main` and named `test_*.cpp`; shared test helpers go in headers. New `core/src/*.cpp` files are picked up automatically. extension load check headless in Godot. CI (`.github/workflows/tests.yml`) runs Linux, Windows and macOS with warnings as errors, plus an ASan/UBSan job; see [CI pipeline](ci-pipeline.md) |
+| Tests | Core unit tests via CTest in `core/tests/`: one CTest test per `core/tests/*.cpp`, each a standalone program with its own `main` and named `test_*.cpp`; shared test helpers go in headers. New `core/src/*.cpp` files are picked up automatically. extension load check headless in Godot. CI (`.github/workflows/tests.yml`) runs Linux and macOS with warnings as errors on PRs, and Windows too on pushes to `main`, plus an ASan/UBSan job; see [CI pipeline](ci-pipeline.md) |
 | Not allowed | GDScript, JavaScript or TypeScript for game logic. Scenes (`.tscn`) and resources are data and are fine |
 | Offline tools | Blender (headless, Python; the `bpy` module from pip works the same) for models; Python + numpy + ffmpeg for audio. Tools live in `tools/` and never ship |
 | Renderers | Mobile (Android, iOS), Forward+ (desktop), Compatibility (web demo) |
@@ -127,6 +127,12 @@ credits screen and the website both read from it.
 
 ## Budgets
 
+These are the caps for everything the mobile and web builds ship.
+Desktop builds also carry larger texture and LOD variants (up to 2048²,
+8k-triangle pieces) that the mobile and web exports strip; per-tier
+budgets, frame times and the look each tier must show are in
+[Visual target](visual-target.md#how-each-tier-gets-its-assets).
+
 - 60 fps on mid-range Android and older iPhones.
 - Pieces under 2k triangles, board under 20k; textures 1024² max.
 - Install size target under 150 MB on mobile; web demo under 40 MB
@@ -144,7 +150,7 @@ credits screen and the website both read from it.
 - Core exceptions never cross into Godot: the binding layer catches them
   (or uses the non-throwing factory) and reports an error instead.
 - The extension builds with the same warning and exception flags as the
-  core, and CI builds it on Windows too.
+  core, and CI builds it on Windows (on pushes to `main`).
 - Every CI job configures CMake with the options it needs
   (`MONTEZUMA_BUILD_EXTENSION`, `MONTEZUMA_BUILD_TESTS`, `MONTEZUMA_WERROR`).
 - Docs: the right Diataxis kind in the right folder, updated with the

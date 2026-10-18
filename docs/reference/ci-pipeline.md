@@ -21,16 +21,21 @@ Token permissions: `contents: read`.
 
 | Job | Runners | What red means |
 |---|---|---|
-| `core` | Ubuntu, Windows, macOS | the core or a Godot-free test fails to build with warnings as errors, or a CTest test fails |
-| `extension` | Ubuntu, Windows | the GDExtension (with godot-cpp) fails to build; on Ubuntu, Godot 4.4.1 logs an error while loading the game headless |
+| `core` | Ubuntu, macOS; Windows too on pushes to `main` | the core or a Godot-free test fails to build with warnings as errors, or a CTest test fails |
+| `extension` | Ubuntu; Windows too on pushes to `main` | the GDExtension (with godot-cpp) fails to build; on Ubuntu, Godot 4.4.1 logs an error while loading the game headless |
 | `sanitizers` | Ubuntu | a CTest test fails under ASan or UBSan |
+
+Windows does not run on PRs. Pushes to `main` run the Windows `core` and
+`extension` jobs here, and the Windows package in the `build` workflow,
+so a Windows-only break shows up on `main` after merge, and the next PR
+fixes it.
 
 ## Caches
 
 | Cache | Job | Tool | Key | Size cap |
 |---|---|---|---|---|
 | Compiler cache | `extension (ubuntu-latest)` | ccache | `tests-extension-ubuntu-latest` + timestamp | 500 MB |
-| Compiler cache | `extension (windows-latest)` | sccache | `tests-extension-windows-latest` + timestamp | 500 MB |
+| Compiler cache | `extension (windows-latest)`, `main` only | sccache | `tests-extension-windows-latest` + timestamp | 500 MB |
 
 - The newest cache with the key prefix is restored, and a new one is saved
   at the end of every run.
