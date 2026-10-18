@@ -62,6 +62,8 @@ the game itself, so it is the project's first impression, and an
 unfinished level there would undercut the downloads it leads to. The team owns that
 quality bar and decides when the site is ready; the project-manager
 takes the decision to the owner, whose only sign-off is going public.
+What is still open before then is listed in the
+[website audit](../reference/website-audit.md).
 
 ## Why the demo runs in the page, not an iframe
 

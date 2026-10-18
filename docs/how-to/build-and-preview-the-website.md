@@ -57,6 +57,10 @@ loader disagree on the extension's file name: compare it with the
 
 ## Check a deployed demo
 
+This covers the compression check the
+[website audit](../reference/website-audit.md#not-checked) could not run
+on a local build.
+
 On a deployed copy of the site, check that the host compresses the demo's
 largest files (the play button's size assumes it) and lets browsers cache
 them:

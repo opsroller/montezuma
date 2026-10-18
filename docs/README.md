@@ -26,6 +26,7 @@ own folder.
 - [Match3Level](reference/match3-level.md): the level timer, score, quotas and outcome in Godot.
 - [Level data](reference/level-data.md): the level file format, defaults, limits and errors.
 - [Website](reference/website.md): pages, release data, platform detection, demo hand-off contract.
+- [Website audit](reference/website-audit.md): what the website passes and what is open, page by page.
 - [Board view](reference/board-view.md): the 3D board's classes, scenes, camera fit and feel constants.
 - [CI pipeline](reference/ci-pipeline.md): the tests, assets and levels workflows' triggers, jobs and caches.
 - [Rules spec](reference/rules-spec.md): how the game plays, with
