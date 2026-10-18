@@ -101,9 +101,9 @@ let retryReloads = false;
 // somewhere Godot does not report (it leaves startGame() pending).
 const STALL_MS = 60_000;
 let lastProgress = 0;
-// Godot's loader reports its own files; the side module is fetched by the
-// page (see fetchSideModule), so the bar adds the two.
-const SIDE_MODULE = "play/montezuma.side.wasm";
+// Godot's loader reports its own files; the side module's bytes are
+// counted by watchFetches, and the bar adds the two.
+const SIDE_MODULE = "montezuma.side.wasm";
 const loaded = { godot: 0, side: 0 };
 // Set before a retry's reload so the new page starts the demo by itself.
 const RETRY_KEY = "montezuma-demo-retry";
@@ -191,27 +191,44 @@ function showProgress() {
   progress.value = loaded.godot + loaded.side;
 }
 
-// Godot's runtime fetches the side module itself, outside its loader's
-// progress reports. Fetching it first, counting the bytes, makes it part of
-// the bar, catches a failed fetch at once, and leaves it in the HTTP cache
-// for the runtime's own request.
-async function fetchSideModule() {
-  const response = await fetch(SIDE_MODULE);
-  if (!response.ok || !response.body) throw new Error(`${SIDE_MODULE}: HTTP ${response.status}`);
-  const reader = response.body.getReader();
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) return;
-    loaded.side += value.byteLength;
-    showProgress();
-  }
+// Godot does not report a failed fetch of its files (startGame() stays
+// pending), and its runtime fetches the side module, about half the
+// download, outside its loader's progress reports. Wrapping fetch for the
+// demo's files catches the first and counts the second, with one download.
+function watchFetches(onFailure) {
+  const realFetch = window.fetch.bind(window);
+  window.fetch = async (input, init) => {
+    const url = String(input instanceof Request ? input.url : input);
+    if (!url.includes("play/")) return realFetch(input, init);
+    let response;
+    try {
+      response = await realFetch(input, init);
+    } catch (error) {
+      onFailure(error);
+      throw error;
+    }
+    if (!response.ok) {
+      onFailure(new Error(`${url}: HTTP ${response.status}`));
+      return response;
+    }
+    if (!url.endsWith(SIDE_MODULE) || !response.body) return response;
+    const counted = response.body.pipeThrough(new TransformStream({
+      transform(chunk, controller) {
+        loaded.side += chunk.byteLength;
+        showProgress();
+        controller.enqueue(chunk);
+      },
+    }));
+    return new Response(counted, { status: response.status, statusText: response.statusText, headers: response.headers });
+  };
 }
 
-// Resolves with the game's start, or rejects once loading has made no
-// progress for STALL_MS.
+// Resolves with the game's start, or rejects when a demo file fails to load
+// or loading has made no progress for STALL_MS.
 function watch(start) {
   lastProgress = Date.now();
   return new Promise((resolve, reject) => {
+    watchFetches(reject);
     const timer = setInterval(() => {
       if (Date.now() - lastProgress > STALL_MS) {
         clearInterval(timer);
@@ -263,11 +280,7 @@ async function startGodot() {
         else lastProgress = Date.now();
       },
     });
-    // The runtime starts only once the side module is in the cache.
-    const start = Promise.all([
-      fetchSideModule(),
-      engine.preloadFile(`play/${EXTENSION}`, EXTENSION),
-    ]).then(() => engine.startGame());
+    const start = engine.preloadFile(`play/${EXTENSION}`, EXTENSION).then(() => engine.startGame());
     await watch(start);
     progress.hidden = true;
     if (!ready) say("Starting the intro level…");

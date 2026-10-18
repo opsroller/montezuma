@@ -25,6 +25,18 @@ button, and downloads the build only when asked, with a progress bar.
 The button names the download size, worked out from the package at build
 time, so a visitor on a phone plan knows the cost before choosing.
 
+## Why the page watches the game's downloads
+
+Godot's loader was written for its own page, which can afford a vague
+bar and a spinner. Ours promises a size on the button, so the bar has to
+reach the end only when the download does, and a broken download has to
+end in a message and a retry, not a wait. Godot misses both: half the
+bytes (the side module) arrive outside its progress reports, and a failed
+file leaves its start pending forever. Watching the page's own requests
+covers both without downloading anything twice or patching Godot's
+files, which the site takes unchanged from each web build. A timer that
+gives up after a minute without progress stays as a backstop.
+
 ## Why the demo runs in the page, not an iframe
 
 An iframe is the usual way to isolate a web build that needs special

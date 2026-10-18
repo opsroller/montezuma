@@ -133,18 +133,17 @@ It checks `WebAssembly` and `Engine.isWebGLAvailable(2)` first. When
 either is missing the status line says which and links to the downloads,
 and no retry is offered.
 
-**Side module.** Godot's runtime fetches `montezuma.side.wasm` (about
-half the download) itself, outside its loader's progress reports. The
-page fetches it first, counting its bytes into the progress bar, and
-calls `startGame()` once it and the extension are in; the runtime's own
-request is then served from the HTTP cache. A browser whose cache can't
-hold a 44 MB entry (Chromium's in-memory cache in private windows, for
-one) downloads it twice.
+**Watching the download.** Once the visitor clicks, the page wraps
+`window.fetch` for URLs under `play/`. Godot's runtime fetches
+`montezuma.side.wasm` (about half the download) outside its loader's
+progress reports; the wrapper counts its bytes into the progress bar as
+they arrive, so it is still downloaded once. Godot also leaves
+`startGame()` pending when one of its files fails; the wrapper sees the
+failed request instead.
 
-**Load failures.** A failed fetch, or loading that makes no progress for
-60 seconds (Godot leaves `startGame()` pending when `montezuma.wasm`
-fails), puts the poster back in the stage with a "Try again" button and
-focuses it. Once Godot's engine has been created, "Try again" reloads the
+**Load failures.** A failed request for a demo file, or loading that
+makes no progress for 60 seconds (a backstop), puts the poster back in
+the stage with a "Try again" button and focuses it. Once Godot's engine has been created, "Try again" reloads the
 page, because Godot keeps a failed start in its module state; a
 `sessionStorage` flag (`montezuma-demo-retry`) makes the reloaded page
 start the demo without another click.
@@ -153,7 +152,8 @@ start the demo without another click.
 40rem wide held upright, and keeps its size before and after the demo
 loads. The canvas (`#game-canvas`) fills it; the page sets its pixel size
 to its CSS size times `devicePixelRatio`, capped at 2, and again on every
-resize. While loading, focus rests on the status line (`tabindex="-1"`);
+resize. While loading, focus rests on the status line (`tabindex="-1"`,
+with the usual focus ring);
 when the game starts it moves to the canvas, unless the visitor has moved
 it somewhere else meanwhile. The canvas's focus ring is drawn on the stage
 in `--color-focus`, outside the game picture.
@@ -165,10 +165,11 @@ canvas has `role="application"` and is described by `#demo-help`, a
 note always shown under the controls in Godot mode with the controls and
 the way out.
 
-**Layout.** The status line keeps room for two lines and the hidden
-button keeps its place, so the game starting does not push the page down.
-Without JavaScript the play button is hidden and only the `<noscript>`
-message shows.
+**Layout.** The status line has its own row with room for two lines, and
+the hidden progress bar and button keep their places, so the game
+starting does not push the page down. Without JavaScript the play button
+and the controls help are hidden (the help keeps its space) and only the
+`<noscript>` message shows.
 
 **Events, game to page.** Dispatched on `window` as `CustomEvent`s (from
 `JavaScriptBridge`). Unknown events and extra fields are ignored, and so

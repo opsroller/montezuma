@@ -104,14 +104,16 @@ main {
 /* Room for two lines, and the button kept in the layout while hidden, so
    the game starting does not push the page down. */
 .status { margin: 0; min-height: 3.2em; display: flex; align-items: center; flex: 1 0 100%; }
-.status:focus { outline: none; } /* focused only to hold focus while loading */
+/* Holds focus while the demo loads; shows it like any focused element. */
+.status:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+#demo-progress[hidden] { display: block; visibility: hidden; }
 #leave-button[hidden] { display: inline-flex; visibility: hidden; }
 .demo-help { margin-top: 0.5rem; }
 [data-demo="stub"] .demo-help { display: none; }
 /* The play button needs main.js (which adds .js); without it, the
    noscript message stands alone. */
-html:not(.js) .poster,
-html:not(.js) .demo-help { display: none; }
+html:not(.js) .poster { display: none; }
+html:not(.js) .demo-help { visibility: hidden; }
 #skip-link { margin-left: auto; }
 
 /* ---- Buttons ------------------------------------------------------------- */
