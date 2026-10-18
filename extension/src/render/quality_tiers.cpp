@@ -14,13 +14,18 @@
 #include <godot_cpp/classes/camera_attributes.hpp>
 #include <godot_cpp/classes/camera_attributes_practical.hpp>
 #include <godot_cpp/classes/config_file.hpp>
+#include <godot_cpp/classes/cpu_particles3d.hpp>
+#include <godot_cpp/classes/csg_box3d.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/environment.hpp>
 #include <godot_cpp/classes/geometry_instance3d.hpp>
+#include <godot_cpp/classes/gpu_particles3d.hpp>
 #include <godot_cpp/classes/light3d.hpp>
 #include <godot_cpp/classes/material.hpp>
 #include <godot_cpp/classes/mesh.hpp>
 #include <godot_cpp/classes/mesh_instance3d.hpp>
+#include <godot_cpp/classes/multi_mesh.hpp>
+#include <godot_cpp/classes/multi_mesh_instance3d.hpp>
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/classes/omni_light3d.hpp>
 #include <godot_cpp/classes/os.hpp>
@@ -29,6 +34,7 @@
 #include <godot_cpp/classes/resource_loader.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/standard_material3d.hpp>
+#include <godot_cpp/classes/time.hpp>
 #include <godot_cpp/classes/viewport.hpp>
 #include <godot_cpp/classes/window.hpp>
 #include <godot_cpp/classes/world_environment.hpp>
@@ -56,6 +62,10 @@ const char* const kFogLightGroup = "quality_fog_light";
 // Where the authored (theme) value of a switched property is kept, so a
 // lower tier can turn an effect off and a higher one can restore it.
 const char* const kAuthoredMeta = "_quality_authored";
+// Material slots QualityTiers filled with a variant of a mesh's own material:
+// surface index -> material, and kOverrideKey for material_override.
+const char* const kVariantMeta = "_quality_variant";
+const char* const kOverrideKey = "override";
 
 String to_godot(std::string_view s) { return String::utf8(s.data(), static_cast<int64_t>(s.size())); }
 std::string to_std(const String& s) { return std::string(s.utf8().get_data()); }
@@ -143,6 +153,7 @@ void QualityTiers::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_active_features"), &QualityTiers::get_active_features);
     ClassDB::bind_method(D_METHOD("resolve_variant", "path"), &QualityTiers::resolve_variant);
     ClassDB::bind_method(D_METHOD("apply_to", "root"), &QualityTiers::apply_to);
+    ClassDB::bind_method(D_METHOD("preload_variants", "scene"), &QualityTiers::preload_variants);
     ClassDB::bind_method(D_METHOD("apply_shadow_budget"), &QualityTiers::apply_shadow_budget);
     ClassDB::bind_method(D_METHOD("run_self_test"), &QualityTiers::run_self_test);
     ADD_SIGNAL(MethodInfo("tier_changed", PropertyInfo(Variant::STRING, "tier")));
@@ -374,25 +385,128 @@ Ref<Material> QualityTiers::variant_of(const Ref<Material>& material) {
 }
 
 void QualityTiers::apply_materials(GeometryInstance3D* geometry) {
-    if (const Ref<Material> m = geometry->get_material_override(); m.is_valid()) {
-        if (const Ref<Material> v = variant_of(m); v != m) geometry->set_material_override(v);
+    // Slots this class filled from a mesh's own material, so they are told
+    // apart from content's overrides and follow a new mesh on the next pass.
+    Dictionary owned = geometry->get_meta(kVariantMeta, Dictionary());
+    bool changed = false;
+    auto release = [&](const Variant& key) {
+        if (owned.has(key)) {
+            owned.erase(key);
+            changed = true;
+        }
+    };
+    auto claim = [&](const Variant& key, const Ref<Material>& material) {
+        if (!owned.has(key) || Ref<Material>(owned[key]) != material) {
+            owned[key] = material;
+            changed = true;
+        }
+    };
+    auto is_owned = [&](const Variant& key, const Ref<Material>& material) {
+        return material.is_valid() && owned.has(key) && Ref<Material>(owned[key]) == material;
+    };
+
+    // Particles and multimeshes draw shared meshes and have no per-surface
+    // slots; when every surface they draw has one material, its variant goes
+    // in material_override.
+    const Ref<Material> override = geometry->get_material_override();
+    if (override.is_valid() && !is_owned(kOverrideKey, override)) {
+        release(kOverrideKey);
+        if (const Ref<Material> v = variant_of(override); v != override) geometry->set_material_override(v);
+    } else {
+        const Ref<Material> source = shared_mesh_material(geometry);
+        const Ref<Material> wanted = variant_of(source);
+        if (source.is_valid() && wanted != source) {
+            if (override != wanted) geometry->set_material_override(wanted);
+            claim(kOverrideKey, wanted);
+        } else {
+            if (is_owned(kOverrideKey, override)) geometry->set_material_override(Ref<Material>());
+            release(kOverrideKey);
+        }
     }
     if (const Ref<Material> m = geometry->get_material_overlay(); m.is_valid()) {
         if (const Ref<Material> v = variant_of(m); v != m) geometry->set_material_overlay(v);
     }
-    auto* mesh_instance = Object::cast_to<MeshInstance3D>(geometry);
-    if (!mesh_instance) return;
-    const Ref<Mesh> mesh = mesh_instance->get_mesh();
-    const int32_t surfaces = mesh_instance->get_surface_override_material_count();
-    for (int32_t i = 0; i < surfaces; ++i) {
-        // A surface without an override shows the mesh's own material; its
-        // variant goes in as an override.
-        Ref<Material> current = mesh_instance->get_surface_override_material(i);
-        if (current.is_null() && mesh.is_valid()) current = mesh->surface_get_material(i);
-        if (current.is_null()) continue;
-        if (const Ref<Material> v = variant_of(current); v != current) {
-            mesh_instance->set_surface_override_material(i, v);
+    // CSG shapes keep their material on the node.
+    if (geometry->is_class("CSGPrimitive3D")) {
+        const Ref<Material> m = geometry->get("material");
+        if (const Ref<Material> v = variant_of(m); v != m) geometry->set("material", v);
+    }
+
+    if (auto* mesh_instance = Object::cast_to<MeshInstance3D>(geometry)) {
+        const Ref<Mesh> mesh = mesh_instance->get_mesh();
+        const int32_t surfaces = mesh_instance->get_surface_override_material_count();
+        for (int32_t i = 0; i < surfaces; ++i) {
+            const Ref<Material> current = mesh_instance->get_surface_override_material(i);
+            if (current.is_valid() && !is_owned(i, current)) {
+                // Content's own override: show its variant.
+                release(i);
+                if (const Ref<Material> v = variant_of(current); v != current) {
+                    mesh_instance->set_surface_override_material(i, v);
+                }
+                continue;
+            }
+            // No override, or one this class set: the mesh's own material
+            // decides, so a new mesh is followed.
+            const Ref<Material> source = mesh.is_valid() ? mesh->surface_get_material(i) : Ref<Material>();
+            const Ref<Material> wanted = variant_of(source);
+            if (source.is_valid() && wanted != source) {
+                if (current != wanted) mesh_instance->set_surface_override_material(i, wanted);
+                claim(i, wanted);
+            } else {
+                if (current.is_valid()) mesh_instance->set_surface_override_material(i, Ref<Material>());
+                release(i);
+            }
         }
+        // Surfaces the old mesh had and the new one lacks.
+        const Array keys = owned.keys();
+        for (int64_t k = 0; k < keys.size(); ++k) {
+            if (keys[k].get_type() == Variant::INT && int64_t(keys[k]) >= surfaces) release(keys[k]);
+        }
+    }
+    if (!changed) return;
+    if (owned.is_empty()) {
+        geometry->remove_meta(kVariantMeta);
+    } else {
+        geometry->set_meta(kVariantMeta, owned);
+    }
+}
+
+Ref<Material> QualityTiers::shared_mesh_material(GeometryInstance3D* geometry) {
+    std::vector<Ref<Mesh>> meshes;
+    if (auto* cpu = Object::cast_to<CPUParticles3D>(geometry)) {
+        meshes.push_back(cpu->get_mesh());
+    } else if (auto* gpu = Object::cast_to<GPUParticles3D>(geometry)) {
+        for (int32_t i = 0; i < gpu->get_draw_passes(); ++i) meshes.push_back(gpu->get_draw_pass_mesh(i));
+    } else if (auto* multi = Object::cast_to<MultiMeshInstance3D>(geometry)) {
+        if (const Ref<MultiMesh> mm = multi->get_multimesh(); mm.is_valid()) meshes.push_back(mm->get_mesh());
+    }
+    Ref<Material> shared;
+    for (const Ref<Mesh>& mesh : meshes) {
+        if (mesh.is_null()) continue;
+        for (int32_t i = 0; i < mesh->get_surface_count(); ++i) {
+            const Ref<Material> m = mesh->surface_get_material(i);
+            if (m.is_null() || (shared.is_valid() && m != shared)) return {};
+            shared = m;
+        }
+    }
+    return shared;
+}
+
+void QualityTiers::preload_variants(const Ref<PackedScene>& scene) {
+    if (scene.is_null()) return;
+    Node* copy = scene->instantiate();
+    if (!copy) return;
+    // Fills the variant cache out of the tree, so the first copy that enters
+    // it later costs a lookup, not a load.
+    apply_materials_to(copy);
+    memdelete(copy);
+}
+
+void QualityTiers::apply_materials_to(Node* root) {
+    if (auto* geometry = Object::cast_to<GeometryInstance3D>(root)) apply_materials(geometry);
+    const TypedArray<Node> children = root->get_children(true);
+    for (int64_t i = 0; i < children.size(); ++i) {
+        apply_materials_to(Object::cast_to<Node>(children[i].operator Object*()));
     }
 }
 
@@ -525,6 +639,27 @@ void QualityTiers::run_self_test() {
     scratch->add_child(overrides);
     auto material_path = [](const Ref<Material>& m) { return m.is_valid() ? m->get_path() : String(); };
 
+    // Cost: once a scene's variants are preloaded (PieceLibrary does it when
+    // a theme loads), its first copy entering the tree only looks them up.
+    // Budget 0.05 ms per acquire; 1 ms here so slow CI runners do not flake.
+    {
+        const String piece_path = "res://assets/models/temple/artifacts/PF_Artifact_SunDisc.tscn";
+        const Ref<PackedScene> piece =
+            loader->exists(piece_path) ? Ref<PackedScene>(loader->load(piece_path)) : Ref<PackedScene>();
+        check(piece.is_valid(), get_tier(), "sun disc piece does not load");
+        if (piece.is_valid()) {
+            preload_variants(piece);
+            Node* first = piece->instantiate();
+            Time* time = Time::get_singleton();
+            const uint64_t t0 = time->get_ticks_usec();
+            get_tree()->get_root()->add_child(first);
+            const uint64_t first_us = time->get_ticks_usec() - t0;
+            check(first_us < 1000, get_tier(), "first copy of a preloaded piece loads its variant mid-frame");
+            get_tree()->get_root()->remove_child(first);
+            memdelete(first);
+        }
+    }
+
     get_tree()->get_root()->add_child(scratch);
 
     // switch_to(..., false): a test never writes the player's settings file.
@@ -563,6 +698,67 @@ void QualityTiers::run_self_test() {
             scratch->remove_child(overrides);
             scratch->add_child(overrides);
             check(material_path(overrides->get_material_override()) == gold_variant, id, "variant lost on re-entry");
+
+            // A node that showed its mesh's own material follows a new mesh:
+            // in the tree after apply_to, and on re-entry after a change
+            // while pooled.
+            Ref<BoxMesh> gold_box;
+            gold_box.instantiate();
+            gold_box->set_material(gold);
+            Ref<BoxMesh> lapis_box;
+            lapis_box.instantiate();
+            lapis_box->set_material(lapis);
+            auto* reshaped = memnew(MeshInstance3D);
+            reshaped->set_mesh(gold_box);
+            scratch->add_child(reshaped);
+            check(material_path(reshaped->get_active_material(0)) == gold_variant, id, "reshaped: gold variant");
+            reshaped->set_mesh(lapis_box);
+            apply_to(reshaped);
+            check(material_path(reshaped->get_active_material(0)) == lapis_path, id,
+                  "mesh changed in the tree keeps the old mesh's material variant");
+            scratch->remove_child(reshaped);
+            reshaped->set_mesh(gold_box);
+            scratch->add_child(reshaped);
+            check(material_path(reshaped->get_active_material(0)) == gold_variant, id, "re-entry with gold mesh");
+            scratch->remove_child(reshaped);
+            reshaped->set_mesh(lapis_box);
+            scratch->add_child(reshaped);
+            check(material_path(reshaped->get_active_material(0)) == lapis_path, id,
+                  "mesh changed out of the tree re-enters with the old mesh's material variant");
+            scratch->remove_child(reshaped);
+            memdelete(reshaped);
+
+            // Particles, multimeshes and CSG show the variant too.
+            auto* cpu = memnew(CPUParticles3D);
+            cpu->set_mesh(gold_box);
+            auto* gpu = memnew(GPUParticles3D);
+            gpu->set_draw_pass_mesh(0, gold_box);
+            Ref<MultiMesh> multimesh;
+            multimesh.instantiate();
+            multimesh->set_mesh(gold_box);
+            auto* multi = memnew(MultiMeshInstance3D);
+            multi->set_multimesh(multimesh);
+            auto* csg = memnew(CSGBox3D);
+            csg->set_material(gold);
+            GeometryInstance3D* drawn[] = {cpu, gpu, multi};
+            for (GeometryInstance3D* g : drawn) scratch->add_child(g);
+            scratch->add_child(csg);
+            for (GeometryInstance3D* g : drawn) {
+                const Ref<Material> o = g->get_material_override();
+                check(material_path(o.is_valid() ? o : gold) == gold_variant, id,
+                      "particle or multimesh material variant");
+            }
+            check(material_path(csg->get_material()) == gold_variant, id, "CSG material variant");
+            // The particle mesh changes to one without a variant: the override goes.
+            cpu->set_mesh(lapis_box);
+            apply_to(cpu);
+            check(cpu->get_material_override().is_null(), id, "particle override kept after its mesh changed");
+            for (GeometryInstance3D* g : drawn) {
+                scratch->remove_child(g);
+                memdelete(g);
+            }
+            scratch->remove_child(csg);
+            memdelete(csg);
         }
     }
     // Back to the first tier: everything the theme authored comes back.

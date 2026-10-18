@@ -66,7 +66,12 @@ works before its variants exist.
 2. Keep naming the base material in prefabs, meshes and the manifest.
 
 `QualityTiers` swaps it in on every mesh on desktop and back on mobile
-and web, including after a runtime tier change; no code is needed.
+and web, including after a runtime tier change; no code is needed. On
+particles, give the effect one material (in `material_override` or on
+every draw-pass surface), and keep it in its own `.tres` file, not
+embedded in the scene. A loader outside `PieceLibrary` calls
+`preload_variants(scene)` when it loads a scene, so the desktop textures
+load then and not in the frame the first copy appears.
 
 ## Check it on every tier
 

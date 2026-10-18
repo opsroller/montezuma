@@ -4,6 +4,7 @@
 #pragma once
 
 #include <godot_cpp/classes/node.hpp>
+#include <godot_cpp/classes/packed_scene.hpp>
 #include <godot_cpp/classes/ref.hpp>
 #include <godot_cpp/classes/material.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
@@ -38,9 +39,11 @@ namespace montezuma::godot_binding {
 // - Light3Ds in group "quality_shadow_light": the nearest N to the camera
 //   keep their shadows, N per tier;
 // - materials loaded from files on every GeometryInstance3D (override,
-//   overlay, surface overrides and the mesh's own surface materials) show
-//   the tier's variant (resolve_variant), and the base again on a tier
-//   without one; so the board view, look-dev and benchmark need no code.
+//   overlay, CSG material, surface overrides and the mesh's own surface
+//   materials; for particles and multimeshes the one material their meshes
+//   share) show the tier's variant (resolve_variant), and the base again on
+//   a tier without one; so the board view, look-dev and benchmark need no
+//   code. A node given a new mesh while in the tree needs apply_to().
 class QualityTiers : public godot::Node {
     GDCLASS(QualityTiers, godot::Node)
 
@@ -77,6 +80,11 @@ public:
     // and then moved in; nodes entering the tree are handled already.
     void apply_to(godot::Node* root);
 
+    // Loads the tier's variants of every material in `scene` ahead of use,
+    // so the first copy entering the tree does not load them mid-frame.
+    // Loaders call it when a theme loads.
+    void preload_variants(const godot::Ref<godot::PackedScene>& scene);
+
     const quality::Profile& get_profile() const { return quality::profile(tier_); }
 
 protected:
@@ -94,6 +102,8 @@ private:
     void apply_camera_attributes(const godot::Ref<godot::CameraAttributes>& attributes);
     void apply_materials(godot::GeometryInstance3D* geometry);
     godot::Ref<godot::Material> variant_of(const godot::Ref<godot::Material>& material);
+    static godot::Ref<godot::Material> shared_mesh_material(godot::GeometryInstance3D* geometry);
+    void apply_materials_to(godot::Node* root);
     void request_shadow_budget();
     void apply_shadow_budget();
     void on_node_added(godot::Node* node);

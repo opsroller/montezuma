@@ -46,7 +46,8 @@ Autoload `/root/QualityTiers`; from C++ `QualityTiers::get_singleton()`
 | `has_feature(id)` | bool | Whether the active tier has a feature (ids below) |
 | `get_active_features()` | PackedStringArray | Feature ids of the active tier, for the benchmark's feature list |
 | `resolve_variant(path)` | String | The active tier's asset variant, `dir/hi/file` on desktop and `dir/lo/file` on web, or `path` itself when that file does not exist or the tier has none (mobile) |
-| `apply_to(node)` | — | Re-applies the tier to a subtree, materials included; nodes entering the tree are handled already |
+| `apply_to(node)` | — | Re-applies the tier to a subtree, materials included; nodes entering the tree are handled already. Call it after giving a node in the tree a new mesh |
+| `preload_variants(scene)` | — | Loads the tier's variants of every material in a `PackedScene` ahead of use, so its first copy entering the tree only looks them up. `PieceLibrary` calls it for each manifest entry when a theme loads |
 | signal `tier_changed(tier)` | — | After a runtime switch is applied |
 
 ### Material variants
@@ -59,14 +60,22 @@ again on every tier switch:
 |---|---|
 | `material_override`, `material_overlay` | yes |
 | `MeshInstance3D` surface override | yes |
-| A mesh's own surface material (no override) | yes, the variant is set as the surface override |
+| A mesh's own surface material (no override) | yes, the variant is set as the surface override; it follows a new mesh on re-entry or `apply_to` |
+| `CSGPrimitive3D.material` | yes |
+| `CPUParticles3D` mesh, `GPUParticles3D` draw passes, `MultiMeshInstance3D` mesh | when all their surfaces share one material, its variant is set as `material_override`; meshes with several materials keep the base |
 | A material made in code or embedded in a scene (`res://x.tscn::id`) | no, it has no file to vary |
+| `next_pass` chains, `ParticleProcessMaterial`, sky, fog volumes, decals | no |
 
 The variant is `resolve_variant` of the base path, so a `hi/` material
 turns back into its base on `mobile` and `web`, and a material with no
 variant file stays the base. Content loads the base path; the board
-view, the benchmark and look-dev scenes need no code for it. Each
-resolved path is cached until the tier changes.
+view, the benchmark and look-dev scenes need no code for it. Overrides
+`QualityTiers` set itself are recorded in the node's
+`_quality_variant` meta, so they are told apart from content's own. A
+folder named `hi` or `lo` directly above a file is always read as a
+variant folder. Each resolved path is cached, keeping its material
+loaded, until the tier changes. A material set on a node already in the
+tree is swapped at the next `apply_to` or tier change.
 
 ### Settings key
 
