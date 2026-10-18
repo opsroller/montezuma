@@ -7,7 +7,9 @@
 # example the GDExtension library missing or not loading). Given a
 # <screens-dir>, it then renders the title screen and the board with
 # Godot's Movie Maker at the project's window size (1280x720) and saves
-# them there as title.png and board.png.
+# them there as title.png and board.png. A capture whose log has an
+# engine error, including one printed at exit such as resources still in
+# use, fails too.
 #
 # Usage: tools/release/smoke-test.sh <archive> [<screens-dir>]
 #   (the .sha256 file sits beside the archive)
@@ -62,32 +64,48 @@ echo "smoke test passed: $name"
 winpath() { if command -v cygpath >/dev/null; then cygpath -w "$1"; else echo "$1"; fi; }
 # Renderers that work on GPU-less CI runners, tried in order: Mesa under
 # Xvfb on Linux, ANGLE over Direct3D 11 (WARP) on Windows. On macOS
-# virtual machines Metal has crashed (Godot 4.4: no argument encoders on
-# the paravirtual GPU) and Vulkan runs out of device memory, so a Metal
-# failure falls back to OpenGL, which there is Apple's software renderer
-# (several seconds a frame): keep the frame counts low.
+# virtual machines Metal works on Godot 4.7.2 (the paravirtual GPU; 4.4
+# crashed there for lack of argument encoders) and Vulkan runs out of
+# device memory. A Metal failure still falls back to OpenGL, which there
+# is Apple's software renderer (several seconds a frame): keep the frame
+# counts low.
 case "$name" in
   *-linux-*)   drivers=(opengl3) ;;
   *-windows-*) drivers=(opengl3_angle) ;;
   *)           drivers=(metal opengl3) ;;
 esac
 
+# show_output <console> <log>: the console output, or the log file where
+# the console stays empty (a Windows GUI build).
+show_output() { if [[ -s "$1" ]]; then cat "$1"; else cat "$2" 2>/dev/null || true; fi; }
+
 capture() {  # capture <shot> <frames> [<game user arg>...]: keeps the last frame
-  local shot="$1" frames="$2" dir="$work/movie-$1" slog="$work/$1.log" driver
+  local shot="$1" frames="$2" dir="$work/movie-$1" slog="$work/$1.log" sout="$work/$1.out" driver
   shift 2
   for driver in "${drivers[@]}"; do
     rm -rf "$dir" && mkdir -p "$dir"
-    if "$game" --rendering-driver "$driver" --fixed-fps 30 --quit-after "$frames" \
-      --write-movie "$(winpath "$dir/frame.png")" --log-file "$(winpath "$slog")" -- "$@"; then
+    # The game quits itself after <frames> (--quit-after-frames), stopping
+    # its sounds first; Godot's --quit-after, set later, only catches a hang.
+    if "$game" --rendering-driver "$driver" --fixed-fps 30 --quit-after "$((frames + 300))" \
+      --write-movie "$(winpath "$dir/frame.png")" --log-file "$(winpath "$slog")" \
+      -- --quit-after-frames="$frames" "$@" >"$sout" 2>&1; then
       local last
       last="$(find "$dir" -name 'frame*.png' | sort | tail -n 1)"
       if [[ -s "$last" ]]; then
+        show_output "$sout" "$slog"
+        # An error in the run that rendered fails the capture: falling back
+        # to another driver would not fix it. Errors printed at exit (such
+        # as resources still in use) reach only the console, not the log.
+        if grep -E "ERROR|SCRIPT ERROR" "$slog" "$sout" >/dev/null; then
+          echo "engine errors while capturing $shot with $driver" >&2
+          exit 1
+        fi
         cp "$last" "$screens/$shot.png"
         echo "captured $shot.png with $driver from $(basename "$last")"
         return
       fi
     fi
-    cat "$slog" 2>/dev/null
+    show_output "$sout" "$slog"
     echo "no frames rendered for $shot with $driver" >&2
   done
   exit 1
