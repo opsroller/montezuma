@@ -131,12 +131,13 @@ without the win heading. Without JavaScript it jumps to `#download`.
 
 ## Hosting
 
-**Not public yet.** Charles decides when the site goes live (2026-10-18:
-nothing is published until he says it looks good). Until then CI builds
-the site as a downloadable preview artifact only; there is no Pages
-deployment.
+**Not public yet.** The site stays unpublished until the game itself is
+polished; the team owns that quality bar and the go-live call is made
+through the project-manager, not by asking the owner to review. Until
+then CI builds the site as a downloadable preview artifact only; there is
+no Pages deployment.
 
-When he approves, the target is GitHub Pages, deployed from `main` by a
+When it goes live, the target is GitHub Pages, deployed from `main` by a
 workflow owned by devops-engineer. The single-threaded export needs no
 cross-origin-isolation headers; GitHub Pages serves `.wasm` as
 `application/wasm`.
