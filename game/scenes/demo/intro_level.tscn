@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://bmzdemointro"]
+
+[ext_resource type="PackedScene" uid="uid://bmzboardview3d" path="res://scenes/board/board.tscn" id="1_board"]
+
+[node name="IntroLevel" type="IntroLevel"]
+board_view_path = NodePath("Board/View")
+
+[node name="Board" parent="." instance=ExtResource("1_board")]
