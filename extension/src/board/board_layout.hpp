@@ -42,6 +42,15 @@ inline bool cell_at(const Grid& g, Point p, int& out_x, int& out_y) {
     return true;
 }
 
+// How far a drawn board reaching from (min_x, min_z) to (max_x, max_z)
+// extends past the outer cells, in cells; 0 when it lies inside them.
+inline double board_padding(const Grid& g, double min_x, double min_z, double max_x, double max_z) {
+    const double half_w = 0.5 * g.width * g.cell;
+    const double half_h = 0.5 * g.height * g.cell;
+    const double reach = std::max({-min_x - half_w, max_x - half_w, -min_z - half_h, max_z - half_h});
+    return std::max(0.0, reach / g.cell);
+}
+
 struct Fit {
     double half_width = 4.0;     // half the framed area along X (world units)
     double half_depth = 4.0;     // half the framed area along Z

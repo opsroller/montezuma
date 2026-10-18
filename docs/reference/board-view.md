@@ -29,7 +29,9 @@ Draws a `Match3Board` and plays back results. It never applies a rule.
 | `animation_speed` | property | Playback speed, 0.1 to 10, default 1. Fast-forward and reduced motion use it; outcomes never change |
 | `cell_at_screen(pos: Vector2) -> Vector2i` | method | Cell under a screen position using the active camera; `(-1, -1)` off the board |
 | `get_board_width()`, `get_board_height()` | method | Size of the board last shown |
-| `cell_size` | property | World size of one cell, 0.25 to 4, default 1 |
+| `cell_size` | property | World size of one cell, 0.25 to 4, default 1. Theme art is built for 1 |
+| `theme` | property | Theme in the asset manifest; empty (default) means its `default_theme`. Changing it rebuilds the view |
+| `get_board_padding()` | method | How far the drawn board (frame or slab edge) reaches past the outer cells, in cells. The camera fits to it |
 | `swap_requested(a: Vector2i, b: Vector2i)` | signal | The player asked to swap two adjacent cells |
 | `animation_finished` | signal | A `play` or `play_illegal` finished; the view now matches the board |
 | `cascade_step(step: int)` | signal | Step `step` (0 = the swap's own match) starts clearing. Audio plays `cascade_<step+1>` and effects hook here |
@@ -58,17 +60,24 @@ Deals a new board after a `stuck` result. Properties: `board_view_path`,
 
 ### `PieceLibrary` (C++ only)
 
-Resolves visuals from the asset manifest and pools piece nodes per kind.
+Resolves visuals from one theme of the asset manifest and pools piece
+nodes per kind. `game/assets/manifest.json` holds `default_theme` and
+`themes.<theme>`, a map of name to `res://` path (contract:
+[Asset manifest](contracts.md#asset-manifest-owner-technical-artist-wp-09-11)).
+The view reads `themes[theme]`, or `themes[default_theme]` when `theme` is
+empty. Names, scale and files: [Board themes](board-themes.md).
 
-| Manifest name | Used for | Fallback |
+| Theme name | Used for | Fallback |
 |---|---|---|
-| `artifact_0` … `artifact_6` | Piece of that kind: a `PackedScene` (`.glb`, `.tscn`) or a `Mesh` | Placeholder primitive (below) |
-| `temple_board` | Board under the pieces: a `PackedScene` | Stone slab with alternating cell tiles |
+| `artifact_0` … `artifact_6` | Piece of that kind: a `PackedScene` or a `Mesh` | Placeholder primitive (below) |
+| `board` | Board under the pieces: a `PackedScene`, tile tops at y = 0 | Stone slab with alternating cell tiles |
+| `environment` | Sky, every light and the backdrop, added once and kept across redeals | Plain sky, warm key light with shadows, cool fill light |
+| `cell_highlight` | Marker shown at the selected cell, keeping the scene's own height | None; the lifted, enlarged piece alone shows the selection |
+| `fx_match` | One-shot `CPUParticles3D` started at each cleared cell when its clear begins; frees itself on `finished` | None |
 
-`game/assets/manifest.json` is one flat JSON object of name to `res://`
-path. A missing file, name, or a path that does not load gives a warning
-and the fallback. Art is modelled for a 1×1 cell, at most 0.8 wide, origin
-at the piece centre, +Y up.
+A missing manifest, theme, name or a path that does not load gives a
+warning and the fallback. The themed board is built for the theme's board
+size (temple: 8 × 8); a level of another size needs a theme built for it.
 
 Placeholders differ by outline as well as colour, seen from above:
 
@@ -86,13 +95,15 @@ Placeholders differ by outline as well as colour, seen from above:
 
 | Scene | Root | Contents |
 |---|---|---|
-| `game/scenes/board/board.tscn` | `Board` (Node3D) | `WorldEnvironment`, `KeyLight`, `FillLight`, `View` (BoardView3D), `Camera` (BoardCamera3D) |
+| `game/scenes/board/board.tscn` | `Board` (Node3D) | `View` (BoardView3D), `Camera` (BoardCamera3D). No lights: the view adds the theme's `environment` |
 | `game/scenes/board/board_playtest.tscn` | `BoardPlaytest` | `board.tscn` instance, wired to `Board/View` |
 | `game/scenes/main.tscn` | `Main` | `board_playtest.tscn` instance (until WP-28) |
 
-Layers, back to front: environment (sky, ambient), slab, cell tiles,
-pieces. All opaque. Lights: one warm key light about 65° up with soft
-shadows (opacity 0.6), one cool fill light at 0.35 energy, no shadow.
+Children the view adds, back to front: `Environment` (sky, lights,
+backdrop), `Slab` (the board), `CellHighlight`, `Pieces`, `Effects`
+(match bursts). Lights come from the theme's environment; the fallback is
+one warm key light about 65° up with soft shadows (opacity 0.6) and one
+cool fill light at 0.35 energy, no shadow.
 
 ## Layout
 
@@ -105,7 +116,8 @@ at the top of the screen. Cell centre:
 ## Camera fit
 
 The camera looks at the view's origin from `tilt_degrees` off vertical and
-backs off to the smallest distance where every corner of the slab, at
+backs off to the smallest distance where every corner of the drawn board
+(cells plus `get_board_padding()`, measured from the board's meshes), at
 board level and at piece height (0.6 cells), is inside the viewport minus
 `margin`. Portrait phones fit by width, wide screens by height; the board
 is never cropped.

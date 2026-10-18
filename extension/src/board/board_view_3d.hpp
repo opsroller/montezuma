@@ -50,6 +50,12 @@ public:
     int get_board_height() const { return grid_.height; }
     void set_cell_size(double v);
     double get_cell_size() const { return grid_.cell; }
+    // Theme in the asset manifest; empty means the manifest's default_theme.
+    void set_theme(const godot::String& v);
+    godot::String get_theme() const { return theme_; }
+    // How far the drawn board (frame included) reaches past the outer cells,
+    // in cells, so the camera can fit all of it.
+    double get_board_padding() const { return board_padding_; }
 
     godot::Vector3 cell_position(godot::Vector2i cell) const;
     // Cell under a screen position, using the active camera; (-1, -1) when none.
@@ -68,6 +74,7 @@ private:
     godot::Vector3 cell_position(int x, int y) const;
     void play_events(const anim::Events& events);
     void emit_cascade_step(int step);
+    void spawn_match_fx(godot::Vector3 position);
     void redeal_in();
     void release_dying();
     // Releases cleared pieces and makes every cell show the board's kind.
@@ -97,8 +104,14 @@ private:
     layout::Grid grid_;
     PieceLibrary library_;
     godot::Ref<Match3Board> board_;
+    godot::String theme_;
+    godot::Node3D* environment_ = nullptr;
     godot::Node3D* slab_ = nullptr;
+    godot::Node3D* highlight_ = nullptr;
+    godot::real_t highlight_lift_ = 0.0f;
+    double board_padding_ = 0.0;
     godot::Node3D* pieces_root_ = nullptr;
+    godot::Node3D* fx_root_ = nullptr;
     std::vector<godot::Node3D*> pieces_;
     std::vector<int> kinds_;
     godot::Ref<godot::Tween> tween_;

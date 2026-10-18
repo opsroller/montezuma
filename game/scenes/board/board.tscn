@@ -1,40 +1,6 @@
-[gd_scene load_steps=5 format=3 uid="uid://bmzboardview3d"]
-
-[sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
-sky_top_color = Color(0.2, 0.42, 0.55, 1)
-sky_horizon_color = Color(0.62, 0.7, 0.62, 1)
-ground_bottom_color = Color(0.16, 0.22, 0.12, 1)
-ground_horizon_color = Color(0.62, 0.7, 0.62, 1)
-
-[sub_resource type="Sky" id="sky"]
-sky_material = SubResource("sky_mat")
-
-[sub_resource type="Environment" id="env"]
-background_mode = 2
-sky = SubResource("sky")
-ambient_light_source = 3
-ambient_light_energy = 0.45
-reflected_light_source = 2
-tonemap_mode = 2
+[gd_scene format=3 uid="uid://bmzboardview3d"]
 
 [node name="Board" type="Node3D"]
-
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource("env")
-
-[node name="KeyLight" type="DirectionalLight3D" parent="."]
-transform = Transform3D(0.906308, -0.383022, 0.178606, 0, 0.422618, 0.906308, -0.422618, -0.821394, 0.383022, 0, 6, 0)
-light_color = Color(1, 0.95, 0.85, 1)
-light_energy = 0.9
-shadow_enabled = true
-shadow_opacity = 0.6
-directional_shadow_mode = 0
-directional_shadow_max_distance = 40.0
-
-[node name="FillLight" type="DirectionalLight3D" parent="."]
-transform = Transform3D(-0.866025, 0.25, -0.433013, 0, 0.866025, 0.5, 0.5, 0.433013, -0.75, 0, 6, 0)
-light_color = Color(0.75, 0.85, 1, 1)
-light_energy = 0.35
 
 [node name="View" type="BoardView3D" parent="."]
 

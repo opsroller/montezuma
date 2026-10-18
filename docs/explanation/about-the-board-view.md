@@ -66,8 +66,9 @@ The original was a flat 2D board. A camera close to top-down (15° of
 tilt) keeps that readability while showing the pieces' depth. The board
 must stay whole on every screen we target, from a 9:21 phone held upright
 to a 21:9 monitor. So the camera does one job: back off to the shortest
-distance where the slab and the pieces' tops fit inside the viewport minus
-a margin, and redo that when the window or board changes.
+distance where the drawn board, frame included, and the pieces' tops fit
+inside the viewport minus a margin, and redo that when the window or
+board changes.
 
 It does not follow, pan or shake during play. A match-3 board has no
 moving target to follow, and a still camera means a tap always picks the
@@ -82,11 +83,12 @@ with one tested function, and it runs only on resize.
 
 ## Placeholders that already read
 
-Until the art thread's models arrive through the asset manifest, the
-pieces are engine primitives. Each kind gets its own outline as seen from
+When a theme lacks a piece, or the manifest is missing, the pieces are
+engine primitives. Each kind gets its own outline as seen from
 above (circle, diamond, octagon, triangle, ring, pill, hexagon) as well as
 its own colour, so kinds stay apart in grayscale and for colour-blind
-players. Final art must keep that rule. Alternating cell tiles on the slab
+players. Theme art keeps that rule (the temple's ruby, carnelian, sun disc,
+jade, lapis, amethyst and moonstone each have their own shape). Alternating cell tiles on the slab
 make rows and columns easy to count.
 
 Piece nodes are pooled per kind, so a long cascade reuses nodes instead of

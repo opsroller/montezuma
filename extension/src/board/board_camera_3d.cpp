@@ -18,8 +18,6 @@ namespace montezuma::godot_binding {
 
 namespace {
 
-// Half the board slab's padding beyond the outer cells (see PieceLibrary::make_board).
-constexpr double kSlabPadCells = 0.2;
 // Tallest piece above the board plane, in cells, including the selection lift.
 constexpr double kPieceTopCells = 0.6;
 
@@ -66,8 +64,10 @@ void BoardCamera3D::refit() {
     if (size.y <= 0.0f) return;
     const double cell = view->get_cell_size();
     layout::Fit fit;
-    fit.half_width = (view->get_board_width() * 0.5 + kSlabPadCells) * cell;
-    fit.half_depth = (view->get_board_height() * 0.5 + kSlabPadCells) * cell;
+    // The drawn board's reach past the outer cells (frame, slab edge).
+    const double pad = view->get_board_padding();
+    fit.half_width = (view->get_board_width() * 0.5 + pad) * cell;
+    fit.half_depth = (view->get_board_height() * 0.5 + pad) * cell;
     fit.height = kPieceTopCells * cell;
     fit.tilt_degrees = tilt_degrees_;
     fit.vfov_degrees = get_fov();  // Camera3D keeps height by default, so fov is vertical
