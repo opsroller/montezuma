@@ -20,6 +20,7 @@
 #include "effects/board_effects.hpp"
 #include "effects/effect_plan.hpp"
 #include "input.hpp"
+#include "piece_batcher.hpp"
 #include "piece_library.hpp"
 
 namespace montezuma::godot_binding {
@@ -53,6 +54,9 @@ public:
     void show_hints(const godot::Array& pairs, double seconds);
     void clear_hints();
     bool has_hints() const { return !hints_.empty(); }
+    // Draws the pieces and markers take now: one per batch on tiers that
+    // batch them, else one per mesh (tests and the benchmark).
+    godot::Dictionary get_piece_draws() const;
     // Plays one totem or power-up effect on its own, outside a move:
     // `label` is "totem:<id>" or "powerup:<id>", `cells` what it touches.
     // For the benchmark's bench_event (WP-46) and look-dev.
@@ -115,6 +119,8 @@ private:
 
     void rebuild();
     void on_tier_changed(const godot::String& tier);
+    // After every tween of the frame, before it is drawn.
+    void sync_batches();
     void clear_pieces();
     // Makes every cell show the board's kind; changed cells drop in when `animate`.
     void sync_to_board(bool animate);
@@ -142,6 +148,8 @@ private:
     godot::real_t highlight_lift_ = 0.0f;
     double board_padding_ = 0.0;
     godot::Node3D* pieces_root_ = nullptr;
+    // Draws the pieces and their markers on tiers that batch them.
+    PieceBatcher batcher_;
     godot::Node3D* fx_root_ = nullptr;
     // Worst seconds a move's effects ran past its plan, since load (0: none).
     double effects_overrun_ = 0.0;

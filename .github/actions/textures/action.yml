@@ -5,7 +5,8 @@
 # before anything validates, imports or exports the game. Each output is cached
 # by a hash of its inputs: the generator, its parameters and the pinned numpy
 # and Pillow. On a cache hit a generator only confirms its .inputs stamp and
-# exits; on a miss the fire simulation takes about five minutes.
+# writes the Godot .import files (the cache does not hold them); on a miss the
+# fire simulation takes about five minutes.
 # Reference: docs/reference/ci-pipeline.md
 name: Generate textures
 description: Restore or generate the board theme textures and fire flipbooks

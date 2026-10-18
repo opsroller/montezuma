@@ -116,6 +116,12 @@ jobs:
         run: |
           ./godot --headless --path game --quit-after 120 -- --game-selftest 2>&1 | tee game.log
           grep -E "Match3Game self-test: [0-9]+ moves, outcome 1, [0-9]+ cues, 0 failures" game.log
+      # The web demo's scene: the intro level is won in play and completes once.
+      - name: Intro level self-test
+        if: runner.os == 'Linux'
+        run: |
+          ./godot --headless --path game --quit-after 120 res://scenes/demo/intro_level.tscn -- --intro-selftest 2>&1 | tee intro.log
+          grep -E "IntroLevel self-test: [0-9]+ moves, outcome 1, 1 completions, 0 failures" intro.log
       # Quits from inside a level, with music and ambience playing, the way
       # a player does: no resources may be left in use at exit.
       - name: In-level quit

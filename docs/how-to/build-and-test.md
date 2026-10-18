@@ -70,6 +70,15 @@ godot --headless --path game --quit-after 120 -- --game-selftest
 
 It ends with `Match3Game self-test: <n> moves, outcome 1, <n> cues, 0 failures`.
 
+Check the web demo's scene, which must be won in play and tell the page
+once ([IntroLevel](../reference/intro-level.md#self-test)):
+
+```sh
+godot --headless --path game --quit-after 120 res://scenes/demo/intro_level.tscn -- --intro-selftest
+```
+
+It ends with `IntroLevel self-test: <n> moves, outcome 1, 1 completions, 0 failures`.
+
 Quit from inside a level, with music playing, as CI does; nothing may
 print an error or a leak at exit:
 

@@ -53,7 +53,8 @@ or a cloud machine without a GPU do not count against the
 
 3. Read the results in `bench-out/`:
 
-   - `run.txt`: the budget verdict (`frame_ms` percentiles against whole
+   - `run.txt`: the draw calls against the tier's cap (a count, so a
+     cloud machine's software renderer measures it too), and the budget verdict (`frame_ms` percentiles against whole
      60 Hz periods, with its reason when it fails), the render size and
      the replay, one PASS or FAIL line each. A vsync-locked 60 fps run
      passes. NOTE lines say when the driver gives no GPU timing.
