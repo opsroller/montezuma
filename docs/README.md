@@ -26,7 +26,7 @@ own folder.
 - [Level data](reference/level-data.md): the level file format, defaults, limits and errors.
 - [Website](reference/website.md): pages, release data, platform detection, demo hand-off contract.
 - [Board view](reference/board-view.md): the 3D board's classes, scenes, camera fit and feel constants.
-- [CI pipeline](reference/ci-pipeline.md): the tests workflow's triggers, jobs and caches.
+- [CI pipeline](reference/ci-pipeline.md): the tests, assets and levels workflows' triggers, jobs and caches.
 - [Rules spec](reference/rules-spec.md): how the game plays, with
   [Power Totems](reference/rules-totems.md), [power-ups](reference/rules-power-ups.md),
   [bonus games](reference/rules-bonus-games.md) and [sources](reference/rules-sources.md).
