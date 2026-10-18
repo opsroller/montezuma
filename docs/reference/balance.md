@@ -67,8 +67,8 @@ difficulty, with the upgrades a player would own on reaching it
   123.1 moves, 86.5 % hard, 77.5 s; its ten chains 99 %, 138.2 s, 130.3
   moves, 82.5 %, 62.5 s; 32 chains (the bottom four rows) 94 %, 114 s,
   136.4 moves, 65 %, 49.5 s. Before chains held, the ten cost 1.5 points
-  and 8 s on normal and 2.5 points and 8 s on hard, the 32 cost 2.5 and
-  19.5 s, and 11.5 points and 21 s
+  and 8 s on normal and 2.5 points and 8 s on hard, the 32 cost 2.5 points
+  and 19.5 s on normal and 11.5 points and 21 s on hard
   ([what the simulator measures](../explanation/about-the-episode-3-levels.md#what-the-simulator-measures-here)).
 
 ## Clock
@@ -97,7 +97,8 @@ required clock = ceil(greedy mean moves × 3.5 s × 1.15 / 10) × 10
 - Timer upgrades add 30 s a tier on top (`GOAL-03`).
 
 With no upgrades at all the requirement is higher: e2-l06 380/570 s
-instead of 310/470 s, e3-l08 730/1100 s (measured before chains held, WP-59) instead of 540/820 s. Why the rule
+instead of 310/470 s, e3-l08 730/1100 s instead of 540/820 s (the no-upgrade figure was not
+measured again after WP-59). Why the rule
 is built this way is in [about level clocks](../explanation/about-level-clocks.md).
 
 ## Current results
