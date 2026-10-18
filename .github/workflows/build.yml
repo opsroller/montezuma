@@ -13,8 +13,12 @@ on:
   pull_request:
     paths:
       - .github/workflows/build.yml
-      - game/export_presets.cfg
       - tools/release/**
+      - CMakeLists.txt
+      - core/**
+      - extension/**
+      - game/**
+      - thirdparty/**
   workflow_dispatch:
 
 permissions:

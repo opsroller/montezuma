@@ -34,8 +34,10 @@ mkdir -p "$stage"
 # Commit time for archive timestamps, so packaging adds no clock noise.
 export SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-$(git log -1 --format=%ct)}"
 
-"$godot" --headless --path game --import >/dev/null 2>&1 || true
 mkdir -p "$outdir/logs"
+# The import pass prints errors for libraries of other targets; the export
+# below is what must succeed, so its log is the one that gates.
+"$godot" --headless --path game --import >"$outdir/logs/$name.import.log" 2>&1 || true
 log="$outdir/logs/$name.export.log"
 if ! "$godot" --headless --path game --export-release "$preset" "$stage/$binary" >"$log" 2>&1; then
   tail -n 40 "$log" >&2
@@ -50,6 +52,7 @@ if grep -E "CodeSign|Code Signing" "$log" | grep -qiE "error|fail"; then
 fi
 
 cp LICENSE "$stage/LICENSE.txt"
+python3 "$here/notices.py" "$stage"
 
 archive="$outdir/$name.$format"
 python3 "$here/package.py" "$format" "$outdir/stage" "$name" "$archive"

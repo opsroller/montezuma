@@ -31,7 +31,15 @@ def entries(root, name):
     return sorted(set(found))
 
 
+def reject_symlinks(root, name):
+    # Zip has no portable symlinks; keep both formats the same by refusing them.
+    links = [rel for rel in entries(root, name) if os.path.islink(os.path.join(root, rel))]
+    if links:
+        sys.exit("symlinks are not packaged: " + ", ".join(links))
+
+
 def pack_tar(root, name, archive, epoch):
+    reject_symlinks(root, name)
     buf = io.BytesIO()
     with tarfile.open(fileobj=buf, mode="w", format=tarfile.PAX_FORMAT) as tar:
         for rel in entries(root, name):
@@ -50,6 +58,7 @@ def pack_tar(root, name, archive, epoch):
 
 
 def pack_zip(root, name, archive, epoch):
+    reject_symlinks(root, name)
     # Zip timestamps start in 1980 and have two-second resolution.
     stamp = time.gmtime(max(epoch, 315532800))[:6]
     with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as z:

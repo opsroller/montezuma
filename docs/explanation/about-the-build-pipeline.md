@@ -47,7 +47,7 @@ which come with the store packages, not here.
 ## Desktop on every push to main
 
 Every push to `main` builds all three packages, so `main` always has
-downloadable builds. Pull requests build them only when they change the
-pipeline itself, because the compile and tests for product code already
-run in the tests workflow and a full export on every PR would slow
-feedback without catching much more.
+downloadable builds. Pull requests build them whenever they change
+anything that goes into a package (the pipeline, the C++ code, the Godot
+project, godot-cpp), so a change that breaks an export is caught before
+it reaches `main`. Docs-only changes skip it.

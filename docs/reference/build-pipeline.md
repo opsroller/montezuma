@@ -9,7 +9,7 @@ built by `.github/workflows/web.yml`.
 | Event | Runs |
 |---|---|
 | Push to `main` | Every time |
-| Pull request | Only when it changes `build.yml`, `game/export_presets.cfg` or `tools/release/` |
+| Pull request | When it changes `build.yml`, `tools/release/`, `CMakeLists.txt`, `core/`, `extension/`, `game/` or `thirdparty/` (docs-only PRs skip it) |
 | Manual (`workflow_dispatch`) | On demand, from the Actions tab |
 
 The workflow token is read-only (`contents: read`). No job uses secrets.
@@ -35,11 +35,15 @@ All extension builds use `-DGODOTCPP_TARGET=template_release
 | `montezuma-linux` | `montezuma-<version>-linux-x86_64.tar.gz` and its `.sha256` | 90 days (repository default) |
 | `montezuma-windows` | `montezuma-<version>-windows-x86_64.zip` and its `.sha256` | 90 days |
 | `montezuma-macos` | `montezuma-<version>-macos-universal.zip` and its `.sha256` | 90 days |
-| `export-logs` | Godot's export output per platform | 7 days |
+| `export-logs` | Godot's import and export output per platform | 7 days |
 | `extension-<platform>` | The compiled libraries, passed from `extension` to `export` | 3 days |
 
 Each package holds one folder named after the archive, containing the
-game, the extension library and `LICENSE.txt`:
+game, the extension library, `LICENSE.txt` (GPL-2.0), and two files
+written by `tools/release/notices.py`: `THIRD-PARTY-NOTICES.txt` (Godot's
+license and `COPYRIGHT.txt`, godot-cpp's license) and `SOURCE.txt` (the
+commit and where to get its source). The web demo ships the same two
+files from the same script.
 
 | Platform | Game inside the folder |
 |---|---|
@@ -80,7 +84,9 @@ The Godot downloads are cached under the key
 | `fetch-godot.sh <dir> <template>...` | Downloads and verifies the editor and templates, installs the named templates |
 | `version.sh` | Prints the version, as above |
 | `export-desktop.sh <linux\|windows\|macos> <version> <outdir>` | Exports one preset and writes the archive and `.sha256` |
-| `package.py <tar.gz\|zip> <root> <name> <archive>` | Packs a folder with stable bytes |
+| `package.py <tar.gz\|zip> <root> <name> <archive>` | Packs a folder with stable bytes; refuses symlinks |
+| `notices.py <outdir>` | Writes `THIRD-PARTY-NOTICES.txt` and `SOURCE.txt`; add a row to its `COMPONENTS` for every library linked into the game |
+| `notices/` | Verbatim upstream notice texts (Godot 4.4.1 `LICENSE.txt`, `COPYRIGHT.txt`) |
 | `smoke-test.sh <archive>` | Verifies, unpacks and runs a package on its own platform |
 
 ## Export presets
