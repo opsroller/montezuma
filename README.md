@@ -14,22 +14,35 @@ audio or text. The gameplay rules are written up in
 
 - `core/` holds the game rules (board, cascades, level state) in plain C++20
   with no engine dependency, along with their tests.
+- `extension/` holds the GDExtension that exposes the core to Godot
+  (`Match3Board`) and draws the 3D board (`BoardView3D`).
+- `game/` holds the Godot project. It has no GDScript; game logic lives in
+  C++.
+- `thirdparty/godot-cpp` is the official C++ binding for Godot 4.4, included
+  as a git submodule.
 - `docs/` holds the rules spec and design notes.
-- The Godot project and the GDExtension binding are coming next.
 
 ## Building and testing
 
-You need CMake 3.22 or newer and a C++20 compiler (GCC, Clang or MSVC).
+You need CMake 3.22 or newer, a C++20 compiler (GCC, Clang or MSVC),
+Python 3 (godot-cpp generates its bindings with it) and Godot 4.4.
 
 ```sh
+git submodule update --init --recursive
 cmake -S . -B build
 cmake --build build
 ctest --test-dir build --output-on-failure
+godot --path game        # play; the extension is built into game/bin/
 ```
+
+To build and test only the core, without godot-cpp, pass
+`-DMONTEZUMA_BUILD_EXTENSION=OFF`.
 
 ## Targets
 
-Windows, macOS, Linux, Android and iOS, all as native builds.
+Windows, macOS, Linux, Android and iOS, all as native builds. The website
+will run a playable intro level, built from the same C++ as WebAssembly, and
+offer the download once the player finishes it.
 
 ## License
 

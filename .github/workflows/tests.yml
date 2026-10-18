@@ -16,8 +16,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=OFF
       - name: Build
         run: cmake --build build --config Release
       - name: Test
         run: ctest --test-dir build -C Release --output-on-failure
+
+  extension:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Build GDExtension
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_TESTS=OFF
+          cmake --build build -j4
+      - name: Download Godot
+        run: |
+          curl -sSL -o godot.zip https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_linux.x86_64.zip
+          unzip -q godot.zip
+          mv Godot_v4.4.1-stable_linux.x86_64 godot
+      - name: Load the game headless
+        run: |
+          ./godot --headless --path game --import
+          ./godot --headless --path game --quit-after 120 2>&1 | tee run.log
+          if grep -E "ERROR|SCRIPT ERROR|Can't open dynamic library" run.log; then exit 1; fi
