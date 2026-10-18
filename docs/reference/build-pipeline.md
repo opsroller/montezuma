@@ -185,7 +185,6 @@ WebAssembly. It never deploys; the package is the run's artifact.
 | Main scene | `res://scenes/demo/intro_level.tscn` (`application/run/main_scene.web`); see [IntroLevel](intro-level.md) |
 | Budget | All files gzipped at most 40 MB, checked by `web-export.sh` |
 | Browser check | `web-smoke.py` in headless Chromium 141, Firefox 142 and WebKit 26 (Playwright 1.56.0): `montezuma:ready`, then `montezuma:level-completed` for `e1-l01` with `--complete-level`, and no browser errors |
-| Browser cache | Playwright's browser downloads (`~/.cache/ms-playwright`) cached under `playwright-<hash of web-requirements.txt>`; a hit skips the downloads, and `playwright install --with-deps` still installs the system libraries |
 
 | Artifact | Contents | Kept |
 |---|---|---|

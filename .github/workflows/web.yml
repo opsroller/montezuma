@@ -87,14 +87,6 @@ jobs:
           name: web-export-logs
           path: dist/web/logs/
           retention-days: 7
-      # Playwright's browser builds are fixed by its pinned version, so the
-      # downloads are cached on web-requirements.txt; on a hit the install
-      # step only adds the system libraries. See docs/explanation/about-ci-caching.md.
-      - name: Cache the browsers
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ hashFiles('tools/release/web-requirements.txt') }}
       - name: Install the browser test tools
         run: |
           python3 -m venv ~/web-smoke

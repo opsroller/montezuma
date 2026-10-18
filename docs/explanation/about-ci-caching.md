@@ -59,10 +59,10 @@ release, and running the check in it was tried and measured: starting the
 container took about 26 seconds, and the browsers ran slower inside it
 (WebKit alone took about as long as all three on the runner), so the
 check took longer than installing on the runner, even split into one job
-per browser. Instead the browser downloads are cached with
-`actions/cache`, keyed on the pinned Playwright version in
-`tools/release/web-requirements.txt`; only the system libraries are
-installed on each run.
+per browser. Caching the browser downloads with `actions/cache` was
+measured too: the install step still took 40 seconds on a cache hit,
+because installing the system libraries is most of it, so that cache was
+not added either. The browsers are installed on the runner on each run.
 
 The compile jobs stay on the stock runner images for the same reason.
 Those already carry CMake, Ninja and the compilers (the cache action adds
