@@ -1,0 +1,248 @@
+{
+  "_comment": "Parameters for the temple theme generators. SPDX-License-Identifier: GPL-2.0-or-later",
+  "theme": "temple",
+  "seed": 1517,
+  "cell_size": 1.0,
+  "board": {
+    "width": 8,
+    "height": 8,
+    "tile_gap": 0.06,
+    "tile_height": 0.12,
+    "frame_width": 0.55,
+    "frame_height": 0.16
+  },
+  "artifacts": {
+    "piece_width": 0.78,
+    "kinds": [
+      {
+        "index": 0,
+        "name": "Ruby",
+        "shape": "round_gem",
+        "material": "MI_Ruby"
+      },
+      {
+        "index": 1,
+        "name": "Carnelian",
+        "shape": "pyramid",
+        "material": "MI_Carnelian"
+      },
+      {
+        "index": 2,
+        "name": "SunDisc",
+        "shape": "sun",
+        "material": "MI_Gold"
+      },
+      {
+        "index": 3,
+        "name": "Jade",
+        "shape": "leaf",
+        "material": "MI_Jade"
+      },
+      {
+        "index": 4,
+        "name": "Lapis",
+        "shape": "diamond",
+        "material": "MI_Lapis"
+      },
+      {
+        "index": 5,
+        "name": "Amethyst",
+        "shape": "hex_crystal",
+        "material": "MI_Amethyst"
+      },
+      {
+        "index": 6,
+        "name": "Moonstone",
+        "shape": "crescent",
+        "material": "MI_Moonstone"
+      }
+    ]
+  },
+  "backdrop": {
+    "tiers": 3,
+    "foliage_clumps": 28,
+    "ground_size": 70.0
+  },
+  "textures": {
+    "size": 512
+  },
+  "materials": {
+    "MI_Ruby": {
+      "albedo": "#b3121f",
+      "roughness": 0.05,
+      "specular": 1.0,
+      "rim": 0.35,
+      "rim_tint": 0.6,
+      "emission": "#5a0508",
+      "emission_energy": 0.9
+    },
+    "MI_Carnelian": {
+      "albedo": "#e2661c",
+      "roughness": 0.4,
+      "specular": 0.6,
+      "rim": 0.25,
+      "rim_tint": 0.6,
+      "emission": "#5e2306",
+      "emission_energy": 0.5
+    },
+    "MI_Gold": {
+      "albedo": "#ffcc4d",
+      "metallic": 0.65,
+      "roughness": 0.3,
+      "emission": "#7a4e06",
+      "emission_energy": 0.8,
+      "specular": 0.8
+    },
+    "MI_Jade": {
+      "albedo": "#2b9a57",
+      "roughness": 0.2,
+      "specular": 0.7,
+      "rim": 0.4,
+      "rim_tint": 0.7,
+      "emission": "#0b3a1e",
+      "emission_energy": 0.5
+    },
+    "MI_Lapis": {
+      "albedo": "#2350c8",
+      "roughness": 0.05,
+      "specular": 1.0,
+      "rim": 0.35,
+      "rim_tint": 0.6,
+      "emission": "#0a1c52",
+      "emission_energy": 0.9
+    },
+    "MI_Amethyst": {
+      "albedo": "#8a35c8",
+      "roughness": 0.05,
+      "specular": 1.0,
+      "rim": 0.35,
+      "rim_tint": 0.6,
+      "emission": "#330d52",
+      "emission_energy": 0.9
+    },
+    "MI_Moonstone": {
+      "albedo": "#ecebf3",
+      "roughness": 0.18,
+      "specular": 0.6,
+      "clearcoat": 0.6,
+      "rim": 0.5,
+      "rim_tint": 0.2,
+      "emission": "#3a4258",
+      "emission_energy": 0.4
+    },
+    "MI_StoneTileLight": {
+      "albedo_texture": "res://assets/textures/temple/T_Stone_01_BC.png",
+      "normal_texture": "res://assets/textures/temple/T_Stone_01_N.png",
+      "roughness_texture": "res://assets/textures/temple/T_Stone_01_R.png",
+      "triplanar_scale": 0.9,
+      "normal_scale": 1.2,
+      "albedo": "#d2b688"
+    },
+    "MI_StoneTileDark": {
+      "albedo_texture": "res://assets/textures/temple/T_Stone_01_BC.png",
+      "normal_texture": "res://assets/textures/temple/T_Stone_01_N.png",
+      "roughness_texture": "res://assets/textures/temple/T_Stone_01_R.png",
+      "triplanar_scale": 0.9,
+      "normal_scale": 1.2,
+      "albedo": "#9a8364"
+    },
+    "MI_StoneFrame": {
+      "albedo_texture": "res://assets/textures/temple/T_Stone_01_BC.png",
+      "normal_texture": "res://assets/textures/temple/T_Stone_01_N.png",
+      "roughness_texture": "res://assets/textures/temple/T_Stone_01_R.png",
+      "triplanar_scale": 0.9,
+      "normal_scale": 1.2,
+      "albedo": "#a38a66"
+    },
+    "MI_StoneDark": {
+      "albedo_texture": "res://assets/textures/temple/T_Stone_01_BC.png",
+      "normal_texture": "res://assets/textures/temple/T_Stone_01_N.png",
+      "roughness_texture": "res://assets/textures/temple/T_Stone_01_R.png",
+      "triplanar_scale": 0.9,
+      "normal_scale": 1.2,
+      "albedo": "#5c5246"
+    },
+    "MI_Ground": {
+      "albedo": "#ffffff",
+      "albedo_texture": "res://assets/textures/temple/T_Ground_01_BC.png",
+      "normal_texture": "res://assets/textures/temple/T_Ground_01_N.png",
+      "roughness_texture": "res://assets/textures/temple/T_Ground_01_R.png",
+      "triplanar_scale": 0.22,
+      "normal_scale": 1.0,
+      "world_triplanar": true
+    },
+    "MI_Foliage": {
+      "albedo": "#24521f",
+      "roughness": 0.65,
+      "double_sided": true,
+      "backlight": "#3d6b1f"
+    },
+    "MI_Bronze": {
+      "albedo": "#a8703f",
+      "metallic": 1.0,
+      "roughness": 0.42
+    },
+    "MI_Flame": {
+      "shader": "res://assets/materials/shaders/SH_Flame.gdshader",
+      "params": {
+        "core_color": "#fff1b0",
+        "edge_color": "#ff6a12",
+        "intensity": 3.0
+      }
+    },
+    "MI_CellHighlight": {
+      "shader": "res://assets/materials/shaders/SH_CellHighlight.gdshader",
+      "params": {
+        "glow_color": "#ffd36b",
+        "intensity": 3.0
+      }
+    },
+    "MI_Spark": {
+      "shader": "res://assets/materials/shaders/SH_Spark.gdshader",
+      "params": {
+        "spark_color": "#ffd979",
+        "intensity": 4.0
+      }
+    }
+  },
+  "environment": {
+    "sky_top": "#24566e",
+    "sky_horizon": "#b7ae86",
+    "ground_bottom": "#1d2a16",
+    "ambient_energy": 0.4,
+    "exposure": 0.95,
+    "fog": "#7f946c",
+    "fog_density": 0.003,
+    "saturation": 1.08,
+    "sun": {
+      "transform": "Transform3D(0.819152, 0.383798, -0.426250, 0.000000, 0.743145, 0.669131, 0.573576, -0.548120, 0.608749, 0, 8, 0)",
+      "color": "#ffdcae",
+      "energy": 1.15
+    },
+    "torch": {
+      "color": "#ff9a3c",
+      "energy": 1.6,
+      "range": 4.5
+    }
+  },
+  "lookdev": {
+    "camera_transform": "Transform3D(1, 0, 0, 0, 0.258819, 0.965926, 0, -0.965926, 0.258819, 0, 11, 3)",
+    "fov": 50.0,
+    "highlight_cell": [
+      3,
+      4
+    ]
+  },
+  "surface_tokens": {
+    "sandstone-light": "MI_StoneTileLight",
+    "sandstone-dark": "MI_StoneTileDark",
+    "frame-stone": "MI_StoneFrame",
+    "shadow-stone": "MI_StoneDark",
+    "gold": "MI_Gold",
+    "jungle": "MI_Foliage"
+  },
+  "extra_tokens": {
+    "torch": "#ff9a3c",
+    "glow": "#ffd36b"
+  }
+}

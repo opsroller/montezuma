@@ -15,6 +15,7 @@ own folder.
 - [Project profile](reference/project-profile.md): stack, commands, who owns what, project rules.
 - [Contracts](reference/contracts.md): interfaces between work packages.
 - [Work packages](reference/work-packages.md): the plan and its status.
+- [Board themes](reference/board-themes.md): theme files, asset names, generators, budgets, validator.
 - [Audio](reference/audio.md): sound formats, levels and the files behind each cue.
 - [Power Totems](reference/totems.md): totem ids, charging, effects and tuning.
 - [Power-ups](reference/bonuses.md): on-board power-up ids, tiers, placement, triggering and effects.
@@ -38,6 +39,7 @@ own folder.
 ## How-to guides
 
 - [Build and test](how-to/build-and-test.md): build the core and extension, run tests, load the game, capture screenshots.
+- [Make a board theme](how-to/make-a-board-theme.md): change the temple look or add a new theme.
 - [Regenerate or add sounds](how-to/regenerate-or-add-sounds.md): rebuild the generated audio, add a cue.
 - [Play a sound from code](how-to/play-a-sound-from-code.md): call a cue from C++ or a scene, start and stop music.
 - [Add a UI screen](how-to/add-a-ui-screen.md): a new menu screen or modal, opened from a button.
@@ -47,6 +49,7 @@ own folder.
 
 - [UI architecture](explanation/ui-architecture.md): why a C++ screen stack, an overlay and a tokens-built theme.
 - [About the board view](explanation/about-the-board-view.md): why the view never applies rules, and how the camera frames the board.
+- [Art direction](explanation/art-direction.md): why the board looks the way it does, and the rules new art follows.
 - [About CI caching](explanation/about-ci-caching.md): why CI uses a compiler cache and what it leaves uncached.
 - [Sound direction](explanation/sound-direction.md): why the game sounds the way it does.
 
