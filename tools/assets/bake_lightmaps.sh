@@ -89,8 +89,10 @@ for s in "${scenes[@]}"; do
   grep -q "LIGHTMAP_BAKE ok $s " "$log" || { echo "bake failed: $s" >&2; status=1; }
 done
 # On a failure, the engine's own errors say why (the driver only relays the
-# editor's dialog text).
-if [[ "$status" != 0 ]]; then grep -E -A1 '^(ERROR|WARNING):' "$log" | tail -40 >&2 || true; fi
+# editor's dialog text). The editor colours its output; strip that first.
+if [[ "$status" != 0 ]]; then
+  sed 's/\x1b\[[0-9;]*m//g' "$log" | grep -E -A1 '^ *(ERROR|WARNING|SCRIPT ERROR):' | tail -60 >&2 || true
+fi
 rm -f "$log"
 if [[ "$status" == 0 ]]; then
   for entry in "${stamps[@]}"; do printf '%s\n' "${entry#*=}" > "${entry%%=*}"; done
