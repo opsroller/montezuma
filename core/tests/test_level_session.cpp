@@ -323,11 +323,13 @@ void test_construction() {
     }
     {
         LevelData lt = base_level();
-        lt.time_limit = TimeLimit{200, 150};
+        lt.base_clock = BaseClock{200, 150};
         Upgrades u;
+        check(LevelSession(lt, Difficulty::Normal, u, 1).time_left() == 200, "base_clock normal at tier 0");
+        check(LevelSession(lt, Difficulty::Hard, u, 1).time_left() == 150, "base_clock hard at tier 0");
         u.timer_tier = 3;
-        check(LevelSession(lt, Difficulty::Normal, u, 1).time_left() == 200, "time_limit override normal");
-        check(LevelSession(lt, Difficulty::Hard, u, 1).time_left() == 150, "time_limit override hard");
+        check(LevelSession(lt, Difficulty::Normal, u, 1).time_left() == 290, "timer tier adds to base_clock normal");
+        check(LevelSession(lt, Difficulty::Hard, u, 1).time_left() == 240, "timer tier adds to base_clock hard");
     }
     for (int bad : {-1, 5}) {
         Upgrades u;

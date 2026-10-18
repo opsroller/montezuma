@@ -22,6 +22,7 @@
 
 #include "../audio/game_audio.hpp"
 #include "../board/board_view_3d.hpp"
+#include "../board/feel.hpp"
 #include "display_move.hpp"
 
 using namespace godot;
@@ -37,6 +38,8 @@ constexpr int kEffectStages = fx::kTotemCount + fx::kPowerUpCount;
 constexpr int kMaxCascadeCue = 8;
 // Self-test: a level this long without an end is a failure.
 constexpr int kSelfTestMaxMoves = 500;
+// AMBIGUOUS until progress (WP-08): the timer tier every level starts with.
+constexpr int kTimerTier = 0;
 
 String str(std::string_view s) { return String::utf8(s.data(), static_cast<int64_t>(s.size())); }
 Vector2i to_vec(Cell c) { return Vector2i(c.x, c.y); }
@@ -251,6 +254,10 @@ void Match3Game::connect_ui() {
     if (ui->has_signal("play_requested") && !ui->is_connected("play_requested", play)) ui->connect("play_requested", play);
     if (ui->has_signal("level_quit_requested") && !ui->is_connected("level_quit_requested", quit))
         ui->connect("level_quit_requested", quit);
+    const Callable settings = callable_mp(this, &Match3Game::on_settings_changed);
+    if (ui->has_signal("settings_changed") && !ui->is_connected("settings_changed", settings))
+        ui->connect("settings_changed", settings);
+    apply_reduced_motion();
 }
 
 void Match3Game::disconnect_ui() {
@@ -261,6 +268,19 @@ void Match3Game::disconnect_ui() {
     const Callable quit = callable_mp(this, &Match3Game::on_level_quit_requested);
     if (ui->is_connected("play_requested", play)) ui->disconnect("play_requested", play);
     if (ui->is_connected("level_quit_requested", quit)) ui->disconnect("level_quit_requested", quit);
+    const Callable settings = callable_mp(this, &Match3Game::on_settings_changed);
+    if (ui->is_connected("settings_changed", settings)) ui->disconnect("settings_changed", settings);
+}
+
+void Match3Game::on_settings_changed(const String& key) {
+    if (key == "reduced_motion") apply_reduced_motion();
+}
+
+void Match3Game::apply_reduced_motion() {
+    Node* ui = get_tree()->get_root()->get_node_or_null(NodePath("UiRoot"));
+    BoardView3D* v = view();
+    if (!ui || !v || !ui->has_method("get_setting")) return;
+    v->set_animation_speed(feel::animation_speed_for(bool(ui->call("get_setting", "reduced_motion"))));
 }
 
 void Match3Game::on_play_requested(const String& level_id, const String& difficulty) {
@@ -291,7 +311,9 @@ bool Match3Game::start_level(const String& level_id, const String& difficulty) {
     try {
         // AMBIGUOUS until progress (WP-08): every upgrade at tier 0, and the
         // level's own seed, so a level deals the same board each time.
-        session = std::make_unique<LevelSession>(*parsed.level, *diff, Upgrades{}, parsed.level->seed);
+        Upgrades up;
+        up.timer_tier = kTimerTier;
+        session = std::make_unique<LevelSession>(*parsed.level, *diff, up, parsed.level->seed);
     } catch (const std::exception& e) {
         ERR_FAIL_V_MSG(false, "Match3Game: cannot start " + level_id + ": " + String::utf8(e.what()));
     }
@@ -634,11 +656,11 @@ Dictionary Match3Game::level_dictionary() const {
             if (kind >= 0 && static_cast<std::size_t>(kind) < kKindNames.size()) quotas[str(kKindNames[static_cast<std::size_t>(kind)])] = count;
         d["quotas"] = quotas;
     }
-    // The HUD reads the time it starts from; this is the session's, after
-    // the timer tier (GOAL-03), on both keys' own difficulty.
+    // The HUD reads the time it starts from: each difficulty's base clock
+    // plus the timer tier's bonus (GOAL-03), the session's on its own key.
     Dictionary time;
-    time["normal"] = l.time_limit ? l.time_limit->normal : session_->time_left();
-    time["hard"] = l.time_limit ? l.time_limit->hard : session_->time_left();
+    time["normal"] = l.time_limit_for(montezuma::Difficulty::Normal, kTimerTier);
+    time["hard"] = l.time_limit_for(montezuma::Difficulty::Hard, kTimerTier);
     time[difficulty_] = session_->time_left();
     d["time_limit"] = time;
     d["totems_unlocked"] = to_array(l.totems_unlocked);
@@ -768,6 +790,17 @@ void Match3Game::run_self_test() {
     step_mismatches_ = 0;
     if (start_level("e1-l99", "normal")) fail("a missing level started");
     if (start_level("nonsense", "normal")) fail("a bad id started");
+    // GOAL-03: a level's base clock with the timer tier's bonus on top; the
+    // HUD's start time matches the session's.
+    if (!start_level("e1-l05", "hard")) {
+        fail("e1-l05 did not start");
+    } else {
+        const double expected = session_->level().time_limit_for(montezuma::Difficulty::Hard, kTimerTier);
+        if (get_time_left() != expected) fail("e1-l05 hard did not start at its base clock");
+        if (get_time_left() <= montezuma::kBaseTimerSeconds) fail("e1-l05 hard did not get its own base clock");
+        const Dictionary time = level_dictionary().get("time_limit", Dictionary());
+        if (static_cast<double>(time.get("hard", 0.0)) != expected) fail("level time_limit.hard is not the start time");
+    }
     if (!start_level("e1-l01", "normal")) fail("e1-l01 did not start");
     BoardView3D* v = view();
     if (!v) fail("no board view");

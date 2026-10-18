@@ -77,9 +77,10 @@ same name in a `hi/` folder next to the base one. The base file is what
 `mobile` and `web` load and what every tier falls back to; `desktop-high`
 and `desktop-standard` load the `hi/` file when it exists:
 `QualityTiers::resolve_variant` maps a path to it and falls back to the
-base ([Quality tiers](quality-tiers.md)). The board view does not call it
-for materials yet, so the game shows the base files for now;
-`LD_<Theme>_Hi.tscn` shows the desktop look. Mobile and web export presets
+base ([Quality tiers](quality-tiers.md)). `QualityTiers` swaps the
+materials of every mesh as it enters the tree, so prefabs and the
+manifest name the base files and the game shows the `hi/` look on
+desktop; `LD_<Theme>_Hi.tscn` names the `hi/` files directly. Mobile and web export presets
 list `*/hi/*` in `exclude_filter`, so those builds carry only their own
 sizes. The web tier's `lo/` folder is not used by the temple: its base
 sets fit the web texture budget.
@@ -91,6 +92,15 @@ sets fit the web texture budget.
 | Ruby, amethyst | `ORMMaterial3D`, `Gem_01` tinted, opaque, Fresnel from the real index of refraction, rim | `SH_Gem`: refraction of the scene behind with dispersion and absorption by the body colour |
 | Carnelian, jade, moonstone | `ORMMaterial3D` with backlight for cheap translucency | sub-surface scattering with a transmittance colour; moonstone adds a stronger clearcoat |
 | Lapis | `ORMMaterial3D`, `Lapis_01` (blue, calcite, metallic pyrite flecks) | none; the base is used everywhere |
+
+Texture filtering: the `ORMMaterial3D` set uses Godot's default trilinear
+filter with repeat. `SH_TriplanarPBR` and `SH_Gem` filter anisotropically
+(the tier's 2× to 16×) through a clamped sampler and wrap the coordinates
+in `SH_Triplanar.gdshaderinc` (`tri_tex`). No material filters
+anisotropically with repeat: Godot's Metal backend gives that sampler slot
+17, and Metal GPUs without argument buffers (Apple5 family and older, such
+as the macOS CI runner) address slots 0 to 15 only, so the material fails
+to compile there.
 
 ## Generators
 
@@ -231,6 +241,10 @@ each as `error: <file>: <rule and fix>`:
   30-240 sRGB and metal (where `_ORM` blue ≥ 0.5) at 180 or more; normals
   unit length, facing out, averaging flat; metallic 0 or 1 except at most
   5% of pixels; roughness ≥ 0.02; height spans a real range.
+- No `.tres`, `.tscn` or `.gdshader` filters anisotropically with repeat
+  (`texture_filter = 4` or `5` without `texture_repeat = false`, or a
+  `filter_*_anisotropic` sampler without `repeat_disable`); see texture
+  filtering above.
 - Every file in a `hi/` folder has a base file of the same name; a `hi/`
   texture is the same map at the same or a larger size.
 - Android, iOS and Web export presets list `*/hi/*` in `exclude_filter`;

@@ -147,6 +147,22 @@ void test_variant_path() {
     check(variant_path("b.png", "lo") == "lo/b.png", "bare file name");
 }
 
+void test_base_path() {
+    check(base_path("res://assets/materials/temple/hi/MI_Gold.tres") == "res://assets/materials/temple/MI_Gold.tres",
+          "hi folder stripped");
+    check(base_path("res://a/lo/b.png") == "res://a/b.png", "lo folder stripped");
+    check(base_path("res://a/b.png") == "res://a/b.png", "base path unchanged");
+    check(base_path("res://hi/b/c.png") == "res://hi/b/c.png", "only the file's own folder counts");
+    check(base_path("res://a/high/b.png") == "res://a/high/b.png", "folder that only starts with a variant name");
+    check(base_path("hi/b.png") == "b.png", "relative variant path");
+    check(base_path("b.png") == "b.png", "bare file name");
+    for (Tier t : kTiers) {
+        const std::string_view v = profile(t).texture_variant;
+        const std::string p = "res://assets/textures/temple/T_Stone_01_BC.png";
+        check(base_path(variant_path(p, v)) == p, "variant_path then base_path round-trips");
+    }
+}
+
 }  // namespace
 
 int main() {
@@ -157,6 +173,7 @@ int main() {
     test_renderer_per_tier();
     test_viewport_plan();
     test_variant_path();
+    test_base_path();
     std::printf("quality_tests: %d checks, %d failures\n", checks, failures);
     return failures == 0 ? 0 : 1;
 }

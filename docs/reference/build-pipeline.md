@@ -14,7 +14,9 @@ Tests run separately in `.github/workflows/tests.yml`.
 
 Windows (`extension (windows)`, the Windows export and `smoke (windows)`)
 runs only on pushes to `main` and manual runs, to keep PR feedback fast.
-A Windows-only break shows up on `main` after merge; the next PR fixes it.
+PRs that change the build system also build and test on Windows in the
+[`windows` workflow](ci-pipeline.md#windows-workflow); any other
+Windows-only break shows up on `main` after merge, and the next PR fixes it.
 
 The workflow token is read-only (`contents: read`). No job uses secrets.
 
@@ -84,13 +86,18 @@ a store upload. Open a run in the Actions tab and download them from its
 |---|---|---|
 | Linux | `opengl3` (Mesa software) | Xvfb, `1280x720x24` |
 | Windows | `opengl3_angle` (ANGLE over Direct3D 11) | The runner's desktop session |
-| macOS | `metal`, then `opengl3` if Metal fails: on the runner's paravirtual GPU Metal has crashed (Godot 4.4), Vulkan runs out of device memory, and OpenGL is Apple's software renderer at several seconds a frame | The runner's desktop session |
+| macOS | `metal`, then `opengl3` if Metal fails: Metal works on the runner's paravirtual GPU with Godot 4.7.2 (4.4 crashed there), Vulkan runs out of device memory, and OpenGL is Apple's software renderer at several seconds a frame | The runner's desktop session |
 
 Each shot runs the game at the project's 1280×720 window size with
-`--write-movie`, `--fixed-fps 30` and `--quit-after` (15 frames for the
-title, 30 for the board, so the opening fade and the deal have finished)
+`--write-movie` and `--fixed-fps 30`, quits through the game's own
+`--quit-after-frames` (15 frames for the title, 30 for the board, so the
+opening fade and the deal have finished; see
+[Audio](audio.md#quitting)) with Godot's `--quit-after` as a safety net,
 and keeps the last frame. If a renderer exits with an error or writes no
-frame, the next one in the table is tried. The board shot passes
+frame, the next one in the table is tried. If the renderer that wrote
+the frames printed an engine `ERROR` to its log file or its console
+(errors at exit, such as resources still in use, reach only the
+console), the smoke job fails. The board shot passes
 `-- --start-level=e1-l01`, which skips the menus and plays that level
 (see [UI](ui.md#command-line-arguments)).
 

@@ -11,7 +11,9 @@ materials only reference files that exist; every file parses as its format;
 every theme has a provenance record; source files carry the SPDX header;
 names follow the prefixes. Texture sets: each map has the channels and
 colour space of its suffix, is wired to the matching material slot, and
-holds physically plausible values; every desktop variant under hi/ has a
+holds physically plausible values; no material or shader filters
+anisotropically with repeat (it does not compile on 16-slot Metal GPUs);
+every desktop variant under hi/ has a
 base file; mobile and web export presets leave the hi/ variants out.
 Needs only the standard library and Pillow.
 """
@@ -222,6 +224,26 @@ def sampler_errors(path, rel):
     return errors
 
 
+def anisotropic_repeat_errors(path, rel):
+    """No anisotropic filtering with repeat: Godot's Metal backend binds that
+    sampler at slot 17, past the 16 slots of GPUs without argument buffers."""
+    text = path.read_text()
+    errors = []
+    if path.suffix == ".gdshader":
+        for name, hints in re.findall(r"uniform\s+sampler2D\s+(\w+)\s*(?::\s*([^;=]+))?", text):
+            if "anisotropic" in (hints or "") and "repeat_disable" not in hints:
+                errors.append(f"{rel}: sampler {name} filters anisotropically with repeat, which does not compile "
+                              "on 16-slot Metal GPUs; use repeat_disable and wrap in the shader (tri_tex)")
+    else:
+        # One check per resource block, so a texture_repeat in one material does not excuse another.
+        for block in re.split(r"^\[", text, flags=re.M):
+            if re.search(r"^texture_filter = [45]$", block, re.M) and \
+                    not re.search(r"^texture_repeat = false$", block, re.M):
+                errors.append(f"{rel}: anisotropic texture_filter with repeat does not compile on 16-slot Metal "
+                              "GPUs; use the default trilinear filter")
+    return errors
+
+
 def export_errors():
     """Mobile and web presets exclude the desktop texture and material variants; desktop presets keep them."""
     path = GAME / "export_presets.cfg"
@@ -301,6 +323,8 @@ def main():
             errors += slot_errors(path, rel)
         if path.suffix == ".gdshader":
             errors += sampler_errors(path, rel)
+        if path.suffix in (".gdshader", ".tres", ".tscn"):
+            errors += anisotropic_repeat_errors(path, rel)
         if path.parent.name == TIERED and path.suffix in (".png", ".tres"):
             base = path.parent.parent / path.name
             if not base.exists():

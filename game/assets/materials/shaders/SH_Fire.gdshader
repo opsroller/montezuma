@@ -68,7 +68,8 @@ void vertex() {
 }
 
 // Colour of a blackbody at t kelvin in linear sRGB, brightest channel 1.
-// Planckian locus in CIE 1960 uv (Krystek 1985), then XYZ to sRGB.
+// Planckian locus in CIE 1960 uv (published 1985 rational fit), then XYZ
+// to sRGB.
 vec3 blackbody(float t) {
 	float u = (0.860117757 + 1.54118254e-4 * t + 1.28641212e-7 * t * t)
 			/ (1.0 + 8.42420235e-4 * t + 7.08145163e-7 * t * t);

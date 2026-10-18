@@ -1,0 +1,15 @@
+{
+  "id": "e4-l10",
+  "episode": 4,
+  "index": 10,
+  "rules": "classic",
+  "theme": "temple",
+  "board": { "width": 8, "height": 8, "kinds": 7 },
+  "gem_goal": { "normal": 150, "hard": 225 },
+  "base_clock": { "normal": 670, "hard": 1010 },
+  "totems_unlocked": ["fire", "time", "gold", "gift", "harvest", "paint", "ward"],
+  "powerups_unlocked": ["tnt", "color_clear", "lightning", "clock", "multiplier", "hint"],
+  "steel_rate": 0.06,
+  "chained_cells": [[1, 1], [3, 1], [4, 1], [6, 1], [0, 2], [2, 2], [5, 2], [7, 2], [3, 3], [4, 3]],
+  "seed": 20090710
+}

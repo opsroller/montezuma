@@ -37,7 +37,7 @@ The HUD sits below the stack, so pause and results draw over it.
 
 | Member | Kind | Notes |
 |---|---|---|
-| `play_requested(level_id: String, difficulty: String)` | signal | Menus closed; the game scene should load the level. `difficulty` is `normal` or `hard` (LevelData `gem_goal` and `time_limit` keys) |
+| `play_requested(level_id: String, difficulty: String)` | signal | Menus closed; the game scene should load the level. `difficulty` is `normal` or `hard` (LevelData `gem_goal` and `base_clock` keys) |
 | `level_quit_requested()` | signal | The player left the level from the pause menu |
 | `settings_changed(key: String)` | signal | After a setting is applied |
 | `show_results(outcome: int, score: int, level_id := "")` | method | Opens results. `outcome` is `LevelState::Outcome` (1 won, 2 lost); empty `level_id` means the level last played |
@@ -91,7 +91,7 @@ it exists.
 | `restart` | — | UiRoot | `play` the current level again |
 | `resume` | — | UiRoot | Close pause |
 | `quit_level` | screen id (default `episode_map`) | UiRoot | Emit `level_quit_requested`, reset to the screen |
-| `quit` | — | UiRoot | Quit the app (button hidden on web and mobile) |
+| `quit` | — | UiRoot | Quit the app through `GameAudio.quit()`, which stops every sound first (button hidden on web and mobile) |
 | `url` | `https://` URL | UiRoot | Open in the browser |
 
 ### Hud
@@ -188,8 +188,13 @@ settings screen saves on close.
 | `fullscreen` | bool | false | window mode (desktop only) |
 | `locale` | String | `""` (system) | `TranslationServer` |
 | `text_scale` | float 1..2 | 1.0 | all font sizes (headings ×½ rate, titles ×¼) |
-| `reduced_motion` | bool | false | screen transitions off |
+| `reduced_motion` | bool | false | screen transitions off; board animations at `feel::kReducedMotionAnimationSpeed` (2×) through `BoardView3D.animation_speed` |
 | `difficulty` | `normal` / `hard` | `normal` | passed with `play_requested` |
+
+The settings screen's **Graphics quality** row is not a `UiRoot` setting:
+it reads and writes the `quality_tier` choice of `QualityTiers`
+(`user://quality.cfg`), applies at once and shows only where more than
+one tier is available ([Quality tiers](quality-tiers.md#settings-key)).
 
 ## Theme tokens
 
@@ -262,3 +267,4 @@ Pass after `--`: `godot --path game -- --pseudolocalize`.
 | `--unlock-all` | Every level open on the map (until WP-08) |
 | `--start-screen=<id>` | Opens on screen `<id>` instead of the title; empty (`--start-screen=`) opens none |
 | `--start-level=<id>` | Skips the menus and plays level `<id>`, as if picked on the map. CI screenshots use `e1-l01` |
+| `--quit-after-frames=<n>` | Quits after `<n>` frames through `GameAudio.quit()` (see [Audio](audio.md#quitting)). Use it instead of Godot's `--quit-after` in any run that plays sound and must end without errors |

@@ -147,8 +147,8 @@ with `fire.json`. The shader's own defaults are the base material's
 values, so resetting one in the inspector keeps the base sheet working.
 Below 1000 K the blackbody fit is out of range and gives plain red.
 
-Colour is a blackbody at the stored temperature (Planckian locus fit by
-Krystek, converted to linear sRGB), times emission, brightness and the
+Colour is a blackbody at the stored temperature (a published 1985 rational
+fit of the Planckian locus, converted to linear sRGB), times emission, brightness and the
 particle colour ramp (fade in over the first 25 % of life, out over the
 last 30 %).
 
@@ -215,16 +215,15 @@ Shadows, volumetric fog energy and tier switches are handled by
 | Fire light shadows | all four | nearest two | none | none |
 | Fire light in volumetric fog | yes\*\* | no | no fog | no fog |
 
-\* The `hi/` materials are chosen by `QualityTiers::resolve_variant`, which
-the board view does not call for materials yet
-([Board themes](board-themes.md)), so the game shows the 4×4 base sheets on
-every tier for now; the look-dev scene `LD_Temple_Fire_Hi` sets the `hi/`
-materials directly.
+\* The `hi/` materials reach the game through `QualityTiers`, which swaps
+the particles' `material_override` for its `hi/` variant on the desktop
+tiers ([Quality tiers](quality-tiers.md)); the look-dev scene
+`LD_Temple_Fire_Hi` sets them directly. The web export strips `hi/`, so it
+never carries the 8×8 sheets.
 
 \*\* The light carries `light_volumetric_fog_energy` 2.0, but the temple
 environment does not enable volumetric fog yet, so nothing shows until it
-does. The web export strips `hi/`, so it never carries the
-8×8 sheets.
+does.
 
 ## Cost
 

@@ -37,6 +37,11 @@ told apart at a glance.
 | `mobile` | Mobile | Android, iOS | Pixel 7a / Galaxy A54 class; iPhone 12 | native output, 3D at 0.75 to 1.0 | p95 ≤ 16.6 ms, held for 10 minutes without thermal throttling below 55 fps |
 | `web` | Compatibility | Chrome, Firefox, Safari (WebAssembly) | 2020 laptop with Intel UHD 620 class integrated GPU | 1280×720 canvas | p95 ≤ 33.3 ms, median ≤ 16.6 ms; download ≤ 40 MB compressed; first frame ≤ 10 s on broadband |
 
+Frame budgets are whole periods of a 60 Hz display: 16.6 ms is one period
+(1000/60 = 16.667 ms) and 33.3 ms two, so a vsync-locked 60 fps run meets
+them. The benchmark judges them on wall-clock frame time with a small
+tolerance; see [Benchmark](benchmark.md#budget).
+
 A higher-end desktop runs `desktop-high` at 4K (3840×2160) with FSR 2.2
 Quality; that is a setting, not a separate tier. The tier is chosen at
 start from the renderer and GPU and can be changed in the settings menu;
@@ -129,7 +134,7 @@ A tier is met when all of these pass on its reference hardware:
 
 | Check | How it is measured | Pass |
 |---|---|---|
-| Frame time | [Benchmark scene](benchmark.md) (WP-46): 60 s scripted replay of the busiest board (four-step cascades, two power-ups, all totems firing) with the braziers lit; GPU and CPU frame time from `RenderingServer` per frame, after 10 s warm-up | p95 within the tier budget above |
+| Frame time | [Benchmark scene](benchmark.md) (WP-46): 60 s scripted replay of the busiest board (four-step cascades, two power-ups, all totems firing) with the braziers lit, at a locked render size; wall-clock frame time per frame (CPU and, where the driver gives it, GPU time from `RenderingServer` reported beside it), after 10 s warm-up | p95 within the tier budget above ([Benchmark](benchmark.md#budget)) |
 | Thermal (mobile) | Benchmark replay looped for 10 minutes | never below 55 fps over any 5 s window |
 | Effects present | Benchmark writes the active feature list; `tools/bench/check_features.py` compares it with the tier | every ✔ for the tier on, every — off |
 | Readability | [Readability capture](benchmark.md#readability-checks) (`game/scenes/bench/readability.tscn`, `tools/bench/check_readability.py`), rules 2, 4, 5 and 6 above | all pass |

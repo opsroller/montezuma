@@ -168,6 +168,22 @@ layout_mode = 2
 unique_name_in_owner = true
 custom_minimum_size = Vector2(340, 48)
 
+[node name="QualityRow" type="HBoxContainer" parent="Center/Panel/Column/Scroll/Rows"]
+layout_mode = 2
+unique_name_in_owner = true
+
+[node name="Label" type="Label" parent="Center/Panel/Column/Scroll/Rows/QualityRow"]
+layout_mode = 2
+text = "settings.quality"
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(300, 0)
+autowrap_mode = 3
+
+[node name="Quality" type="OptionButton" parent="Center/Panel/Column/Scroll/Rows/QualityRow"]
+layout_mode = 2
+unique_name_in_owner = true
+custom_minimum_size = Vector2(340, 48)
+
 [node name="Back" type="NavButton" parent="Center/Panel/Column"]
 layout_mode = 2
 text = "menu.back"

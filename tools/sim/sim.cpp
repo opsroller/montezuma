@@ -4,6 +4,7 @@
 #include "sim.hpp"
 
 #include <algorithm>
+#include <climits>
 #include <array>
 #include <cstdio>
 #include <set>
@@ -195,6 +196,27 @@ RunResult play(const LevelData& level, Difficulty d, const Upgrades& up, Bot bot
     return out;
 }
 
+Row simulate(const LevelData& level, Difficulty d, const Upgrades& up, Bot bot, int seeds) {
+    Row row;
+    row.level = level.id;
+    row.episode = level.episode;
+    row.index = level.index;
+    row.bot = bot;
+    row.difficulty = d;
+    row.seeds = seeds;
+    for (int i = 0; i < seeds; ++i) {
+        const RunResult r = play(level, d, up, bot, run_seed(level.seed, i));
+        row.total_moves += r.moves;
+        if (r.won) {
+            ++row.wins;
+            row.win_moves += r.moves;
+            row.win_times.push_back(r.time_left);
+        }
+        if (r.stuck) ++row.stuck;
+    }
+    return row;
+}
+
 // ---- Upgrades -----------------------------------------------------------------
 
 int campaign_position(int episode, int index) noexcept {
@@ -214,6 +236,12 @@ Upgrades auto_upgrades(const LevelData& level) {
     u.frenzy_tier = tiers_owned(kFrenzyTiers, pos);
     for (std::size_t i = 0; i < kPowerUpCount; ++i) u.power_up_tiers[i] = tiers_owned(kPowerUpTiers[i], pos);
     for (std::size_t i = 0; i < kTotemCount; ++i) u.totem_tiers[i] = tiers_owned(kTotemTiers[i], pos);
+    return u;
+}
+
+Upgrades clock_upgrades(const LevelData& level) {
+    Upgrades u = auto_upgrades(level);
+    u.timer_tier = 0;
     return u;
 }
 
@@ -238,12 +266,12 @@ std::optional<double> Row::median_time_left() const {
 std::optional<TargetRow> target_row(int episode, int index) {
     // balance.md Targets.
     static constexpr std::array<TargetRow, 6> kRows{{
-        {"e1-l01", 100, 150.0, 95, false, 99, 0},
-        {"e1", 98, 100.0, 70, false, 90, 0},
-        {"e2", 95, 70.0, 40, false, 80, 50},
-        {"e3", 90, 50.0, 20, false, 70, 70},
-        {"e4", 85, 35.0, 20, true, 60, 90},
-        {"e5", 80, 25.0, 10, true, 50, 110},
+        {"e1-l01", 100, 150.0, 95, 99, 0},
+        {"e1", 98, 100.0, 70, 90, 0},
+        {"e2", 95, 70.0, 40, 80, 50},
+        {"e3", 90, 50.0, 20, 70, 70},
+        {"e4", 85, 35.0, -1, 60, 90},
+        {"e5", 80, 25.0, -1, 50, 110},
     }};
     if (episode == 1) return index == 1 ? kRows[0] : kRows[1];
     if (episode >= 2 && episode <= 5) return kRows[static_cast<std::size_t>(episode)];
@@ -261,8 +289,8 @@ std::string target_text(const Row& row) {
     if (row.bot == Bot::Greedy && row.difficulty == Difficulty::Normal)
         return "win>=" + std::to_string(t->greedy_win_pct) + "% median>=" + fmt1(t->greedy_median) + "s" +
                (t->greedy_min_moves > 0 ? " moves>=" + std::to_string(t->greedy_min_moves) : std::string());
-    if (row.bot == Bot::Random && row.difficulty == Difficulty::Normal)
-        return std::string(t->random_at_most ? "win<=" : "win>=") + std::to_string(t->random_pct) + "%";
+    if (row.bot == Bot::Random && row.difficulty == Difficulty::Normal && t->random_pct >= 0)
+        return "win>=" + std::to_string(t->random_pct) + "%";
     if (row.bot == Bot::Planner && row.difficulty == Difficulty::Hard)
         return "win>=" + std::to_string(t->planner_hard_pct) + "%";
     return "-";
@@ -274,7 +302,6 @@ Verdict evaluate(const Row& row) {
     // Exact: wins x 100 against pct x seeds.
     const long long w = static_cast<long long>(row.wins) * 100;
     const auto at_least = [&](int pct) { return w >= static_cast<long long>(pct) * row.seeds; };
-    const auto at_most = [&](int pct) { return w <= static_cast<long long>(pct) * row.seeds; };
     const auto verdict = [](bool ok) { return ok ? Verdict::Pass : Verdict::Fail; };
     if (row.bot == Bot::Greedy && row.difficulty == Difficulty::Normal) {
         const auto median = row.median_time_left();
@@ -283,26 +310,31 @@ Verdict evaluate(const Row& row) {
         return verdict(at_least(t->greedy_win_pct) && median && *median >= t->greedy_median && enough_moves);
     }
     if (row.bot == Bot::Random && row.difficulty == Difficulty::Normal)
-        return verdict(t->random_at_most ? at_most(t->random_pct) : at_least(t->random_pct));
+        return t->random_pct >= 0 ? verdict(at_least(t->random_pct)) : Verdict::None;
     if (row.bot == Bot::Planner && row.difficulty == Difficulty::Hard) return verdict(at_least(t->planner_hard_pct));
     return Verdict::None;
 }
 
-bool introduces_idea(const LevelData& level, const LevelData* previous) {
+bool introduces_idea(const LevelData& level, const std::vector<const LevelData*>& earlier) {
     // AMBIGUOUS: a new totem or power-up id, first chains, first steel, or a
     // passive idea from progression's Episodes table.
     if (std::find(kPassiveIdeaLevels.begin(), kPassiveIdeaLevels.end(), level.id) != kPassiveIdeaLevels.end())
         return true;
-    if (!previous) return false;
-    const auto has = [](const std::vector<std::string>& v, const std::string& id) {
+    const auto seen = [&](auto&& has) {
+        return std::any_of(earlier.begin(), earlier.end(), [&](const LevelData* l) { return l && has(*l); });
+    };
+    const auto lists = [](const std::vector<std::string>& v, const std::string& id) {
         return std::find(v.begin(), v.end(), id) != v.end();
     };
     for (const std::string& id : level.totems_unlocked)
-        if (!has(previous->totems_unlocked, id)) return true;
+        if (!seen([&](const LevelData& l) { return lists(l.totems_unlocked, id); })) return true;
     for (const std::string& id : level.powerups_unlocked)
-        if (!has(previous->powerups_unlocked, id)) return true;
-    if (!level.chained_cells.empty() && previous->chained_cells.empty()) return true;
-    if (level.steel_rate > 0.0 && previous->steel_rate <= 0.0) return true;
+        if (!seen([&](const LevelData& l) { return lists(l.powerups_unlocked, id); })) return true;
+    // Chains and steel are new on their first level only, not each time they
+    // come back after a level without them.
+    if (!level.chained_cells.empty() && !seen([](const LevelData& l) { return !l.chained_cells.empty(); }))
+        return true;
+    if (level.steel_rate > 0.0 && !seen([](const LevelData& l) { return l.steel_rate > 0.0; })) return true;
     return false;
 }
 
@@ -331,7 +363,10 @@ std::vector<CurveCheck> curve_checks(const std::vector<LevelData>& levels, const
             continue;
         }
         const long long diff = cross(b->wins, b->seeds, a->wins, a->seeds);  // (b - a) x seeds_a x seeds_b
-        if (introduces_idea(*next, &l)) {
+        std::vector<const LevelData*> earlier;
+        for (int p = 1; p <= pos; ++p)
+            if (const LevelData* e = by_position(p)) earlier.push_back(e);
+        if (introduces_idea(*next, earlier)) {
             // A level can be no easier than winning every run.
             const bool both_full = a->wins == a->seeds && b->wins == b->seeds;
             c.verdict = diff > 0 || both_full ? Verdict::Pass : Verdict::Fail;
@@ -367,6 +402,58 @@ std::vector<CurveCheck> curve_checks(const std::vector<LevelData>& levels, const
         }
         out.push_back(c);
     }
+    return out;
+}
+
+// ---- Clock rule ---------------------------------------------------------------
+
+int required_clock(long long moves, int runs) noexcept {
+    if (runs <= 0 || moves <= 0) return 0;
+    // Clock in tens of seconds: ceil(moves x millis x percent /
+    // (runs x 1000 x 100 x 10)). Past this many moves the product would
+    // overflow; no run gets near it.
+    constexpr long long kFactor = static_cast<long long>(kHumanMoveMillis) * kClockMarginPercent;
+    if (moves > LLONG_MAX / kFactor) return INT_MAX;
+    const long long num = moves * kFactor;
+    const long long den = static_cast<long long>(runs) * 1000 * 100 * kClockStepSeconds;
+    const long long tens = (num + den - 1) / den;
+    return tens > INT_MAX / kClockStepSeconds ? INT_MAX : static_cast<int>(tens) * kClockStepSeconds;
+}
+
+std::vector<Row> clock_rows(const std::vector<LevelData>& levels, int seeds) {
+    std::vector<Row> rows;
+    for (const LevelData& l : levels)
+        for (Difficulty d : {Difficulty::Normal, Difficulty::Hard})
+            rows.push_back(simulate(l, d, clock_upgrades(l), Bot::Greedy, seeds));
+    return rows;
+}
+
+std::vector<CurveCheck> clock_checks(const std::vector<LevelData>& levels, const std::vector<Row>& rows) {
+    std::vector<CurveCheck> out;
+    for (const LevelData& l : levels)
+        for (Difficulty d : {Difficulty::Normal, Difficulty::Hard}) {
+            CurveCheck c;
+            c.rule = "clock";
+            c.levels = l.id + " " + std::string(difficulty_name(d));
+            const Row* r = find_row(rows, l.id, Bot::Greedy, d);
+            if (!r || r->seeds <= 0) {
+                c.detail = "no greedy rows";
+                out.push_back(c);
+                continue;
+            }
+            const double base = l.time_limit_for(d, 0);
+            if (r->wins <= 0) {
+                c.verdict = Verdict::Fail;
+                c.detail = "base " + fmt1(base) + "s: greedy never won, so no clock can be set";
+                out.push_back(c);
+                continue;
+            }
+            const int need = required_clock(r->win_moves, r->wins);
+            c.verdict = base >= need ? Verdict::Pass : Verdict::Fail;
+            c.detail = "base " + fmt1(base) + "s must reach " + std::to_string(need) + "s (" +
+                       fmt1(static_cast<double>(r->win_moves) / r->wins) + " moves a win x 3.5 s x 1.15)";
+            out.push_back(c);
+        }
     return out;
 }
 

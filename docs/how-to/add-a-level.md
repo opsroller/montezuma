@@ -30,8 +30,13 @@ messages are in [Level data](../reference/level-data.md).
      the simulator and tests repeat.
 3. Add obstacles only where the row or the balance work calls for them:
    `steel_rate`, `chained_cells`, `blocked_cells`.
-4. Leave out `time_limit` unless the level has its own clock; without it
-   the player's timer tier decides.
+4. Leave out `base_clock` at first; the level then starts from 270 s plus
+   the player's timer tier bonus. If the simulator (below) fails a
+   `clock` line, add `base_clock` with, for each difficulty, the larger of
+   270 and the seconds that line requires
+   (`"base_clock": { "normal": 310, "hard": 490 }`), then run it again:
+   a longer clock lets losing runs play longer, so repeat until every
+   `clock` line passes. See the [clock rule](../reference/balance.md#clock).
 5. Keep `rules` and `theme` as `classic` and `temple` for the campaign.
 
 ## Check it

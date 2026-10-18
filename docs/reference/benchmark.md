@@ -4,7 +4,8 @@
 *Reference. The benchmark scene, its replay, its report, and the
 readability capture and checks that measure a build against the
 [Visual target](visual-target.md#acceptance-tests). Running them:
-[Run the benchmark](../how-to/run-the-benchmark.md).*
+[Run the benchmark](../how-to/run-the-benchmark.md). Measured numbers:
+[Benchmark results](benchmark-results.md).*
 
 ## Files
 
@@ -13,16 +14,17 @@ readability capture and checks that measure a build against the
 | `game/scenes/bench/bench.tscn` | Board scene plus a `BenchmarkRunner` |
 | `game/scenes/bench/readability.tscn` | Board scene plus a `ReadabilityCapture` |
 | `extension/src/bench/replay.*` | Godot-free replay planner (`plan_replay`) |
-| `extension/src/bench/frame_stats.hpp` | Godot-free percentiles (`summarize`) |
+| `extension/src/bench/frame_stats.hpp` | Godot-free percentiles (`summarize`), budget verdict (`judge_budget`), render-size tracking (`SizeTracker`) |
 | `extension/src/bench/render_probe.*` | Feature list, device info, effect switching |
 | `extension/src/bench/benchmark_runner.*` | `BenchmarkRunner` node |
 | `extension/src/bench/readability_capture.*` | `ReadabilityCapture` node |
-| `extension/src/bench/tests/` | `bench_tests` CTest test (planner and statistics) |
+| `extension/src/bench/tests/` | `bench_tests` CTest test (planner, statistics, budget, render size) |
 | `tools/bench/run_bench.sh` | Runs both scenes and the checks on a desktop |
+| `tools/bench/check_run.py` | Budget verdict, render size and replay of one report |
 | `tools/bench/check_features.py` | Feature list against one tier (`tiers.json`) |
 | `tools/bench/check_readability.py` | Readability rules 2, 4, 5 and 6 on the captures (Pillow) |
 | `tools/bench/tiers.json` | What each tier must have on, from the feature tables |
-| `tools/bench/tests/` | Tests of the readability checks on synthetic captures (the `assets` CI job runs them) |
+| `tools/bench/tests/` | Tests of the readability checks on synthetic captures and of `check_run.py` on synthetic reports (the `assets` CI job runs them) |
 
 Both scenes hide the UI layers the autoloads draw (the menus), so the
 frame is the 3D board, its theme environment and its effects.
@@ -69,14 +71,66 @@ Per frame, from the previous frame (the newest the engine has):
 
 | Sample | Source |
 |---|---|
-| `cpu_ms` | `Performance.TIME_PROCESS` plus `RenderingServer.get_frame_setup_time_cpu()` plus `viewport_get_measured_render_time_cpu()` of the root viewport |
-| `gpu_ms` | `RenderingServer.viewport_get_measured_render_time_gpu()` of the root viewport |
+| `process_ms` | this frame's process pass, timed by the runner: from `SceneTree.process_frame` to the end of the runner's own `_process` (it runs last), so every node's `_process` and the replay's beat; tweens and physics are not in it. `Performance.TIME_PROCESS` is not used: it is the maximum of the previous second, not a per-frame value |
+| `render_cpu_ms` | `RenderingServer.get_frame_setup_time_cpu()` plus `viewport_get_measured_render_time_cpu()` of the root viewport. On Metal this includes waiting for the next drawable, so with vsync on it grows to fill the display period (`timing.render_cpu_includes_display_wait`) |
+| `cpu_ms` | `process_ms` plus `render_cpu_ms` |
+| `gpu_ms` | `RenderingServer.viewport_get_measured_render_time_gpu()` of the root viewport; frames with no timestamp (0) are left out |
 | `frame_ms` | wall-clock time between frames |
 | draw calls, primitives | `Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME`, `RENDER_TOTAL_PRIMITIVES_IN_FRAME` |
 | video memory | `Performance.RENDER_VIDEO_MEM_USED`, maximum |
+| render size | the root viewport's texture size, checked against the requested size |
+| window size | `DisplayServer.window_get_size()`, which must not change during the capture |
+
+At the start of the capture the runner also reads the display's refresh
+rate (`DisplayServer.screen_get_refresh_rate()`, -1 when unknown) and the
+vsync mode.
 
 Percentiles are nearest-rank. Wall-clock time sets both phase lengths, so
 a slow device plays fewer beats in the same 60 s.
+
+## Render size
+
+With `render_size` set (`--bench-size=WxH`, which `run_bench.sh` always
+passes), the runner locks the size before the warm-up: the window gets
+that size and may not be resized, and the root window's content scale
+mode is `viewport` at that size (aspect `ignore`), so the frame renders at
+exactly W×H even if the OS moves, shrinks or rescales the window. Every
+captured frame's render size is compared with the request; with no
+request, with the first frame's. The lock keeps the render size by
+construction, so the window size is followed too: a window resized during
+the capture changes the scale and present cost. Any mismatch of either
+fails the run. A window that starts smaller than the render (the screen
+cannot fit it) is not a mismatch; its size is in the report.
+
+## Budget
+
+The [visual target's](visual-target.md#quality-tiers) frame budgets are
+whole periods of a 60 Hz display (period 1000/60 = 16.667 ms; "16.6 ms"
+and "33.3 ms" in the target are one and two periods). The verdict judges
+`frame_ms`, the time the player sees, because GPU timing is not available
+on every driver:
+
+| Tier | Rule |
+|---|---|
+| `desktop-high`, `desktop-standard`, `mobile` | p95 ≤ one period |
+| `web` | p95 ≤ two periods and p50 ≤ one period |
+
+Each rule passes when the percentile is at most its budget × (1 +
+`tolerance`), tolerance 0.05 by default: a vsync-locked 60 fps run sits a
+little either side of 16.667 ms and passes, a 23 ms p95 fails. The
+graphics-programmer owns the tolerance; a change to it is a change to this
+section. `over_budget` counts frames above the p95 limit (budget plus
+tolerance). A display slower than 60 Hz less the tolerance (a 50 Hz panel)
+cannot show the target, so with vsync on the verdict fails as
+`display-limited`; with vsync off, or when the refresh is unknown, it is
+not held against the run.
+
+The verdict also fails, with its numbers still in the report, when the
+tier is not one of the four, when fewer than 30 frames were captured, and
+when the frames are no measurement: a `--headless` run (nothing is
+rendered) or a software rasteriser (`llvmpipe`, `lavapipe`, `softpipe`,
+SwiftShader, Microsoft Basic Render), whose reason reads `not a
+measurement: ...`. The tolerance is clamped to 0 to 0.5.
 
 ## Options
 
@@ -91,10 +145,16 @@ command line:
 | `measure_seconds` | `--bench-seconds=S` | 60 |
 | `output_path` | `--bench-out=PATH` | `user://bench/benchmark.json` |
 | `tier` | `--bench-tier=NAME` | empty: the tier [`QualityTiers`](quality-tiers.md) has in effect. A label only; to run another tier, pass `--quality=NAME` (QualityTiers' own argument) |
-| `budget_ms` | `--bench-budget=MS` | 0: the tier's p95 budget, 33.3 for `web`, else 16.6 |
+| `budget_ms` | `--bench-budget=MS` | 0: the tier's p95 budget, two 60 Hz periods (33.333) for `web`, else one (16.667); a value replaces the p95 budget |
+| `tolerance` | `--bench-tolerance=F` | 0.05; clamped to 0 to 0.5, a non-number stops the run |
+| `render_size` | `--bench-size=WxH` | (0, 0): not locked, but the size must not change |
+| `disable_vsync` | `--bench-vsync=off` sets it true | false: the project's vsync |
 | `quit_when_done` | `--bench-stay` sets it false | true |
 
-The runner quits with status 1 when the replay diverged, else 0.
+The runner quits with status 1 when the replay diverged, the render size
+did not hold or `--bench-size` is malformed, else 0. An over-budget run
+still quits 0: the verdict is in the report, and `check_run.py` fails on
+it.
 
 `ReadabilityCapture`: `seed` (`--capture-seed=N`, 52), `output_dir`
 (`--capture-out=DIR`, `user://bench/readability`), `settle_frames` (45,
@@ -108,16 +168,36 @@ reach):
 
 | Field | Meaning |
 |---|---|
-| `schema` | 1 |
-| `tier`, `budget_ms` | as resolved above |
+| `schema` | 2 (1 had no `budget`, `resolution`, `display`, `timing`, `process_ms`, `render_cpu_ms`) |
+| `tier`, `budget_ms` | as resolved above; `budget_ms` is the p95 budget before the tolerance |
+| `budget` | `metric` (`frame_ms`), `target_hz` (60), `period_ms`, `tolerance`, `limits` (each `percentile`, `budget_ms`, `limit_ms`, `value_ms`, `pass`), `pass`, `reason` (empty on a pass) |
+| `resolution` | `requested` [w, h] or null, `locked`, `render` (first frame), `min`, `max`, `mismatched_frames`, `window` (`first`, `min`, `max`, `changed_frames`), `pass` |
+| `display` | `refresh_hz` (-1 when unknown), `vsync` (`disabled`, `enabled`, `adaptive`, `mailbox`) |
+| `timing` | `gpu` (as `gpu_timing`), `gpu_note` (why, when false), `gpu_frames` (frames with a GPU timestamp), `render_cpu_includes_display_wait` (true on Metal) |
 | `warmup_seconds`, `measure_seconds` | as run |
-| `device` | `os`, `model`, `godot`, `rendering_method` (`forward_plus`, `mobile`, `gl_compatibility`), `rendering_driver`, `adapter`, `vendor`, `api_version`, `resolution` [w, h] |
-| `gpu_timing` | false when every GPU sample was 0 (headless, or a driver without timer queries); then `gpu_ms` means nothing |
-| `cpu_ms`, `gpu_ms`, `frame_ms` | each `{frames, mean, p50, p95, p99, max, over_budget}`; `over_budget` counts frames over `budget_ms` |
+| `device` | `os`, `model`, `godot`, `rendering_method` (`forward_plus`, `mobile`, `gl_compatibility`), `rendering_driver`, `adapter`, `vendor`, `api_version`, `resolution` [w, h], `headless`, `software` (a CPU rasteriser adapter) |
+| `gpu_timing` | false when no frame had a GPU timestamp (headless, or a driver without timer queries: Metal in Godot 4.7.2); then `gpu_ms` is null and no verdict uses GPU time |
+| `process_ms`, `render_cpu_ms`, `cpu_ms`, `gpu_ms`, `frame_ms` | each `{frames, mean, p50, p95, p99, max, over_budget}`; `over_budget` counts frames over the p95 limit |
 | `render` | `draw_calls_p95`, `draw_calls_max`, `primitives_p95`, `primitives_max`, `video_mem_max_mb` |
 | `replay` | `scenario` (`busiest-board`), `seed`, `beats`, `loops`, `deep_cascades` (beats of 4+ steps played), `max_cascade_steps`, `diverged` |
 | `features` | the feature list below, read when the capture starts |
 | `quality_features` | `QualityTiers.get_active_features()`: the feature ids the active tier switches on ([Quality tiers](quality-tiers.md#feature-ids)) |
+
+`check_run.py REPORT [--size WxH] [--no-budget]` prints a PASS or FAIL
+line for the budget, the render and window size (with `--size`, also that
+the run was locked at that size) and the replay. It does not take the
+runner's pass flags on trust: it re-derives the budget from the tier's
+rules and the report's percentiles (an unknown tier, a missing rule, a
+budget looser than the tier's, a tolerance outside 0 to 0.5, fewer than
+30 frames, a display below 57 Hz with vsync on, a headless or software
+run all fail), and the size from the
+min, max and mismatch counts. It also fails a `process_ms` median above
+the `frame_ms` median (not per-frame data). NOTE lines give the adapter,
+display, any non-default tolerance or budget, missing GPU timing and the
+Metal display wait. It exits 1 when a check fails and 2 when the report
+is unreadable, not schema 2, has a budget limit that is not numbers, or
+carries `gpu_ms` numbers under `timing.gpu` false. `--no-budget` prints the budget as SKIP (CI smoke
+runs).
 
 ## Features
 

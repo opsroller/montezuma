@@ -10,7 +10,7 @@ namespace montezuma::godot_binding::flicker {
 namespace {
 
 std::uint32_t hash(std::uint32_t x) {
-    // lowbias32 (Chris Wellons), public domain integer hash.
+    // lowbias32, a public-domain integer hash.
     x ^= x >> 16;
     x *= 0x7feb352dU;
     x ^= x >> 15;

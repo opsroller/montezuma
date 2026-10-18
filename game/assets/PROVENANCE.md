@@ -23,6 +23,24 @@ GPL-2.0-or-later.
 | `game/data/levels/e2/l04.json` | Written from `docs/reference/progression.md` (Episode 2 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
 | `game/data/levels/e2/l05.json` | Written from `docs/reference/progression.md` (Episode 2 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
 | `game/data/levels/e2/l06.json` | Written from `docs/reference/progression.md` (Episode 2 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e3/l01.json` | Written from `docs/reference/progression.md` (Episode 3 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e3/l02.json` | Written from `docs/reference/progression.md` (Episode 3 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e3/l03.json` | Written from `docs/reference/progression.md` (Episode 3 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e3/l04.json` | Written from `docs/reference/progression.md` (Episode 3 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e3/l05.json` | Written from `docs/reference/progression.md` (Episode 3 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e3/l06.json` | Written from `docs/reference/progression.md` (Episode 3 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e3/l07.json` | Written from `docs/reference/progression.md` (Episode 3 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e3/l08.json` | Written from `docs/reference/progression.md` (Episode 3 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e4/l01.json` | Written from `docs/reference/progression.md` (Episode 4 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e4/l02.json` | Written from `docs/reference/progression.md` (Episode 4 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e4/l03.json` | Written from `docs/reference/progression.md` (Episode 4 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e4/l04.json` | Written from `docs/reference/progression.md` (Episode 4 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e4/l05.json` | Written from `docs/reference/progression.md` (Episode 4 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e4/l06.json` | Written from `docs/reference/progression.md` (Episode 4 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e4/l07.json` | Written from `docs/reference/progression.md` (Episode 4 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e4/l08.json` | Written from `docs/reference/progression.md` (Episode 4 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e4/l09.json` | Written from `docs/reference/progression.md` (Episode 4 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e4/l10.json` | Written from `docs/reference/progression.md` (Episode 4 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
 
 ## Board theme `temple`
 
@@ -135,6 +153,6 @@ notes: >
   fails to convert), Debian's Blender 4.0 cannot register the manta module, and blender.org
   builds are not reachable from the build machines. So the same physical model runs in our own
   numpy solver, which also needs nothing beyond the numpy and Pillow CI already pins. The
-  blackbody colour uses Krystek's 1985 Planckian-locus fit (published formula).
+  blackbody colour uses a published 1985 rational fit of the Planckian locus.
   Regenerate with the commands in docs/how-to/tune-the-fire.md.
 ```

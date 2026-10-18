@@ -28,3 +28,5 @@ game/assets/textures/*/.inputs
 game/assets/textures/*/fx/T_*.png
 game/assets/textures/*/fx/hi/T_*.png
 game/assets/textures/*/fx/.inputs
+# CMake build folders (build/, build-ext/, build-asan/ ...).
+build-*/
