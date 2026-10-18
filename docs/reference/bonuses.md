@@ -1,163 +1,218 @@
 <!-- SPDX-License-Identifier: GPL-2.0-or-later -->
 <!-- Copyright (C) 2026 Charles (opsroller) and Montezuma contributors -->
 
-# Bonuses
+# Power-ups
 
-Reference for the bonus system in the core rules library (WP-07): ids,
-how pickups are earned, what each bonus does, upgrades and the C++ API.
-For gameplay programmers wiring bonuses into the game and for the game
-designer tuning them.
+Reference for on-board power-ups in the core rules library (WP-07): ids,
+tiers, how they are placed, how they move and trigger, what each one does,
+and the C++ API. For gameplay programmers wiring power-ups into the game
+and for the game designer checking the rules.
 
 Code: `core/include/montezuma/bonuses.hpp`, `core/src/bonuses.cpp`.
-Tests: `core/tests/test_bonuses.cpp`.
+Tests: `core/tests/test_bonuses.cpp`. (The files keep their `bonuses.*`
+names; the API calls the concept "power-up".)
 
-**Every number on this page is a placeholder** (`[verify]`) until WP-03
-(rules spec) settles the original game's bonuses. The numbers live in one
-table, `kBonusDefs` in `core/src/bonuses.cpp`; change them there and in
-this page together, with a rules-spec change.
+The rules come from the game designer (WP-03). Their spec, with rule ids,
+is pending; the code marks each rule with `// rule: <tbd>` until then.
+Points still to confirm are marked **[verify]** here and in the code.
 
-## Ids
+## Model
 
-From the contracts doc, in the stable `BonusId` order used for storage:
+Power-ups sit on board pieces. There is no inventory.
 
-| Index | `BonusId` | Contract id | Targeted |
-|---|---|---|---|
-| 0 | `Hammer` | `hammer` | yes, one cell |
-| 1 | `Lightning` | `lightning` | yes, a cell and an axis |
-| 2 | `ExtraTime` | `extra_time` | no |
-| 3 | `Shuffle` | `shuffle` | no |
-| 4 | `Dynamite` | `dynamite` | yes, one cell |
-| 5 | `Freeze` | `freeze` | no |
+- A legal swap whose match has a **run of exactly 4** places **one**
+  power-up on a random plain piece (a piece without a power-up). A **run of
+  5 or more** places **two**. Runs of 3 place nothing.
+- Runs are counted in `MoveResult::cascades[s].runs`, over **every cascade
+  step** of the swap **[verify]**. A `clear_cells` result (a totem or
+  power-up effect, `swap` empty) places nothing, even when its cascades
+  make runs **[verify]**.
+- The power-up placed is a uniform random pick among the **unlocked**
+  ones **[verify]**, at the tier the player owns.
+- A power-up moves with its piece through falls and shuffles. It
+  **triggers when its piece is cleared** by anything (a match, a totem,
+  another power-up), at the cell where the piece was cleared.
+- A redeal (`MoveResult::redealt`) replaces every piece, so every power-up
+  on the board is lost **[verify]**.
+- Upgrades cost golden stars and belong to WP-08. Here the tier is an
+  input (`PowerUpTiers`).
 
-`bonus_name(id)` and `bonus_from_name(name)` convert between the two
-(case-sensitive). New ids are appended, never reordered.
+## Ids and tiers
 
-## Earning
+Stable `PowerUpId` order (the index into `PowerUpSet`, `PowerUpTiers` and
+the defs table; new ids are appended, never reordered):
 
-The rules spec says a match of 4 or more grants a bonus pickup.
+| Index | `PowerUpId` | Contract id | L1 | L2 | L3 |
+|---|---|---|---|---|---|
+| 0 | `Tnt` | `tnt` | 3x3 around it (9 cells) | diamond of radius 2 (13) | 5x5 minus the 4 corners (21) |
+| 1 | `ColorClear` | `color_clear` | every piece of its piece's colour | L1, plus that colour's steel pieces (flag) | L2, plus every piece orthogonally next to those cells **[verify]** |
+| 2 | `Lightning` | `lightning` | the column above it | up, left and right | the full row and column |
+| 3 | `Clock` | `clock` | +15 s | +20 s | +25 s |
+| 4 | `Multiplier` | `multiplier` | the triggering move scores x5 | x7 | x10 |
+| 5 | `Hint` | `hint` | highlight every legal move for 20 s | 25 s | 30 s |
 
-- For each cascade step of a legal move, each artifact kind that step
-  cleared **4 or more** of (`kBonusEarnThreshold`) earns one pickup.
-- The pickup is one bonus, picked by weight among the bonuses whose
-  `earn_min_cleared` that count reaches and that are below their cap.
-- If every eligible bonus is at its cap, the pickup is lost.
-- Randomness comes only from the `Rng&` passed in, iterating steps in
-  order and kinds in ascending order, so the same seed and moves always
-  give the same pickups. A move with no qualifying step draws no random
-  numbers.
+- Cell counts are for the middle of the board; shapes are clipped at
+  edges and corners (a 3x3 TNT in a corner clears 4 cells).
+- Lightning's rays include its own cell **[verify]**, so a lightning on
+  the top row still clears that one cell at L1.
+- `color_clear` uses the colour of the piece the power-up sat on, which is
+  recorded at placement (`PowerUp::kind`) because that piece is gone by
+  the time the effect is computed.
+- Steel pieces do not exist in `Board` yet; L2+ `color_clear` reports
+  `clear_colour_steel = true` and the game layer acts on it.
 
-**Known approximation.** `MoveResult` today carries only pieces cleared
-per kind per step, so two separate runs of 3 of one kind in the same
-step (6 pieces) also earn a pickup, and an L or T of 5 counts as 5. When
-the cell-level `MoveResult` from the contracts doc lands (`CascadeStep::runs`),
-earning switches to one pickup per run of 4+ and uses the run length for
-`earn_min_cleared`.
+`power_up_name(id)` and `power_up_from_name(name)` convert between the
+enum and the contract id (case-sensitive).
 
-## Effects and upgrades
+## Game-layer loop
 
-Each bonus has upgrade levels 1 to 3 (`kMinBonusLevel`, `kMaxBonusLevel`).
-All start at level 1. Shapes are clipped to the board.
+The core computes; the game layer applies. After each legal swap:
 
-| Bonus | Earned from | Weight | Effect | Level 1 | Level 2 | Level 3 |
-|---|---|---|---|---|---|---|
-| `hammer` | 4+ | 30 | Clears cells within Manhattan distance *n* of the target | 1 cell (n=0), max 3 | plus of 5 (n=1), max 4 | diamond of 13 (n=2), max 5 |
-| `lightning` | 4+ | 25 | Clears the target's row or column | chosen line, max 2 | row and column, max 3 | 3-wide row and column, max 3 |
-| `extra_time` | 4+ | 20 | Adds seconds to the level timer | +10 s, max 2 | +15 s, max 3 | +20 s, max 3 |
-| `shuffle` | 4+ | 15 | Reshuffles the board | max 1 | max 2 | max 3 |
-| `dynamite` | 5+ | 6 | Clears a square around the target | 3x3, max 1 | 5x5, max 2 | 7x7, max 2 |
-| `freeze` | 5+ | 4 | Stops the level timer | 5 s, max 1 | 8 s, max 2 | 12 s, max 2 |
+```cpp
+auto r = board.try_swap(a, b);                      // std::optional<MoveResult>
+std::vector<TriggeredPowerUp> queue = layer.triggered_by(*r);   // before remap
+layer.remap(*r);
+for (std::size_t i = 0; i < queue.size(); ++i) {
+    PowerUpEffect e = power_up_effect(queue[i], board);
+    // add e.time_delta_seconds to the timer, scale the move's score by
+    // e.score_multiplier, show hints for e.hint_seconds, handle
+    // e.clear_colour_steel
+    if (!e.cells_to_clear.empty())
+        if (auto er = board.clear_cells(e.cells_to_clear)) {
+            auto more = layer.triggered_by(*er);   // chained triggers
+            queue.insert(queue.end(), more.begin(), more.end());
+            layer.remap(*er);
+        }
+}
+layer.place_from_move(*r, board, rng, unlocked, tiers);   // once the chain is done
+```
 
-"max" is the stock cap at that level. Upgrading keeps the current stock.
-What an upgrade costs and when the player may buy one is the progress
-package's concern; `BonusInventory::upgrade` only raises the level.
+- **Chained triggers.** When a power-up's cells hold another power-up,
+  `clear_cells` clears that piece and the next `triggered_by` reports it.
+  The core never recurses; the game layer's queue resolves the chain.
+- **Order matters.** Call `triggered_by` before `remap` for the same
+  result: `remap` removes the triggered power-ups.
+- **Placement last.** Placing after the chain keeps a fresh power-up from
+  being consumed by the effects of the move that earned it **[verify]**.
+  `place_from_move` reads only the swap's runs and the current board, so
+  it works after any number of `clear_cells` calls.
+- Effects are computed on the board **after** the move (and after earlier
+  effects in the chain), centred on the cell where the piece was cleared.
+- Whether effect clears score, count toward quotas or extend the totem
+  streak is the game layer's call per the rules spec.
 
 ## API
 
 All in namespace `montezuma`; no engine headers.
 
-### Tuning table
+### Defs table
 
-- `struct BonusLevelParams { max_stock, extent, both_axes, time_seconds, freeze_seconds, reshuffle }`:
-  the effect at one level.
-- `struct BonusDef { id, shape, earn_min_cleared, earn_weight, levels[3] }`:
-  one table row. `shape` is `None`, `Diamond` (hammer), `Line`
-  (lightning) or `Square` (dynamite). `targeted()`, `at_level(level)`.
-- `bonus_defs()` returns the table; `bonus_def(id)` one row. A
-  `static_assert` checks ids are in order, caps are at least 1 and never
-  shrink with level, and no bonus is earned below the threshold.
+```cpp
+struct PowerUpTierParams {
+    int area_chebyshev = -1;      // area: |dx|,|dy| <= this (-1 = no area) ...
+    int area_manhattan = 0;       // ... and |dx| + |dy| <= this
+    unsigned rays = kRayNone;     // kRayUp | kRayDown | kRayLeft | kRayRight
+    bool colour = false;          // every piece of the triggering colour
+    bool colour_steel = false;    // also the colour's steel (flag only)
+    bool colour_adjacent = false; // also orthogonal neighbours of colour cells
+    double time_seconds = 0.0;
+    int score_multiplier = 1;
+    double hint_seconds = 0.0;
+};
+struct PowerUpDef { PowerUpId id; std::string_view name; std::array<PowerUpTierParams, 3> tiers; };
+```
+
+- `power_up_defs()` is the table, `power_up_def(id)` one row,
+  `PowerUpDef::at_tier(tier)` one tier (clamped to 1..3).
+- TNT's three shapes are areas: L1 `(1, 2)`, L2 `(2, 2)`, L3 `(2, 3)`.
+- `validate_power_up_defs(span)` throws `std::invalid_argument` unless
+  every id appears once in order with a unique non-empty name and every
+  tier is well formed. The built-in table is checked at compile time.
+- `validate_power_up_tiers(tiers)` throws `std::invalid_argument` for a
+  tier outside 1..3.
+
+### Layer
+
+```cpp
+struct PowerUp { PowerUpId id; int tier; int kind; };      // kind: colour of its piece
+struct PowerUpPlacement { Cell cell; PowerUp power_up; };
+struct TriggeredPowerUp { Cell cell; PowerUp power_up; int step; };
+
+struct PowerUpLayer {
+    int width, height;
+    std::vector<std::optional<PowerUp>> cells;   // row-major, y * width + x
+    ...
+};
+```
+
+`PowerUpLayer` is plain data (public members, `operator==`), so it can be
+saved with a level in progress.
+
+| Member | Meaning |
+|---|---|
+| `PowerUpLayer(w, h)`, `PowerUpLayer(const Board&)` | empty layer; throws `std::invalid_argument` for a size below 1 |
+| `at(cell)`, `has(cell)`, `set(cell, p)`, `erase(cell)`, `clear()`, `count()` | lookups and edits; out-of-bounds cells read as empty and are ignored on write |
+| `entries()` | every power-up, row-major |
+| `triggered_by(const MoveResult&) const` | power-ups whose pieces the result cleared, by step then `CascadeStep::cleared` order (row-major); `cell` is where the piece was when cleared |
+| `remap(const MoveResult&)` | moves power-ups with their pieces; removes triggered ones; a redeal clears the layer |
+| `place_from_move(result, board, rng, unlocked, tiers)` | places earned power-ups and returns them in placement order |
+| `earned_by(result)` (static) | how many the result earns before capping by plain pieces |
+
+`triggered_by` and `remap` replay the result in event order (see
+[move-result.md](move-result.md)): the `swap` exchanges the two cells'
+entries; for each step, entries on `cleared` cells trigger and go, then
+every `falls[i].from` entry is lifted and dropped at its `to` (`spawns`
+are plain pieces); then, when `shuffled && !redealt`, `after[to] =
+before[from]` for each `shuffle_map` pair. Cells outside the layer are
+ignored. Both are `noexcept`.
+
+**Placement draws.** For each earned power-up, in order: pick the id with
+`rng.below(number of unlocked)` over unlocked ids in `PowerUpId` order,
+then the cell with `rng.below(number of plain pieces)` over plain pieces
+in row-major order (occupied board cells with no power-up, minus cells
+already chosen). Placement stops, without drawing, when no plain piece is
+left. Nothing is drawn when nothing is earned or nothing is unlocked. The
+same seed and the same moves always give the same placements.
+`place_from_move` throws `std::invalid_argument` for a bad `tiers` table or
+a layer whose size differs from the board's. Call it after `remap` on the
+board after the move.
+
+**Invariant.** After `remap` with the board's own results, every power-up
+sits on an occupied cell whose piece has the recorded `kind`. The random
+sweep in the tests checks this after every swap, effect and shuffle.
 
 ### Effects
 
 ```cpp
-struct BonusTarget { Cell cell; Axis axis = Axis::Row; };   // axis: lightning only
-
-struct Effect {
-    BonusId bonus;
-    std::vector<Cell> cells_to_clear;   // row-major, unique, in bounds
-    double time_delta_seconds;
-    double freeze_seconds;
-    bool reshuffle;
+struct PowerUpEffect {
+    PowerUpId id;
+    int tier;
+    std::vector<Cell> cells_to_clear;   // occupied, in bounds, row-major, unique
+    double time_delta_seconds;          // 0 unless clock
+    int score_multiplier;               // 1 unless multiplier
+    double hint_seconds;                // 0 unless hint
+    bool clear_colour_steel;            // color_clear L2+
 };
 
-Effect bonus_effect(BonusId id, int level, const Board& board, BonusTarget target = {});
+PowerUpEffect power_up_effect(PowerUpId id, int tier, const Board& board, Cell at,
+                              int colour = Board::kEmpty) noexcept;
+PowerUpEffect power_up_effect(const TriggeredPowerUp& t, const Board& board) noexcept;
 ```
 
-`bonus_effect` computes an effect without touching any inventory (use it
-to preview a target). Out-of-range levels clamp to 1..3. Untargeted
-bonuses ignore the target. The cell list does not look at cell contents;
-empty or (later) blocked cells are skipped when the effect is applied.
+`tier` clamps to 1..3. `colour` is the triggering piece's kind; when
+negative, the piece now at `at` is used. An out-of-bounds `at` gives no
+cells but keeps the value fields. The effect never changes the board.
 
-### Inventory
+## Removed
 
-`BonusInventory` is a plain struct, so the progress package can save it
-between levels:
+The bonus inventory of the first WP-07 draft is gone: `hammer`, `shuffle`,
+`dynamite` and `freeze`, stored stock and caps, upgrades by stock, and the
+save text. `extra_time` became `clock`.
 
-| Member | Meaning |
-|---|---|
-| `std::array<int, 6> stock` | pickups held, by `BonusId` index; `0 <= stock <= cap` |
-| `std::array<int, 6> level` | upgrade level, 1..3 |
-| `count(id)`, `level_of(id)`, `cap(id)` | lookups; `cap` is the current level's max stock |
-| `add(id)` | adds one pickup; false at the cap |
-| `earn_from(const MoveResult&, Rng&)` | awards pickups for a move (see Earning); returns the awarded ids in order |
-| `use(id, const Board&, BonusTarget = {})` | spends one and returns `UseResult` |
-| `upgrade(id)` | raises the level by one; false at level 3 |
-| `to_text()`, `from_text(text)`, `try_from_text(text)` | text form for saving |
+## Open points
 
-`UseResult { std::optional<Effect> effect; UseError error; }` converts to
-`true` on success. Errors leave the inventory unchanged and never throw:
-
-| `UseError` | When |
-|---|---|
-| `None` | success; `effect` is set |
-| `NoStock` | none of that bonus held |
-| `TargetOutOfBounds` | a targeted bonus aimed off the board |
-
-Text form, one line per bonus in `BonusId` order:
-
-```
-hammer 1 1
-lightning 2 2
-extra_time 0 1
-shuffle 0 1
-dynamite 0 1
-freeze 1 3
-```
-
-Fields are `<id> <stock> <level>`. `from_text` accepts lines in any order,
-blank lines and CRLF; it requires every id exactly once with level 1..3
-and stock 0..cap, and throws `std::invalid_argument` otherwise.
-`try_from_text` is the non-throwing variant for the binding layer.
-
-## Not done here
-
-- **Applying effects.** `use` returns an `Effect`; it does not change the
-  board or the level timer. A later integration step (game layer or a
-  `Board`/`LevelState` API) clears `cells_to_clear` with collapse and
-  refill, scores them, adds `time_delta_seconds`, pauses the timer for
-  `freeze_seconds` and calls `Board::shuffle()` for `reshuffle`. Whether
-  bonus clears score, count toward quotas or extend the totem streak is a
-  WP-03 question.
-- **Signals.** The game layer emits `bonus_changed(bonus_id, count)` and
-  plays `bonus_earned` / `bonus_use_<id>` from `earn_from`'s return value
-  and successful `use` calls.
-- **Persistence and upgrade costs**: the progress package.
+- The contract ids in [contracts.md](contracts.md#totem-and-bonus-ids-owner-game-designer-wp-03--proposed)
+  still list the old bonus ids; the game designer updates them with the
+  spec.
+- The `bonus_changed`, `bonus_earned` and `bonus_use_<id>` signal and cue
+  names in the contracts predate power-ups.

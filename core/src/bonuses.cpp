@@ -5,221 +5,340 @@
 
 #include <algorithm>
 #include <cstdlib>
-#include <sstream>
 #include <stdexcept>
+#include <string>
+#include <utility>
 
 namespace montezuma {
 
 namespace {
 
-// Tuning table, one BonusDef per id in BonusId order. Every number here is a
-// [verify] placeholder until WP-03 (game designer) settles the original's
-// bonuses; change them only with a rules-spec change.
-//
-// Level params: {max_stock, extent, both_axes, time_seconds, freeze_seconds, reshuffle}
-constexpr std::array<BonusDef, kBonusCount> kBonusDefs{{
-    // [verify] placeholder until WP-03: hammer clears one piece; upgrades
-    // widen it to a plus (radius 1) and a diamond (radius 2).
-    {BonusId::Hammer, BonusShape::Diamond, 4, 30,
-     {{{3, 0, false, 0.0, 0.0, false}, {4, 1, false, 0.0, 0.0, false}, {5, 2, false, 0.0, 0.0, false}}}},
-    // [verify] placeholder until WP-03: lightning clears the chosen row or
-    // column; level 2 clears both through the target, level 3 a 3-wide cross.
-    {BonusId::Lightning, BonusShape::Line, 4, 25,
-     {{{2, 0, false, 0.0, 0.0, false}, {3, 0, true, 0.0, 0.0, false}, {3, 1, true, 0.0, 0.0, false}}}},
-    // [verify] placeholder until WP-03: seconds added to the level timer.
-    {BonusId::ExtraTime, BonusShape::None, 4, 20,
-     {{{2, 0, false, 10.0, 0.0, false}, {3, 0, false, 15.0, 0.0, false}, {3, 0, false, 20.0, 0.0, false}}}},
-    // [verify] placeholder until WP-03: reshuffles the board; upgrades only
-    // raise how many the player may hold.
-    {BonusId::Shuffle, BonusShape::None, 4, 15,
-     {{{1, 0, false, 0.0, 0.0, true}, {2, 0, false, 0.0, 0.0, true}, {3, 0, false, 0.0, 0.0, true}}}},
-    // [verify] placeholder until WP-03: dynamite clears a square around the
-    // target, 3x3 then 5x5 then 7x7. Needs a match of 5.
-    {BonusId::Dynamite, BonusShape::Square, 5, 6,
-     {{{1, 1, false, 0.0, 0.0, false}, {2, 2, false, 0.0, 0.0, false}, {2, 3, false, 0.0, 0.0, false}}}},
-    // [verify] placeholder until WP-03: stops the level timer. Needs a match of 5.
-    {BonusId::Freeze, BonusShape::None, 5, 4,
-     {{{1, 0, false, 0.0, 5.0, false}, {2, 0, false, 0.0, 8.0, false}, {2, 0, false, 0.0, 12.0, false}}}},
+// Builders keep the table readable: each sets only the part that applies.
+constexpr PowerUpTierParams area(int chebyshev, int manhattan) {
+    PowerUpTierParams p;
+    p.area_chebyshev = chebyshev;
+    p.area_manhattan = manhattan;
+    return p;
+}
+constexpr PowerUpTierParams rays(unsigned mask) {
+    PowerUpTierParams p;
+    p.rays = mask;
+    return p;
+}
+constexpr PowerUpTierParams colour(bool steel, bool adjacent) {
+    PowerUpTierParams p;
+    p.colour = true;
+    p.colour_steel = steel;
+    p.colour_adjacent = adjacent;
+    return p;
+}
+constexpr PowerUpTierParams time_bonus(double seconds) {
+    PowerUpTierParams p;
+    p.time_seconds = seconds;
+    return p;
+}
+constexpr PowerUpTierParams multiply(int factor) {
+    PowerUpTierParams p;
+    p.score_multiplier = factor;
+    return p;
+}
+constexpr PowerUpTierParams hint(double seconds) {
+    PowerUpTierParams p;
+    p.hint_seconds = seconds;
+    return p;
+}
+
+// The defs table, one row per id in PowerUpId order. Numbers come from the
+// game designer's rules (WP-03); change them only with a rules-spec change.
+constexpr std::array<PowerUpDef, kPowerUpCount> kPowerUpDefs{{
+    // rule: <tbd>
+    // L1 3x3 (9 cells), L2 diamond of radius 2 (13), L3 5x5 minus the four
+    // corners (21).
+    {PowerUpId::Tnt, "tnt", {{area(1, 2), area(2, 2), area(2, 3)}}},
+    // rule: <tbd>
+    // L1 every piece of its colour, L2 also that colour's steel pieces, L3
+    // also every piece next to those cells.
+    {PowerUpId::ColorClear, "color_clear", {{colour(false, false), colour(true, false), colour(true, true)}}},
+    // rule: <tbd>
+    // L1 the column above, L2 up, left and right, L3 the full row and column.
+    {PowerUpId::Lightning, "lightning", {{rays(kRayUp), rays(kRayUp | kRayLeft | kRayRight), rays(kRayAll)}}},
+    // rule: <tbd>
+    {PowerUpId::Clock, "clock", {{time_bonus(15.0), time_bonus(20.0), time_bonus(25.0)}}},
+    // rule: <tbd>
+    {PowerUpId::Multiplier, "multiplier", {{multiply(5), multiply(7), multiply(10)}}},
+    // rule: <tbd>
+    {PowerUpId::Hint, "hint", {{hint(20.0), hint(25.0), hint(30.0)}}},
 }};
 
-constexpr std::array<std::string_view, kBonusCount> kBonusNames{
-    "hammer", "lightning", "extra_time", "shuffle", "dynamite", "freeze"};
-
-constexpr bool table_is_consistent() {
-    for (std::size_t i = 0; i < kBonusCount; ++i) {
-        const BonusDef& d = kBonusDefs[i];
-        if (static_cast<std::size_t>(d.id) != i) return false;
-        if (d.earn_min_cleared < kBonusEarnThreshold || d.earn_weight <= 0) return false;
-        int previous_stock = 0;
-        for (const BonusLevelParams& p : d.levels) {
-            if (p.max_stock < previous_stock || p.max_stock < 1 || p.extent < 0) return false;
-            previous_stock = p.max_stock;
+// nullptr when `defs` is well formed, otherwise what is wrong.
+constexpr const char* defs_error(std::span<const PowerUpDef> defs) {
+    if (defs.size() != kPowerUpCount) return "power-up defs: wrong number of rows";
+    for (std::size_t i = 0; i < defs.size(); ++i) {
+        const PowerUpDef& d = defs[i];
+        if (power_up_index(d.id) != i) return "power-up defs: ids out of order";
+        if (d.name.empty()) return "power-up defs: empty name";
+        for (std::size_t j = 0; j < i; ++j)
+            if (defs[j].name == d.name) return "power-up defs: duplicate name";
+        for (const PowerUpTierParams& p : d.tiers) {
+            if (p.area_chebyshev < -1 || (p.area_chebyshev >= 0 && p.area_manhattan < 0))
+                return "power-up defs: bad area";
+            if ((p.rays & ~static_cast<unsigned>(kRayAll)) != 0) return "power-up defs: bad ray mask";
+            if ((p.colour_steel || p.colour_adjacent) && !p.colour)
+                return "power-up defs: steel or adjacency without colour";
+            if (p.score_multiplier < 1) return "power-up defs: multiplier below 1";
+            if (p.time_seconds < 0.0 || p.hint_seconds < 0.0) return "power-up defs: negative time";
         }
     }
-    return true;
+    return nullptr;
 }
-static_assert(table_is_consistent(), "bonus table: ids in order, caps >= 1 and non-decreasing");
+static_assert(defs_error(kPowerUpDefs) == nullptr, "power-up defs table is malformed");
 
-int clamp_level(int level) { return std::clamp(level, kMinBonusLevel, kMaxBonusLevel); }
+constexpr int clamp_tier(int tier) { return std::clamp(tier, kMinPowerUpTier, kMaxPowerUpTier); }
+
+// How many power-ups the runs of `result` earn: one per run of exactly 4,
+// two per run of 5+. rule: <tbd>
+// [verify] whether cascade steps after the swap's own match count; today
+// every step does.
+int earned_by_runs(const MoveResult& result) {
+    int earned = 0;
+    for (const CascadeStep& step : result.cascades) {
+        for (const Run& run : step.runs) {
+            const std::size_t len = run.cells.size();
+            if (len == 4) earned += 1;
+            else if (len >= 5) earned += 2;
+        }
+    }
+    return earned;
+}
 
 }  // namespace
 
-std::string_view bonus_name(BonusId id) { return kBonusNames[BonusInventory::index(id)]; }
+std::string_view power_up_name(PowerUpId id) noexcept { return kPowerUpDefs[power_up_index(id)].name; }
 
-std::optional<BonusId> bonus_from_name(std::string_view name) {
-    for (std::size_t i = 0; i < kBonusCount; ++i)
-        if (kBonusNames[i] == name) return static_cast<BonusId>(i);
+std::optional<PowerUpId> power_up_from_name(std::string_view name) noexcept {
+    for (const PowerUpDef& d : kPowerUpDefs)
+        if (d.name == name) return d.id;
     return std::nullopt;
 }
 
-const BonusLevelParams& BonusDef::at_level(int level) const {
-    return levels[static_cast<std::size_t>(clamp_level(level) - kMinBonusLevel)];
+const PowerUpTierParams& PowerUpDef::at_tier(int tier) const noexcept {
+    return tiers[static_cast<std::size_t>(clamp_tier(tier) - kMinPowerUpTier)];
 }
 
-std::span<const BonusDef, kBonusCount> bonus_defs() { return kBonusDefs; }
+std::span<const PowerUpDef, kPowerUpCount> power_up_defs() noexcept { return kPowerUpDefs; }
 
-const BonusDef& bonus_def(BonusId id) { return kBonusDefs[BonusInventory::index(id)]; }
+const PowerUpDef& power_up_def(PowerUpId id) noexcept { return kPowerUpDefs[power_up_index(id)]; }
 
-Effect bonus_effect(BonusId id, int level, const Board& board, BonusTarget target) {
-    const BonusDef& def = bonus_def(id);
-    const BonusLevelParams& p = def.at_level(level);
+void validate_power_up_defs(std::span<const PowerUpDef> defs) {
+    if (const char* error = defs_error(defs)) throw std::invalid_argument(error);
+}
 
-    Effect effect;
-    effect.bonus = id;
+void validate_power_up_tiers(const PowerUpTiers& tiers) {
+    for (std::size_t i = 0; i < kPowerUpCount; ++i)
+        if (tiers[i] < kMinPowerUpTier || tiers[i] > kMaxPowerUpTier)
+            throw std::invalid_argument("power-up tiers: tier " + std::to_string(tiers[i]) + " out of range for '" +
+                                        std::string(kPowerUpDefs[i].name) + "'");
+}
+
+PowerUpEffect power_up_effect(PowerUpId id, int tier, const Board& board, Cell at, int colour) noexcept {
+    const PowerUpTierParams& p = power_up_def(id).at_tier(tier);
+
+    PowerUpEffect effect;
+    effect.id = id;
+    effect.tier = clamp_tier(tier);
     effect.time_delta_seconds = p.time_seconds;
-    effect.freeze_seconds = p.freeze_seconds;
-    effect.reshuffle = p.reshuffle;
-    if (!def.targeted()) return effect;
+    effect.score_multiplier = p.score_multiplier;
+    effect.hint_seconds = p.hint_seconds;
+    effect.clear_colour_steel = p.colour && p.colour_steel;
+    if (!board.in_bounds(at.x, at.y)) return effect;
 
-    const int tx = target.cell.x;
-    const int ty = target.cell.y;
-    const auto covers = [&](int x, int y) {
-        const int dx = std::abs(x - tx);
-        const int dy = std::abs(y - ty);
-        switch (def.shape) {
-            case BonusShape::Diamond:
-                return dx + dy <= p.extent;
-            case BonusShape::Square:
-                return dx <= p.extent && dy <= p.extent;
-            case BonusShape::Line: {
-                const bool on_row = dy <= p.extent;
-                const bool on_column = dx <= p.extent;
-                if (p.both_axes) return on_row || on_column;
-                return target.axis == Axis::Row ? on_row : on_column;
-            }
-            case BonusShape::None:
-                break;
-        }
-        return false;
+    const int w = board.width();
+    const int h = board.height();
+    std::vector<char> mark(static_cast<std::size_t>(w) * static_cast<std::size_t>(h), 0);
+    const auto put = [&](int x, int y) {
+        if (board.in_bounds(x, y)) mark[static_cast<std::size_t>(y * w + x)] = 1;
     };
-    // Scanning only the board clips the shape to it and yields row-major order.
-    for (int y = 0; y < board.height(); ++y)
-        for (int x = 0; x < board.width(); ++x)
-            if (covers(x, y)) effect.cells_to_clear.push_back({x, y});
+
+    if (p.area_chebyshev >= 0) {
+        for (int dy = -p.area_chebyshev; dy <= p.area_chebyshev; ++dy)
+            for (int dx = -p.area_chebyshev; dx <= p.area_chebyshev; ++dx)
+                if (std::abs(dx) + std::abs(dy) <= p.area_manhattan) put(at.x + dx, at.y + dy);
+    }
+    if (p.rays != kRayNone) {
+        // [verify] each ray includes the power-up's own cell, so a lightning
+        // at the top edge still clears that cell. rule: <tbd>
+        put(at.x, at.y);
+        if (p.rays & kRayUp)
+            for (int y = at.y - 1; y >= 0; --y) put(at.x, y);
+        if (p.rays & kRayDown)
+            for (int y = at.y + 1; y < h; ++y) put(at.x, y);
+        if (p.rays & kRayLeft)
+            for (int x = at.x - 1; x >= 0; --x) put(x, at.y);
+        if (p.rays & kRayRight)
+            for (int x = at.x + 1; x < w; ++x) put(x, at.y);
+    }
+    if (p.colour) {
+        const int kind = colour >= 0 ? colour : board.at(at.x, at.y);
+        if (kind != Board::kEmpty) {
+            std::vector<char> same(mark.size(), 0);
+            for (int y = 0; y < h; ++y)
+                for (int x = 0; x < w; ++x)
+                    if (board.at(x, y) == kind) same[static_cast<std::size_t>(y * w + x)] = 1;
+            for (int y = 0; y < h; ++y) {
+                for (int x = 0; x < w; ++x) {
+                    if (!same[static_cast<std::size_t>(y * w + x)]) continue;
+                    put(x, y);
+                    if (p.colour_adjacent) {
+                        // [verify] "adjacent" read as the four orthogonal
+                        // neighbours. rule: <tbd>
+                        put(x - 1, y);
+                        put(x + 1, y);
+                        put(x, y - 1);
+                        put(x, y + 1);
+                    }
+                }
+            }
+        }
+    }
+
+    // Scanning in row-major order sorts and de-duplicates; skip empty cells.
+    for (int y = 0; y < h; ++y)
+        for (int x = 0; x < w; ++x)
+            if (mark[static_cast<std::size_t>(y * w + x)] && board.at(x, y) != Board::kEmpty)
+                effect.cells_to_clear.push_back({x, y});
     return effect;
 }
 
-int BonusInventory::cap(BonusId id) const { return bonus_def(id).at_level(level_of(id)).max_stock; }
-
-bool BonusInventory::add(BonusId id) {
-    if (count(id) >= cap(id)) return false;
-    ++stock[index(id)];
-    return true;
+PowerUpEffect power_up_effect(const TriggeredPowerUp& triggered, const Board& board) noexcept {
+    return power_up_effect(triggered.power_up.id, triggered.power_up.tier, board, triggered.cell,
+                           triggered.power_up.kind);
 }
 
-std::vector<BonusId> BonusInventory::earn_from(const MoveResult& result, Rng& rng) {
-    // Today MoveResult carries only per-step kind counts, so "a match of 4+"
-    // is read as "a step cleared 4+ of one kind". Two separate runs of 3 in
-    // one step therefore also qualify. Switch to CascadeStep::runs when the
-    // cell-level MoveResult lands (see docs/reference/bonuses.md).
-    std::vector<BonusId> awarded;
-    for (const auto& step : result.steps) {
-        for (const auto& [kind, cleared] : step) {  // std::map: ascending kind order
-            if (cleared < kBonusEarnThreshold) continue;
-            int total_weight = 0;
-            for (const BonusDef& d : kBonusDefs)
-                if (cleared >= d.earn_min_cleared && count(d.id) < cap(d.id)) total_weight += d.earn_weight;
-            if (total_weight == 0) continue;  // every eligible bonus is full: pickup lost
-            int roll = rng.below(total_weight);
-            for (const BonusDef& d : kBonusDefs) {
-                if (cleared < d.earn_min_cleared || count(d.id) >= cap(d.id)) continue;
-                if (roll < d.earn_weight) {
-                    add(d.id);
-                    awarded.push_back(d.id);
-                    break;
-                }
-                roll -= d.earn_weight;
-            }
-        }
-    }
-    return awarded;
+PowerUpLayer::PowerUpLayer(int w, int h) : width(w), height(h) {
+    if (w < 1 || h < 1) throw std::invalid_argument("power-up layer: width and height must be at least 1");
+    cells.assign(static_cast<std::size_t>(w) * static_cast<std::size_t>(h), std::nullopt);
 }
 
-UseResult BonusInventory::use(BonusId id, const Board& board, BonusTarget target) {
-    if (count(id) <= 0) return {std::nullopt, UseError::NoStock};
-    if (bonus_def(id).targeted() && !board.in_bounds(target.cell.x, target.cell.y))
-        return {std::nullopt, UseError::TargetOutOfBounds};
-    --stock[index(id)];
-    return {bonus_effect(id, level_of(id), board, target), UseError::None};
+std::optional<PowerUp> PowerUpLayer::at(Cell c) const noexcept {
+    if (!in_bounds(c) || index(c) >= cells.size()) return std::nullopt;
+    return cells[index(c)];
 }
 
-bool BonusInventory::upgrade(BonusId id) {
-    if (level_of(id) >= kMaxBonusLevel) return false;
-    ++level[index(id)];
-    return true;
+void PowerUpLayer::set(Cell c, PowerUp p) noexcept {
+    if (in_bounds(c) && index(c) < cells.size()) cells[index(c)] = p;
 }
 
-std::string BonusInventory::to_text() const {
-    std::string out;
-    for (std::size_t i = 0; i < kBonusCount; ++i) {
-        out += kBonusNames[i];
-        out += ' ';
-        out += std::to_string(stock[i]);
-        out += ' ';
-        out += std::to_string(level[i]);
-        out += '\n';
-    }
+void PowerUpLayer::erase(Cell c) noexcept {
+    if (in_bounds(c) && index(c) < cells.size()) cells[index(c)].reset();
+}
+
+void PowerUpLayer::clear() noexcept { std::fill(cells.begin(), cells.end(), std::nullopt); }
+
+int PowerUpLayer::count() const noexcept {
+    return static_cast<int>(std::count_if(cells.begin(), cells.end(), [](const auto& c) { return c.has_value(); }));
+}
+
+std::vector<PowerUpPlacement> PowerUpLayer::entries() const {
+    std::vector<PowerUpPlacement> out;
+    for (int y = 0; y < height; ++y)
+        for (int x = 0; x < width; ++x)
+            if (const auto p = at({x, y})) out.push_back({{x, y}, *p});
     return out;
 }
 
-BonusInventory BonusInventory::from_text(std::string_view text) {
-    BonusInventory inv;
-    std::array<bool, kBonusCount> seen{};
-    std::istringstream lines{std::string(text)};
-    std::string line;
-    while (std::getline(lines, line)) {
-        if (line.find_first_not_of(" \t\r") == std::string::npos) continue;
-        std::istringstream fields(line);
-        std::string name;
-        int stock_value = 0;
-        int level_value = 0;
-        std::string extra;
-        if (!(fields >> name >> stock_value >> level_value) || (fields >> extra))
-            throw std::invalid_argument("bonus inventory: malformed line '" + line + "'");
-        const auto id = bonus_from_name(name);
-        if (!id) throw std::invalid_argument("bonus inventory: unknown bonus '" + name + "'");
-        const std::size_t i = index(*id);
-        if (seen[i]) throw std::invalid_argument("bonus inventory: duplicate bonus '" + name + "'");
-        seen[i] = true;
-        if (level_value < kMinBonusLevel || level_value > kMaxBonusLevel)
-            throw std::invalid_argument("bonus inventory: level out of range for '" + name + "'");
-        inv.level[i] = level_value;
-        if (stock_value < 0 || stock_value > inv.cap(*id))
-            throw std::invalid_argument("bonus inventory: stock out of range for '" + name + "'");
-        inv.stock[i] = stock_value;
+void PowerUpLayer::walk(PowerUpLayer& layer, const MoveResult& result, std::vector<TriggeredPowerUp>* fired) noexcept {
+    // rule: <tbd> power-ups move with their pieces and trigger wherever the
+    // piece is when it is cleared, by a match, a totem or another power-up.
+    if (result.swap) {
+        const Cell a = (*result.swap)[0];
+        const Cell b = (*result.swap)[1];
+        if (layer.in_bounds(a) && layer.in_bounds(b)) std::swap(layer.cells[layer.index(a)], layer.cells[layer.index(b)]);
     }
-    for (std::size_t i = 0; i < kBonusCount; ++i)
-        if (!seen[i])
-            throw std::invalid_argument("bonus inventory: missing bonus '" + std::string(kBonusNames[i]) + "'");
-    return inv;
+    std::vector<std::pair<Cell, PowerUp>> moving;
+    for (std::size_t s = 0; s < result.cascades.size(); ++s) {
+        const CascadeStep& step = result.cascades[s];
+        for (const Cell c : step.cleared) {
+            const auto p = layer.at(c);
+            if (!p) continue;
+            if (fired) fired->push_back({c, *p, static_cast<int>(s)});
+            layer.erase(c);
+        }
+        // Falls happen at once: lift every moving power-up, then drop them.
+        moving.clear();
+        for (const Fall& f : step.falls) {
+            if (const auto p = layer.at(f.from)) {
+                moving.emplace_back(f.to, *p);
+                layer.erase(f.from);
+            }
+        }
+        for (const auto& [to, p] : moving) layer.set(to, p);
+        // Spawns are new plain pieces: nothing to do.
+    }
+    if (result.shuffled) {
+        if (result.redealt) {
+            // [verify] a redeal replaces every piece, so the power-ups on
+            // them are lost. rule: <tbd>
+            layer.clear();
+        } else {
+            const std::vector<std::optional<PowerUp>> before = layer.cells;
+            for (const auto& [from, to] : result.shuffle_map) {
+                if (!layer.in_bounds(from) || !layer.in_bounds(to)) continue;
+                layer.cells[layer.index(to)] = before[layer.index(from)];
+            }
+        }
+    }
 }
 
-std::optional<BonusInventory> BonusInventory::try_from_text(std::string_view text) noexcept {
-    try {
-        return from_text(text);
-    } catch (const std::exception&) {
-        return std::nullopt;
+std::vector<TriggeredPowerUp> PowerUpLayer::triggered_by(const MoveResult& result) const noexcept {
+    std::vector<TriggeredPowerUp> fired;
+    PowerUpLayer scratch = *this;
+    walk(scratch, result, &fired);
+    return fired;
+}
+
+void PowerUpLayer::remap(const MoveResult& result) noexcept { walk(*this, result, nullptr); }
+
+int PowerUpLayer::earned_by(const MoveResult& result) noexcept {
+    // rule: <tbd> only a legal swap earns power-ups; an effect's clear_cells
+    // result does not, even when its cascades make runs. [verify]
+    if (!result.swap) return 0;
+    return earned_by_runs(result);
+}
+
+std::vector<PowerUpPlacement> PowerUpLayer::place_from_move(const MoveResult& result, const Board& board, Rng& rng,
+                                                            const PowerUpSet& unlocked, const PowerUpTiers& tiers) {
+    validate_power_up_tiers(tiers);
+    if (board.width() != width || board.height() != height ||
+        cells.size() != static_cast<std::size_t>(width) * static_cast<std::size_t>(height))
+        throw std::invalid_argument("power-up layer: size differs from the board");
+
+    std::vector<PowerUpPlacement> placed;
+    const int earned = earned_by(result);
+    if (earned == 0) return placed;
+
+    std::vector<PowerUpId> pool;
+    for (const PowerUpDef& d : kPowerUpDefs)
+        if (unlocked[power_up_index(d.id)]) pool.push_back(d.id);
+    if (pool.empty()) return placed;
+
+    std::vector<Cell> plain;
+    for (int y = 0; y < height; ++y)
+        for (int x = 0; x < width; ++x)
+            if (board.at(x, y) != Board::kEmpty && !has({x, y})) plain.push_back({x, y});
+
+    for (int i = 0; i < earned && !plain.empty(); ++i) {
+        // rule: <tbd> [verify] the id is a uniform pick among the unlocked
+        // power-ups. Draw order: id first, then cell.
+        const PowerUpId id = pool[static_cast<std::size_t>(rng.below(static_cast<int>(pool.size())))];
+        // rule: <tbd> placed on a random plain piece.
+        const std::size_t pick = static_cast<std::size_t>(rng.below(static_cast<int>(plain.size())));
+        const Cell c = plain[pick];
+        plain.erase(plain.begin() + static_cast<std::ptrdiff_t>(pick));
+        const PowerUp p{id, tiers[power_up_index(id)], board.at(c.x, c.y)};
+        set(c, p);
+        placed.push_back({c, p});
     }
+    return placed;
 }
 
 }  // namespace montezuma

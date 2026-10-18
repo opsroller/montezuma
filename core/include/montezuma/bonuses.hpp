@@ -3,11 +3,16 @@
 
 #pragma once
 
+// On-board power-ups (WP-07). A power-up sits on a board piece, moves with it
+// through falls and shuffles, and triggers when that piece is cleared. This
+// header computes everything as data; the game layer applies it (clears
+// cells through Board::clear_cells, changes the timer, scales the score,
+// shows hints). See docs/reference/bonuses.md.
+
 #include <array>
 #include <cstddef>
 #include <optional>
 #include <span>
-#include <string>
 #include <string_view>
 #include <vector>
 
@@ -16,135 +21,204 @@
 
 namespace montezuma {
 
-// Bonus ids from the contracts doc ("Totem and bonus ids"). The enum order is
-// the stable index used by BonusInventory and the serialised form; append new
-// ids at the end, never reorder.
-enum class BonusId { Hammer, Lightning, ExtraTime, Shuffle, Dynamite, Freeze };
+// Power-up ids. The enum order is the stable index used by PowerUpSet,
+// PowerUpTiers and the defs table; append new ids at the end, never reorder.
+enum class PowerUpId { Tnt, ColorClear, Lightning, Clock, Multiplier, Hint };
 
-inline constexpr std::size_t kBonusCount = 6;
-inline constexpr int kMinBonusLevel = 1;
-inline constexpr int kMaxBonusLevel = 3;  // [verify] placeholder until WP-03
+inline constexpr std::size_t kPowerUpCount = 6;
+inline constexpr int kMinPowerUpTier = 1;
+inline constexpr int kMaxPowerUpTier = 3;
 
-// Fewest pieces of one kind a cascade step must clear to earn any pickup.
-// The rules spec says "a match of 4 or more" ([verify] there too).
-inline constexpr int kBonusEarnThreshold = 4;
+constexpr std::size_t power_up_index(PowerUpId id) { return static_cast<std::size_t>(id); }
 
-// Contract id string: "hammer", "lightning", "extra_time", "shuffle",
-// "dynamite", "freeze".
-std::string_view bonus_name(BonusId id);
-std::optional<BonusId> bonus_from_name(std::string_view name);
+// Contract id string: "tnt", "color_clear", "lightning", "clock",
+// "multiplier", "hint". Case-sensitive.
+std::string_view power_up_name(PowerUpId id) noexcept;
+std::optional<PowerUpId> power_up_from_name(std::string_view name) noexcept;
 
-// How a targeted bonus picks its cells.
-enum class BonusShape {
-    None,     // untargeted: time, freeze or reshuffle
-    Diamond,  // cells within Manhattan distance `extent` of the target (hammer)
-    Line,     // the target's row or column, `extent` lines either side (lightning)
-    Square,   // cells within Chebyshev distance `extent` of the target (dynamite)
+// Straight lines a power-up clears from its cell, as a bit mask.
+enum PowerUpRay : unsigned {
+    kRayNone = 0,
+    kRayUp = 1u << 0,
+    kRayDown = 1u << 1,
+    kRayLeft = 1u << 2,
+    kRayRight = 1u << 3,
+    kRayAll = kRayUp | kRayDown | kRayLeft | kRayRight,
 };
 
-// Effect parameters at one upgrade level.
-struct BonusLevelParams {
-    int max_stock = 0;          // how many of this bonus the player may hold
-    int extent = 0;             // shape size, see BonusShape
-    bool both_axes = false;     // Line only: clear the row and the column
-    double time_seconds = 0.0;  // ExtraTime: seconds added to the level timer
-    double freeze_seconds = 0.0;  // Freeze: seconds the timer stops
-    bool reshuffle = false;     // Shuffle: reorder the board's pieces
+// What a power-up does at one tier. Fields that do not apply keep their
+// defaults; the effect is the union of every part that is set.
+struct PowerUpTierParams {
+    // Area around the cell: |dx| <= area_chebyshev && |dy| <= area_chebyshev
+    // && |dx| + |dy| <= area_manhattan. -1 means no area.
+    int area_chebyshev = -1;
+    int area_manhattan = 0;
+    // Lines from the cell (PowerUpRay mask). Each ray includes the cell.
+    unsigned rays = kRayNone;
+    // Every piece of the triggering piece's colour.
+    bool colour = false;
+    // Also the colour's steel pieces (reported as a flag, see PowerUpEffect).
+    bool colour_steel = false;
+    // Also every piece orthogonally next to a colour cell.
+    bool colour_adjacent = false;
+    double time_seconds = 0.0;
+    int score_multiplier = 1;
+    double hint_seconds = 0.0;
 };
 
-// One row of the tuning table: how a bonus is earned and what it does.
-struct BonusDef {
-    BonusId id;
-    BonusShape shape;
-    // Earned from a cascade step that clears at least this many of one kind.
-    int earn_min_cleared;
-    // Relative chance among the bonuses eligible for a pickup.
-    int earn_weight;
-    // Index 0 is level 1.
-    std::array<BonusLevelParams, kMaxBonusLevel> levels;
+// One row of the defs table.
+struct PowerUpDef {
+    PowerUpId id;
+    std::string_view name;
+    // Index 0 is tier 1.
+    std::array<PowerUpTierParams, kMaxPowerUpTier> tiers;
 
-    bool targeted() const { return shape != BonusShape::None; }
-    const BonusLevelParams& at_level(int level) const;
+    // `tier` is clamped to [kMinPowerUpTier, kMaxPowerUpTier].
+    const PowerUpTierParams& at_tier(int tier) const noexcept;
 };
 
-// The whole tuning table, in BonusId order, and one row of it.
-std::span<const BonusDef, kBonusCount> bonus_defs();
-const BonusDef& bonus_def(BonusId id);
+// The defs table, in PowerUpId order, and one row of it.
+std::span<const PowerUpDef, kPowerUpCount> power_up_defs() noexcept;
+const PowerUpDef& power_up_def(PowerUpId id) noexcept;
 
-enum class Axis { Row, Column };
+// Throws std::invalid_argument unless `defs` has every id once in PowerUpId
+// order with a non-empty unique name, and every tier is well formed (area
+// sizes >= -1/0, known ray bits, multiplier >= 1, times >= 0, steel and
+// adjacency only with colour). The built-in table is checked at compile time.
+void validate_power_up_defs(std::span<const PowerUpDef> defs);
 
-// Where a targeted bonus is aimed. Untargeted bonuses ignore it.
-struct BonusTarget {
-    Cell cell{};
-    Axis axis = Axis::Row;  // Lightning only
+// Which power-ups the player has unlocked, by PowerUpId index.
+using PowerUpSet = std::array<bool, kPowerUpCount>;
+// The tier the player owns for each power-up, by PowerUpId index. Upgrades
+// (golden stars) belong to WP-08; here the tier is only an input.
+using PowerUpTiers = std::array<int, kPowerUpCount>;
+
+// Throws std::invalid_argument when a tier is outside [1, 3].
+void validate_power_up_tiers(const PowerUpTiers& tiers);
+
+// A power-up on a piece. `kind` is the colour of the piece it sits on,
+// recorded at placement (pieces never change colour); color_clear uses it
+// because by the time the effect is computed the piece is gone.
+struct PowerUp {
+    PowerUpId id = PowerUpId::Tnt;
+    int tier = kMinPowerUpTier;
+    int kind = Board::kEmpty;
+    bool operator==(const PowerUp&) const = default;
 };
 
-// What using a bonus should do. Computed from the board but never applied to
-// it: the game layer clears the cells (scoring and refilling them like a
-// match), changes the timer and reshuffles.
-struct Effect {
-    BonusId bonus = BonusId::Hammer;
-    std::vector<Cell> cells_to_clear;  // row-major order, unique, in bounds
+struct PowerUpPlacement {
+    Cell cell;
+    PowerUp power_up;
+    bool operator==(const PowerUpPlacement&) const = default;
+};
+
+// A power-up whose piece was cleared. `cell` is where the piece was when it
+// was cleared, `step` the index into MoveResult::cascades that cleared it.
+struct TriggeredPowerUp {
+    Cell cell;
+    PowerUp power_up;
+    int step = 0;
+    bool operator==(const TriggeredPowerUp&) const = default;
+};
+
+// What a triggered power-up should do. Computed from the board but never
+// applied to it.
+struct PowerUpEffect {
+    PowerUpId id = PowerUpId::Tnt;
+    int tier = kMinPowerUpTier;
+    // Occupied, in bounds, row-major, no duplicates. Pass to
+    // Board::clear_cells.
+    std::vector<Cell> cells_to_clear;
     double time_delta_seconds = 0.0;
-    double freeze_seconds = 0.0;
-    bool reshuffle = false;
+    // Multiplies the score of the move that triggered it; 1 means unchanged.
+    int score_multiplier = 1;
+    // Highlight every legal move for this long; 0 means no hint.
+    double hint_seconds = 0.0;
+    // Also clear the steel pieces of the colour (color_clear L2+). The board
+    // has no steel pieces yet; the game layer acts on this flag.
+    bool clear_colour_steel = false;
+    bool operator==(const PowerUpEffect&) const = default;
 };
 
-// The effect of `id` at `level` aimed at `target`, clipped to the board.
-// Does not touch any inventory; useful to preview a target. `level` is
-// clamped to [kMinBonusLevel, kMaxBonusLevel].
-Effect bonus_effect(BonusId id, int level, const Board& board, BonusTarget target = {});
+// The effect of `id` at `tier` triggered at `at`. `colour` is the triggering
+// piece's kind (TriggeredPowerUp::power_up.kind); when negative, the piece
+// now at `at` is used. `tier` is clamped to [1, 3]; an out-of-bounds `at`
+// gives no cells. Never throws for game reasons.
+PowerUpEffect power_up_effect(PowerUpId id, int tier, const Board& board, Cell at,
+                              int colour = Board::kEmpty) noexcept;
+PowerUpEffect power_up_effect(const TriggeredPowerUp& triggered, const Board& board) noexcept;
 
-enum class UseError {
-    None,
-    NoStock,            // none of this bonus held
-    TargetOutOfBounds,  // targeted bonus aimed outside the board
-};
+// Which cells hold a power-up: plain data, one optional entry per cell in
+// row-major order (y * width + x). A cell without one holds a plain piece
+// (or nothing).
+//
+// Per move, the game layer does (see docs/reference/bonuses.md):
+//   1. fired = layer.triggered_by(result);   // before remap
+//   2. layer.remap(result);
+//   3. for each fired power-up: e = power_up_effect(...); apply time,
+//      multiplier and hint; if e.cells_to_clear is non-empty, r =
+//      board.clear_cells(e.cells_to_clear) and repeat 1-3 with r. That is
+//      how chained triggers resolve: a power-up whose cells hold another
+//      power-up fires it through the next triggered_by.
+//   4. layer.place_from_move(swap_result, board, rng, unlocked, tiers) once
+//      the chain is done.
+struct PowerUpLayer {
+    int width = 0;
+    int height = 0;
+    std::vector<std::optional<PowerUp>> cells;
 
-struct UseResult {
-    std::optional<Effect> effect;  // set exactly when error == None
-    UseError error = UseError::None;
-    explicit operator bool() const { return effect.has_value(); }
-};
+    PowerUpLayer() = default;
+    // Throws std::invalid_argument when width or height is below 1.
+    PowerUpLayer(int width, int height);
+    explicit PowerUpLayer(const Board& board) : PowerUpLayer(board.width(), board.height()) {}
 
-// The player's bonuses: plain data so the progress package can save it
-// between levels. Invariant: 0 <= stock[i] <= cap and
-// kMinBonusLevel <= level[i] <= kMaxBonusLevel.
-struct BonusInventory {
-    std::array<int, kBonusCount> stock{};
-    std::array<int, kBonusCount> level{1, 1, 1, 1, 1, 1};
+    bool operator==(const PowerUpLayer&) const = default;
 
-    bool operator==(const BonusInventory&) const = default;
+    bool in_bounds(Cell c) const noexcept { return c.x >= 0 && c.y >= 0 && c.x < width && c.y < height; }
+    // Empty for a cell without a power-up or out of bounds.
+    std::optional<PowerUp> at(Cell c) const noexcept;
+    bool has(Cell c) const noexcept { return at(c).has_value(); }
+    // Out-of-bounds cells are ignored.
+    void set(Cell c, PowerUp p) noexcept;
+    void erase(Cell c) noexcept;
+    void clear() noexcept;
+    int count() const noexcept;
+    // Every power-up, row-major.
+    std::vector<PowerUpPlacement> entries() const;
 
-    int count(BonusId id) const { return stock[index(id)]; }
-    int level_of(BonusId id) const { return level[index(id)]; }
-    // Max stock at the current upgrade level.
-    int cap(BonusId id) const;
+    // Power-ups whose pieces `result` cleared, following each piece through
+    // the swap and the falls of earlier steps. Ordered by step, then by
+    // CascadeStep::cleared order (row-major). Call before remap.
+    std::vector<TriggeredPowerUp> triggered_by(const MoveResult& result) const noexcept;
 
-    // Adds one pickup. False (and no change) when already at the cap.
-    bool add(BonusId id);
+    // Moves power-ups with their pieces through `result`: the swap, then per
+    // step the cleared pieces (their power-ups are removed) and the falls,
+    // then the shuffle_map. A redeal drops every power-up. Cells outside the
+    // layer are ignored.
+    void remap(const MoveResult& result) noexcept;
 
-    // Awards pickups for one legal move: one per (cascade step, kind) that
-    // cleared at least kBonusEarnThreshold pieces, chosen by weight among the
-    // bonuses that step qualifies for and that are below their cap. Returns
-    // the awarded ids in award order (for bonus_earned / bonus_changed).
-    std::vector<BonusId> earn_from(const MoveResult& result, Rng& rng);
+    // Places power-ups earned by a legal swap and returns them in placement
+    // order: one per run of exactly 4 and two per run of 5+, over every step
+    // of `result`. Nothing for a clear_cells result (no swap). Each one picks
+    // an id uniformly among `unlocked`, then a plain piece (occupied, no
+    // power-up) uniformly in row-major order, drawing from `rng` in that
+    // order. Stops early, without drawing, when no plain piece is left;
+    // draws nothing when nothing is earned or nothing is unlocked.
+    // Call after remap(result), on the board after the move.
+    // Throws std::invalid_argument for a bad `tiers` table or a layer whose
+    // size differs from the board's.
+    std::vector<PowerUpPlacement> place_from_move(const MoveResult& result, const Board& board, Rng& rng,
+                                                  const PowerUpSet& unlocked, const PowerUpTiers& tiers);
 
-    // Spends one `id` and returns its effect. On error nothing changes.
-    UseResult use(BonusId id, const Board& board, BonusTarget target = {});
+    // How many power-ups `result` earns, before capping by plain pieces.
+    static int earned_by(const MoveResult& result) noexcept;
 
-    // Raises the upgrade level by one (between levels; cost is the progress
-    // package's concern). False at kMaxBonusLevel.
-    bool upgrade(BonusId id);
-
-    // Text form, one line per bonus: "<name> <stock> <level>\n", in BonusId
-    // order. from_text accepts lines in any order, requires every id once and
-    // validates the invariant; it throws std::invalid_argument otherwise.
-    std::string to_text() const;
-    static BonusInventory from_text(std::string_view text);
-    static std::optional<BonusInventory> try_from_text(std::string_view text) noexcept;
-
-    static std::size_t index(BonusId id) { return static_cast<std::size_t>(id); }
+private:
+    std::size_t index(Cell c) const noexcept {
+        return static_cast<std::size_t>(c.y) * static_cast<std::size_t>(width) + static_cast<std::size_t>(c.x);
+    }
+    // Walks `result`, moving entries in `layer`; appends to `fired` if set.
+    static void walk(PowerUpLayer& layer, const MoveResult& result, std::vector<TriggeredPowerUp>* fired) noexcept;
 };
 
 }  // namespace montezuma
