@@ -131,7 +131,12 @@ without the win heading. Without JavaScript it jumps to `#download`.
 
 ## Hosting
 
-GitHub Pages, deployed from `main` by a workflow owned by devops-engineer
-(requested in WP-35). The single-threaded export needs no
+**Not public yet.** Charles decides when the site goes live (2026-10-18:
+nothing is published until he says it looks good). Until then CI builds
+the site as a downloadable preview artifact only; there is no Pages
+deployment.
+
+When he approves, the target is GitHub Pages, deployed from `main` by a
+workflow owned by devops-engineer. The single-threaded export needs no
 cross-origin-isolation headers; GitHub Pages serves `.wasm` as
 `application/wasm`.
