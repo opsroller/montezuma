@@ -399,8 +399,8 @@ def atmosphere(r, p, models):
     hl = math.hypot(hx, hz)
     hx, hz = hx / hl, hz / hl
     rng = random.Random(p["seed"] + 51)
-    buffer, attempts = [], 0
-    while len(buffer) < 12 * shafts["count"]:
+    cards, attempts = [], 0
+    while len(cards) < shafts["count"]:
         attempts += 1
         if attempts > 2000:
             raise SystemExit(f"{theme}: could not place {shafts['count']} light-shaft cards off the board")
@@ -416,14 +416,11 @@ def atmosphere(r, p, models):
         if any(over_board(c, keep_out) and not inside_platform(c, p) for c in points):
             continue
         # Basis columns X (across, width), Y (toward the sun, length), Z (normal),
-        # stored row by row with the origin, as MultiMesh expects.
+        # written row by row, then the origin, as Transform3D text is.
         nx, ny, nz = -hz * uy, hz * ux - hx * uz, hx * uy  # X cross Y, unit length
         cols = [(hx * width, 0.0, hz * width), (ux * length, uy * length, uz * length), (nx, ny, nz)]
-        for row, origin in zip(range(3), (cx, cy, cz)):
-            buffer += [round(cols[0][row], 5), round(cols[1][row], 5), round(cols[2][row], 5), round(origin, 4)]
-    subs += ['[sub_resource type="MultiMesh" id="shafts"]', "transform_format = 1",
-             f"instance_count = {shafts['count']}", 'mesh = SubResource("shaft_quad")',
-             f"buffer = PackedFloat32Array({', '.join(map(str, buffer))})", ""]
+        rows = [round(cols[c][row], 5) for row in range(3) for c in range(3)]
+        cards.append(", ".join(map(str, rows + [round(cx, 4), round(cy, 4), round(cz, 4)])))
 
     # Motes drift up to lifetime x top speed (plus turbulence) from where they spawn.
     reach = dust["inner_radius"] - dust["lifetime"] * dust["speed"][1] - dust["turbulence"]
@@ -445,11 +442,16 @@ def atmosphere(r, p, models):
             f"{2 * dust['outer_radius'] + 2}, 6, {2 * dust['outer_radius'] + 2})",
             'process_material = SubResource("dust_process")', 'draw_pass_1 = SubResource("dust_quad")',
             f"material_override = {dust_mat}",
-            # Shown only where the tier has no volumetric fog. On the effects
-            # layer: it reads the depth texture, which the reflection probe
-            # must not draw (WebKit rejects the probe's depth blit).
-            "", '[node name="LightShaftCards" type="MultiMeshInstance3D" parent="." groups=["quality_fallback:volumetric_fog"]]',
-            f"layers = {FX_LAYER}", "cast_shadow = 0", "gi_mode = 0", 'multimesh = SubResource("shafts")', f"material_override = {shaft_mat}"]
+            # Shown only where the tier has no volumetric fog.
+            "", '[node name="LightShaftCards" type="Node3D" parent="." groups=["quality_fallback:volumetric_fog"]]']
+    # One plain mesh per card, not a MultiMesh: ANGLE's Metal backend aborts
+    # on paravirtual Macs drawing the instanced cards. On the effects layer:
+    # the cards read the depth texture, which the reflection probe must not
+    # draw (WebKit rejects the probe's depth blit).
+    for i, t in enumerate(cards, 1):
+        body += ["", f'[node name="Card{i:02d}" type="MeshInstance3D" parent="LightShaftCards"]',
+                 f"transform = Transform3D({t})", f"layers = {FX_LAYER}", "cast_shadow = 0", "gi_mode = 0",
+                 'mesh = SubResource("shaft_quad")', f"material_override = {shaft_mat}"]
     return subs, body
 
 

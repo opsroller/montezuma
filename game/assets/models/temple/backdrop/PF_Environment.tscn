@@ -96,12 +96,6 @@ size = Vector2(0.05, 0.05)
 
 [sub_resource type="QuadMesh" id="shaft_quad"]
 
-[sub_resource type="MultiMesh" id="shafts"]
-transform_format = 1
-instance_count = 12
-mesh = SubResource("shaft_quad")
-buffer = PackedFloat32Array(0.79575, -2.27365, -0.3838, 6.4768, 0.0, 3.5692, -0.74314, -0.1154, 0.55719, 3.24712, 0.54812, -3.965, 0.77382, -1.97743, -0.3838, 9.1347, 0.0, 3.10418, -0.74314, -0.3479, 0.54183, 2.82406, 0.54812, 3.5799, 0.7648, -2.2106, -0.3838, -7.2846, 0.0, 3.47022, -0.74314, -0.1649, 0.53552, 3.15707, 0.54812, 6.6934, 0.96042, -2.04995, -0.3838, -7.7186, 0.0, 3.21804, -0.74314, -0.291, 0.67249, 2.92764, 0.54812, -2.5414, 0.81992, -1.87085, -0.3838, -11.0012, 0.0, 2.93688, -0.74314, -0.4316, 0.57412, 2.67186, 0.54812, 4.6658, 0.97795, -1.74616, -0.3838, -4.9309, 0.0, 2.74113, -0.74314, -0.5294, 0.68477, 2.49378, 0.54812, 7.9127, 0.76343, -1.89456, -0.3838, 3.5441, 0.0, 2.9741, -0.74314, -0.413, 0.53456, 2.70571, 0.54812, 8.9492, 0.90228, -1.69815, -0.3838, -1.494, 0.0, 2.66578, -0.74314, -0.5671, 0.63178, 2.42522, 0.54812, 12.3726, 0.52554, -2.15363, -0.3838, 6.986, 0.0, 3.38079, -0.74314, -0.2096, 0.36799, 3.07571, 0.54812, 5.3557, 0.7351, -1.64358, -0.3838, -7.6479, 0.0, 2.58011, -0.74314, -0.6099, 0.51472, 2.34728, 0.54812, -4.1531, 0.95295, -1.68431, -0.3838, -5.2701, 0.0, 2.64405, -0.74314, -0.578, 0.66726, 2.40545, 0.54812, -6.4214, 1.01982, -2.24682, -0.3838, -3.1376, 0.0, 3.52708, -0.74314, -0.1365, 0.71409, 3.20879, 0.54812, -6.3882)
-
 [node name="Environment" type="Node3D"]
 
 [node name="Stone" type="MeshInstance3D" parent="."]
@@ -199,9 +193,100 @@ process_material = SubResource("dust_process")
 draw_pass_1 = SubResource("dust_quad")
 material_override = ExtResource("12")
 
-[node name="LightShaftCards" type="MultiMeshInstance3D" parent="." groups=["quality_fallback:volumetric_fog"]]
+[node name="LightShaftCards" type="Node3D" parent="." groups=["quality_fallback:volumetric_fog"]]
+
+[node name="Card01" type="MeshInstance3D" parent="LightShaftCards"]
+transform = Transform3D(0.79575, -2.27365, -0.3838, 0.0, 3.5692, -0.74314, 0.55719, 3.24712, 0.54812, 6.4768, -0.1154, -3.965)
 layers = 2
 cast_shadow = 0
 gi_mode = 0
-multimesh = SubResource("shafts")
+mesh = SubResource("shaft_quad")
+material_override = ExtResource("13")
+
+[node name="Card02" type="MeshInstance3D" parent="LightShaftCards"]
+transform = Transform3D(0.77382, -1.97743, -0.3838, 0.0, 3.10418, -0.74314, 0.54183, 2.82406, 0.54812, 9.1347, -0.3479, 3.5799)
+layers = 2
+cast_shadow = 0
+gi_mode = 0
+mesh = SubResource("shaft_quad")
+material_override = ExtResource("13")
+
+[node name="Card03" type="MeshInstance3D" parent="LightShaftCards"]
+transform = Transform3D(0.7648, -2.2106, -0.3838, 0.0, 3.47022, -0.74314, 0.53552, 3.15707, 0.54812, -7.2846, -0.1649, 6.6934)
+layers = 2
+cast_shadow = 0
+gi_mode = 0
+mesh = SubResource("shaft_quad")
+material_override = ExtResource("13")
+
+[node name="Card04" type="MeshInstance3D" parent="LightShaftCards"]
+transform = Transform3D(0.96042, -2.04995, -0.3838, 0.0, 3.21804, -0.74314, 0.67249, 2.92764, 0.54812, -7.7186, -0.291, -2.5414)
+layers = 2
+cast_shadow = 0
+gi_mode = 0
+mesh = SubResource("shaft_quad")
+material_override = ExtResource("13")
+
+[node name="Card05" type="MeshInstance3D" parent="LightShaftCards"]
+transform = Transform3D(0.81992, -1.87085, -0.3838, 0.0, 2.93688, -0.74314, 0.57412, 2.67186, 0.54812, -11.0012, -0.4316, 4.6658)
+layers = 2
+cast_shadow = 0
+gi_mode = 0
+mesh = SubResource("shaft_quad")
+material_override = ExtResource("13")
+
+[node name="Card06" type="MeshInstance3D" parent="LightShaftCards"]
+transform = Transform3D(0.97795, -1.74616, -0.3838, 0.0, 2.74113, -0.74314, 0.68477, 2.49378, 0.54812, -4.9309, -0.5294, 7.9127)
+layers = 2
+cast_shadow = 0
+gi_mode = 0
+mesh = SubResource("shaft_quad")
+material_override = ExtResource("13")
+
+[node name="Card07" type="MeshInstance3D" parent="LightShaftCards"]
+transform = Transform3D(0.76343, -1.89456, -0.3838, 0.0, 2.9741, -0.74314, 0.53456, 2.70571, 0.54812, 3.5441, -0.413, 8.9492)
+layers = 2
+cast_shadow = 0
+gi_mode = 0
+mesh = SubResource("shaft_quad")
+material_override = ExtResource("13")
+
+[node name="Card08" type="MeshInstance3D" parent="LightShaftCards"]
+transform = Transform3D(0.90228, -1.69815, -0.3838, 0.0, 2.66578, -0.74314, 0.63178, 2.42522, 0.54812, -1.494, -0.5671, 12.3726)
+layers = 2
+cast_shadow = 0
+gi_mode = 0
+mesh = SubResource("shaft_quad")
+material_override = ExtResource("13")
+
+[node name="Card09" type="MeshInstance3D" parent="LightShaftCards"]
+transform = Transform3D(0.52554, -2.15363, -0.3838, 0.0, 3.38079, -0.74314, 0.36799, 3.07571, 0.54812, 6.986, -0.2096, 5.3557)
+layers = 2
+cast_shadow = 0
+gi_mode = 0
+mesh = SubResource("shaft_quad")
+material_override = ExtResource("13")
+
+[node name="Card10" type="MeshInstance3D" parent="LightShaftCards"]
+transform = Transform3D(0.7351, -1.64358, -0.3838, 0.0, 2.58011, -0.74314, 0.51472, 2.34728, 0.54812, -7.6479, -0.6099, -4.1531)
+layers = 2
+cast_shadow = 0
+gi_mode = 0
+mesh = SubResource("shaft_quad")
+material_override = ExtResource("13")
+
+[node name="Card11" type="MeshInstance3D" parent="LightShaftCards"]
+transform = Transform3D(0.95295, -1.68431, -0.3838, 0.0, 2.64405, -0.74314, 0.66726, 2.40545, 0.54812, -5.2701, -0.578, -6.4214)
+layers = 2
+cast_shadow = 0
+gi_mode = 0
+mesh = SubResource("shaft_quad")
+material_override = ExtResource("13")
+
+[node name="Card12" type="MeshInstance3D" parent="LightShaftCards"]
+transform = Transform3D(1.01982, -2.24682, -0.3838, 0.0, 3.52708, -0.74314, 0.71409, 3.20879, 0.54812, -3.1376, -0.1365, -6.3882)
+layers = 2
+cast_shadow = 0
+gi_mode = 0
+mesh = SubResource("shaft_quad")
 material_override = ExtResource("13")

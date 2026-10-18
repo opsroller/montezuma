@@ -18,7 +18,8 @@ uniform sampler2D depth_texture : hint_depth_texture, filter_nearest;
 varying float phase;
 
 void vertex() {
-	phase = fract(sin(float(INSTANCE_ID) * 12.9898) * 43758.5453) * 6.2832;
+	vec2 origin = (MODEL_MATRIX * vec4(0.0, 0.0, 0.0, 1.0)).xz;
+	phase = fract(sin(dot(origin, vec2(12.9898, 78.233))) * 43758.5453) * 6.2832;
 }
 
 void fragment() {

@@ -68,8 +68,11 @@ in a sunbeam read. They exist only on the desktop tiers, with the fog.
 
 The Mobile and Compatibility renderers have no volumetric fog. The cards
 that stand in for it are twelve soft additive quads along the sun's
-direction, beside the platform, drawn as one `MultiMesh`: one draw call,
-which the web build's draw-call budget has room for. The generator checks
+direction, beside the platform: twelve draw calls, which the web build's
+draw-call budget has room for. They are plain meshes rather than one
+instanced `MultiMesh`, because ANGLE's Metal backend, which runs the
+Compatibility renderer on macOS, aborts drawing them instanced on a
+virtual Mac GPU. The generator checks
 every point of every card against the game camera at the distances it
 uses from a wide window to a tall phone, and places them again until none
 draws over the board.
