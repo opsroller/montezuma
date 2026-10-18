@@ -17,6 +17,7 @@
 #include <godot_cpp/classes/callback_tweener.hpp>
 #include <godot_cpp/classes/interval_tweener.hpp>
 #include <godot_cpp/classes/viewport.hpp>
+#include <godot_cpp/classes/visual_instance3d.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/math.hpp>
 
@@ -32,6 +33,19 @@ namespace {
 real_t r(double v) { return static_cast<real_t>(v); }
 
 const Vector2i kNoCell(-1, -1);
+
+// Bounds of every mesh under `node`, in `node`'s parent space.
+void grow_bounds(const Node3D* node, const Transform3D& to_parent, AABB& box, bool& any) {
+    const Transform3D xf = to_parent * node->get_transform();
+    if (const auto* vi = Object::cast_to<VisualInstance3D>(node)) {
+        const AABB local = xf.xform(vi->get_aabb());
+        box = any ? box.merge(local) : local;
+        any = true;
+    }
+    for (int i = 0; i < node->get_child_count(); ++i) {
+        if (const auto* child = Object::cast_to<Node3D>(node->get_child(i))) grow_bounds(child, xf, box, any);
+    }
+}
 
 anim::Cell to_cell(const Variant& v) {
     const Vector2i c = v;
@@ -94,7 +108,9 @@ struct BoardView3D::PlanHooks {
             ->set_ease(fall ? Tween::EASE_IN : Tween::EASE_IN_OUT);
     }
 
-    void on_clear(const anim::Phase& p, const Slot& slot, anim::Cell) {
+    void on_clear(const anim::Phase& p, const Slot& slot, anim::Cell cell) {
+        tween->tween_callback(callable_mp(view, &BoardView3D::spawn_match_fx).bind(view->cell_position(cell.x, cell.y)))
+            ->set_delay(p.start);
         if (!slot.node) return;
         const real_t pop = r(feel::kClearPopScale);
         tween->tween_property(slot.node, "scale", Vector3(pop, pop, pop), feel::kClearPopSeconds)
@@ -148,6 +164,19 @@ void BoardView3D::set_cell_size(double v) {
     }
 }
 
+void BoardView3D::set_theme(const String& v) {
+    if (v == theme_) return;
+    theme_ = v;
+    if (environment_) {
+        environment_->queue_free();
+        environment_ = nullptr;
+    }
+    if (board_.is_valid() && is_inside_tree()) {
+        stop_animation();
+        rebuild();
+    }
+}
+
 Vector3 BoardView3D::cell_position(int x, int y) const {
     const layout::Point p = layout::cell_center(grid_, x, y);
     return Vector3(r(p.x), 0.0f, r(p.z));
@@ -184,20 +213,46 @@ void BoardView3D::rebuild() {
         slab_->queue_free();
         slab_ = nullptr;
     }
+    if (highlight_) {
+        highlight_->queue_free();
+        highlight_ = nullptr;
+    }
     grid_.width = board_->get_width();
     grid_.height = board_->get_height();
     gesture_.reset(grid_.width, grid_.height);
-    // Pooled pieces were built for the old cell size.
+    // Pooled pieces were built for the old cell size or theme.
     library_.clear();
-    library_.load(grid_.cell);
+    library_.load(grid_.cell, theme_);
 
+    // The theme's environment brings the sky and every light, so the scene
+    // around the view supplies none. It outlives redeals; a theme change drops it.
+    if (!environment_) {
+        environment_ = library_.make_environment();
+        environment_->set_name("Environment");
+        add_child(environment_);
+    }
     slab_ = library_.make_board(grid_.width, grid_.height, grid_.cell);
     slab_->set_name("Slab");
     add_child(slab_);
+    AABB box;
+    bool any = false;
+    grow_bounds(slab_, Transform3D(), box, any);
+    const Vector3 hi = box.position + box.size;
+    board_padding_ = any ? layout::board_padding(grid_, box.position.x, box.position.z, hi.x, hi.z) : 0.0;
+    highlight_ = library_.make_highlight();
+    if (highlight_) {
+        highlight_->set_name("CellHighlight");
+        highlight_lift_ = highlight_->get_position().y;  // keeps it just above the tiles
+        highlight_->set_visible(false);
+        add_child(highlight_);
+    }
     if (!pieces_root_) {
         pieces_root_ = memnew(Node3D);
         pieces_root_->set_name("Pieces");
         add_child(pieces_root_);
+        fx_root_ = memnew(Node3D);
+        fx_root_->set_name("Effects");
+        add_child(fx_root_);
     }
     pieces_.assign(static_cast<size_t>(grid_.width * grid_.height), nullptr);
     kinds_.assign(pieces_.size(), -1);
@@ -344,6 +399,14 @@ void BoardView3D::play_events(const anim::Events& events) {
 }
 
 void BoardView3D::emit_cascade_step(int step) { emit_signal("cascade_step", step); }
+
+void BoardView3D::spawn_match_fx(Vector3 position) {
+    // The burst frees itself when its particles are done.
+    Node3D* fx = library_.make_match_fx();
+    if (!fx) return;
+    fx->set_position(position);
+    fx_root_->add_child(fx);
+}
 
 void BoardView3D::redeal_in() {
     // The old pieces have shrunk away; deal the board's new layout in.
@@ -537,6 +600,10 @@ void BoardView3D::select(Vector2i cell) {
         piece->set_scale(Vector3(s, s, s));
         piece->set_position(cell_position(cell) + Vector3(0, r(grid_.cell * feel::kSelectedLiftCells), 0));
     }
+    if (highlight_) {
+        highlight_->set_position(cell_position(cell) + Vector3(0, highlight_lift_, 0));
+        highlight_->set_visible(true);
+    }
 }
 
 void BoardView3D::clear_selection() {
@@ -546,6 +613,7 @@ void BoardView3D::clear_selection() {
             piece->set_position(cell_position(selected_));
         }
     }
+    if (highlight_) highlight_->set_visible(false);
     has_selection_ = false;
 }
 
@@ -561,10 +629,14 @@ void BoardView3D::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_board_height"), &BoardView3D::get_board_height);
     ClassDB::bind_method(D_METHOD("set_cell_size", "value"), &BoardView3D::set_cell_size);
     ClassDB::bind_method(D_METHOD("get_cell_size"), &BoardView3D::get_cell_size);
+    ClassDB::bind_method(D_METHOD("set_theme", "theme"), &BoardView3D::set_theme);
+    ClassDB::bind_method(D_METHOD("get_theme"), &BoardView3D::get_theme);
+    ClassDB::bind_method(D_METHOD("get_board_padding"), &BoardView3D::get_board_padding);
     ClassDB::bind_method(D_METHOD("cell_at_screen", "screen_position"), &BoardView3D::cell_at_screen);
 
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "cell_size", PROPERTY_HINT_RANGE, "0.25,4,0.05"), "set_cell_size",
                  "get_cell_size");
+    ADD_PROPERTY(PropertyInfo(Variant::STRING, "theme"), "set_theme", "get_theme");
     ADD_SIGNAL(MethodInfo("swap_requested", PropertyInfo(Variant::VECTOR2I, "a"), PropertyInfo(Variant::VECTOR2I, "b")));
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "animation_speed", PROPERTY_HINT_RANGE, "0.1,10,0.05"),
                  "set_animation_speed", "get_animation_speed");

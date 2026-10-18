@@ -162,6 +162,9 @@ mini games can swap the whole look without code changes:
 Each value is a `res://` path to a `PackedScene`. `BoardView3D` takes a
 `theme` property (empty means `default_theme`), reads the manifest once and
 falls back to a placeholder primitive for any name the theme lacks.
+**Implemented** for `artifact_*`, `board`, `environment`, `cell_highlight`
+and `fx_match` in `extension/src/board/piece_library.cpp`; see
+[Board view](board-view.md#piecelibrary-c-only).
 
 Names, theme-neutral: `artifact_0` … `artifact_6` (by kind index; origin at
 the cell centre on the board plane), `board` (replaces the slab; tile tops

@@ -443,6 +443,15 @@ void test_pointer_rules() {
 
 }  // namespace
 
+void test_board_padding_measures_the_frame() {
+    layout::Grid g{8, 8, 1.0};
+    check(near(layout::board_padding(g, -4.2, -4.2, 4.2, 4.2), 0.2), "slab 0.2 past the cells");
+    check(near(layout::board_padding(g, -4.0, -4.7, 4.0, 4.1), 0.7), "widest side wins");
+    check(near(layout::board_padding(g, -3.0, -3.0, 3.0, 3.0), 0.0), "inside the cells is no padding");
+    g.cell = 2.0;
+    check(near(layout::board_padding(g, -9.0, -8.0, 8.0, 8.0), 0.5), "padding is in cells");
+}
+
 int main() {
     test_cell_centres_are_symmetric();
     test_cell_at_round_trips_every_cell();
@@ -450,6 +459,7 @@ int main() {
     test_fit_distance_is_tight();
     test_tall_screens_need_more_distance();
     test_fit_handles_straight_down_and_margin();
+    test_board_padding_measures_the_frame();
     test_plan_orders_phases_in_time();
     test_fall_timing_follows_gravity();
     test_walk_ends_where_the_rules_did();
