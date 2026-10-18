@@ -64,14 +64,10 @@ Each role loads `engineering-practices` plus its own plugin from
 | `project-manager` | `docs/reference/work-packages.md` status, plan changes | Coordinator: staffs packages, holds the owner's standing rules |
 | `code-reviewer` | — (reviews every PR) | Uses the review notes below |
 
-Until opsroller/montezuma#3 (GDExtension scaffold) merges, the port
-thread ("Plan the faithful port") owns `extension/`, `game/` and
-`thirdparty/`; other roles build against the contracts and wait for it
-before touching those folders.
-
 Shared, append-only for everyone: `game/assets/PROVENANCE.md`, `CREDITS.md`,
 `CHANGELOG.md` (generated). `extension/src/register_types.cpp`: each role
-adds one `register_<area>()` call, nothing else.
+adds one `register_<area>()` call, nothing else. `game/project.godot`: each
+role adds only its own autoload, input-action or setting entries.
 
 ## Conventional Commit scopes
 
