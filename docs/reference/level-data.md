@@ -223,5 +223,6 @@ Parsing uses nlohmann/json 3.11.3 (MIT), vendored at
 
 nlohmann/json 3.11.3 is MIT-licensed, Copyright (c) 2013-2023 Niels
 Lohmann. Its license text is in `thirdparty/nlohmann/LICENSE.MIT` and must
-ship with every copy, binaries included. The project's `CREDITS.md` entry
-follows once that file exists.
+ship with every copy, binaries included: `tools/release/notices.py` puts
+it in `THIRD-PARTY-NOTICES.txt`, and `CREDITS.md` lists it under
+Third-party works.

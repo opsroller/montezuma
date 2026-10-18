@@ -42,6 +42,10 @@ cp game/project.godot "$outdir/project.godot.orig"
 trap 'cp "$outdir/project.godot.orig" game/project.godot; rm -f "$outdir/project.godot.orig"' EXIT
 sed -i.bak "s|^config/name=.*|&\nconfig/version=\"$version\"|" game/project.godot && rm -f game/project.godot.bak
 
+# Credits and license files the game reads from res:// (generated, not
+# committed; the preset includes them by name).
+python3 "$here/game-files.py" stage game
+
 # The import pass prints errors for libraries of other targets; the export
 # below is what must succeed, so its log is the one that gates.
 "$godot" --headless --path game --import >"$outdir/logs/$name.import.log" 2>&1 || true
@@ -54,6 +58,8 @@ fi
 for f in montezuma.js montezuma.wasm montezuma.pck montezuma.side.wasm "$(basename "$lib")"; do
   [[ -f "$stage/$f" ]] || { ls -l "$stage" >&2; echo "export is missing $f" >&2; exit 1; }
 done
+
+python3 "$here/game-files.py" check game "$stage/montezuma.pck"
 
 cp LICENSE "$stage/LICENSE.txt"
 python3 "$here/notices.py" "$stage"

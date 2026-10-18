@@ -159,8 +159,10 @@ Data sources and stubs:
 - **Trophies:** ids `t01`…`t09` in the scene, all shown as not earned
   until WP-08 supplies earned ids.
 - **Credits:** reads `res://CREDITS.md` (headings, bullets, `https` links,
-  bold); shows `credits.fallback` until the build packages the root
-  `CREDITS.md` there.
+  bold), the root `CREDITS.md` copied in by the CMake build and packed
+  into every export; shows `credits.fallback` if the file is missing. The
+  export also packs `res://THIRD-PARTY-NOTICES.txt`, `res://LICENSE.txt`
+  and `res://SOURCE.txt` (see the build pipeline reference).
 - **Intro:** pages `intro.1`…`intro.3` are placeholders for the game designer.
 
 ## Input
@@ -246,7 +248,7 @@ Translator context:
 | `settings.difficulty.normal/hard` | Match the level files' `normal` / `hard` keys (`DIFF-*`) |
 | `credits.fallback` | Shown when the full credits file is not packaged; names stay untranslated |
 
-Known gap: Godot 4.4 CSV has no plural forms and no locale number
+Known gap (checked in Godot 4.4): Godot CSV translations have no plural forms and no locale number
 grouping; no current string needs either. Plural strings will move to
 gettext `.po` when one is added.
 

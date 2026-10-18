@@ -107,14 +107,22 @@ bool Board::has_legal_move() {
     return false;
 }
 
-std::vector<Run> Board::find_runs() const {
+std::vector<Run> Board::find_runs() const { return find_runs(nullptr); }
+
+int Board::match_kind(int x, int y, const StepHooks* hooks) const {
+    const int kind = at(x, y);
+    if (kind == kEmpty || !hooks || !hooks->matchable) return kind;
+    return hooks->matchable(*this, Cell{x, y}) ? kind : kEmpty;
+}
+
+std::vector<Run> Board::find_runs(const StepHooks* hooks) const {
     std::vector<Run> runs;
     for (int y = 0; y < height_; ++y) {
         int x = 0;
         while (x < width_) {
-            int kind = at(x, y);
+            int kind = match_kind(x, y, hooks);
             int end = x + 1;
-            while (end < width_ && kind != kEmpty && at(end, y) == kind) ++end;
+            while (end < width_ && kind != kEmpty && match_kind(end, y, hooks) == kind) ++end;
             if (kind != kEmpty && end - x >= 3) {
                 Run run{{}, kind};
                 for (int i = x; i < end; ++i) run.cells.push_back({i, y});
@@ -126,9 +134,9 @@ std::vector<Run> Board::find_runs() const {
     for (int x = 0; x < width_; ++x) {
         int y = 0;
         while (y < height_) {
-            int kind = at(x, y);
+            int kind = match_kind(x, y, hooks);
             int end = y + 1;
-            while (end < height_ && kind != kEmpty && at(x, end) == kind) ++end;
+            while (end < height_ && kind != kEmpty && match_kind(x, end, hooks) == kind) ++end;
             if (kind != kEmpty && end - y >= 3) {
                 Run run{{}, kind};
                 for (int i = y; i < end; ++i) run.cells.push_back({x, i});
@@ -140,12 +148,36 @@ std::vector<Run> Board::find_runs() const {
     return runs;
 }
 
+bool Board::is_legal_swap(Cell a, Cell b, const StepHooks* hooks) {
+    if (!hooks || (!hooks->matchable && !hooks->movable)) return is_legal_swap(a, b);
+    if (!in_bounds(a.x, a.y) || !in_bounds(b.x, b.y)) return false;
+    if (std::abs(a.x - b.x) + std::abs(a.y - b.y) != 1) return false;
+    if (hooks->movable && (!hooks->movable(*this, a) || !hooks->movable(*this, b))) return false;
+    swap_cells(a, b);
+    bool ok = !find_runs(hooks).empty();
+    swap_cells(a, b);
+    return ok;
+}
+
+bool Board::has_legal_move(const StepHooks* hooks) {
+    for (int y = 0; y < height_; ++y) {
+        for (int x = 0; x < width_; ++x) {
+            if (x + 1 < width_ && is_legal_swap({x, y}, {x + 1, y}, hooks)) return true;
+            if (y + 1 < height_ && is_legal_swap({x, y}, {x, y + 1}, hooks)) return true;
+        }
+    }
+    return false;
+}
+
 std::optional<MoveResult> Board::try_swap(Cell a, Cell b, const StepHooks* hooks) {
-    if (!is_legal_swap(a, b)) return std::nullopt;
+    if (!is_legal_swap(a, b, hooks)) return std::nullopt;
     swap_cells(a, b);
     MoveResult result;
     result.swap = std::array<Cell, 2>{a, b};
-    result.matched_kind = dominant_kind(find_matches());
+    std::set<int> matched;
+    for (const Run& run : find_runs(hooks))
+        for (Cell c : run.cells) matched.insert(index(c.x, c.y));
+    result.matched_kind = dominant_kind(matched);
     resolve_and_settle(result, hooks);
     return result;
 }
@@ -162,7 +194,11 @@ std::optional<MoveResult> Board::clear_cells(const std::vector<Cell>& cells, con
 }
 
 void Board::resolve_and_settle(MoveResult& result, const StepHooks* hooks) {
-    for (auto runs = find_runs(); !runs.empty(); runs = find_runs()) {
+    for (auto runs = find_runs(hooks); !runs.empty(); runs = find_runs(hooks)) {
+        if (hooks && hooks->max_steps > 0 && static_cast<int>(result.cascades.size()) >= hooks->max_steps) {
+            result.stuck = true;
+            return;
+        }
         std::set<int> matched;
         for (const Run& run : runs)
             for (Cell c : run.cells) matched.insert(index(c.x, c.y));
@@ -170,8 +206,9 @@ void Board::resolve_and_settle(MoveResult& result, const StepHooks* hooks) {
         step.runs = std::move(runs);
         clear_step(std::move(matched), std::move(step), result, hooks);
     }
-    if (!has_legal_move()) {
-        result.shuffled = shuffle_tracked(result.shuffle_map, result.redealt);
+    if (hooks && !hooks->settle_shuffle) return;
+    if (!has_legal_move(hooks)) {
+        result.shuffled = shuffle(hooks, result.shuffle_map, result.redealt);
         result.stuck = !result.shuffled;
     }
 }
@@ -236,10 +273,56 @@ bool Board::shuffle() noexcept {
     return shuffle_tracked(map, redealt);
 }
 
+bool Board::shuffle(const StepHooks* hooks, std::vector<std::pair<Cell, Cell>>& map, bool& redealt) noexcept {
+    if (!hooks || (!hooks->matchable && !hooks->movable)) return shuffle_tracked(map, redealt);
+    return shuffle_movable(*hooks, map, redealt);
+}
+
+bool Board::shuffle_movable(const StepHooks& hooks, std::vector<std::pair<Cell, Cell>>& map, bool& redealt) noexcept {
+    map.clear();
+    redealt = false;
+    const std::vector<int> before = cells_;
+    // A shuffle that finds nothing playable leaves no trace, the stream included.
+    const Rng rng_before = rng_;
+    std::vector<int> movable;
+    for (int i = 0; i < static_cast<int>(cells_.size()); ++i)
+        if (cells_[i] != kEmpty && (!hooks.movable || hooks.movable(*this, cell_of(i)))) movable.push_back(i);
+    std::vector<int> origin(cells_.size());
+    for (std::size_t i = 0; i < origin.size(); ++i) origin[i] = static_cast<int>(i);
+    const auto playable = [&] { return find_runs(&hooks).empty() && has_legal_move(&hooks); };
+    for (int attempt = 0; attempt < kMaxShuffleAttempts && movable.size() > 1; ++attempt) {
+        for (int i = static_cast<int>(movable.size()) - 1; i > 0; --i) {
+            int j = rng_.below(i + 1);
+            std::swap(cells_[movable[i]], cells_[movable[j]]);
+            std::swap(origin[movable[i]], origin[movable[j]]);
+        }
+        if (playable()) {
+            for (int i = 0; i < static_cast<int>(origin.size()); ++i)
+                if (origin[i] != i) map.emplace_back(cell_of(origin[i]), cell_of(i));
+            return true;
+        }
+    }
+    // Deal the movable cells afresh; the fixed pieces stay.
+    for (int attempt = 0; attempt < kMaxFillAttempts && !movable.empty(); ++attempt) {
+        for (int idx : movable) {
+            Cell c = cell_of(idx);
+            cells_[idx] = pick_non_matching(c.x, c.y);
+        }
+        if (playable()) {
+            redealt = true;
+            return true;
+        }
+    }
+    cells_ = before;
+    rng_ = rng_before;
+    return false;
+}
+
 bool Board::shuffle_tracked(std::vector<std::pair<Cell, Cell>>& map, bool& redealt) noexcept {
     map.clear();
     redealt = false;
     const std::vector<int> before = cells_;
+    const Rng rng_before = rng_;
     // origin[i] = where the piece now at i stood before the shuffle.
     std::vector<int> origin(cells_.size());
     for (std::size_t i = 0; i < origin.size(); ++i) origin[i] = static_cast<int>(i);
@@ -262,6 +345,7 @@ bool Board::shuffle_tracked(std::vector<std::pair<Cell, Cell>>& map, bool& redea
         return true;
     } catch (const std::exception&) {
         cells_ = before;
+        rng_ = rng_before;
         return false;
     }
 }

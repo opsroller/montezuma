@@ -45,9 +45,23 @@ All extension builds use `-DGODOTCPP_TARGET=template_release
 Each package holds one folder named after the archive, containing the
 game, the extension library, `LICENSE.txt` (GPL-2.0), and two files
 written by `tools/release/notices.py`: `THIRD-PARTY-NOTICES.txt` (Godot's
-license and `COPYRIGHT.txt`, godot-cpp's license) and `SOURCE.txt` (the
-commit and where to get its source). The web demo ships the same two
-files from the same script.
+license and `COPYRIGHT.txt`, godot-cpp's and nlohmann/json's licenses) and
+`SOURCE.txt` (the commit and where to get its source). The web demo ships
+the same two files from the same script.
+
+The same files are also inside the game, readable from `res://`:
+
+| `res://` path | From |
+|---|---|
+| `CREDITS.md` | root `CREDITS.md` (the credits screen shows it) |
+| `LICENSE.txt` | root `LICENSE` |
+| `THIRD-PARTY-NOTICES.txt` | `notices.py` |
+| `SOURCE.txt` | `notices.py` |
+
+`export-desktop.sh` stages them into `game/` with `game-files.py stage`
+before exporting, the presets' `include_filter` packs them, and
+`game-files.py check` fails the export if any of them is missing from the
+exported game. They are generated and ignored by git.
 
 | Platform | Game inside the folder |
 |---|---|
@@ -72,8 +86,8 @@ no owners, and every timestamp set to the commit time
 
 | Input | Pin | Where |
 |---|---|---|
-| Godot editor and export templates | 4.4.1-stable, SHA-512 verified | `tools/release/godot.env` |
-| godot-cpp | Submodule commit | `thirdparty/godot-cpp` |
+| Godot editor and export templates | 4.7.2-stable, SHA-512 verified | `tools/release/godot.env` |
+| godot-cpp | Submodule commit (10.0.0-stable), API version 4.7 | `thirdparty/godot-cpp`, `extension/CMakeLists.txt` |
 | GitHub Actions | Full commit SHA, version in a comment | `build.yml` |
 | Runner images | Named versions (`ubuntu-22.04`, `windows-2022`, `macos-14`, `ubuntu-24.04`), not `-latest` | `build.yml` |
 
@@ -81,7 +95,7 @@ The Godot downloads are cached under the key
 `godot-<hash of godot.env>`; changing the pin changes the key.
 
 The extension jobs compile through a compiler cache, restored from and
-saved to the newest cache with the key prefix `build-extension-<platform>`
+saved to the newest cache with the key prefix `build-extension-godot-cpp-10-<platform>`
 (500 MB cap). The **Compiler cache stats** step prints hits and misses.
 
 | Platform | Cache | Generator |
@@ -103,7 +117,9 @@ compiler cache is safe for release builds.
 | `export-desktop.sh <linux\|windows\|macos> <version> <outdir>` | Exports one preset and writes the archive and `.sha256` |
 | `package.py <tar.gz\|zip> <root> <name> <archive>` | Packs a folder with stable bytes; refuses symlinks |
 | `notices.py <outdir>` | Writes `THIRD-PARTY-NOTICES.txt` and `SOURCE.txt`; add a row to its `COMPONENTS` for every library linked into the game |
-| `notices/` | Verbatim upstream notice texts (Godot 4.4.1 `LICENSE.txt`, `COPYRIGHT.txt`) |
+| `game-files.py stage <gamedir>` | Copies `CREDITS.md` and `LICENSE` into the Godot project and runs `notices.py` there |
+| `game-files.py check <gamedir> <export>` | Exits 1 unless every staged file's bytes are inside the exported game (a file or a `.app` folder) |
+| `notices/` | Verbatim upstream notice texts (Godot 4.7.2 `LICENSE.txt`, `COPYRIGHT.txt`) |
 | `smoke-test.sh <archive>` | Verifies, unpacks and runs a package on its own platform |
 | `web-fetch-emsdk.sh <dir>` | Installs the pinned Emscripten (`EMSDK_VERSION` in `godot.env`) into `<dir>` and prints its `emsdk_env.sh` |
 | `web-export.sh <version> <outdir>` | Exports the `Web` preset, checks the download budget and writes the zip and `.sha256` |
@@ -131,7 +147,7 @@ WebAssembly. It never deploys; the package is the run's artifact.
 |---|---|
 | Triggers | Push to `main`; pull requests touching `web.yml`, `tools/release/`, `CMakeLists.txt`, `core/`, `extension/`, `game/` or `thirdparty/`; manual |
 | Runner | `ubuntu-24.04`, one job `web` |
-| Emscripten | 3.1.64 (`EMSDK_VERSION` in `godot.env`, the version Godot 4.4.1's web templates are built with), cached under `emsdk-<hash of godot.env>` |
+| Emscripten | 4.0.11 (`EMSDK_VERSION` in `godot.env`, the version Godot 4.7.2's web templates are built with), cached under `emsdk-<hash of godot.env>` |
 | Extension build | `emcmake cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON -DMONTEZUMA_BUILD_TESTS=OFF -DMONTEZUMA_WERROR=ON -DGODOTCPP_TARGET=template_release -DGODOTCPP_THREADS=OFF`, through ccache (`EM_COMPILER_WRAPPER=ccache`, key prefix `build-web-extension`) |
 | Library | `game/bin/libmontezuma.web.template_release.wasm32.nothreads.wasm` (`web.release.wasm32` in `game/montezuma.gdextension`) |
 | Template | `web_dlink_nothreads_release.zip` from the pinned templates archive |

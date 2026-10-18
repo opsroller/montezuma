@@ -4,6 +4,9 @@
 # One exception setting for every target: the core reports errors with
 # exceptions, and mixing settings is an ODR hazard on MSVC.
 set(GODOTCPP_DISABLE_EXCEPTIONS OFF CACHE BOOL "" FORCE)
+# godot-cpp 10 is versioned apart from Godot; pick the engine API we target.
+# Must match the Godot pinned in tools/release/godot.env.
+set(GODOTCPP_API_VERSION "4.7" CACHE STRING "" FORCE)
 # Keep godot-cpp's own warnings out of our -Werror builds.
 set(GODOTCPP_SYSTEM_HEADERS ON CACHE BOOL "" FORCE)
 add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/godot-cpp ${CMAKE_BINARY_DIR}/godot-cpp)

@@ -101,6 +101,15 @@ Difficulties: `normal`, `hard`.
 Kind names, in index order: `red`, `orange`, `yellow`, `green`, `blue`,
 `purple`, `white`.
 
+## LevelSession (owner: gameplay-programmer, WP-22) — implemented
+
+`montezuma::LevelSession(LevelData, Difficulty, Upgrades, seed)` plays one
+level by the full rules. Commands: `swap(a, b)` -> `optional<MoveReport>`,
+`tick(dt)` -> `optional<TickReport>`, `shuffle()` -> `optional<ShuffleReport>`,
+`buy_hint()` -> `optional<Swap>`; `legal_moves()` for bots and hints.
+Reports list every step in display order. Fields and defaults:
+[level-session.md](level-session.md).
+
 ## Game signals (owner: graphics-programmer, WP-10/WP-26) — proposed
 
 `Match3Game` (C++ node in `extension/src/game/`, placed in `game/scenes/game/game.tscn`)
@@ -230,7 +239,7 @@ the autoload exists. Volumes go to audio buses `Music` and `SFX`.
 Agreed by both sides on 2026-10-18. The site's side is described in
 `docs/reference/website.md`.
 
-**Files.** The Godot 4.4.1 single-threaded web export, named `montezuma`
+**Files.** The Godot 4.7.2 single-threaded web export, named `montezuma`
 (`montezuma.js`, `montezuma.wasm`, `montezuma.side.wasm`, `montezuma.pck`,
 the audio worklet scripts) and the game's extension library
 `libmontezuma.web.template_release.wasm32.nothreads.wasm`, all in one

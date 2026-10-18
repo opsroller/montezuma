@@ -26,7 +26,7 @@ button, and downloads the build only when asked, with a progress bar.
 ## Why the demo runs in the page, not an iframe
 
 An iframe is the usual way to isolate a web build that needs special
-headers or comes from another origin. This one needs neither: Godot 4.4's
+headers or comes from another origin. This one needs neither: Godot 4.7's
 single-threaded web export runs without cross-origin isolation, and the
 build is served from the same site. Running it in the page lets the game
 announce a win with a plain DOM event (`montezuma:level-completed`) that

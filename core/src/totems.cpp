@@ -153,6 +153,11 @@ std::vector<TotemId> TotemSystem::record_move(const MoveResult& result) {
 }
 
 TotemEffect TotemSystem::make_effect(TotemId id, const Board& board, Rng& rng) const {
+    return make_effect(id, board, rng, {});
+}
+
+TotemEffect TotemSystem::make_effect(TotemId id, const Board& board, Rng& rng, const std::vector<bool>& steel) const {
+    const auto is_steel = [&](std::size_t i) { return i < steel.size() && steel[i]; };
     const TotemTierDef& td = tier_def(id);
     TotemEffect effect;
     effect.totem = id;
@@ -204,14 +209,18 @@ TotemEffect TotemSystem::make_effect(TotemId id, const Board& board, Rng& rng) c
         // present (ascending), then the cells, from pieces of other kinds.
         // Fewer than two kinds: nothing to repaint, no draws.
         std::vector<int> present;
-        for (int k : board.cells())
-            if (k != Board::kEmpty) present.push_back(k);
+        for (std::size_t i = 0; i < board.cells().size(); ++i)
+            if (board.cells()[i] != Board::kEmpty && !is_steel(i)) present.push_back(board.cells()[i]);
         std::sort(present.begin(), present.end());
         present.erase(std::unique(present.begin(), present.end()), present.end());
         if (present.size() < 2 || td.repaint_count == 0) break;
         effect.repaint_kind = present[static_cast<std::size_t>(rng.below(static_cast<int>(present.size())))];
-        // Once steel exists in Board, steel pieces leave this pool too.
-        std::vector<Cell> pool = occupied_cells(board, effect.repaint_kind);
+        // Steel pieces are not repainted.
+        std::vector<Cell> pool;
+        for (Cell c : occupied_cells(board, effect.repaint_kind))
+            if (!is_steel(static_cast<std::size_t>(c.y) * static_cast<std::size_t>(board.width()) +
+                          static_cast<std::size_t>(c.x)))
+                pool.push_back(c);
         std::size_t used = 0;
         take_random(pool, used, static_cast<std::size_t>(td.repaint_count), rng, effect.cells_to_repaint);
         sort_row_major(effect.cells_to_repaint);

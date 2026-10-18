@@ -38,6 +38,10 @@ python3 -m unittest discover site/tests
 node --test site/tests/*.test.mjs
 ```
 
+CTest runs the same two as `site_build_tests` and `site_js_tests`, so
+`ctest --test-dir build` from [Build and test](build-and-test.md) and
+every CI `tests` job include them.
+
 ## Add or change release data
 
 Edit `site/data/releases.json` only to change its shape; the release

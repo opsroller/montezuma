@@ -17,6 +17,7 @@ else()
 endif()
 option(MONTEZUMA_BUILD_EXTENSION "Build the Godot GDExtension (needs thirdparty/godot-cpp)" ${_montezuma_has_godot_cpp})
 option(MONTEZUMA_WERROR "Treat compiler warnings as errors" OFF)
+option(MONTEZUMA_BUILD_SIM "Build the balance simulator (tools/sim)" ON)
 
 # Engine-independent game rules. The Godot GDExtension links against this.
 # Sources are picked up automatically so parallel work packages can add
@@ -50,11 +51,21 @@ if(MONTEZUMA_BUILD_TESTS)
   endforeach()
 endif()
 
+# Balance simulator CLI (WP-22); a desktop tool, never shipped.
+if(MONTEZUMA_BUILD_SIM)
+  add_subdirectory(tools/sim)
+endif()
+
 if(MONTEZUMA_BUILD_EXTENSION)
   if(NOT EXISTS "${PROJECT_SOURCE_DIR}/thirdparty/godot-cpp/CMakeLists.txt")
     message(FATAL_ERROR "godot-cpp is missing. Run: git submodule update --init --recursive")
   endif()
   add_subdirectory(extension)
+  # The credits screen reads res://CREDITS.md and the license as
+  # res://LICENSE.txt; copy them in so editor and headless runs show them.
+  # Exports also add the notices (tools/release/game-files.py).
+  configure_file(CREDITS.md "${PROJECT_SOURCE_DIR}/game/CREDITS.md" COPYONLY)
+  configure_file(LICENSE "${PROJECT_SOURCE_DIR}/game/LICENSE.txt" COPYONLY)
 endif()
 
 # Godot-free parts of the board view (layout, camera fit): no godot-cpp needed,
@@ -62,4 +73,22 @@ endif()
 if(MONTEZUMA_BUILD_TESTS)
   add_subdirectory(extension/src/board/tests)
   add_subdirectory(extension/src/demo/tests)
+endif()
+
+# The website's tests (site/tests), when Python 3.10+ and Node are on the
+# machine. Docs: docs/how-to/build-and-preview-the-website.md
+if(MONTEZUMA_BUILD_TESTS)
+  find_package(Python3 3.10 COMPONENTS Interpreter QUIET)
+  if(Python3_Interpreter_FOUND)
+    add_test(NAME site_build_tests
+      COMMAND "${Python3_EXECUTABLE}" -m unittest discover site/tests
+      WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+    # Read and write text as UTF-8 on Windows too.
+    set_tests_properties(site_build_tests PROPERTIES ENVIRONMENT "PYTHONUTF8=1")
+  endif()
+  find_program(MONTEZUMA_NODE node)
+  if(MONTEZUMA_NODE)
+    file(GLOB MONTEZUMA_SITE_JS_TESTS CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/site/tests/*.test.mjs")
+    add_test(NAME site_js_tests COMMAND "${MONTEZUMA_NODE}" --test ${MONTEZUMA_SITE_JS_TESTS})
+  endif()
 endif()
