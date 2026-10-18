@@ -1,4 +1,5 @@
 <!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- Copyright (C) 2026 Charles (opsroller) and Montezuma contributors -->
 # Benchmark results
 
 *Reference. Frame times and readability results measured with the
@@ -63,7 +64,9 @@ Measurement notes:
 The busiest-board replay plays every totem and power-up effect, so the
 numbers above include them. On this machine they fit `desktop-standard`
 (it keeps 60 Hz) and do not fit `desktop-high` (p95 25.1 ms against
-16.6 ms). The cost of the effects alone was not isolated: the benchmark
+16.6 ms). The M4's 10-core GPU is in the "Apple M1 Pro class" that
+[Visual target](visual-target.md#quality-tiers) names for `desktop-high`,
+so this is a miss on that tier's own hardware. The cost of the effects alone was not isolated: the benchmark
 has no switch to turn them off.
 
 ## Feature rows
