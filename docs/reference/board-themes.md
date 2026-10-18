@@ -77,9 +77,10 @@ same name in a `hi/` folder next to the base one. The base file is what
 `mobile` and `web` load and what every tier falls back to; `desktop-high`
 and `desktop-standard` load the `hi/` file when it exists:
 `QualityTiers::resolve_variant` maps a path to it and falls back to the
-base ([Quality tiers](quality-tiers.md)). The board view does not call it
-for materials yet, so the game shows the base files for now;
-`LD_<Theme>_Hi.tscn` shows the desktop look. Mobile and web export presets
+base ([Quality tiers](quality-tiers.md)). `QualityTiers` swaps the
+materials of every mesh as it enters the tree, so prefabs and the
+manifest name the base files and the game shows the `hi/` look on
+desktop; `LD_<Theme>_Hi.tscn` names the `hi/` files directly. Mobile and web export presets
 list `*/hi/*` in `exclude_filter`, so those builds carry only their own
 sizes. The web tier's `lo/` folder is not used by the temple: its base
 sets fit the web texture budget.

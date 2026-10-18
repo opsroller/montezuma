@@ -1,8 +1,9 @@
 <!-- SPDX-License-Identifier: GPL-2.0-or-later -->
-# CI pipeline: tests, assets and levels workflows
+# CI pipeline: tests, windows, assets and levels workflows
 
 Facts about `.github/workflows/tests.yml`,
-`.github/workflows/assets.yml` and `.github/workflows/levels.yml`. Desktop packaging is the separate `build`
+`.github/workflows/windows.yml`, `.github/workflows/assets.yml` and
+`.github/workflows/levels.yml`. Desktop packaging is the separate `build`
 workflow. To run any check locally, use the commands in
 [Build and test](../how-to/build-and-test.md).
 
@@ -25,17 +26,18 @@ Token permissions: `contents: read`.
 | `extension` | Ubuntu; Windows too on pushes to `main` | the GDExtension (with godot-cpp) or a test fails to build, or a CTest test fails (every test, including `ui_model_tests`); on Ubuntu, Godot (the version in `tools/release/godot.env`) logs an error while loading the game headless, the audio or game self-test reports a failure ([Match3Game self-test](match3-game.md#self-test)), quitting from level `e1-l01` with `--quit-after-frames` prints an error or a leak ([Audio: Quitting](audio.md#quitting)), or the quality tier self-test (`--quality-selftest`, run once each with `--rendering-method forward_plus`, `mobile` and `gl_compatibility`) reports a failure, or the [benchmark](benchmark.md) smoke run (3 s headless) logs an error, drifts from its plan or writes no report |
 | `sanitizers` | Ubuntu | a CTest test fails under ASan or UBSan |
 
-Windows does not run on PRs. Pushes to `main` run the Windows `core` and
-`extension` jobs here, and the Windows package in the `build` workflow,
-so a Windows-only break shows up on `main` after merge, and the next PR
-fixes it.
+Windows does not run in this workflow on PRs. Pushes to `main` run the
+Windows `core` and `extension` jobs here, and the Windows package in the
+`build` workflow. PRs that change the build system also get the
+[`windows` workflow](#windows-workflow); any other Windows-only break
+shows up on `main` after merge, and the next PR fixes it.
 
 ## Caches
 
 | Cache | Job | Tool | Key | Size cap |
 |---|---|---|---|---|
 | Compiler cache | `extension (ubuntu-latest)` | ccache | `tests-extension-godot-cpp-10-ubuntu-latest` + timestamp | 500 MB |
-| Compiler cache | `extension (windows-latest)`, `main` only | sccache | `tests-extension-godot-cpp-10-windows-latest` + timestamp | 500 MB |
+| Compiler cache | `extension (windows-latest)` on `main`; `build and test (windows)` in the `windows` workflow | sccache | `tests-extension-godot-cpp-10-windows-latest` + timestamp | 500 MB |
 
 - The newest cache with the key prefix is restored, and a new one is saved
   at the end of every run.
@@ -51,6 +53,28 @@ The `core` and `sanitizers` jobs build in seconds and use no cache.
 
 See [About CI caching](../explanation/about-ci-caching.md) for why the
 caches are set up this way.
+
+## Windows workflow
+
+`.github/workflows/windows.yml` builds the core, the GDExtension and every
+CTest test with MSVC and warnings as errors, then runs CTest, on
+`windows-latest`.
+
+| Event | Runs when |
+|---|---|
+| `pull_request` | the PR changes `CMakeLists.txt`, any `**/CMakeLists.txt`, any `**/*.cmake`, `.gitmodules`, `thirdparty/**` or `windows.yml` |
+| `workflow_dispatch` | on demand, from the Actions tab |
+
+| Job | What red means |
+|---|---|
+| `build and test (windows)` | the build fails to configure, compile or link with MSVC (for example a C runtime mismatch between targets, error LNK2038), or a CTest test fails on Windows. Reproduce with [Build and test on Windows](../how-to/build-and-test.md#build-and-test-on-windows) |
+
+It reads and writes the sccache cache `tests-extension-godot-cpp-10-windows-latest`
+(500 MB cap), the same key as the `extension (windows-latest)` job, so a PR
+starts from the cache `main` wrote. Token permissions: `contents: read`; no
+secrets, no artifacts. It is path-filtered, so it is not a required check.
+Why it runs only on these PRs:
+[About CI caching](../explanation/about-ci-caching.md#why-windows-is-off-the-pr-path).
 
 ## Assets workflow
 

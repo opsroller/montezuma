@@ -29,12 +29,15 @@ LevelSession s(level, Difficulty::Normal, upgrades, seed);
 
 Totem and power-up tiers apply only to the ids the level lists; a listed
 id with tier 0 is owned at tier 1 (`PROG-03`); unlisted ids are not owned.
-The constructor throws `std::invalid_argument` for a tier out of range, an
+The constructor throws `std::invalid_argument` for a tier out of range, a
+`base_clock` of 0 or less set in code, an
 unknown difficulty, a level with no goal, a chained cell off the board
 (`OBS-05`), and a level with `blocked_cells` (not supported yet), and `std::runtime_error` when no playable board can
 be dealt.
 
-At the start: `gems_max` gems on distinct plain pieces, the level's
+At the start: `time_left` is `level.time_limit_for(difficulty,
+upgrades.timer_tier)`, the level's base clock plus 30 s per timer tier
+(`GOAL-03`, [level data](level-data.md#timer-tiers)); `gems_max` gems on distinct plain pieces, the level's
 chains, no steel and no power-ups (`BOARD-04`); no run and a legal move
 that uses no chained piece (`BOARD-03`; if the chains leave none, the
 movable pieces are reshuffled at no cost); totems at `start_level()`

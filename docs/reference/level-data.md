@@ -34,14 +34,14 @@ be cited here once that spec lands.
 }
 ```
 
-This level has no `time_limit`, so its time comes from the player's timer
-tier, and uses the default `rules` (`classic`) and `theme` (`temple`). A
-rule-variant level adds `quotas`, and a level with its own clock adds
-`time_limit`:
+This level has no `base_clock`, so it starts from the default 270 s plus
+the player's timer tier, and uses the default `rules` (`classic`) and
+`theme` (`temple`). A rule-variant level adds `quotas`, and a level that
+needs a longer clock adds `base_clock`:
 
 ```json
 "quotas": { "red": 10, "blue": 8, "purple": 3 },
-"time_limit": { "normal": 240, "hard": 150.5 }
+"base_clock": { "normal": 310, "hard": 490 }
 ```
 
 ## Fields
@@ -59,9 +59,9 @@ rule-variant level adds `quotas`, and a level with its own clock adds
 | `gem_goal.normal` | integer | yes | | Gems to collect on Normal, 1 or more |
 | `gem_goal.hard` | integer | yes | | Gems to collect on Hard, 1 or more |
 | `quotas` | object | see [Goals](#goals) | absent | Rule-variant goal. Kind name to pieces to clear. At least one entry. Each count is an integer of 1 or more. Each kind's index is below `board.kinds`. With `gem_goal`, both goals must be met (`GOAL-06`) |
-| `time_limit` | object | no | absent: the [timer tier](#timer-tiers) decides | Keys `normal` and `hard` only, both required. Overrides the timer tier (`GOAL-03`) |
-| `time_limit.normal` | number | yes | | Seconds, greater than 0; integer or fraction |
-| `time_limit.hard` | number | yes | | Seconds, greater than 0; integer or fraction |
+| `base_clock` | object | no | absent: 270 s on both difficulties | Keys `normal` and `hard` only, both required. The [timer tier](#timer-tiers)'s bonus is added on top (`GOAL-03`). Set from the [clock rule](balance.md#clock) |
+| `base_clock.normal` | number | yes | | Seconds, greater than 0; integer or fraction |
+| `base_clock.hard` | number | yes | | Seconds, greater than 0; integer or fraction |
 | `totems_unlocked` | array of strings | yes | | Totem ids below, each at most once. May be empty |
 | `powerups_unlocked` | array of strings | no | `[]` | Power-up ids below, each at most once |
 | `steel_rate` | number | no | 0 | Chance per spawned piece to be steel, 0 to 1 inclusive (`OBS-02`) |
@@ -71,7 +71,7 @@ rule-variant level adds `quotas`, and a level with its own clock adds
 | `theme` | string | no | `"temple"` | Theme id: one or more of `a-z`, `0-9`, `_` |
 | `seed` | integer | yes | | 0 to 18446744073709551615 |
 
-Any other top-level, `board`, `gem_goal` or `time_limit` key is an error.
+Any other top-level, `board`, `gem_goal` or `base_clock` key is an error.
 Integer fields reject numbers written with a fraction (`8.0`), strings
 (`"8"`) and booleans. A key repeated in the same object is an error.
 
@@ -88,19 +88,24 @@ and no relaxed mode.
 
 ## Timer tiers
 
-When a level has no `time_limit`, its time comes from the player's timer
-tier, which upgrades raise:
+A level starts with its base clock plus the player's timer tier bonus,
+which upgrades raise. The bonus applies on every level, so a bought timer
+upgrade always keeps its value:
 
-| Tier | Seconds |
-|---|---|
-| 0 (default) | 270 |
-| 1 | 300 |
-| 2 | 330 |
-| 3 | 360 |
-| 4 | 390 |
+| Tier | Bonus | Level without `base_clock` |
+|---|---|---|
+| 0 (default) | +0 s | 270 s |
+| 1 | +30 s | 300 s |
+| 2 | +60 s | 330 s |
+| 3 | +90 s | 360 s |
+| 4 | +120 s | 390 s |
 
-A level's `time_limit`, when present, overrides the tier for both
-difficulties.
+For example, a level with `"base_clock": { "normal": 310, "hard": 490 }`
+starts at 310 s on normal with no upgrades and at 400 s with tier 3.
+
+`time_limit`, which used to replace the tier's time, is no longer
+accepted: a file that still has it fails with an error naming
+`base_clock`.
 
 ## Kind names
 
@@ -139,7 +144,8 @@ Header: `core/include/montezuma/level_data.hpp`, namespace `montezuma`.
 | `LevelData::parse(std::string_view json)` | `LevelParseResult`: `level` set when valid, otherwise `errors` holds every problem found | Never (`noexcept`) |
 | `LevelData::load(std::string_view json)` | `LevelData` | `std::invalid_argument` whose message is `Invalid level data:` followed by one error per line |
 | `LevelData::goal()` | `LevelGoal`: `gems` and `quotas`, true for each goal kind the level has | Never |
-| `LevelData::time_limit_for(Difficulty, int timer_tier = 0)` | Seconds for `Difficulty::Normal` or `Difficulty::Hard`: the level's `time_limit` when present, otherwise the timer tier's time | `std::invalid_argument` when `timer_tier` is outside 0 to 4, even when `time_limit` is present |
+| `LevelData::base_clock_for(Difficulty)` | The difficulty's base clock in seconds: `base_clock` when present, otherwise 270 | Never |
+| `LevelData::time_limit_for(Difficulty, int timer_tier = 0)` | Seconds the level starts with: `base_clock_for()` plus 30 s per timer tier | `std::invalid_argument` when `timer_tier` is outside 0 to 4, or when a `base_clock` set in code is 0, below 0 or not a number |
 | `LevelData::make_state(Difficulty, int timer_tier = 0)` | `LevelState` with the level's quotas and `time_limit_for()`'s time | `std::invalid_argument` for a bad `timer_tier`, or `gem goals need the gem rules (coming)` for a level with `gem_goal` and no `quotas`, until `LevelState` tracks gems |
 | `difficulty_from_name(std::string_view)` | `Difficulty` for `"normal"` or `"hard"`, otherwise empty | Never |
 | `LevelParseResult::error_text()` | All errors, one `path: message` per line | |
@@ -147,7 +153,7 @@ Header: `core/include/montezuma/level_data.hpp`, namespace `montezuma`.
 `LevelData` fields: `id`, `episode`, `index`, `board` (`BoardSpec`:
 `width`, `height`, `kinds`), `gem_goal` (`std::optional<GemGoal>`:
 `normal`, `hard`), `quotas` (`std::map<int, int>`, kind index to count;
-empty when absent), `time_limit` (`std::optional<TimeLimit>`: `normal`,
+empty when absent), `base_clock` (`std::optional<BaseClock>`: `normal`,
 `hard`, seconds), `totems_unlocked` and `powerups_unlocked` (in file
 order), `steel_rate` (`double`), `blocked_cells` and `chained_cells`
 (`std::vector<Cell>`, in file order), `rules` and `theme`
@@ -174,7 +180,8 @@ against an invalid `board`.
 | (empty) | `expected an object at the top level, got <type>` | Document is not an object |
 | (empty) | `needs a goal: gem_goal, quotas or both` | Neither `gem_goal` nor `quotas` is present |
 | (empty) | `duplicate key "<key>"` | A key appears twice in one object |
-| `<field>` | `unknown field` | Key not in the format, at top level, in `board`, `gem_goal` or `time_limit` |
+| `<field>` | `unknown field` | Key not in the format, at top level, in `board`, `gem_goal` or `base_clock` |
+| `time_limit` | `replaced by base_clock, which the timer tier adds to (GOAL-03)` | The old clock override is present; move its values to `base_clock` |
 | `<field>` | `required field missing` | A required field is absent |
 | `<field>` | `expected an integer, got <value>` | Integer field holds a fraction, string, boolean, null, array or object |
 | `<field>` | `must be at least <min>, got <value>` | `episode`, `index`, a `gem_goal` count or a quota count below 1 |
@@ -189,9 +196,9 @@ against an invalid `board`.
 | `quotas` | `must list at least one kind` | `quotas` is `{}` |
 | `quotas.<name>` | `unknown kind (expected one of red, orange, ...)` | Name not in the kind list |
 | `quotas.<name>` | `kind <i> is not on a board with <n> kinds` | Kind index is `board.kinds` or more |
-| `time_limit` | `expected an object with normal and hard, got <type>` | `time_limit` is not an object |
-| `time_limit.<mode>` | `expected a number of seconds, got <type>` | Not a number |
-| `time_limit.<mode>` | `must be greater than 0 seconds, got <value>` | 0 or negative |
+| `base_clock` | `expected an object with normal and hard, got <type>` | `base_clock` is not an object |
+| `base_clock.<mode>` | `expected a number of seconds, got <type>` | Not a number |
+| `base_clock.<mode>` | `must be greater than 0 seconds, got <value>` | 0 or negative |
 | `totems_unlocked` | `expected an array of totem ids, got <type>` | Not an array |
 | `totems_unlocked[i]` | `expected a totem id string, got <value>` | Element is not a string |
 | `totems_unlocked[i]` | `unknown totem "<id>" (expected one of ...)` | Id not in the totem list |

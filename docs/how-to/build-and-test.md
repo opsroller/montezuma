@@ -68,6 +68,22 @@ print an error or a leak at exit:
 godot --headless --path game --quit-after 600 -- --start-level=e1-l01 --quit-after-frames=60
 ```
 
+## Build and test on Windows
+
+Needs Visual Studio 2022 with the C++ workload, CMake 3.22+ and Ninja
+(both come with Visual Studio). From an **x64 Native Tools Command Prompt**,
+so MSVC is on the path:
+
+```bat
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_WERROR=ON
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
+
+This is what the `windows` workflow runs on PRs that change the build
+system. Every target links the static MSVC runtime, as godot-cpp does;
+the root `CMakeLists.txt` sets it before the first target.
+
 ## Check the assets
 
 Needs Python 3, numpy and Pillow. This is the `assets` CI job. The board

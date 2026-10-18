@@ -21,6 +21,12 @@ or a cloud machine without a GPU do not count against the
    godot --headless --path game --import
    ```
 
+   On a Mac, add `-DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+   -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15` to the configure line: the game
+   only loads a universal library, and without it Godot reports `Can't
+   open dynamic library` and every game class is missing. The Godot app's
+   binary is `/Applications/Godot.app/Contents/MacOS/Godot`.
+
 2. Run the benchmark and the readability capture for the tier the machine
    stands for (on Windows, use Git Bash or WSL for the script):
 
@@ -38,15 +44,24 @@ or a cloud machine without a GPU do not count against the
 
 3. Read the results in `bench-out/`:
 
-   - `benchmark.json`: `cpu_ms.p95` and `gpu_ms.p95` against the tier's
-     budget, `over_budget` frames, and `replay.diverged`, which must be
-     false.
+   - `benchmark.json`: `frame_ms.p95` against `budget_ms`, `over_budget`
+     frames, and `replay.diverged`, which must be false. `cpu_ms` and
+     `gpu_ms` split the time where the driver reports both; when
+     `gpu_timing` is false (as on Metal) `gpu_ms` is not measured. See the
+     notes in [Benchmark results](../reference/benchmark-results.md#frame-time).
    - `features.txt`: one line per feature row of the tier, `FAIL` where
      the scene does not match the target.
    - `readability.txt`: one line per rule; open the PNGs in
      `bench-out/readability/` to see what failed.
 
    The script exits 1 if any run or check failed.
+
+   Check that `device.resolution` in `benchmark.json` matches `--size`.
+   On macOS the window has been seen to change size during a run; run
+   again if it differs.
+
+4. Add the numbers to [Benchmark results](../reference/benchmark-results.md):
+   the machine once, then a row per tier in each table.
 
 To run the benchmark alone, without the script:
 

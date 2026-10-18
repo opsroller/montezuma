@@ -39,7 +39,7 @@ constexpr std::array<std::string_view, 6> kPowerupIdsUntilPr8{
 
 constexpr std::array<std::string_view, 15> kTopLevelFields{
     "id",         "episode",         "index",      "board",         "gem_goal",
-    "quotas",     "time_limit",      "totems_unlocked", "powerups_unlocked",
+    "quotas",     "base_clock",      "totems_unlocked", "powerups_unlocked",
     "steel_rate", "blocked_cells",   "chained_cells",   "rules",    "theme",
     "seed"};
 constexpr std::array<std::string_view, 3> kBoardFields{"width", "height", "kinds"};
@@ -110,8 +110,12 @@ public:
             error("", "expected an object at the top level, got " + describe(root));
             return level;
         }
-        for (const auto& item : root.items())
-            if (!contains(kTopLevelFields, item.key())) error(item.key(), "unknown field");
+        for (const auto& item : root.items()) {
+            if (item.key() == "time_limit")
+                error("time_limit", "replaced by base_clock, which the timer tier adds to (GOAL-03)");
+            else if (!contains(kTopLevelFields, item.key()))
+                error(item.key(), "unknown field");
+        }
 
         const std::optional<int> episode = required_int(root, "", "episode", 1, INT_MAX);
         const std::optional<int> index = required_int(root, "", "index", 1, INT_MAX);
@@ -123,7 +127,7 @@ public:
         const bool has_quotas = read_quotas(root, board_ok, level);
         // rule: <tbd>
         if (!has_gem_goal && !has_quotas) error("", "needs a goal: gem_goal, quotas or both");
-        read_time_limit(root, level);
+        read_base_clock(root, level);
         read_id_list(root, "totems_unlocked", true, "totem", kTotemIdsUntilPr6, level.totems_unlocked);
         read_id_list(root, "powerups_unlocked", false, "power-up", kPowerupIdsUntilPr8, level.powerups_unlocked);
         read_steel_rate(root, level);
@@ -287,24 +291,25 @@ private:
         return true;
     }
 
-    // Optional; when absent the timer tier decides the time.
-    // rule: <tbd>
-    void read_time_limit(const json& root, LevelData& level) {
-        const json* j = field(root, "", "time_limit", false);
+    // Optional; when absent the base clock is kBaseTimerSeconds. The timer
+    // tier's bonus is added on top (GOAL-03).
+    // rule: GOAL-03
+    void read_base_clock(const json& root, LevelData& level) {
+        const json* j = field(root, "", "base_clock", false);
         if (!j) return;
         if (!j->is_object()) {
-            error("time_limit", "expected an object with normal and hard, got " + describe(*j));
+            error("base_clock", "expected an object with normal and hard, got " + describe(*j));
             return;
         }
-        reject_unknown(*j, "time_limit", kDifficultyFields);
+        reject_unknown(*j, "base_clock", kDifficultyFields);
         bool ok = true;
         auto read = [&](std::string_view key) -> double {
-            const json* v = field(*j, "time_limit", key, true);
+            const json* v = field(*j, "base_clock", key, true);
             if (!v) {
                 ok = false;
                 return 0.0;
             }
-            const std::string path = child("time_limit", key);
+            const std::string path = child("base_clock", key);
             if (!v->is_number()) {
                 error(path, "expected a number of seconds, got " + describe(*v));
                 ok = false;
@@ -320,7 +325,7 @@ private:
         };
         const double normal = read("normal");
         const double hard = read("hard");
-        if (ok) level.time_limit = TimeLimit{normal, hard};
+        if (ok) level.base_clock = BaseClock{normal, hard};
     }
 
     // An array of ids from `known`, each at most once, kept in file order.
@@ -542,13 +547,21 @@ LevelData LevelData::load(std::string_view json) {
 
 LevelGoal LevelData::goal() const { return LevelGoal{gem_goal.has_value(), !quotas.empty()}; }
 
+double LevelData::base_clock_for(Difficulty difficulty) const {
+    if (!base_clock) return kBaseTimerSeconds;
+    return difficulty == Difficulty::Hard ? base_clock->hard : base_clock->normal;
+}
+
 double LevelData::time_limit_for(Difficulty difficulty, int timer_tier) const {
-    // rule: <tbd>
+    // rule: GOAL-03
     if (timer_tier < kMinTimerTier || timer_tier > kMaxTimerTier)
         throw std::invalid_argument("timer_tier must be between " + std::to_string(kMinTimerTier) + " and " +
                                     std::to_string(kMaxTimerTier) + ", got " + std::to_string(timer_tier));
-    if (time_limit) return difficulty == Difficulty::Hard ? time_limit->hard : time_limit->normal;
-    return kBaseTimerSeconds + kTimerTierStepSeconds * timer_tier;
+    const double base = base_clock_for(difficulty);
+    // The parser rejects these; a base_clock set in code is checked here.
+    if (!std::isfinite(base) || base <= 0.0)
+        throw std::invalid_argument("base_clock must be a number of seconds greater than 0");
+    return base + kTimerTierStepSeconds * timer_tier;
 }
 
 LevelState LevelData::make_state(Difficulty difficulty, int timer_tier) const {

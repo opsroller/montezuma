@@ -1,4 +1,11 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- Copyright (C) 2026 Charles (opsroller) and Montezuma contributors -->
 # About the website
+
+Explanation of why the website is shaped the way it is. For anyone
+changing `site/`. The facts are in the
+[website reference](../reference/website.md); the steps to build it are in
+[How to build and preview the website](../how-to/build-and-preview-the-website.md).
 
 The website exists to turn a curious visitor into a player. Its front
 page is the game itself: the visitor plays the intro level in the browser,
@@ -22,6 +29,41 @@ The web demo is tens of megabytes. Loading it with the page would make the
 first visit slow on phones and metered connections and would hurt the
 page's loading metrics. The page reserves the demo's space, shows a play
 button, and downloads the build only when asked, with a progress bar.
+The button names the download size, worked out from the package at build
+time, so a visitor on a phone plan knows the cost before choosing.
+
+## Why the page watches the game's downloads
+
+Godot's loader was written for its own page, which can afford a vague
+bar and a spinner. Ours promises a size on the button, so the bar has to
+reach the end only when the download does, and a broken download has to
+end in a message and a retry, not a wait. Godot misses both: half the
+bytes (the side module) arrive outside its progress reports, and a failed
+file leaves its start pending forever. Watching the page's own requests
+covers both without downloading anything twice or patching Godot's
+files, which the site takes unchanged from each web build. A timer that
+gives up after a minute without progress stays as a backstop. Godot also
+keeps a failed start in its module state, which is why a retry reloads
+the page. The behaviour is listed in the
+[demo hand-off contract](../reference/website.md#demo-hand-off-contract).
+
+## Why the extension is preloaded by hand
+
+Godot's `gdextensionLibs` setting fetches the extension relative to the
+page and opens it by that same path, so it fails when the build lives in
+a subfolder such as `play/`. Preloading it under its bare name puts it
+where the game opens it. This was found in WP-21 by running the export
+in a browser.
+
+## Why the site is not public yet
+
+The site goes public only once the game is polished: its front page is
+the game itself, so it is the project's first impression, and an
+unfinished level there would undercut the downloads it leads to. The team owns that
+quality bar and decides when the site is ready; the project-manager
+takes the decision to the owner, whose only sign-off is going public.
+What is still open before then is listed in the
+[website audit](../reference/website-audit.md).
 
 ## Why the demo runs in the page, not an iframe
 
@@ -54,4 +96,6 @@ screen and the release always agree.
 
 The website was built before the web demo existed. The stub fires the
 same event the game will, so the page, the popup and their tests are
-finished and only the build needs swapping in when it lands.
+finished and only the build needs swapping in when it lands. It still
+runs whenever the site is built without a web package, which keeps site
+work and its tests independent of the game's slow WebAssembly build.

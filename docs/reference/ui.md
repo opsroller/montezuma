@@ -37,7 +37,7 @@ The HUD sits below the stack, so pause and results draw over it.
 
 | Member | Kind | Notes |
 |---|---|---|
-| `play_requested(level_id: String, difficulty: String)` | signal | Menus closed; the game scene should load the level. `difficulty` is `normal` or `hard` (LevelData `gem_goal` and `time_limit` keys) |
+| `play_requested(level_id: String, difficulty: String)` | signal | Menus closed; the game scene should load the level. `difficulty` is `normal` or `hard` (LevelData `gem_goal` and `base_clock` keys) |
 | `level_quit_requested()` | signal | The player left the level from the pause menu |
 | `settings_changed(key: String)` | signal | After a setting is applied |
 | `show_results(outcome: int, score: int, level_id := "")` | method | Opens results. `outcome` is `LevelState::Outcome` (1 won, 2 lost); empty `level_id` means the level last played |
@@ -190,6 +190,11 @@ settings screen saves on close.
 | `text_scale` | float 1..2 | 1.0 | all font sizes (headings ×½ rate, titles ×¼) |
 | `reduced_motion` | bool | false | screen transitions off |
 | `difficulty` | `normal` / `hard` | `normal` | passed with `play_requested` |
+
+The settings screen's **Graphics quality** row is not a `UiRoot` setting:
+it reads and writes the `quality_tier` choice of `QualityTiers`
+(`user://quality.cfg`), applies at once and shows only where more than
+one tier is available ([Quality tiers](quality-tiers.md#settings-key)).
 
 ## Theme tokens
 
