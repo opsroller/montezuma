@@ -40,7 +40,8 @@ export SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-$(git log -1 --format=%ct)}"
 # only and put project.godot back afterwards.
 cp game/project.godot "$outdir/project.godot.orig"
 trap 'cp "$outdir/project.godot.orig" game/project.godot; rm -f "$outdir/project.godot.orig"' EXIT
-sed -i.bak "s|^config/name=.*|&\nconfig/version=\"$version\"|" game/project.godot && rm -f game/project.godot.bak
+awk -v v="$version" '{ print } /^config\/name=/ { printf "config/version=\"%s\"\n", v }' \
+  "$outdir/project.godot.orig" > game/project.godot
 
 # Credits and license files the game reads from res:// (generated, not
 # committed; the preset includes them by name).

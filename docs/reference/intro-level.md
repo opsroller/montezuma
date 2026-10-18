@@ -54,6 +54,14 @@ String fields are JSON-escaped, including `<`, `>`, `&` and U+2028/2029
 | `gem_goal` only (the intro level `e1-l01`) | Not detected yet: the core does not track gems. The level plays without a win until the level session lands (WP-34) |
 | Any, with the user argument `--complete-level` | On the first frame. Used by the browser smoke test |
 
+`--complete-level` works in release builds too. That is harmless: the
+page controls the arguments, and the popup only shows download links.
+It also means the event is not proof that a player won.
+
+The level is still played by `Match3Board` and `Match3Level`. WP-34
+replaces this with a thin wrapper over `Match3Game` (WP-28), which runs
+the core level session, including gem goals.
+
 User arguments come after `--`: `godot --path game -- --complete-level`,
 or `args: ["--", "--complete-level"]` in the page's `Engine` config.
 
