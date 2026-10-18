@@ -17,6 +17,8 @@ stack, commands, paths each role owns and the project's rules.
 - Game code is compiled C++20 (WebAssembly for the web demo). No game
   logic in GDScript, JavaScript or TypeScript.
 - Every source file carries the SPDX header from the project profile.
+- No individual's name in project files other than the owner's;
+  third-party license notices that must be kept verbatim are exempt.
 - Docs follow Diataxis (`docs/README.md`) and change in the same PR as
   the code.
 - All code and assets are our own; nothing from the original game's files.
