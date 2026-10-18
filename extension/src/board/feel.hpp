@@ -6,7 +6,7 @@
 // Feel constants for the board view: every timing and size the player can
 // feel lives here, so the feel pass (WP-40) tunes one file. Plain values
 // with no Godot types, so the Godot-free board tests can read them too.
-// Targets come from the "Feel targets" section of docs/rules-spec.md.
+// Targets come from the "Feedback" section of docs/reference/rules-spec.md.
 
 namespace montezuma::godot_binding::feel {
 
