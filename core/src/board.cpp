@@ -4,6 +4,7 @@
 #include "montezuma/board.hpp"
 
 #include <cstdlib>
+#include <stdexcept>
 #include <utility>
 
 namespace montezuma {
@@ -23,15 +24,28 @@ int MoveResult::score() const {
 }
 
 Board::Board(int width, int height, int kinds, std::uint64_t seed)
-    : width_(width), height_(height), kinds_(kinds), cells_(width * height, kEmpty), rng_(seed) {
+    : width_(width), height_(height), kinds_(kinds), rng_(seed) {
+    if (width < kMinSize || height < kMinSize) throw std::invalid_argument("Board must be at least 3x3");
+    if (kinds < kMinKinds) throw std::invalid_argument("Board needs at least 3 artifact kinds");
+    cells_.assign(static_cast<std::size_t>(width) * height, kEmpty);
     fill_fresh();
 }
 
+std::optional<Board> Board::try_create(int width, int height, int kinds, std::uint64_t seed) noexcept {
+    try {
+        return Board(width, height, kinds, seed);
+    } catch (const std::exception&) {
+        return std::nullopt;
+    }
+}
+
 void Board::fill_fresh() {
-    do {
+    for (int attempt = 0; attempt < kMaxFillAttempts; ++attempt) {
         for (int y = 0; y < height_; ++y)
             for (int x = 0; x < width_; ++x) set(x, y, pick_non_matching(x, y));
-    } while (!has_legal_move());
+        if (has_legal_move()) return;
+    }
+    throw std::runtime_error("Could not generate a board with a legal move; use fewer kinds or a larger board");
 }
 
 int Board::pick_non_matching(int x, int y) {
@@ -137,10 +151,13 @@ void Board::collapse_and_refill() {
 }
 
 void Board::shuffle() {
-    do {
+    for (int attempt = 0; attempt < kMaxShuffleAttempts; ++attempt) {
         for (int i = static_cast<int>(cells_.size()) - 1; i > 0; --i)
             std::swap(cells_[i], cells_[rng_.below(i + 1)]);
-    } while (!find_matches().empty() || !has_legal_move());
+        if (find_matches().empty() && has_legal_move()) return;
+    }
+    // The current pieces can't be arranged into a playable board; deal a new one.
+    fill_fresh();
 }
 
 }  // namespace montezuma
