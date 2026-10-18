@@ -42,3 +42,17 @@ messages are in [Level data](../reference/level-data.md).
 - `montezuma::LevelData::parse` accepts it. A rejected file reports each
   problem as `path: message`; look the message up in
   [Level data errors](../reference/level-data.md#errors).
+- The core tests pass. `test_level_files` reads every file under
+  `game/data/levels/`, so it checks the new one with no change: it parses,
+  its id matches its path, and it deals a playable board on normal and
+  hard. Run it with the core build in [Build and test](build-and-test.md):
+
+  ```sh
+  ctest --test-dir build -R test_level_files --output-on-failure
+  ```
+
+## Play it
+
+Start the game, pick the level on the episode map, or start it directly
+from a scene by setting `autostart_level` on the `Game` node
+([Match3Game](../reference/match3-game.md#properties)) to its id.
