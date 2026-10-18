@@ -37,18 +37,18 @@ row in the PR that finishes the package.
 | 06 | Power Totems | gameplay-programmer | `core/**/totems.*`, `core/tests/test_totems.cpp` | 01, 03 | each totem charges from streaks and returns a tested effect result | done |
 | 07 | Bonuses | gameplay-programmer | `core/**/bonuses.*`, `core/tests/test_bonuses.cpp` | 01, 03 | power-ups placed from runs of 4 and 5+, carried with their pieces, set off in the step that clears them, with each tier's effect per spec, tested | done |
 | 08 | Progress, save and trophies | gameplay-programmer | `core/**/progress.*`, `core/**/trophies.*`, tests | 05 | unlocks, best scores and 9 trophies serialise; tested | todo |
-| 09 | Artifact piece models | technical-artist | `game/assets/models/artifacts/`, `tools/assets/artifacts*` | 04 | 7 pieces, distinct colour and silhouette, in the manifest, under budget | active (placeholder style until 04) |
-| 10 | Temple board and environment | technical-artist | `game/assets/models/temple/`, `tools/assets/temple*` | 04 | board and backdrop in the manifest, fits 8×8 | active (placeholder style until 04) |
-| 11 | Materials and effect shaders | technical-artist | `game/assets/materials/`, `game/assets/textures/` | 04 | stone, gold, jade, highlight, match flash on Mobile, Forward+ and Compatibility | active (placeholder style until 04) |
+| 09 | Artifact piece models | technical-artist | `game/assets/models/<theme>/artifacts/`, piece shapes in `tools/assets/gen_theme_meshes.py` | 04 | 7 pieces, distinct colour and silhouette, in the manifest, under budget | done (#18) |
+| 10 | Temple board and environment | technical-artist | `game/assets/models/<theme>/{board,backdrop}/`, `tools/assets/themes/` | 04 | board and backdrop in the manifest, fits 8×8 | done (#18) |
+| 11 | Materials and effect shaders | technical-artist | `game/assets/materials/`, `game/assets/textures/`, `tools/assets/gen_theme_textures.py` | 04 | stone, gold, jade, highlight, match flash on Mobile, Forward+ and Compatibility | done (#18) |
 | 12 | Board view and camera | graphics-programmer | `extension/src/board/`, `game/scenes/board/` | 02 | `BoardView3D` shows a board with placeholders, camera and lights set | done |
-| 13 | Swap, match and cascade animation | graphics-programmer | `extension/src/board/animator.*` | 01, 12 | plays any MoveResult in order at feel targets; view equals board after | review |
-| 14 | Input | graphics-programmer | `extension/src/board/input.*` | 12 | tap-tap and swipe, mouse, illegal bounce | todo |
+| 13 | Swap, match and cascade animation | graphics-programmer | `extension/src/board/animator.*` | 01, 12 | plays any MoveResult in order at feel targets; view equals board after | done |
+| 14 | Input | graphics-programmer | `extension/src/board/input.*` | 12 | tap-tap and swipe, mouse, illegal bounce | done |
 | 15 | Sound effects | sound-designer | `game/assets/audio/sfx/`, `tools/audio/sfx*` | — | every effect cue in the contract exists | done |
 | 16 | Audio system | sound-designer | `extension/src/audio/`, `game/scenes/audio/` | 02 | `GameAudio` autoload, cue table, buses, volume API | done |
 | 17 | Music and ambience | sound-designer | `game/assets/audio/music/`, `tools/audio/music*` | — | menu theme, 5 episode loops, jungle ambience | done |
-| 18 | UI theme and HUD | ui-developer | `game/ui/theme/`, `game/ui/hud/`, `extension/src/ui/hud*` | 02, 04 | gem counter, timer, score, 7 totem meters and Frenzy bar bound to game signals; quota counters only on levels with quotas | todo |
-| 19 | Screens and navigation | ui-developer | `game/ui/screens/`, `game/ui/widgets/`, `game/ui/strings.csv`, `extension/src/ui/screens*` | 02, 04 | title, episode map, intro, pause, results, trophies, settings, credits | todo |
-| 20 | Desktop builds in CI | devops-engineer | `game/export_presets.cfg`, `.github/workflows/build.yml` | 02 | Windows, macOS, Linux builds as CI artifacts on `main` | todo |
+| 18 | UI theme and HUD | ui-developer | `game/ui/theme/`, `game/ui/hud/`, `extension/src/ui/hud*` | 02, 04 | gem counter, timer, score, 7 totem meters and Frenzy bar bound to game signals; quota counters only on levels with quotas | done (#27; theme on placeholder tokens until 04) |
+| 19 | Screens and navigation | ui-developer | `game/ui/screens/`, `game/ui/widgets/`, `game/ui/strings.csv`, `extension/src/ui/screens*` | 02, 04 | title, episode map, intro, pause, results, trophies, settings, credits | done (#19) |
+| 20 | Desktop builds in CI | devops-engineer | `game/export_presets.cfg`, `.github/workflows/build.yml`, `tools/release/` | 02 | Windows, macOS, Linux builds as CI artifacts on `main` | done (#16) |
 | 21 | Web demo build | gameplay-programmer (port thread) | `.github/workflows/web.yml`, `tools/release/web*` | 02 | extension compiled with Emscripten; single-threaded web export of the intro level runs in Chrome, Firefox and Safari | todo |
 
 ## Wave 2: content, integration, distribution
@@ -62,7 +62,7 @@ row in the PR that finishes the package.
 | 29 | Totem and bonus visuals | graphics-programmer | `extension/src/board/effects/`, `game/scenes/board/effects/` | 06, 07, 11, 13 | every effect animates | todo |
 | 30-33 | Bonus games: 30 `bg_accuracy`, 31 `bg_memory`, 32 `bg_reaction`, 33 `bg_attention` (one package each; rules in `docs/reference/rules-bonus-games.md`) | gameplay-programmer + graphics-programmer | `core/**/minigames/<id>.*`, `extension/src/minigames/<id>/`, `game/scenes/minigames/<id>/` | 03, 28 | playable and tested per the rules | todo |
 | 34 | Intro-level mode | gameplay-programmer (port thread) | `extension/src/demo/`, `game/scenes/demo/` | 23, 28 | web build plays the intro level only and emits `level_completed` when it is won, forwarded to the page as a `montezuma:level-completed` DOM event through `JavaScriptBridge`; no-op off web | todo |
-| 35 | Website: demo page, download popup, credits | frontend-web-developer | `site/` | 04, 21 | site opens on the playable intro level; on `montezuma:level-completed` (or a skip link) a popup offers the visitor's platform download or store badge, all platforms listed; credits page from `CREDITS.md`; deploys on merge | todo |
+| 35 | Website: demo page, download popup, credits | frontend-web-developer | `site/` | 04, 21 | site opens on the playable intro level; on `montezuma:level-completed` (or a skip link) a popup offers the visitor's platform download or store badge, all platforms listed; credits page from `CREDITS.md`; deploys on merge | active |
 | 36 | Android build | devops-engineer | Android job in `.github/workflows/build.yml` | 20 | debug APK as a CI artifact | todo |
 | 37 | iOS build | devops-engineer | iOS job in `.github/workflows/build.yml` | 20 | builds on a macOS runner; signing documented | todo |
 | 38 | App icons and store art | graphic-designer | `design/icons/`, `design/store/` | 04, 28 | icons at every size, store graphics and captioned screenshots per store spec | todo |

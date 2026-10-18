@@ -1,0 +1,38 @@
+[gd_scene load_steps=2 format=3]
+; SPDX-License-Identifier: GPL-2.0-or-later
+
+[ext_resource type="PackedScene" path="res://ui/hud/hud.tscn" id="1"]
+
+[node name="UiRoot" type="UiRoot"]
+layer = 10
+
+[node name="Scaled" type="Control" parent="."]
+layout_mode = 0
+mouse_filter = 2
+
+[node name="SafeArea" type="MarginContainer" parent="Scaled"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Hud" parent="Scaled/SafeArea" instance=ExtResource("1")]
+layout_mode = 2
+
+[node name="ScreenStack" type="ScreenStack" parent="Scaled/SafeArea"]
+layout_mode = 2
+mouse_filter = 2
+screens = {
+"title": "res://ui/screens/title/title.tscn",
+"intro": "res://ui/screens/intro/intro.tscn",
+"episode_map": "res://ui/screens/episode_map/episode_map.tscn",
+"pause": "res://ui/screens/pause/pause.tscn",
+"results": "res://ui/screens/results/results.tscn",
+"trophies": "res://ui/screens/trophies/trophies.tscn",
+"settings": "res://ui/screens/settings/settings.tscn",
+"credits": "res://ui/screens/credits/credits.tscn"
+}
+initial_screen = "title"

@@ -6,7 +6,7 @@
 // Feel constants for the board view: every timing and size the player can
 // feel lives here, so the feel pass (WP-40) tunes one file. Plain values
 // with no Godot types, so the Godot-free board tests can read them too.
-// Targets come from the "Feel targets" section of docs/rules-spec.md.
+// Targets come from the "Feedback" section of docs/reference/rules-spec.md.
 
 namespace montezuma::godot_binding::feel {
 
@@ -43,6 +43,12 @@ inline constexpr double kRedealInSeconds = 0.22;
 // Selected piece grows and lifts so it reads against its neighbours.
 inline constexpr double kSelectedScale = 1.18;
 inline constexpr double kSelectedLiftCells = 0.12;
+
+// Swipe (WP-14): a drag this far, as a fraction of one cell on screen, is a
+// swap toward that neighbour; never less than the minimum, so a shaky tap on
+// a dense screen stays a tap.
+inline constexpr double kSwipeCellFraction = 0.3;
+inline constexpr double kSwipeMinMillimetres = 2.5;
 
 // Camera: near top-down, as the original's 2D board read.
 inline constexpr double kCameraTiltDegrees = 15.0;

@@ -1,0 +1,80 @@
+[gd_scene format=3]
+; SPDX-License-Identifier: GPL-2.0-or-later
+
+[node name="EpisodeMapScreen" type="EpisodeMapScreen"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+screen_id = "episode_map"
+back_behavior = 2
+back_action = "reset"
+back_target = "title"
+
+[node name="Backdrop" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"ScrimPanel"
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="Center"]
+layout_mode = 2
+
+[node name="Column" type="VBoxContainer" parent="Center/Panel"]
+layout_mode = 2
+
+[node name="Heading" type="Label" parent="Center/Panel/Column"]
+layout_mode = 2
+text = "map.title"
+horizontal_alignment = 1
+theme_type_variation = &"HeadingLabel"
+
+[node name="Episodes" type="HBoxContainer" parent="Center/Panel/Column"]
+layout_mode = 2
+alignment = 1
+
+[node name="Prev" type="Button" parent="Center/Panel/Column/Episodes"]
+layout_mode = 2
+unique_name_in_owner = true
+text = "map.prev"
+custom_minimum_size = Vector2(0, 48)
+
+[node name="EpisodeTitle" type="Label" parent="Center/Panel/Column/Episodes"]
+layout_mode = 2
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 0)
+size_flags_horizontal = 3
+theme_type_variation = &"HeadingLabel"
+horizontal_alignment = 1
+
+[node name="Next" type="Button" parent="Center/Panel/Column/Episodes"]
+layout_mode = 2
+unique_name_in_owner = true
+text = "map.next"
+custom_minimum_size = Vector2(0, 48)
+
+[node name="Levels" type="HFlowContainer" parent="Center/Panel/Column"]
+layout_mode = 2
+unique_name_in_owner = true
+custom_minimum_size = Vector2(840, 0)
+alignment = 1
+
+[node name="Back" type="NavButton" parent="Center/Panel/Column"]
+layout_mode = 2
+text = "menu.back"
+action = "reset"
+target = "title"

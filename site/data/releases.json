@@ -1,0 +1,13 @@
+{
+  "version": null,
+  "released": null,
+  "source_url": "https://github.com/opsroller/montezuma",
+  "notes_url": null,
+  "platforms": [
+    { "key": "windows", "label": "Windows", "kind": "file", "url": null },
+    { "key": "macos", "label": "macOS", "kind": "file", "url": null },
+    { "key": "linux", "label": "Linux", "kind": "file", "url": null },
+    { "key": "android", "label": "Android", "kind": "store", "store": "google-play", "url": null },
+    { "key": "ios", "label": "iPhone and iPad", "kind": "store", "store": "app-store", "url": null }
+  ]
+}

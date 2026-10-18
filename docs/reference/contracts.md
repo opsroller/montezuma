@@ -126,6 +126,20 @@ bonus_changed(bonus_id: String, count: int)
 level_finished(outcome: int, score: int)                # LevelState.Outcome
 ```
 
+Also emitted for the HUD (consumer: ui-developer, WP-18) — proposed:
+
+```
+gems_changed(collected: int, goal: int)                 # goal 0 hides the counter
+totem_changed(totem_id: String, charge: float, uses_left: int)   # charge 0..1
+frenzy_changed(bar: float, seconds_left: float)         # bar 0..1; seconds_left > 0 while Frenzy is on
+shuffles_changed(left: int)
+hint_cost_changed(cost: int, affordable: bool)
+```
+
+Commands the HUD calls on `Match3Game` (no arguments): `shuffle()` and
+`buy_hint()`. The HUD finds the node through group `match3_game`, which
+must be set in the scene (`node_added` fires before `_ready`).
+
 `BoardView3D` API: `show_board(board: Match3Board)`, `play(result: Dictionary)`
 (emits `animation_finished` when done), `play_illegal(a, b)`, signals `swap_requested(a: Vector2i,
 b: Vector2i)` and `animation_finished`.
@@ -133,13 +147,29 @@ b: Vector2i)` and `animation_finished`.
 `cell_at_screen(pos)` and a `layout_changed` signal; see
 [Board view](board-view.md).
 
-## Asset manifest (owner: technical-artist, WP-07/08) — proposed
+## Asset manifest (owner: technical-artist, WP-09-11) — proposed
 
-`game/assets/manifest.json` maps logical names to resource paths. The board view
-falls back to a placeholder primitive when a name is missing.
+`game/assets/manifest.json` maps logical names to scenes, per theme, so
+mini games can swap the whole look without code changes:
 
-`artifact_0` … `artifact_6` (by kind index), `temple_board`, `temple_env`,
-`cell_highlight`, `fx_match`, `fx_cascade`, `totem_<id>`, `bonus_<id>`.
+```json
+{
+  "default_theme": "temple",
+  "themes": { "temple": { "artifact_0": "res://assets/models/temple/artifacts/PF_Artifact_Ruby.tscn" } }
+}
+```
+
+Each value is a `res://` path to a `PackedScene`. `BoardView3D` takes a
+`theme` property (empty means `default_theme`), reads the manifest once and
+falls back to a placeholder primitive for any name the theme lacks.
+
+Names, theme-neutral: `artifact_0` … `artifact_6` (by kind index; origin at
+the cell centre on the board plane), `board` (replaces the slab; tile tops
+at y = 0), `environment` (backdrop plus its own `WorldEnvironment`, sun and
+lights, so the scene supplies none), `cell_highlight` (shown at the
+selected cell), `fx_match` (one-shot `CPUParticles3D` at each cleared cell,
+freed after `lifetime`), `fx_cascade`, `totem_<id>`, `bonus_<id>`.
+Scale, folders and rules: [Board themes](board-themes.md).
 
 ## Audio cues (owner: sound-designer, WP-15 to 17) — proposed
 
@@ -180,6 +210,26 @@ These replace the placeholders `row_clear`, `random_blast`, `color_bomb`
 `totem_fire_<id>`, `bonus_use_<id>` use these ids.
 
 The LevelData fields above were agreed with the LevelData owner and land with WP-05 (#7).
+
+## UI requests (owner: ui-developer, WP-19) — proposed
+
+`UiRoot` (autoload at `/root/UiRoot`, `extension/src/ui/ui_root.*`) is the
+menus' side of the hand-off to play. Details in `docs/reference/ui.md`.
+
+```
+# UiRoot emits, for the game scene:
+play_requested(level_id: String, difficulty: String)   # "e1-l03", "normal" | "hard"
+level_quit_requested()                                  # left from the pause menu
+# The game scene calls:
+show_results(outcome: int, score: int, level_id: String = "")   # LevelState.Outcome
+open_pause()
+```
+
+The UI pauses the tree (`get_tree().paused`) while the pause menu is open;
+board and game nodes keep the default pausable process mode. During play
+ui_cancel and `ui_pause` (P, controller Start) open the pause menu. UI
+sounds are played with `GameAudio.play("ui_click")` and `"ui_back"` when
+the autoload exists. Volumes go to audio buses `Music` and `SFX`.
 
 ## Web demo hand-off (owner: gameplay-programmer, WP-21/WP-34; consumer: frontend-web-developer, WP-35) — agreed
 

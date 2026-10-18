@@ -1,0 +1,140 @@
+[gd_scene format=3]
+; SPDX-License-Identifier: GPL-2.0-or-later
+
+[node name="Hud" type="Hud"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="TopBar" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 64.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="ScorePanel" type="PanelContainer" parent="TopBar"]
+layout_mode = 2
+theme_type_variation = &"CardPanel"
+custom_minimum_size = Vector2(240, 0)
+
+[node name="Column" type="VBoxContainer" parent="TopBar/ScorePanel"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="Score" type="Label" parent="TopBar/ScorePanel/Column"]
+layout_mode = 2
+unique_name_in_owner = true
+auto_translate_mode = 2
+
+[node name="Gems" type="Label" parent="TopBar/ScorePanel/Column"]
+layout_mode = 2
+unique_name_in_owner = true
+auto_translate_mode = 2
+theme_type_variation = &"HeadingLabel"
+
+[node name="TimerBox" type="VBoxContainer" parent="TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="Clock" type="Label" parent="TopBar/TimerBox"]
+layout_mode = 2
+unique_name_in_owner = true
+auto_translate_mode = 2
+horizontal_alignment = 1
+theme_type_variation = &"HeadingLabel"
+
+[node name="TimeBar" type="ProgressBar" parent="TopBar/TimerBox"]
+layout_mode = 2
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 12)
+value = 100.0
+show_percentage = false
+
+[node name="Pause" type="NavButton" parent="TopBar"]
+layout_mode = 2
+text = "hud.pause"
+action = "pause"
+focus_mode = 0
+custom_minimum_size = Vector2(140, 48)
+
+[node name="QuotaPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 0
+offset_top = 104.0
+offset_right = 240.0
+unique_name_in_owner = true
+visible = false
+theme_type_variation = &"CardPanel"
+
+[node name="Column" type="VBoxContainer" parent="QuotaPanel"]
+layout_mode = 2
+
+[node name="Heading" type="Label" parent="QuotaPanel/Column"]
+layout_mode = 2
+text = "hud.quotas"
+theme_type_variation = &"CaptionLabel"
+
+[node name="Quotas" type="VBoxContainer" parent="QuotaPanel/Column"]
+layout_mode = 2
+unique_name_in_owner = true
+theme_override_constants/separation = 4
+
+[node name="Right" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -240.0
+offset_top = 104.0
+grow_horizontal = 0
+theme_type_variation = &"CardPanel"
+
+[node name="Column" type="VBoxContainer" parent="Right"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="TotemsHeading" type="Label" parent="Right/Column"]
+layout_mode = 2
+text = "hud.totems"
+theme_type_variation = &"CaptionLabel"
+
+[node name="Totems" type="VBoxContainer" parent="Right/Column"]
+layout_mode = 2
+unique_name_in_owner = true
+theme_override_constants/separation = 4
+
+[node name="Frenzy" type="Label" parent="Right/Column"]
+layout_mode = 2
+unique_name_in_owner = true
+auto_translate_mode = 2
+text = "hud.frenzy"
+theme_type_variation = &"CaptionLabel"
+
+[node name="FrenzyBar" type="ProgressBar" parent="Right/Column"]
+layout_mode = 2
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 12)
+show_percentage = false
+
+[node name="Shuffle" type="Button" parent="Right/Column"]
+layout_mode = 2
+unique_name_in_owner = true
+auto_translate_mode = 2
+focus_mode = 0
+disabled = true
+custom_minimum_size = Vector2(0, 48)
+
+[node name="Hint" type="Button" parent="Right/Column"]
+layout_mode = 2
+unique_name_in_owner = true
+auto_translate_mode = 2
+focus_mode = 0
+disabled = true
+custom_minimum_size = Vector2(0, 48)

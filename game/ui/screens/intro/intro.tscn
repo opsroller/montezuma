@@ -1,0 +1,79 @@
+[gd_scene format=3]
+; SPDX-License-Identifier: GPL-2.0-or-later
+
+[node name="IntroScreen" type="IntroScreen"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+screen_id = "intro"
+default_focus = NodePath("%Next")
+pages = PackedStringArray("intro.1", "intro.2", "intro.3")
+
+[node name="Backdrop" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"ScrimPanel"
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="Center"]
+layout_mode = 2
+
+[node name="Column" type="VBoxContainer" parent="Center/Panel"]
+layout_mode = 2
+
+[node name="Heading" type="Label" parent="Center/Panel/Column"]
+layout_mode = 2
+text = "intro.title"
+horizontal_alignment = 1
+theme_type_variation = &"HeadingLabel"
+
+[node name="Body" type="Label" parent="Center/Panel/Column"]
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+unique_name_in_owner = true
+custom_minimum_size = Vector2(640, 120)
+autowrap_mode = 3
+vertical_alignment = 1
+
+[node name="Page" type="Label" parent="Center/Panel/Column"]
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+theme_type_variation = &"CaptionLabel"
+unique_name_in_owner = true
+auto_translate_mode = 2
+
+[node name="Buttons" type="HBoxContainer" parent="Center/Panel/Column"]
+layout_mode = 2
+alignment = 1
+
+[node name="Skip" type="NavButton" parent="Center/Panel/Column/Buttons"]
+layout_mode = 2
+text = "intro.skip"
+action = "replace"
+target = "episode_map"
+
+[node name="Next" type="Button" parent="Center/Panel/Column/Buttons"]
+layout_mode = 2
+unique_name_in_owner = true
+theme_type_variation = &"PrimaryButton"
+text = "intro.next"
+custom_minimum_size = Vector2(0, 48)
+
+[connection signal="pressed" from="Center/Panel/Column/Buttons/Next" to="." method="next_page"]

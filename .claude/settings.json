@@ -1,10 +1,25 @@
 {
   "extraKnownMarketplaces": {
     "opsroller": {
-      "source": { "source": "github", "repo": "opsroller/claude-plugins" }
+      "source": {
+        "source": "github",
+        "repo": "opsroller/claude-plugins"
+      }
     }
   },
   "enabledPlugins": {
-    "engineering-practices@opsroller": true
+    "engineering-practices@opsroller": true,
+    "project-manager@opsroller": true,
+    "game-designer@opsroller": true,
+    "gameplay-programmer@opsroller": true,
+    "graphics-programmer@opsroller": true,
+    "technical-artist@opsroller": true,
+    "sound-designer@opsroller": true,
+    "ui-developer@opsroller": true,
+    "devops-engineer@opsroller": true,
+    "frontend-web-developer@opsroller": true,
+    "graphic-designer@opsroller": true,
+    "code-reviewer@opsroller": true,
+    "technical-writer@opsroller": true
   }
 }
