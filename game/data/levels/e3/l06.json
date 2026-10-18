@@ -1,0 +1,13 @@
+{
+  "id": "e3-l06",
+  "episode": 3,
+  "index": 6,
+  "rules": "classic",
+  "theme": "temple",
+  "board": { "width": 8, "height": 8, "kinds": 7 },
+  "gem_goal": { "normal": 90, "hard": 135 },
+  "totems_unlocked": ["fire", "time", "gold", "gift", "harvest", "paint"],
+  "powerups_unlocked": ["tnt", "color_clear", "lightning", "clock", "multiplier", "hint"],
+  "steel_rate": 0.02,
+  "seed": 20090606
+}

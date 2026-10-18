@@ -69,6 +69,7 @@ own folder.
 - [About the visual target](explanation/about-the-visual-target.md): why a realistic high-end look, and what Godot can and cannot do with ray tracing.
 - [About quality tiers](explanation/about-quality-tiers.md): how a tier is picked, why the renderer is fixed per platform, why tiers only switch effects off.
 - [About CI caching](explanation/about-ci-caching.md): why CI uses a compiler cache and what it leaves uncached.
+- [About the episode 3 levels](explanation/about-the-episode-3-levels.md): why chains then steel, what the simulator measures for chains, and human time against the clock.
 - [About the build pipeline](explanation/about-the-build-pipeline.md): why builds compile natively and export once, and how the web demo is built.
 - [Sound direction](explanation/sound-direction.md): why the game sounds the way it does.
 - [About the website](explanation/about-the-website.md): why the front page is the playable intro level and how it hands off to downloads.
