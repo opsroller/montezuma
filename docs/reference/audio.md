@@ -220,6 +220,7 @@ on the animation frame they belong to.
 
 `godot --headless --path game --quit-after 120 -- --audio-selftest`
 plays every cue once, checks the voice limit and a missing cue, and
-prints `GameAudio self-test: <n> cues, 0 failures`. Stop playback
+prints `GameAudio self-test: <n> cues, 0 failures`. CI runs it in the
+Linux extension job and fails on any other line. Stop playback
 before quitting in any headless test that plays sound; Godot reports
 playbacks still running at exit as leaked resources.

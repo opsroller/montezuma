@@ -298,7 +298,8 @@ void GameAudio::start_one_shot(int cue_index) {
 void GameAudio::start_loop(LoopDeck& deck, int cue_index, double fade_seconds) {
     if (deck.cue == cue_index && deck.players[deck.current]->is_playing()) return;
     Cue& cue = cues_[cue_index];
-    const int next = deck.cue < 0 ? deck.current : 1 - deck.current;
+    // Take the idle player so a loop still fading out is never cut off.
+    const int next = deck.players[deck.current]->is_playing() ? 1 - deck.current : deck.current;
     AudioStreamPlayer* player = deck.players[next];
     player->stop();
     player->set_stream(cue.streams[pick_variation(cue)]);
