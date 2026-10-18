@@ -44,7 +44,7 @@ are a measured lever now, but a small one next to the gem goal: ten
 chains on a 64-cell board add one extra hit each. Episode 3's simulated
 difficulty still comes mostly from the gem goal and, more weakly, from
 `steel_rate` (raising e3-l08's from 0.05 to 0.06 barely changed its
-results). The climb shows in `greedy` mean moves (82 to 145). Before the levels had
+results). The climb shows in `greedy` mean moves (84 to 146). Before the levels had
 their own clocks, `random` also fell on hard, from 78 % on e3-l05 to 17 %
 on e3-l07; with human-pace clocks it wins every run on normal
 ([about level clocks](about-level-clocks.md)). `greedy` wins every
@@ -64,7 +64,7 @@ at 3.5 s a move. At that pace every episode 3 level outlasts the old
 270 s clock, so each now carries its own base clock from the
 [clock rule](../reference/balance.md#clock): the moves `greedy`'s wins
 take, at 3.5 s a move plus 15 %, without the timer upgrade. Episode 3's
-clocks run from 340 s (e3-l01 normal) to 900 s (e3-l07 hard) and follow
+clocks run from 340 s (e3-l01 normal) to 910 s (e3-l07 hard) and follow
 the moves: they rise with the gem goal and dip on the finale, which takes
 fewer moves for the reason above. Each timer tier adds 30 s on top, so
 upgrades stay worth buying.
