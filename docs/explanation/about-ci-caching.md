@@ -65,3 +65,15 @@ for every PR. Pushes to `main` still run the Windows core tests, the
 Windows extension build and the Windows package, so Windows breaks are
 caught within one merge rather than before it. That trade favours fast feedback
 on the platforms most changes are developed on.
+
+The exception is a change to the build system itself: CMake files,
+`.gitmodules` or anything under `thirdparty/`. Those can break only MSVC
+with nothing in the C++ looking wrong. The godot-cpp 10 upgrade did:
+godot-cpp picks the static MSVC runtime when it is added, after the core
+library already had the default DLL runtime, and the Windows link failed
+on every `main` push until it was fixed. Such PRs are rare, so the
+[`windows` workflow](../reference/ci-pipeline.md#windows-workflow) builds
+and tests them on Windows before merge, from the same warm cache, while
+code-only PRs keep the faster feedback. It is not a required check,
+because a path-filtered check never reports on the PRs it skips and
+would block them.
