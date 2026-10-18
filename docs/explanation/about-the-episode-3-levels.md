@@ -1,0 +1,63 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- Copyright (C) 2026 Charles (opsroller) and Montezuma contributors -->
+
+# About the episode 3 levels
+
+Explanation, for designers and reviewers: why episode 3's levels are
+ordered and built the way [progression](../reference/progression.md#episode-3-levels)
+lists them, and what the simulator can and cannot tell us about them.
+Targets are in [balance](../reference/balance.md); the obstacle rules are
+`OBS-*` in the [rules spec](../reference/rules-spec.md).
+
+## Two obstacles across eight levels
+
+Episode 3 brings two ideas, chains (e3-l01) and steel (e3-l06), so most of
+its levels practise or test rather than introduce. Chains get five levels,
+each asking something different of the same piece: a fixed lock (bottom
+row, nothing below it), a falling lock (top half), a dense band that one
+blast can break, a packed test, and a rest with only two. Steel then
+arrives on a level with no chains, so the player meets one new obstacle at
+a time, and the last two levels put both on the board together.
+
+Chains are placed only on the starting board (`OBS-05`) and fall like any
+piece, while steel only arrives later from refills (`OBS-02`). A chain
+high on the board can drift or leave early, so levels that must show both
+obstacles at once keep their chains on the bottom rows, where nothing
+below them can make them fall.
+
+Each level also makes one or two tier-2 upgrades buyable. They are
+optional purchases (`PROG-04`), so no level's first contact relies on
+them.
+
+## What the simulator measures here
+
+Chains barely move the simulator: a probe of e3-l04 with ten chained cells
+and with none gave the same `greedy` win rate and move count, because a
+chain goes as soon as a run passes through it. Episode 3's simulated
+difficulty therefore comes from the gem goal and, more weakly, from
+`steel_rate` (raising e3-l08's from 0.05 to 0.06 barely changed its
+results). The climb shows in `greedy` mean moves (82 to 145) and on
+hard, where `random` falls from 78 % on e3-l05 to 17 % on e3-l07; on
+normal the rates drop only on the last two levels. `greedy` wins every
+run on every level, so the curve rules hold by the 100 % tie rather than
+by a measured sawtooth; chains are a teaching device more than a
+difficulty lever.
+
+The finale, e3-l08, has the biggest goal and the most obstacles, yet takes
+fewer simulated moves than e3-l07: it is where the seventh gem on the
+board becomes available, and the simulator buys every tier as soon as it
+can. A player who has not bought it meets a longer finale. Its brief
+therefore promises the most obstacles, not the longest level.
+
+## Human time against the clock
+
+[Balance](../reference/balance.md) converts simulator moves to human time
+at 3.5 s a move. At that pace most of episode 3's levels outlast the base
+clock (270 s, 300 s with timer tier 1), so a player who buys nothing leans
+on the time totem (+60 s, one use) and clock power-ups (+15 s each). The
+simulator, which moves every 1.5 s, still has a `greedy` median of
+at least 218 s left on normal
+([current results](../reference/balance.md#current-results)). Until a
+playtest settles the real pace, the human first-try rates in the briefs are
+provisional; if players run out of time, the gem goal curve or the pace
+assumption in balance.md is what changes, not the level files alone.

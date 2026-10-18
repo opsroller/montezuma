@@ -61,7 +61,8 @@ row in the PR that finishes the package.
 | 59 | Chains that hold | game-designer + gameplay-programmer, graphics-programmer for the view | `OBS-05` in the rules spec, chain rules in `core/`, chain effects in `extension/src/board/effects/` | 58 | chains are a lever the simulator measures: a level's chains move `greedy`'s win rate or moves more than the 1.5 points and 8 s that e3-l04's ten chains do today (see [balance](balance.md)), for example a run that breaks a chain but leaves its piece in place | todo |
 | 23 | Episode 1 levels (includes the intro levels) | game-designer | `game/data/levels/e1/` | 03, 05, 22 | all load and hit sim targets | done (#37) |
 | 24 | Episode 2 levels | game-designer | `game/data/levels/e2/` | 23, 56 | all load and hit sim targets, moves floor included | done (#45) |
-| 25-27 | Episodes 3, 4, 5 (one package each) | game-designer | `game/data/levels/e<N>/` | 24 | same | todo |
+| 25 | Episode 3 levels | game-designer | `game/data/levels/e3/` | 24 | all load and hit sim targets, moves floor included | done (#49) |
+| 26-27 | Episodes 4, 5 (one package each) | game-designer | `game/data/levels/e<N>/` | 25 | same | todo |
 | 28 | Game scene integration | graphics-programmer | `extension/src/game/`, `game/scenes/game/` | 05, 13, 16, 18 | a level plays start to finish with HUD, audio and results | done |
 | 29 | Totem and bonus visuals | graphics-programmer | `extension/src/board/effects/`, `game/scenes/board/effects/` | 06, 07, 11, 13 | every effect animates | done |
 | 30-33 | Bonus games: 30 `bg_accuracy`, 31 `bg_memory`, 32 `bg_reaction`, 33 `bg_attention` (one package each; rules in `docs/reference/rules-bonus-games.md`) | gameplay-programmer + graphics-programmer | `core/**/minigames/<id>.*`, `extension/src/minigames/<id>/`, `game/scenes/minigames/<id>/` | 03, 28 | playable and tested per the rules | todo |
