@@ -39,6 +39,7 @@ own folder.
 - [Visual target](reference/visual-target.md): the look per quality tier, frame budgets and acceptance tests.
 - [Quality tiers](reference/quality-tiers.md): the `QualityTiers` autoload, settings key, feature ids, node groups and render settings per tier.
 - [Benchmark and readability capture](reference/benchmark.md): the benchmark replay, its JSON report, feature keys and readability checks.
+- [Benchmark results](reference/benchmark-results.md): measured frame times, feature rows and readability per machine and tier.
 
 ## Explanation
 
