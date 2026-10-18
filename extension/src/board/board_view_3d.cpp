@@ -3,10 +3,14 @@
 
 #include "board_view_3d.hpp"
 
+#include <algorithm>
 #include <utility>
 
 #include <godot_cpp/classes/camera3d.hpp>
+#include <godot_cpp/classes/display_server.hpp>
 #include <godot_cpp/classes/input_event_mouse_button.hpp>
+#include <godot_cpp/classes/input_event_mouse_motion.hpp>
+#include <godot_cpp/classes/input_event_screen_drag.hpp>
 #include <godot_cpp/classes/input_event_screen_touch.hpp>
 #include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/classes/property_tweener.hpp>
@@ -169,6 +173,7 @@ void BoardView3D::rebuild() {
     }
     grid_.width = board_->get_width();
     grid_.height = board_->get_height();
+    gesture_.reset(grid_.width, grid_.height);
     library_.load(grid_.cell);
 
     slab_ = library_.make_board(grid_.width, grid_.height, grid_.cell);
@@ -230,6 +235,7 @@ void BoardView3D::sync_to_board(bool animate) {
 Ref<Tween> BoardView3D::begin_animation() {
     if (tween_.is_valid()) tween_->kill();
     clear_selection();
+    gesture_.reset(grid_.width, grid_.height);
     busy_ = true;
     tween_ = create_tween();
     tween_->set_speed_scale(static_cast<float>(animation_speed_));
@@ -406,34 +412,89 @@ Vector2i BoardView3D::cell_at_screen(Vector2 screen_pos) const {
 }
 
 void BoardView3D::_unhandled_input(const Ref<InputEvent>& event) {
+    if (board_.is_null()) return;
+    // Mouse is pointer -1; touches use their finger index.
+    constexpr int kMouse = -1;
+    input::Output out;
+    bool handled = false;
     if (Ref<InputEventMouseButton> mb = event; mb.is_valid()) {
-        if (mb->is_pressed() && mb->get_button_index() == MOUSE_BUTTON_LEFT) handle_press(mb->get_position());
+        if (mb->get_button_index() != MOUSE_BUTTON_LEFT) return;
+        handled = true;
+        out = mb->is_pressed() ? press(kMouse, mb->get_position()) : gesture_.release(kMouse);
+    } else if (Ref<InputEventMouseMotion> mm = event; mm.is_valid()) {
+        if (!gesture_.pressing()) return;
+        handled = true;
+        out = gesture_.move(kMouse, {mm->get_position().x, mm->get_position().y});
     } else if (Ref<InputEventScreenTouch> touch = event; touch.is_valid()) {
-        if (touch->is_pressed()) handle_press(touch->get_position());
+        handled = true;
+        if (touch->is_canceled()) {
+            gesture_.cancel();
+        } else {
+            out = touch->is_pressed() ? press(touch->get_index(), touch->get_position())
+                                      : gesture_.release(touch->get_index());
+        }
+    } else if (Ref<InputEventScreenDrag> drag = event; drag.is_valid()) {
+        if (!gesture_.pressing()) return;
+        handled = true;
+        out = gesture_.move(drag->get_index(), {drag->get_position().x, drag->get_position().y});
     }
+    if (handled) get_viewport()->set_input_as_handled();
+    apply_input(out);
 }
 
-void BoardView3D::handle_press(Vector2 screen_pos) {
-    if (busy_ || board_.is_null()) return;
-    const Vector2i cell = cell_at_screen(screen_pos);
-    if (cell == kNoCell) {
-        clear_selection();
-        return;
+void BoardView3D::_notification(int what) {
+    // Losing focus ends any press, so nothing stays held (alt-tab, app switch).
+    // Window focus events are not used: some X11 setups send one on every
+    // click (pointer grab), which would cancel every swipe.
+    if (what == NOTIFICATION_APPLICATION_FOCUS_OUT) gesture_.cancel();
+}
+
+input::Output BoardView3D::press(int pointer, Vector2 screen_pos) {
+    // Taps during an animation are ignored by design: the board is about to
+    // change under the finger.
+    if (busy_) return {};
+    gesture_.set_swipe_threshold(swipe_threshold_pixels());
+    const Vector2i c = cell_at_screen(screen_pos);
+    const input::Cell cell = c == kNoCell ? input::Cell{} : input::Cell{c.x, c.y};
+    return gesture_.press(pointer, {screen_pos.x, screen_pos.y}, cell);
+}
+
+double BoardView3D::swipe_threshold_pixels() const {
+    // A fraction of one cell as drawn now, but never less than a few
+    // millimetres, so a shaky tap is not a swipe on a dense screen.
+    double cell_px = 0.0;
+    if (const Camera3D* camera = get_viewport()->get_camera_3d()) {
+        const Vector2 a = camera->unproject_position(to_global(cell_position(0, 0)));
+        const Vector2 b = camera->unproject_position(to_global(cell_position(1, 0)));
+        cell_px = a.distance_to(b);
     }
-    if (!has_selection_) {
-        select(cell);
-        return;
+    int dpi = DisplayServer::get_singleton()->screen_get_dpi();
+    if (dpi <= 0) dpi = 96;
+    const double min_px = feel::kSwipeMinMillimetres * dpi / 25.4;
+    return std::max(min_px, cell_px * feel::kSwipeCellFraction);
+}
+
+void BoardView3D::apply_input(const input::Output& out) {
+    switch (out.action) {
+        case input::Action::None:
+            return;
+        case input::Action::Select:
+            clear_selection();
+            select(Vector2i(out.a.x, out.a.y));
+            return;
+        case input::Action::Deselect:
+            clear_selection();
+            return;
+        case input::Action::Swap: {
+            clear_selection();
+            const Vector2i from(out.a.x, out.a.y);
+            const Vector2i to(out.b.x, out.b.y);
+            last_request_[0] = from;
+            last_request_[1] = to;
+            emit_signal("swap_requested", from, to);
+            return;
+        }
     }
-    const Vector2i from = selected_;
-    clear_selection();
-    if (from == cell) return;
-    if (Math::abs(from.x - cell.x) + Math::abs(from.y - cell.y) != 1) {
-        select(cell);
-        return;
-    }
-    last_request_[0] = from;
-    last_request_[1] = cell;
-    emit_signal("swap_requested", from, cell);
 }
 
 void BoardView3D::select(Vector2i cell) {
