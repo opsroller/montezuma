@@ -1,0 +1,8 @@
+{
+  "name": "level-designer",
+  "version": "0.1.0",
+  "description": "Rules spec, level data, difficulty curve and balance simulation for Montezuma 3D.",
+  "author": { "name": "opsroller" },
+  "repository": "https://github.com/opsroller/montezuma",
+  "license": "MIT"
+}

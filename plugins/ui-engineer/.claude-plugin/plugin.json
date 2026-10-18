@@ -1,0 +1,8 @@
+{
+  "name": "ui-engineer",
+  "version": "0.1.0",
+  "description": "HUD, menus, episode map and trophies screen for Montezuma 3D.",
+  "author": { "name": "opsroller" },
+  "repository": "https://github.com/opsroller/montezuma",
+  "license": "MIT"
+}

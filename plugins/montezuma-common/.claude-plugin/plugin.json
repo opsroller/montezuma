@@ -1,0 +1,8 @@
+{
+  "name": "montezuma-common",
+  "version": "0.1.0",
+  "description": "Shared rules every Montezuma 3D role loads: clean-room asset policy, repo layout, contracts, and how to pick up a work package.",
+  "author": { "name": "opsroller" },
+  "repository": "https://github.com/opsroller/montezuma",
+  "license": "MIT"
+}
