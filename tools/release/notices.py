@@ -20,9 +20,10 @@ REPO_URL = "https://github.com/opsroller/montezuma"
 # (component, license file) in the order they appear. Add a row for every
 # library linked into the game.
 COMPONENTS = [
-    ("Godot Engine 4.4.1 (MIT)", "tools/release/notices/godot/LICENSE.txt"),
+    ("Godot Engine 4.7.2 (MIT)", "tools/release/notices/godot/LICENSE.txt"),
     ("godot-cpp (MIT)", "thirdparty/godot-cpp/LICENSE.md"),
-    ("Third-party code included in Godot Engine 4.4.1",
+    ("nlohmann/json 3.11.3 (MIT)", "thirdparty/nlohmann/LICENSE.MIT"),
+    ("Third-party code included in Godot Engine 4.7.2",
      "tools/release/notices/godot/COPYRIGHT.txt"),
 ]
 

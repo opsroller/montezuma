@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
-# Core tests on three OSes, the GDExtension build and headless load, and an
-# ASan/UBSan run. Reference: docs/reference/ci-pipeline.md
+# Core tests on three OSes, the GDExtension build with every CTest test and
+# the headless load, and an ASan/UBSan run. Reference: docs/reference/ci-pipeline.md
 name: tests
 
 on:
@@ -71,12 +71,16 @@ jobs:
       - name: Set up MSVC
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
-      - name: Build GDExtension
+      - name: Build GDExtension and tests
         shell: bash
         run: |
-          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_TESTS=OFF -DMONTEZUMA_WERROR=ON \
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_WERROR=ON \
             -DCMAKE_C_COMPILER_LAUNCHER="$CACHE" -DCMAKE_CXX_COMPILER_LAUNCHER="$CACHE"
           cmake --build build
+      # Every CTest test, including the ones that need the extension build
+      # (ui_model_tests).
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
       - name: Compiler cache stats
         shell: bash
         run: |

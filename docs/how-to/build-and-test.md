@@ -21,6 +21,10 @@ cmake --build build -j
 ctest --test-dir build --output-on-failure
 ```
 
+This also builds the balance simulator (`tools/sim/`) and runs its tests;
+add `-DMONTEZUMA_BUILD_SIM=OFF` to skip it. Running it is in
+[Run the balance simulator](run-the-balance-simulator.md).
+
 ## Run the tests under sanitizers
 
 ```sh
@@ -38,11 +42,16 @@ build folder: CMake caches options, so reusing the core-only `build/`
 would keep the extension off. The library lands in `game/bin/`.
 
 ```sh
-cmake -S . -B build-ext -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON -DMONTEZUMA_BUILD_TESTS=OFF
+cmake -S . -B build-ext -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON
 cmake --build build-ext -j
+ctest --test-dir build-ext --output-on-failure   # every test, as CI's extension job
 godot --headless --path game --import
 godot --headless --path game --quit-after 120    # errors show here
 ```
+
+This build also copies `CREDITS.md` and `LICENSE` into `game/` so the
+credits screen shows them. The tests include `ui_model_tests`, which
+needs the extension build.
 
 ## Check the assets
 
@@ -54,9 +63,9 @@ python3 -m venv .venv
 .venv/bin/python tools/assets/validate_assets.py    # exits 1 on any error
 ```
 
-The hashes in `assets.txt` cover Linux x86_64 only. On macOS, Windows or
-ARM Linux, install with `.venv/bin/pip install pillow==11.3.0` instead.
-On Windows the venv's programs are in `.venv\Scripts\`.
+The hashes in `assets.txt` cover every platform Pillow ships wheels for,
+so the same commands work on Linux, macOS and Windows. On Windows the
+venv's programs are in `.venv\Scripts\`.
 
 ## Capture screenshots without a display
 

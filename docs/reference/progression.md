@@ -161,9 +161,8 @@ demo (WP-34, WP-35). Brief:
   give power-ups, and that the timer matters later.
 - **Help:** free move hint after 8 s idle (`SHUF-05`).
 
-Data, in the proposed LevelData fields (see the contract change in the
-PR that adds this page; the file itself lands with WP-23 once the parser
-accepts the fields):
+Data, in the LevelData fields, in
+[`game/data/levels/e1/l01.json`](../../game/data/levels/e1/l01.json):
 
 ```json
 {
