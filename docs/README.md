@@ -16,19 +16,35 @@ own folder.
 - [Contracts](reference/contracts.md): interfaces between work packages.
 - [Work packages](reference/work-packages.md): the plan and its status.
 - [Board themes](reference/board-themes.md): theme files, asset names, generators, budgets, validator.
+- [Audio](reference/audio.md): sound formats, levels and the files behind each cue.
+- [Power Totems](reference/totems.md): totem ids, charging, effects and tuning.
+- [Power-ups](reference/bonuses.md): on-board power-up ids, tiers, placement, triggering and effects.
 - [MoveResult events](reference/move-result.md): cascade steps, falls, spawns and how to replay a move.
-- [Rules spec](rules-spec.md): the game's rules (moving to `reference/`).
+- [Match3Level](reference/match3-level.md): the level timer, score, quotas and outcome in Godot.
 - [Board view](reference/board-view.md): the 3D board's classes, scenes, camera fit and feel constants.
+- [Rules spec](reference/rules-spec.md): how the game plays, with
+  [Power Totems](reference/rules-totems.md), [power-ups](reference/rules-power-ups.md),
+  [bonus games](reference/rules-bonus-games.md) and [sources](reference/rules-sources.md).
+- [Progression](reference/progression.md): episodes, levels, unlocks, upgrades, trophies, intro level.
+- [Balance targets](reference/balance.md): what the simulator checks each level against.
+
+## Explanation
+
+- [About the rules](explanation/about-the-rules.md): which original we follow, and every choice and deviation.
+- [About rule sets and themes](explanation/about-rule-sets-and-themes.md): how mini games fit the design.
 
 ## How-to guides
 
 - [Build and test](how-to/build-and-test.md): build the core and extension, run tests, load the game, capture screenshots.
 - [Make a board theme](how-to/make-a-board-theme.md): change the temple look or add a new theme.
+- [Regenerate or add sounds](how-to/regenerate-or-add-sounds.md): rebuild the generated audio, add a cue.
+- [Play a sound from code](how-to/play-a-sound-from-code.md): call a cue from C++ or a scene, start and stop music.
 
 ## Explanation
 
 - [About the board view](explanation/about-the-board-view.md): why the view never applies rules, and how the camera frames the board.
 - [Art direction](explanation/art-direction.md): why the board looks the way it does, and the rules new art follows.
+- [Sound direction](explanation/sound-direction.md): why the game sounds the way it does.
 
 Tutorials, more how-to guides and explanations are added by the work
 packages that create what they describe.

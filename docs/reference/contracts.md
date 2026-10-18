@@ -84,11 +84,19 @@ the engine reads the file and passes the text in.
 | `id` | string | `e1-l03` |
 | `episode`, `index` | int | 1-based |
 | `board` | `{width, height, kinds}` | defaults 8, 8, 7 |
-| `quotas` | `{kind_name: int}` | kind names below |
-| `time_limit` | `{relaxed: float, normal: float}` | seconds |
-| `totems_unlocked` | `[totem_id]` | |
+| `gem_goal` | `{normal: int, hard: int}` | gems to collect; a level needs `gem_goal` or `quotas` |
+| `quotas` | `{kind_name: int}` | optional; kind names below. With `gem_goal`, both must be met (`GOAL-06`) |
+| `time_limit` | `{normal: float, hard: float}` | optional, seconds; default `270 + 30 × timer tier` (tiers 0 to 4) |
+| `totems_unlocked` | `[totem_id]` | available on this level; the tier comes from player progress (WP-08) |
+| `powerups_unlocked` | `[power-up id]` | optional, as above |
+| `steel_rate` | float | optional, 0 to 1, default 0 (`OBS-02`) |
 | `blocked_cells` | `[[x, y]]` | optional |
+| `chained_cells` | `[[x, y]]` | optional (`OBS-05`) |
+| `rules` | string | optional, default `classic` |
+| `theme` | string | optional, default `temple` |
 | `seed` | int | for sim and tests |
+
+Difficulties: `normal`, `hard`.
 
 Kind names, in index order: `red`, `orange`, `yellow`, `green`, `blue`,
 `purple`, `white`.
@@ -140,22 +148,45 @@ selected cell), `fx_match` (one-shot `CPUParticles3D` at each cleared cell,
 freed after `lifetime`), `fx_cascade`, `totem_<id>`, `bonus_<id>`.
 Scale, folders and rules: [Board themes](board-themes.md).
 
-## Audio cues (owner: sound-designer, WP-14) — proposed
+## Audio cues (owner: sound-designer, WP-15 to 17) — proposed
 
-Played by name with `GameAudio::play(name)`; a missing cue warns and is silent.
+Played by name with `GameAudio::play(name)` (C++:
+`GameAudio::get_singleton()`; scenes: the `/root/GameAudio` autoload); a
+missing cue warns and is silent. Volume per bus with
+`set_volume(bus, linear)`. Full API and when each cue plays:
+[audio.md](audio.md#audio-system).
 
 `swap`, `swap_illegal`, `match`, `cascade_1` … `cascade_8`, `piece_land`,
-`bonus_earned`, `bonus_use_<id>`, `totem_charge`, `totem_fire_<id>`,
-`quota_done`, `time_warning`, `level_won`, `level_lost`, `ui_click`,
-`ui_back`, `trophy`, `music_menu`, `music_play_<episode>`,
-`ambience_jungle`.
+`gem_collect`, `steel_break`, `chain_break`, `bonus_earned` (a power-up
+appears on the board), `bonus_use_<power-up id>`, `totem_charge`,
+`totem_fire_<totem id>`, `quota_done`, `time_warning`, `level_won`,
+`level_lost`, `ui_click`, `ui_back`, `trophy`, `music_menu`,
+`music_play_<episode>`, `ambience_jungle`.
 
-## Totem and bonus ids (owner: game-designer, WP-03) — proposed
+Ids are the settled totem and power-up ids below. Files, levels and
+status per cue: [audio.md](audio.md).
 
-Totems: `row_clear`, `random_blast`, `time`, `lightning`, `color_bomb`,
-`multiplier`. Bonuses: `hammer`, `lightning`, `extra_time`, `shuffle`,
-`dynamite`, `freeze`. Placeholders until WP-03 settles the originals'
-behaviour; ids may be renamed then.
+## Totem and power-up ids (owner: game-designer, WP-03) — settled
+
+Rules: [rules-totems.md](rules-totems.md), [rules-power-ups.md](rules-power-ups.md).
+
+Totems, one per kind, in kind order: `fire` (red), `time` (orange),
+`gold` (yellow), `harvest` (green), `ward` (blue), `gift` (purple),
+`paint` (white).
+
+Power-ups (the original's bonuses): `tnt`, `color_clear`, `lightning`,
+`clock`, `multiplier`, `hint`.
+
+Bonus games: `bg_accuracy`, `bg_memory`, `bg_reaction`, `bg_attention`.
+
+Rule sets: `classic`. Themes: `temple`.
+
+These replace the placeholders `row_clear`, `random_blast`, `color_bomb`
+(totems) and `hammer`, `extra_time`, `shuffle`, `dynamite`, `freeze`
+(bonuses). Asset and audio names follow: `totem_<id>`, `bonus_<id>`,
+`totem_fire_<id>`, `bonus_use_<id>` use these ids.
+
+The LevelData fields above were agreed with the LevelData owner and land with WP-05 (#7).
 
 ## Web demo hand-off (owner: gameplay-programmer, WP-21/WP-34; consumer: frontend-web-developer, WP-35) — agreed
 

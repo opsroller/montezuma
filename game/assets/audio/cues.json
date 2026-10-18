@@ -1,0 +1,392 @@
+{
+  "_comment": "SPDX-License-Identifier: GPL-2.0-or-later. Cue table read by GameAudio; fields in docs/reference/audio.md. Paths are relative to this folder.",
+  "cues": {
+    "swap": {
+      "files": [
+        "sfx/swap_01.wav",
+        "sfx/swap_02.wav",
+        "sfx/swap_03.wav"
+      ],
+      "bus": "SFX",
+      "priority": 3,
+      "max_voices": 3,
+      "volume_random_db": 1.5,
+      "pitch_random_semitones": 0.5
+    },
+    "swap_illegal": {
+      "files": [
+        "sfx/swap_illegal.wav"
+      ],
+      "bus": "SFX",
+      "priority": 2,
+      "max_voices": 2,
+      "volume_random_db": 1.0,
+      "pitch_random_semitones": 0.3
+    },
+    "match": {
+      "files": [
+        "sfx/match_01.wav",
+        "sfx/match_02.wav",
+        "sfx/match_03.wav",
+        "sfx/match_04.wav"
+      ],
+      "bus": "SFX",
+      "priority": 2,
+      "max_voices": 3,
+      "volume_random_db": 1.0,
+      "pitch_random_semitones": 0.2
+    },
+    "cascade_1": {
+      "files": [
+        "sfx/cascade_1.wav"
+      ],
+      "bus": "SFX",
+      "priority": 2,
+      "max_voices": 2,
+      "volume_random_db": 0.5
+    },
+    "cascade_2": {
+      "files": [
+        "sfx/cascade_2.wav"
+      ],
+      "bus": "SFX",
+      "priority": 2,
+      "max_voices": 2,
+      "volume_random_db": 0.5
+    },
+    "cascade_3": {
+      "files": [
+        "sfx/cascade_3.wav"
+      ],
+      "bus": "SFX",
+      "priority": 2,
+      "max_voices": 2,
+      "volume_random_db": 0.5
+    },
+    "cascade_4": {
+      "files": [
+        "sfx/cascade_4.wav"
+      ],
+      "bus": "SFX",
+      "priority": 2,
+      "max_voices": 2,
+      "volume_random_db": 0.5
+    },
+    "cascade_5": {
+      "files": [
+        "sfx/cascade_5.wav"
+      ],
+      "bus": "SFX",
+      "priority": 2,
+      "max_voices": 2,
+      "volume_random_db": 0.5
+    },
+    "cascade_6": {
+      "files": [
+        "sfx/cascade_6.wav"
+      ],
+      "bus": "SFX",
+      "priority": 2,
+      "max_voices": 2,
+      "volume_random_db": 0.5
+    },
+    "cascade_7": {
+      "files": [
+        "sfx/cascade_7.wav"
+      ],
+      "bus": "SFX",
+      "priority": 2,
+      "max_voices": 2,
+      "volume_random_db": 0.5
+    },
+    "cascade_8": {
+      "files": [
+        "sfx/cascade_8.wav"
+      ],
+      "bus": "SFX",
+      "priority": 2,
+      "max_voices": 2,
+      "volume_random_db": 0.5
+    },
+    "piece_land": {
+      "files": [
+        "sfx/piece_land_01.wav",
+        "sfx/piece_land_02.wav",
+        "sfx/piece_land_03.wav",
+        "sfx/piece_land_04.wav"
+      ],
+      "bus": "SFX",
+      "priority": 3,
+      "max_voices": 6,
+      "volume_random_db": 2.0,
+      "pitch_random_semitones": 1.0
+    },
+    "gem_collect": {
+      "files": [
+        "sfx/gem_collect_01.wav",
+        "sfx/gem_collect_02.wav",
+        "sfx/gem_collect_03.wav"
+      ],
+      "bus": "SFX",
+      "priority": 2,
+      "max_voices": 3,
+      "volume_random_db": 1.0,
+      "pitch_random_semitones": 0.2
+    },
+    "steel_break": {
+      "files": [
+        "sfx/steel_break_01.wav",
+        "sfx/steel_break_02.wav"
+      ],
+      "bus": "SFX",
+      "priority": 2,
+      "max_voices": 2,
+      "volume_random_db": 1.0,
+      "pitch_random_semitones": 0.3
+    },
+    "chain_break": {
+      "files": [
+        "sfx/chain_break_01.wav",
+        "sfx/chain_break_02.wav"
+      ],
+      "bus": "SFX",
+      "priority": 2,
+      "max_voices": 2,
+      "volume_random_db": 1.0,
+      "pitch_random_semitones": 0.3
+    },
+    "bonus_earned": {
+      "files": [
+        "sfx/bonus_earned.wav"
+      ],
+      "bus": "SFX",
+      "priority": 2,
+      "max_voices": 2,
+      "volume_random_db": 1.0
+    },
+    "bonus_use_tnt": {
+      "files": [
+        "sfx/bonus_use_tnt.wav"
+      ],
+      "bus": "SFX",
+      "priority": 2,
+      "max_voices": 1,
+      "volume_random_db": 0.5
+    },
+    "bonus_use_color_clear": {
+      "files": [
+        "sfx/bonus_use_color_clear.wav"
+      ],
+      "bus": "SFX",
+      "priority": 2,
+      "max_voices": 1,
+      "volume_random_db": 0.5
+    },
+    "bonus_use_lightning": {
+      "files": [
+        "sfx/bonus_use_lightning.wav"
+      ],
+      "bus": "SFX",
+      "priority": 2,
+      "max_voices": 1,
+      "volume_random_db": 0.5
+    },
+    "bonus_use_clock": {
+      "files": [
+        "sfx/bonus_use_clock.wav"
+      ],
+      "bus": "SFX",
+      "priority": 2,
+      "max_voices": 1,
+      "volume_random_db": 0.5
+    },
+    "bonus_use_multiplier": {
+      "files": [
+        "sfx/bonus_use_multiplier.wav"
+      ],
+      "bus": "SFX",
+      "priority": 2,
+      "max_voices": 1,
+      "volume_random_db": 0.5
+    },
+    "bonus_use_hint": {
+      "files": [
+        "sfx/bonus_use_hint.wav"
+      ],
+      "bus": "SFX",
+      "priority": 3,
+      "max_voices": 1,
+      "volume_random_db": 0.5
+    },
+    "totem_charge": {
+      "files": [
+        "sfx/totem_charge.wav"
+      ],
+      "bus": "SFX",
+      "priority": 2,
+      "max_voices": 2,
+      "volume_random_db": 0.5,
+      "pitch_random_semitones": 0.2
+    },
+    "totem_fire_fire": {
+      "files": [
+        "sfx/totem_fire_fire.wav"
+      ],
+      "bus": "SFX",
+      "priority": 1,
+      "max_voices": 1
+    },
+    "totem_fire_time": {
+      "files": [
+        "sfx/totem_fire_time.wav"
+      ],
+      "bus": "SFX",
+      "priority": 1,
+      "max_voices": 1
+    },
+    "totem_fire_gold": {
+      "files": [
+        "sfx/totem_fire_gold.wav"
+      ],
+      "bus": "SFX",
+      "priority": 1,
+      "max_voices": 1
+    },
+    "totem_fire_harvest": {
+      "files": [
+        "sfx/totem_fire_harvest.wav"
+      ],
+      "bus": "SFX",
+      "priority": 1,
+      "max_voices": 1
+    },
+    "totem_fire_ward": {
+      "files": [
+        "sfx/totem_fire_ward.wav"
+      ],
+      "bus": "SFX",
+      "priority": 1,
+      "max_voices": 1
+    },
+    "totem_fire_gift": {
+      "files": [
+        "sfx/totem_fire_gift.wav"
+      ],
+      "bus": "SFX",
+      "priority": 1,
+      "max_voices": 1
+    },
+    "totem_fire_paint": {
+      "files": [
+        "sfx/totem_fire_paint.wav"
+      ],
+      "bus": "SFX",
+      "priority": 1,
+      "max_voices": 1
+    },
+    "quota_done": {
+      "files": [
+        "sfx/quota_done.wav"
+      ],
+      "bus": "SFX",
+      "priority": 1,
+      "max_voices": 1
+    },
+    "time_warning": {
+      "files": [
+        "sfx/time_warning.wav"
+      ],
+      "bus": "SFX",
+      "priority": 1,
+      "max_voices": 1
+    },
+    "level_won": {
+      "files": [
+        "sfx/level_won.wav"
+      ],
+      "bus": "SFX",
+      "priority": 1,
+      "max_voices": 1
+    },
+    "level_lost": {
+      "files": [
+        "sfx/level_lost.wav"
+      ],
+      "bus": "SFX",
+      "priority": 1,
+      "max_voices": 1
+    },
+    "ui_click": {
+      "files": [
+        "sfx/ui_click_01.wav",
+        "sfx/ui_click_02.wav",
+        "sfx/ui_click_03.wav"
+      ],
+      "bus": "UI",
+      "priority": 2,
+      "max_voices": 2,
+      "volume_random_db": 1.0,
+      "pitch_random_semitones": 0.3
+    },
+    "ui_back": {
+      "files": [
+        "sfx/ui_back.wav"
+      ],
+      "bus": "UI",
+      "priority": 2,
+      "max_voices": 2,
+      "volume_random_db": 1.0,
+      "pitch_random_semitones": 0.3
+    },
+    "trophy": {
+      "files": [
+        "sfx/trophy.wav"
+      ],
+      "bus": "SFX",
+      "priority": 1,
+      "max_voices": 1
+    },
+    "music_menu": {
+      "type": "music",
+      "files": [
+        "music/music_menu.ogg"
+      ]
+    },
+    "music_play_1": {
+      "type": "music",
+      "files": [
+        "music/music_play_1.ogg"
+      ]
+    },
+    "music_play_2": {
+      "type": "music",
+      "files": [
+        "music/music_play_2.ogg"
+      ]
+    },
+    "music_play_3": {
+      "type": "music",
+      "files": [
+        "music/music_play_3.ogg"
+      ]
+    },
+    "music_play_4": {
+      "type": "music",
+      "files": [
+        "music/music_play_4.ogg"
+      ]
+    },
+    "music_play_5": {
+      "type": "music",
+      "files": [
+        "music/music_play_5.ogg"
+      ]
+    },
+    "ambience_jungle": {
+      "type": "ambience",
+      "files": [
+        "music/ambience_jungle.ogg"
+      ]
+    }
+  }
+}

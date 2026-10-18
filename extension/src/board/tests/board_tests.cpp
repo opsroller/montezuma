@@ -6,7 +6,9 @@
 #include <cstdio>
 #include <numbers>
 #include <string>
+#include <vector>
 
+#include "animator.hpp"
 #include "board_layout.hpp"
 #include "feel.hpp"
 
@@ -112,6 +114,141 @@ void test_fit_handles_straight_down_and_margin() {
     check(layout::fit_distance(f) > expected, "margin pushes the camera back");
 }
 
+
+// ---- Animator plan ----
+
+using anim::Cell;
+
+// Kinds in a grid, as the view tracks nodes; -1 is empty.
+struct KindHooks {
+    int clears = 0;
+    int redeals = 0;
+    void on_move(const anim::Phase&, std::size_t, int, Cell, Cell) {}
+    void on_clear(const anim::Phase&, int, Cell) { ++clears; }
+    int make_spawn(const anim::Phase&, std::size_t, const anim::Spawn& sp) { return sp.kind; }
+    void on_redeal(const anim::Phase&) { ++redeals; }
+};
+
+std::vector<int> grid_from(const std::vector<std::string>& rows) {
+    std::vector<int> g;
+    for (const auto& row : rows)
+        for (char c : row) g.push_back(c == '.' ? -1 : c - '0');
+    return g;
+}
+
+// 3 wide, 4 tall: rows "123", "231", "310", "001". Swapping (2,2) and (2,3)
+// lines up three 0s in row 3; they clear, every column drops one row and the
+// top row refills with 4, 5, 6.
+anim::Events three_column_events() {
+    anim::Events ev;
+    ev.swap = std::array<Cell, 2>{Cell{2, 2}, Cell{2, 3}};
+    anim::Step s;
+    s.cleared = {{0, 3}, {1, 3}, {2, 3}};
+    // Every column drops one row; the top row is refilled.
+    for (int x = 0; x < 3; ++x) {
+        for (int y = 2; y >= 0; --y) s.falls.push_back({{x, y}, {x, y + 1}, -1});
+        s.spawns.push_back({{x, 0}, 4 + x, 1});
+    }
+    ev.steps.push_back(s);
+    return ev;
+}
+
+void test_plan_orders_phases_in_time() {
+    anim::Timing t;
+    auto ev = three_column_events();
+    anim::Step second;
+    second.cleared = {{0, 0}};
+    second.spawns = {{{0, 0}, 2, 1}};
+    ev.steps.push_back(second);
+    const auto plan = anim::build_plan(ev, t);
+    check(plan.phases.size() == 5, "swap, then clear+fall per step");
+    check(plan.phases[0].kind == anim::Phase::Kind::Swap && near(plan.phases[0].start, 0.0), "swap first");
+    check(near(plan.phases[1].start, t.swap), "step 0 clears when the swap lands");
+    check(near(plan.phases[2].start, t.swap + t.clear()), "step 0 falls after its clear");
+    check(near(plan.phases[2].duration, t.fall(1.0)), "one-row falls take one row of gravity");
+    const double step1 = plan.phases[2].start + plan.phases[2].duration + t.cascade_gap;
+    check(near(plan.phases[3].start, step1) && plan.phases[3].step == 1, "step 1 clears after step 0 lands and a gap");
+    check(near(plan.total, plan.phases[4].start + plan.phases[4].duration), "total ends when the last piece lands");
+}
+
+void test_fall_timing_follows_gravity() {
+    anim::Timing t;
+    check(near(t.fall(0.1), t.fall_min), "short drops are floored so they read");
+    check(t.fall(2.0) > t.fall(1.0) && t.fall(8.0) > t.fall(2.0), "longer drops take longer");
+    check(t.fall(4.0) < 2.0 * t.fall(1.0) + 1e-9, "pieces accelerate: 4 rows take twice one row");
+    check(std::abs(t.fall(8.0) - feel::kFallMinSeconds) > 0.1, "a full-board drop is clearly longer");
+    // A spawn starting `drop` rows above the board falls to.y + drop rows.
+    anim::Events ev;
+    anim::Step s;
+    s.spawns = {{{0, 2}, 1, 3}};
+    ev.steps.push_back(s);
+    const auto plan = anim::build_plan(ev, t);
+    check(near(plan.phases[1].spawn_seconds[0], t.fall(5.0)), "spawn falls from row -drop");
+}
+
+void test_walk_ends_where_the_rules_did() {
+    auto grid = grid_from({"123", "231", "310", "001"});
+    const auto plan = anim::build_plan(three_column_events());
+    KindHooks hooks;
+    anim::walk(plan, grid, 3, hooks);
+    check(grid == grid_from({"456", "123", "231", "311"}), "walk applies swap, clear, falls and spawns");
+    check(hooks.clears == 3, "every cleared cell is reported once");
+}
+
+void test_walk_moves_falls_at_once() {
+    // Falls listed top-down would overwrite each other if applied one by one.
+    anim::Events ev;
+    anim::Step s;
+    s.cleared = {{0, 2}};
+    s.falls = {{{0, 0}, {0, 1}, 1}, {{0, 1}, {0, 2}, 2}};
+    s.spawns = {{{0, 0}, 3, 1}};
+    ev.steps.push_back(s);
+    std::vector<int> grid{1, 2, 0};
+    KindHooks hooks;
+    anim::walk(anim::build_plan(ev), grid, 1, hooks);
+    check(grid == std::vector<int>({3, 1, 2}), "falls are simultaneous whatever their order");
+}
+
+void test_shuffle_and_redeal() {
+    anim::Events ev;
+    ev.shuffled = true;
+    ev.shuffle_map = {{{0, 0}, {1, 0}}, {{1, 0}, {0, 0}}};
+    auto plan = anim::build_plan(ev);
+    check(plan.phases.size() == 1 && plan.phases[0].kind == anim::Phase::Kind::Shuffle, "shuffle phase");
+    std::vector<int> grid{1, 2};
+    KindHooks hooks;
+    anim::walk(plan, grid, 2, hooks);
+    check(grid == std::vector<int>({2, 1}), "shuffle map moves pieces");
+
+    ev.redealt = true;
+    ev.shuffle_map.clear();
+    plan = anim::build_plan(ev);
+    check(plan.phases.size() == 1 && plan.phases[0].kind == anim::Phase::Kind::Redeal, "redeal phase");
+    check(near(plan.total, feel::kRedealOutSeconds + feel::kRedealInSeconds), "redeal length");
+    anim::walk(plan, grid, 2, hooks);
+    check(hooks.redeals == 1, "redeal handed to the caller");
+}
+
+void test_timing_scales_without_changing_order() {
+    anim::Timing fast;
+    fast.swap *= 0.5;
+    fast.clear_pop *= 0.5;
+    fast.clear_shrink *= 0.5;
+    fast.gravity *= 4.0;  // half the fall time
+    fast.fall_min *= 0.5;
+    fast.cascade_gap *= 0.5;
+    const auto normal = anim::build_plan(three_column_events());
+    const auto quick = anim::build_plan(three_column_events(), fast);
+    check(std::abs(quick.total - normal.total * 0.5) < 1e-9, "halving every beat halves the move");
+    std::vector<int> a = grid_from({"123", "231", "310", "001"});
+    std::vector<int> b = a;
+    KindHooks h1;
+    KindHooks h2;
+    anim::walk(normal, a, 3, h1);
+    anim::walk(quick, b, 3, h2);
+    check(a == b, "speed never changes the outcome");
+}
+
 }  // namespace
 
 int main() {
@@ -121,6 +258,12 @@ int main() {
     test_fit_distance_is_tight();
     test_tall_screens_need_more_distance();
     test_fit_handles_straight_down_and_margin();
+    test_plan_orders_phases_in_time();
+    test_fall_timing_follows_gravity();
+    test_walk_ends_where_the_rules_did();
+    test_walk_moves_falls_at_once();
+    test_shuffle_and_redeal();
+    test_timing_scales_without_changing_order();
     std::printf("%d checks, %d failures\n", checks, failures);
     return failures == 0 ? 0 : 1;
 }
