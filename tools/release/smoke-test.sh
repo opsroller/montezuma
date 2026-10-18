@@ -84,7 +84,6 @@ capture() {  # capture <shot> <frames> [<game user arg>...]: keeps the last fram
       if [[ -s "$last" ]]; then
         cp "$last" "$screens/$shot.png"
         echo "captured $shot.png with $driver from $(basename "$last")"
-        echo "TEMP (PR #52 proof): engine errors in the $shot log:"; grep -E "ERROR|Failed to compile" "$slog" || echo "none"
         return
       fi
     fi
