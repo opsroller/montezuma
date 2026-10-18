@@ -191,6 +191,11 @@ settings screen saves on close.
 | `reduced_motion` | bool | false | screen transitions off |
 | `difficulty` | `normal` / `hard` | `normal` | passed with `play_requested` |
 
+The settings screen's **Graphics quality** row is not a `UiRoot` setting:
+it reads and writes the `quality_tier` choice of `QualityTiers`
+(`user://quality.cfg`), applies at once and shows only where more than
+one tier is available ([Quality tiers](quality-tiers.md#settings-key)).
+
 ## Theme tokens
 
 `game/ui/theme/placeholder.tokens.json`, W3C Design Tokens (DTCG) format.

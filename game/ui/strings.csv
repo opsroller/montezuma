@@ -92,6 +92,12 @@ settings.language.system,System language
 settings.difficulty,Difficulty
 settings.difficulty.normal,Normal
 settings.difficulty.hard,Hard
+settings.quality,Graphics quality
+settings.quality.auto,Automatic
+settings.quality.desktop-high,High
+settings.quality.desktop-standard,Standard
+settings.quality.mobile,Mobile
+settings.quality.web,Web
 credits.title,Credits
 credits.fallback,"Montezuma's
 
