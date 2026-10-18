@@ -40,6 +40,18 @@ GPL-2.0-or-later.
 | `game/data/levels/e4/l08.json` | Written from `docs/reference/progression.md` (Episode 4 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
 | `game/data/levels/e4/l09.json` | Written from `docs/reference/progression.md` (Episode 4 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
 | `game/data/levels/e4/l10.json` | Written from `docs/reference/progression.md` (Episode 4 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e5/l01.json` | Written from `docs/reference/progression.md` (Episode 5 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e5/l02.json` | Written from `docs/reference/progression.md` (Episode 5 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e5/l03.json` | Written from `docs/reference/progression.md` (Episode 5 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e5/l04.json` | Written from `docs/reference/progression.md` (Episode 5 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e5/l05.json` | Written from `docs/reference/progression.md` (Episode 5 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e5/l06.json` | Written from `docs/reference/progression.md` (Episode 5 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e5/l07.json` | Written from `docs/reference/progression.md` (Episode 5 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e5/l08.json` | Written from `docs/reference/progression.md` (Episode 5 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e5/l09.json` | Written from `docs/reference/progression.md` (Episode 5 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e5/l10.json` | Written from `docs/reference/progression.md` (Episode 5 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e5/l11.json` | Written from `docs/reference/progression.md` (Episode 5 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e5/l12.json` | Written from `docs/reference/progression.md` (Episode 5 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
 
 ## Board theme `temple`
 

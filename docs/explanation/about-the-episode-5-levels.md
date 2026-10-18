@@ -18,21 +18,23 @@ Episode 5 is the campaign's longest (twelve levels, `PROG-01`) and brings
 no new rule: every totem, power-up and obstacle is already known by
 e4-l10. What arrives are optional upper tiers (gold, fire, time, paint,
 gift and harvest tier 4, hint and clock tier 3, ward tier 3, 8 gems on
-the board, the timer's +120 s), so every level develops, twists, tests
+the board, Score Frenzy's 30 s, the timer's +120 s), so every level develops, twists, tests
 or rests on earlier lessons. Its difficulty has to come from two places:
 
-- **The goal.** The gem goal keeps its +5 a level until it reaches the
-  cap of 200 on normal and 300 on hard at e5-l10 (`PROG-08`). e5-l10,
+- **The goal.** The normal gem goal keeps its +5 a level (hard rises
+  with it, `DIFF-03`) until both reach the cap of 200 on normal and 300
+  on hard at e5-l10 (`PROG-08`). e5-l10,
   e5-l11 and e5-l12 share that goal, so from e5-l10 on the obstacles
   alone set how hard a level is.
 - **The obstacles.** Steel and chains stay inside the guidance range
-  (`steel_rate` 0.02 to 0.06, 2 to 10 chains) but reach both maximums on
-  the spike (e5-l08) and the finale (e5-l12), and come close on the two
-  tests (e5-l04, e5-l10). The chains take shapes the campaign has not
+  (`steel_rate` 0.02 to 0.06, 2 to 10 chains) but reach both maximums together
+  on the spike (e5-l08) and the finale (e5-l12); the two tests stay under
+  the steel maximum (e5-l04 with steel 0.05 and 8 chains, e5-l10 with
+  steel 0.05 and the chain maximum of 10). The chains take shapes the campaign has not
   used: a diagonal stair (e5-l02), a whole top row that falls through
   the board (e5-l03), a full row across the middle that no swap can
   enter (e5-l04), a U on the lower half where links have no outer
-  neighbour (e5-l06), a chessboard floor where no two links touch
+  neighbour (e5-l06), a chessboard floor where no two links are side by side
   (e5-l08), a block in the centre where most runs happen (e5-l10), and
   chains in five rows at once (e5-l12).
 
@@ -48,7 +50,7 @@ gem-carrying runs of 4 with 8 gems on the board (e5-l05), planning two
 totems at once (e5-l09), and building power-ups while falling links come
 down by themselves (e5-l11).
 
-e5-l07 is the one level built around an optional tier: ward tier 3 also
+e5-l07 is the one level built around an optional totem tier: ward tier 3 also
 clears the pieces next to destroyed steel, so steel that lands beside a
 chain becomes a way to free it. Tier 2's "no new steel after the ward"
 stays at tier 3, so the lesson is timing the first ward; a player
@@ -65,7 +67,8 @@ the episode's chain shapes and heavy steel: its mean moves rise with the
 goal, dip at e5-l02 where 8 gems on the board shorten every level, and
 flatten from e5-l10 where the goal stops rising. The briefs' human
 targets are for a player who skipped those obstacle removers, and they
-carry the sawtooth the simulator cannot show, within 10 points of the
-next level as the curve rule asks of `greedy`. They are provisional
+carry the sawtooth the simulator cannot show. They follow the curve rule
+that [balance](../reference/balance.md#targets) sets for `greedy` (no
+level more than 10 points harder than the next) and are provisional
 until a playtest. Why the clock rule still uses the simulator's
 upgrades is in [about level clocks](about-level-clocks.md).
