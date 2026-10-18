@@ -124,3 +124,102 @@ music instead.
 Total: 6.9 MB, inside the web demo's 40 MB budget even with every
 piece included; the demo needs only `music_menu`, `music_play_1` and the
 ambience.
+
+## Audio system
+
+`GameAudio` (C++, `extension/src/audio/`) is the only way game code makes
+sound. It runs as the autoload `GameAudio` (`game/scenes/audio/game_audio.tscn`,
+process mode Always so menus sound while the game is paused). C++ code
+calls `GameAudio::get_singleton()->play("match")`; scenes and UI call
+`GameAudio.play("ui_click")` on `/root/GameAudio`.
+
+### Methods
+
+| Method | Does |
+|---|---|
+| `play(name)` | Plays a cue. One-shots take a pooled voice; music and ambience cues cross-fade their loop player. Unknown names warn once and stay silent |
+| `stop(name)` | Stops a cue's voices, or fades out its loop |
+| `stop_music(fade_seconds)` | Fades the music out |
+| `has_cue(name)`, `get_cue_names()` | Look up the table |
+| `set_volume(bus, linear)`, `get_volume(bus)` | Player volume per bus, 0 to 1. The settings screen calls these and saves the values; never set those bus volumes on `AudioServer` directly, because ducking rewrites them |
+| `set_muted(bus, muted)`, `is_muted(bus)` | Mute per bus |
+| `get_active_voice_count()` | Voices playing now |
+
+Properties: `cue_table_path` (default `res://assets/audio/cues.json`),
+`music_fade` (default 1.5 s).
+
+### Buses
+
+Created at startup when missing, all sending to `Master`:
+
+| Bus | Carries |
+|---|---|
+| `Master` | Everything; a hard limiter at -1 dB ceiling as a safety net |
+| `Music` | `music_*` cues |
+| `Ambience` | `ambience_*` cues |
+| `SFX` | Gameplay one-shots |
+| `UI` | `ui_*` cues |
+
+### Cue table
+
+`game/assets/audio/cues.json`: `{"cues": {name: entry}}`, file paths
+relative to `game/assets/audio/`.
+
+| Field | Default | Meaning |
+|---|---|---|
+| `files` | required | Variations; picked at random, never the same one twice in a row |
+| `type` | `one_shot` | `one_shot`, `music` or `ambience`. Music and ambience must be Ogg Vorbis; they loop |
+| `bus` | by type | `SFX` for one-shots, `Music`, `Ambience` |
+| `volume_db` | 0 | Offset on top of the file's level |
+| `volume_random_db` | 0 | ± random volume per play |
+| `pitch_random_semitones` | 0 | ± random pitch per play |
+| `max_voices` | 4 | Instances of this cue at once; past it the oldest is cut |
+| `priority` | 2 | 1 critical, 2 feedback, 3 flavour |
+| `duck_music` | priority is 1 | Duck music and ambience while it plays |
+
+Every file the table names must load: a missing one is an error at
+startup, which the headless CI run catches.
+
+### Voices, priority and ducking
+
+- 24 one-shot voices in all. When every voice is busy, a new cue takes
+  the voice of the least important, oldest sound that is no more
+  important than itself; if there is none, the new cue is dropped.
+- A priority-1 cue ducks `Music` and `Ambience` by 4 dB, attacking at
+  40 dB/s, holding 0.6 s, releasing at 8 dB/s.
+- Nothing is allocated per frame: voices and loop players are created
+  once in `_ready`.
+
+### When each cue plays
+
+The game scene (WP-28) calls these; the board view calls the board ones
+on the animation frame they belong to.
+
+| Cue | Event |
+|---|---|
+| `swap` | A legal swap starts animating |
+| `swap_illegal` | An illegal swap bounces back (`play_illegal`) |
+| `match`, `cascade_<n>` | Each cascade step's clear: step 0 plays `match`, step *n* plays `cascade_<n>` (8 and above play `cascade_8`) |
+| `piece_land` | Falling pieces settle, once per step, not per piece |
+| `gem_collect` | A gem piece is cleared |
+| `steel_break`, `chain_break` | A steel piece is destroyed; chains on a cell break |
+| `bonus_earned` | A power-up appears on the board (a 4+ match places one) |
+| `bonus_use_<id>` | A power-up goes off when its piece is cleared |
+| `totem_charge` | A totem's charge goes from 0 to 1 |
+| `totem_fire_<id>` | A totem fires |
+| `quota_done` | A colour quota is met (levels with quotas) |
+| `time_warning` | Time left crosses the warning threshold |
+| `level_won`, `level_lost` | `level_finished` |
+| `trophy` | A trophy unlocks |
+| `ui_click`, `ui_back` | Button press; back or cancel |
+| `music_menu` | Title and map screens |
+| `music_play_<episode>` | A level starts in that episode |
+| `ambience_jungle` | Under every level |
+
+### Self-test
+
+`godot --headless --path game --quit-after 120 -- --audio-selftest`
+plays every cue once, checks the voice limit and a missing cue, and
+prints `GameAudio self-test: <n> cues, 0 failures`. Stop playback
+before quitting in any headless test that plays sound; Godot reports
+playbacks still running at exit as leaked resources.
