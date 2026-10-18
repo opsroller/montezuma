@@ -73,9 +73,8 @@ It reads and writes the sccache cache `tests-extension-godot-cpp-10-windows-late
 (500 MB cap), the same key as the `extension (windows-latest)` job, so a PR
 starts from the cache `main` wrote. Token permissions: `contents: read`; no
 secrets, no artifacts. It is path-filtered, so it is not a required check.
-It exists because a build-system change can break only MSVC (the godot-cpp
-10 upgrade did, at link), while code-only PRs keep the faster Linux and
-macOS feedback.
+Why it runs only on these PRs:
+[About CI caching](../explanation/about-ci-caching.md#why-windows-is-off-the-pr-path).
 
 ## Assets workflow
 
