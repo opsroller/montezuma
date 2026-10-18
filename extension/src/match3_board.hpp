@@ -27,13 +27,15 @@ public:
     bool is_legal_swap(godot::Vector2i a, godot::Vector2i b);
     bool has_legal_move();
     // Empty Dictionary for an illegal swap; otherwise
-    // { steps: Array[Dictionary kind->count], matched_kind, shuffled, score }.
+    // { steps: Array[Dictionary kind->count], matched_kind, shuffled, stuck, score }.
     godot::Dictionary try_swap(godot::Vector2i a, godot::Vector2i b);
 
 protected:
     static void _bind_methods();
 
 private:
+    // 8x8, 7 kinds, seed 0 is a fixed, known-playable deal (covered by the
+    // core tests), so this default construction cannot fail.
     Board board_{8, 8, 7, 0};
 };
 

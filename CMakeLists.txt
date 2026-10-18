@@ -8,7 +8,14 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 option(MONTEZUMA_BUILD_TESTS "Build core rules tests" ON)
-option(MONTEZUMA_BUILD_EXTENSION "Build the Godot GDExtension (needs thirdparty/godot-cpp)" ON)
+# The extension needs the godot-cpp submodule; default to building it only
+# when the submodule is checked out, so core-only checkouts just work.
+if(EXISTS "${PROJECT_SOURCE_DIR}/thirdparty/godot-cpp/CMakeLists.txt")
+  set(_montezuma_has_godot_cpp ON)
+else()
+  set(_montezuma_has_godot_cpp OFF)
+endif()
+option(MONTEZUMA_BUILD_EXTENSION "Build the Godot GDExtension (needs thirdparty/godot-cpp)" ${_montezuma_has_godot_cpp})
 option(MONTEZUMA_WERROR "Treat compiler warnings as errors" OFF)
 
 # Engine-independent game rules. The Godot GDExtension links against this.

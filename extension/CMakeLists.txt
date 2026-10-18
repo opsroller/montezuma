@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 # Godot GDExtension wrapping the engine-independent core.
 
+# One exception setting for every target: the core reports errors with
+# exceptions, and mixing settings is an ODR hazard on MSVC.
+set(GODOTCPP_DISABLE_EXCEPTIONS OFF CACHE BOOL "" FORCE)
+# Keep godot-cpp's own warnings out of our -Werror builds.
+set(GODOTCPP_SYSTEM_HEADERS ON CACHE BOOL "" FORCE)
 add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/godot-cpp ${CMAKE_BINARY_DIR}/godot-cpp)
 
 add_library(montezuma_extension SHARED
@@ -9,6 +14,7 @@ add_library(montezuma_extension SHARED
   src/board_view_3d.cpp
 )
 target_link_libraries(montezuma_extension PRIVATE montezuma_core godot-cpp)
+montezuma_warnings(montezuma_extension)
 
 get_target_property(GODOTCPP_SUFFIX godot-cpp GODOTCPP_SUFFIX)
 set(MONTEZUMA_BIN_DIR "${PROJECT_SOURCE_DIR}/game/bin")

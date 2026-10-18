@@ -233,17 +233,29 @@ bool BoardView3D::request_swap(Vector2i a, Vector2i b) {
         return false;
     }
     score_ += static_cast<int>(result["score"]);
+    if (static_cast<bool>(result["stuck"])) {
+        // No playable arrangement exists; deal a new board so play continues.
+        board_->setup(board_width_, board_height_, kKinds, ++seed_);
+    }
     // The view mirrors pieces by cell, so the swapped meshes trade owners.
     std::swap(shown_kinds_[a.y * board_width_ + a.x], shown_kinds_[b.y * board_width_ + b.x]);
     std::swap(pieces_[a.y * board_width_ + a.x], pieces_[b.y * board_width_ + b.x]);
     tween->tween_callback(callable_mp(this, &BoardView3D::sync_pieces));
     tween->tween_interval(kSettleSeconds);
+    pending_result_ = result;
     tween->tween_callback(callable_mp(this, &BoardView3D::finish_animation));
-    emit_signal("move_resolved", result, score_);
     return true;
 }
 
-void BoardView3D::finish_animation() { animating_ = false; }
+void BoardView3D::finish_animation() {
+    animating_ = false;
+    // Fire once the move is on screen, so HUD and audio stay in sync with it.
+    if (!pending_result_.is_empty()) {
+        Dictionary result = pending_result_;
+        pending_result_ = Dictionary();
+        emit_signal("move_resolved", result, score_);
+    }
+}
 
 void BoardView3D::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_board_width", "value"), &BoardView3D::set_board_width);

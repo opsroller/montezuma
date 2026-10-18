@@ -10,6 +10,7 @@
 #include <godot_cpp/classes/mesh.hpp>
 #include <godot_cpp/classes/mesh_instance3d.hpp>
 #include <godot_cpp/classes/node3d.hpp>
+#include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/vector2i.hpp>
 
 #include "match3_board.hpp"
@@ -67,6 +68,7 @@ private:
     bool animating_ = false;
     bool has_selection_ = false;
     godot::Vector2i selected_;
+    godot::Dictionary pending_result_;
 
     godot::Ref<Match3Board> board_;
     std::vector<godot::MeshInstance3D*> pieces_;

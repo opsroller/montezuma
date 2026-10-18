@@ -48,6 +48,7 @@ Dictionary Match3Board::try_swap(Vector2i a, Vector2i b) {
     out["steps"] = steps;
     out["matched_kind"] = result->matched_kind;
     out["shuffled"] = result->shuffled;
+    out["stuck"] = result->stuck;
     out["score"] = result->score();
     return out;
 }
