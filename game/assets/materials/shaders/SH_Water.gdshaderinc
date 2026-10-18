@@ -11,15 +11,16 @@
 // height h(x, z, t); wt_slope returns (dh/dx, dh/dz), and the surface
 // normal is normalize(vec3(-dh/dx, 1, -dh/dz)).
 
-// Integer hash of a lattice point to a gradient direction. Integer maths
-// so it gives the same lattice on every GPU, unlike sin-based hashes.
+// Integer hash of a lattice point to a gradient. Integer maths so it gives
+// the same lattice on every GPU, unlike sin-based hashes, and no trig: the
+// gradient is two hashed bytes mapped to -1..1 (not unit length, which
+// gradient noise does not need).
 vec2 wt_gradient(vec2 cell) {
 	uvec2 q = uvec2(ivec2(cell) + ivec2(32768));
 	q = q * uvec2(1664525u, 1013904223u);
 	uint n = (q.x ^ (q.y >> 5u)) * 2654435761u;
 	n ^= n >> 15u;
-	float a = float(n & 65535u) * (6.2831853 / 65536.0);
-	return vec2(cos(a), sin(a));
+	return vec2(float(n & 255u), float((n >> 8u) & 255u)) * (2.0 / 255.0) - 1.0;
 }
 
 // Gradient noise with its derivative: returns (value, d/dx, d/dy), value
@@ -48,7 +49,9 @@ vec3 wt_noise(vec2 p) {
 
 // Slope of the ripple field at world position p (x, z). Two long, slow
 // swells set the direction the light dances in; noise octaves drifting
-// with the flow break them up. octaves 1..3. scale > 0 grows the ripples.
+// with the flow break them up. octaves 1..3. scale > 0 grows the ripples
+// (wavelength and height together, so the slope does not change with it);
+// the slope is capped so no setting tips the surface past about 30 degrees.
 vec2 wt_slope(vec2 p, float t, float scale, float strength, float flow, int octaves) {
 	vec2 q = p / scale;
 	vec2 s = vec2(0.0);
@@ -69,7 +72,9 @@ vec2 wt_slope(vec2 p, float t, float scale, float strength, float flow, int octa
 		amp *= 0.5;
 		freq *= 2.03;
 	}
-	return s * strength * 10.0 / scale;
+	s *= strength * 7.0;
+	float m = length(s);
+	return m > 0.6 ? s * (0.6 / m) : s;
 }
 
 vec3 wt_normal(vec2 slope) {
@@ -94,7 +99,7 @@ float wt_caustics(vec2 p, float t, float scale, int layers) {
 // Fraction of light left after a path of `len` metres (Beer-Lambert),
 // per channel; absorption is per metre.
 vec3 wt_transmittance(vec3 absorption, float len) {
-	return exp(-absorption * max(len, 0.0));
+	return exp(-max(absorption, vec3(0.0)) * max(len, 0.0));
 }
 
 // Schlick Fresnel for water (F0 = 0.02, IOR 1.33).

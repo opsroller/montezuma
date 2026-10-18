@@ -34,6 +34,9 @@ stone causeway under the far stair. All numbers come from the theme's
 | Channel floor | −2.52 |
 | Board rectangle | ±4.55, so the water is at least 3.9 m outside it |
 
+Ferns and boulders keep 1.2 m clear of the outer edge, so the jungle
+planting moved outward when the channel came in.
+
 From the game camera at 16:9 the east and west strips show at the left
 and right edges, about a tenth of the frame; taller screens also show the
 near and far strips. Water never lies inside the board rectangle
@@ -73,19 +76,19 @@ desktop variant. The generator adds `floor_height` to materials marked
 | Parameter | Shaders | Range | Temple | Meaning |
 |---|---|---|---|---|
 | `water_color` | both | colour | `#1d4a40` | colour deep water scatters back, lit by the scene |
-| `absorption` | both | 0 to 4 per metre, per channel | (1.1, 0.34, 0.28) | light lost per metre, red, green, blue; red goes first, so depth turns the water green-teal |
-| `wave_scale` | both | 0.2 to 4 | 1.4 | ripple size; larger is broader |
-| `wave_strength` | both | 0 to 1 | 0.18 | ripple slope |
-| `flow_speed` | both | 0 to 0.5 m/s | 0.05 | drift of the ripples |
+| `absorption` | both | 0 to 4 per metre, per channel (negative counts as 0) | (1.1, 0.34, 0.28) | light lost per metre, red, green, blue; red goes first, so depth turns the water green-teal |
+| `wave_scale` | both | 0.2 to 4 | 1.4 | ripple size; wavelength and height scale together, so the slope stays the same |
+| `wave_strength` | both | 0 to 1 | 0.18 | ripple slope; capped at a 0.6 slope (about 31°) so no setting turns the surface into glitter |
+| `flow_speed` | both | 0 to 0.5 | 0.05 | drift rate of the ripple noise (the pattern moves at about a third of this in m/s); the two swells and the caustics move at fixed slow rates |
 | `roughness` | both | 0 to 0.3 | 0.04 | surface roughness of the reflections |
 | `caustic_strength` | both | 0 to 4 | 2.2 | brightness of the caustic lines on the floor |
 | `caustic_scale` | both | 0.2 to 4 | 1.3 | caustic pattern size |
 | `refraction_strength` | `SH_Water` | 0 to 0.15 | 0.04 | screen-space bend per metre of water |
 | `ssr_max_distance` | `SH_Water` | 1 to 30 m | 10 | how far a reflection ray travels |
-| `ssr_steps` | `SH_Water` | 8 to 48 | 20 | reflection march steps; the main cost knob |
+| `ssr_steps` | `SH_Water` | 8 to 32 | 16 | reflection march steps; the main cost knob |
 | `edge_softness` | `SH_Water` | 0 to 0.3 m | 0.08 | width of the soft line where the water meets stone |
 | `floor_height` | `SH_WaterSimple` | metres, Godot Y | −2.52 (generated) | the flat channel floor the path length and caustics use |
-| `floor_albedo` | `SH_WaterSimple` | 0 to 1 | 0.3 | how much caustic light the floor sends back |
+| `floor_albedo` | `SH_WaterSimple` | 0 to 1 | 0.12 | how bright the caustic lines make the floor; they are added to the lit albedo, so they follow sun, shadow and exposure |
 
 The theme's `water` block:
 
@@ -105,16 +108,18 @@ nodes.
 
 | Shader | Render mode | Samplers | Cost per pixel |
 |---|---|---|---|
-| `SH_Water` | transparent pass (reads the screen texture), opaque result (no `ALPHA`), depth write, Burley diffuse, GGX | `hint_screen_texture` (linear mipmap, clamp) and `hint_depth_texture` (nearest, clamp), as `SH_Gem` | 2 depth + 2 screen samples, up to `ssr_steps` + 3 depth samples and 1 screen sample for the reflection, 3 noise octaves, 2 caustic layers |
-| `SH_WaterSimple` | blended (`ALPHA` from the absorption, at least the Fresnel), Burley diffuse, GGX | none | 2 noise octaves, 1 caustic layer, no texture samples |
-| `SH_Water.gdshaderinc` | — | none | gradient noise with analytic derivatives (integer hash), ripple slope, caustics, Beer-Lambert transmittance, Schlick Fresnel |
+| `SH_Water` | transparent pass (reads the screen texture), opaque result (no `ALPHA`), depth write, Burley diffuse, GGX | `hint_screen_texture` (linear, no mipmaps, clamp) and `hint_depth_texture` (nearest, clamp) | 2 depth and 1 screen sample, then up to `ssr_steps` + 3 depth and 1 screen sample for the reflection (23 at the default 16); 3 noise octaves, and 2 caustic layers (4 noise evaluations) only where the caustics can show |
+| `SH_WaterSimple` | blended (`ALPHA` from the absorption, at least the Fresnel), Burley diffuse, GGX | none | 2 noise octaves, 1 caustic layer (3 noise evaluations) where it can show, no texture samples, no trigonometry in the noise |
+| `SH_Water.gdshaderinc` | — | none | gradient noise with analytic derivatives (integer hash, gradients from hashed bytes, no trigonometry), ripple slope, caustics, Beer-Lambert transmittance, Schlick Fresnel |
 
 No static switches: two compiled user variants. Neither shader samples a
 material texture, so the water adds no anisotropic or repeating sampler
 and stays inside the 16 Metal sampler slots
-([Board themes](board-themes.md#quality-tier-variants)). `SH_Water` runs on
-Forward+ (Vulkan, D3D12, Metal); `SH_WaterSimple` on Mobile and
-Compatibility (and Forward+). Both use `TIME`, so Movie Maker captures are
+([Board themes](board-themes.md#quality-tier-variants)). `SH_Water` is
+written for Forward+ (Vulkan, D3D12, Metal) and checked on Vulkan; Metal is
+checked by CI's macOS screenshot job when that job renders with Metal, and
+D3D12 by no job yet (the Windows screenshot uses OpenGL through ANGLE).
+`SH_WaterSimple` is checked on Mobile and Compatibility. Both use `TIME`, so Movie Maker captures are
 repeatable at a fixed frame rate.
 
 ## Cost
@@ -122,7 +127,7 @@ repeatable at a fixed frame rate.
 | Measure | Value |
 |---|---|
 | Budget | `SH_WaterSimple` ≤ 0.3 ms at 1280×720 on an Intel UHD 620 class GPU; `SH_Water` ≤ 0.5 ms at 1440p on the benchmark Mac (M4) |
-| Measured | not on a real GPU yet: the [benchmark](benchmark.md) (WP-46) measures it with the rest of the scene, see [Benchmark results](benchmark-results.md) |
-| Estimate | software rendering (lavapipe, llvmpipe) runs the look-dev scene at 1 to 2 fps with or without the water, so it cannot resolve the cost; by count, `SH_WaterSimple` is 3 noise evaluations and no samples, `SH_Water` 5 noise evaluations and up to 26 depth and 3 screen samples |
+| Measured | not on a real GPU yet: the [benchmark](benchmark.md) (WP-46) measures it with the rest of the scene, see [Benchmark results](benchmark-results.md); compare a run with the four `Water*` nodes hidden to get the water's share |
+| Estimate | software rendering (lavapipe, llvmpipe) runs the look-dev scene at 1 to 2 fps with or without the water, so it cannot resolve the cost. By count: `SH_WaterSimple` is up to 5 noise evaluations (2 for the ripples, 3 for the caustics), each 4 integer hashes and no trigonometry, and no texture samples; `SH_Water` up to 7 noise evaluations and up to 23 depth and 2 screen samples |
 | Triangles | 12 per strip slab (60 in all); the channel adds about 400 to the backdrop |
 | Reflection probes | 4, rendered once at load |

@@ -120,7 +120,7 @@ def shader_material(spec, theme, hi):
     if "ior" in spec and spec["shader"].endswith("SH_TriplanarPBR.gdshader"):
         r.body.append(f"shader_parameter/specular = {specular_from_ior(spec['ior'])}")
     params = dict(spec.get("params", {}))
-    if spec.get("water") and WATER:
+    if spec.get("water") and WATER and spec["shader"].endswith("SH_WaterSimple.gdshader"):
         params["floor_height"] = round(WATER["floor"], 4)
     for key, value in params.items():
         if isinstance(value, str):

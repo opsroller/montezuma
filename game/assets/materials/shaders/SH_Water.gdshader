@@ -8,34 +8,35 @@
 // screen-space ray march (Godot's SSR skips the transparent pass this
 // material draws in), with the reflection probes and sky through the
 // engine's own specular wherever the march misses. Mobile and web use
-// SH_WaterSimple (no refraction, no march). Cost per pixel: 1 + ssr_steps
-// (+3 refine) depth samples, 2 screen samples, 3 noise octaves and 2
-// caustic layers; no material textures.
+// SH_WaterSimple (no refraction, no march). Cost per pixel: 2 depth and 1
+// screen sample, then up to ssr_steps + 3 depth and 1 screen sample for the
+// reflection; 3 noise octaves, and 2 caustic layers where they can show;
+// no material textures.
 shader_type spatial;
 render_mode blend_mix, depth_draw_always, cull_back, diffuse_burley, specular_schlick_ggx;
 
 #include "res://assets/materials/shaders/SH_Water.gdshaderinc"
 
-uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_linear_mipmap;
+uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_linear;
 uniform sampler2D depth_texture : hint_depth_texture, repeat_disable, filter_nearest;
 
 // Colour the water scatters back where it is deep, lit by the scene.
 uniform vec4 water_color : source_color = vec4(0.114, 0.29, 0.251, 1.0);
-// Light lost per metre of water, red, green, blue: red goes first, so deep
-// water turns green-teal.
-uniform vec3 absorption = vec3(1.6, 0.55, 0.45);
-uniform float wave_scale : hint_range(0.2, 4.0, 0.01) = 1.0;
-uniform float wave_strength : hint_range(0.0, 1.0, 0.01) = 0.35;
+// Light lost per metre of water, red, green, blue, 0 to 4 (negative counts
+// as 0): red goes first, so deep water turns green-teal.
+uniform vec3 absorption = vec3(1.1, 0.34, 0.28);
+uniform float wave_scale : hint_range(0.2, 4.0, 0.01) = 1.4;
+uniform float wave_strength : hint_range(0.0, 1.0, 0.01) = 0.18;
 // Drift of the ripples, metres per second.
 uniform float flow_speed : hint_range(0.0, 0.5, 0.001) = 0.05;
 uniform float roughness : hint_range(0.0, 0.3, 0.001) = 0.04;
 // Screen-space bend of the floor seen through the surface, per metre of depth.
 uniform float refraction_strength : hint_range(0.0, 0.15, 0.001) = 0.04;
-uniform float caustic_strength : hint_range(0.0, 4.0, 0.01) = 1.4;
+uniform float caustic_strength : hint_range(0.0, 4.0, 0.01) = 2.2;
 uniform float caustic_scale : hint_range(0.2, 4.0, 0.01) = 1.3;
 // Reflection ray march: how far a ray may travel and in how many steps.
 uniform float ssr_max_distance : hint_range(1.0, 30.0, 0.1) = 10.0;
-uniform int ssr_steps : hint_range(8, 48) = 20;
+uniform int ssr_steps : hint_range(8, 32) = 16;
 // Width of the soft line where the water meets stone, metres of water.
 uniform float edge_softness : hint_range(0.0, 0.3, 0.001) = 0.08;
 
@@ -84,8 +85,12 @@ void fragment() {
 	// Caustics: brighter where the floor lies a little under the surface,
 	// fading in from the edge and out with depth.
 	float below = max(w_pos.y - floor_w.y, 0.0);
-	float caustic = wt_caustics(floor_w.xz, TIME, caustic_scale, 2);
-	seen *= 1.0 + caustic_strength * caustic * smoothstep(0.02, 0.2, below) * exp(-1.2 * below);
+	float fade = smoothstep(0.02, 0.2, below) * exp(-1.2 * below);
+	float caustic = 0.0;
+	if (fade * caustic_strength > 0.01) {
+		caustic = wt_caustics(floor_w.xz, TIME, caustic_scale, 2);
+	}
+	seen *= 1.0 + caustic_strength * caustic * fade;
 
 	vec3 trans = wt_transmittance(absorption, len);
 	vec3 transmitted = seen * trans * (1.0 - fresnel);
@@ -99,7 +104,7 @@ void fragment() {
 	float step_len = ssr_max_distance / float(ssr_steps * ssr_steps);
 	float t = step_len;
 	float t_prev = 0.0;
-	for (int i = 1; i <= 48; i++) {
+	for (int i = 1; i <= 32; i++) {
 		if (i > ssr_steps) {
 			break;
 		}
