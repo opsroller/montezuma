@@ -33,7 +33,7 @@ row in the PR that finishes the package.
 
 | WP | Package | Role | Owns | Depends on | Done when | Status |
 |---|---|---|---|---|---|---|
-| 05 | Level data parser | gameplay-programmer | `core/src/level_data.*`, `core/include/montezuma/level_data.hpp`, `core/tests/test_level_data.cpp` | 01 | parses and validates the LevelData contract with clear errors | todo |
+| 05 | Level data parser | gameplay-programmer | `core/src/level_data.*`, `core/include/montezuma/level_data.hpp`, `core/tests/test_level_data.cpp` | 01 | parses and validates the LevelData contract with clear errors | review |
 | 06 | Power Totems | gameplay-programmer | `core/**/totems.*`, `core/tests/test_totems.cpp` | 01, 03 | each totem charges from streaks and returns a tested effect result | todo |
 | 07 | Bonuses | gameplay-programmer | `core/**/bonuses.*`, `core/tests/test_bonuses.cpp` | 01, 03 | earned, stored, used and upgraded per spec, tested | todo |
 | 08 | Progress, save and trophies | gameplay-programmer | `core/**/progress.*`, `core/**/trophies.*`, tests | 05 | unlocks, best scores and 9 trophies serialise; tested | todo |

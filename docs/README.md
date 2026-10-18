@@ -15,6 +15,7 @@ own folder.
 - [Project profile](reference/project-profile.md): stack, commands, who owns what, project rules.
 - [Contracts](reference/contracts.md): interfaces between work packages.
 - [Work packages](reference/work-packages.md): the plan and its status.
+- [Level data](reference/level-data.md): the level file format, defaults, limits and errors.
 - [Rules spec](rules-spec.md): the game's rules (moving to `reference/`).
 
 ## How-to guides
