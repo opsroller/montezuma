@@ -18,6 +18,7 @@ own folder.
 - [Power Totems](reference/totems.md): totem ids, charging, effects and tuning.
 - [Power-ups](reference/bonuses.md): on-board power-up ids, tiers, placement, triggering and effects.
 - [MoveResult events](reference/move-result.md): cascade steps, falls, spawns and how to replay a move.
+- [Match3Level](reference/match3-level.md): the level timer, score, quotas and outcome in Godot.
 - [Rules spec](rules-spec.md): the game's rules (moving to `reference/`).
 - [Board view](reference/board-view.md): the 3D board's classes, scenes, camera fit and feel constants.
 

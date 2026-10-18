@@ -11,6 +11,7 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/godot-cpp ${CMAKE_BINARY_DIR}/
 add_library(montezuma_extension SHARED
   src/register_types.cpp
   src/match3_board.cpp
+  src/match3_level.cpp
   src/board/board_view_3d.cpp
   src/board/board_camera_3d.cpp
   src/board/board_playtest.cpp
