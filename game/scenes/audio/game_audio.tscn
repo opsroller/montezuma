@@ -1,0 +1,4 @@
+[gd_scene format=3 uid="uid://bmontezumaaudio"]
+
+[node name="GameAudio" type="GameAudio"]
+process_mode = 3
