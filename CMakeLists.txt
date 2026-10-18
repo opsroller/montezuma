@@ -19,10 +19,10 @@ option(MONTEZUMA_BUILD_EXTENSION "Build the Godot GDExtension (needs thirdparty/
 option(MONTEZUMA_WERROR "Treat compiler warnings as errors" OFF)
 
 # Engine-independent game rules. The Godot GDExtension links against this.
-add_library(montezuma_core STATIC
-  core/src/board.cpp
-  core/src/level_state.cpp
-)
+# Sources are picked up automatically so parallel work packages can add
+# files without editing this list.
+file(GLOB MONTEZUMA_CORE_SOURCES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/core/src/*.cpp")
+add_library(montezuma_core STATIC ${MONTEZUMA_CORE_SOURCES})
 target_include_directories(montezuma_core PUBLIC core/include)
 
 # Warnings for our own targets (not third-party code).
@@ -37,10 +37,15 @@ montezuma_warnings(montezuma_core)
 
 if(MONTEZUMA_BUILD_TESTS)
   enable_testing()
-  add_executable(montezuma_core_tests core/tests/core_tests.cpp)
-  target_link_libraries(montezuma_core_tests PRIVATE montezuma_core)
-  montezuma_warnings(montezuma_core_tests)
-  add_test(NAME core_tests COMMAND montezuma_core_tests)
+  # One executable and one CTest test per file in core/tests/.
+  file(GLOB MONTEZUMA_CORE_TESTS CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/core/tests/*.cpp")
+  foreach(test_source ${MONTEZUMA_CORE_TESTS})
+    get_filename_component(test_name ${test_source} NAME_WE)
+    add_executable(montezuma_${test_name} ${test_source})
+    target_link_libraries(montezuma_${test_name} PRIVATE montezuma_core)
+    montezuma_warnings(montezuma_${test_name})
+    add_test(NAME ${test_name} COMMAND montezuma_${test_name})
+  endforeach()
 endif()
 
 if(MONTEZUMA_BUILD_EXTENSION)
