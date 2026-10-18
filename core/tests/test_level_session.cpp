@@ -1631,8 +1631,10 @@ void test_chains_hold() {
             const Swap m = moves[static_cast<std::size_t>(i * 5) % moves.size()];
             auto ra = a.swap(m[0], m[1]);
             auto rb = b.swap(m[0], m[1]);
+            check(ra && rb, "determinism: both sessions accept the move");
+            if (!ra || !rb) break;
             for (const StepReport& st : ra->steps) broken += static_cast<int>(st.chains_broken.size());
-            check(ra && rb && snap(a) == snap(b), "determinism: chains held the same way");
+            check(snap(a) == snap(b), "determinism: chains held the same way");
         }
         check(broken > 0, "determinism run broke chains");
     }
