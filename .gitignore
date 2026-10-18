@@ -5,4 +5,9 @@ build/
 game/bin/*
 !game/bin/.gitkeep
 game/.godot/
+# Copied in by CMake and tools/release/game-files.py
+game/CREDITS.md
+game/LICENSE.txt
+game/THIRD-PARTY-NOTICES.txt
+game/SOURCE.txt
 __pycache__/

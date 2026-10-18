@@ -38,11 +38,18 @@ build folder: CMake caches options, so reusing the core-only `build/`
 would keep the extension off. The library lands in `game/bin/`.
 
 ```sh
-cmake -S . -B build-ext -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON -DMONTEZUMA_BUILD_TESTS=OFF
+cmake -S . -B build-ext -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON
 cmake --build build-ext -j
+ctest --test-dir build-ext --output-on-failure   # every test, as CI's extension job
 godot --headless --path game --import
 godot --headless --path game --quit-after 120    # errors show here
 ```
+
+This build also copies `CREDITS.md` and `LICENSE` into `game/` so the
+credits screen shows them. The tests include `ui_model_tests` and, when
+Python 3 has Pillow (`python3 -m pip install Pillow`), `asset_tests`;
+pass `-DMONTEZUMA_TEST_ASSETS=ON` to make a missing Pillow an error, as
+CI does.
 
 ## Capture screenshots without a display
 

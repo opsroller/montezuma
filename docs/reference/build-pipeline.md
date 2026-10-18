@@ -41,9 +41,23 @@ All extension builds use `-DGODOTCPP_TARGET=template_release
 Each package holds one folder named after the archive, containing the
 game, the extension library, `LICENSE.txt` (GPL-2.0), and two files
 written by `tools/release/notices.py`: `THIRD-PARTY-NOTICES.txt` (Godot's
-license and `COPYRIGHT.txt`, godot-cpp's license) and `SOURCE.txt` (the
-commit and where to get its source). The web demo ships the same two
-files from the same script.
+license and `COPYRIGHT.txt`, godot-cpp's and nlohmann/json's licenses) and
+`SOURCE.txt` (the commit and where to get its source). The web demo ships
+the same two files from the same script.
+
+The same files are also inside the game, readable from `res://`:
+
+| `res://` path | From |
+|---|---|
+| `CREDITS.md` | root `CREDITS.md` (the credits screen shows it) |
+| `LICENSE.txt` | root `LICENSE` |
+| `THIRD-PARTY-NOTICES.txt` | `notices.py` |
+| `SOURCE.txt` | `notices.py` |
+
+`export-desktop.sh` stages them into `game/` with `game-files.py stage`
+before exporting, the presets' `include_filter` packs them, and
+`game-files.py check` fails the export if any of them is missing from the
+exported game. They are generated and ignored by git.
 
 | Platform | Game inside the folder |
 |---|---|
@@ -86,6 +100,8 @@ The Godot downloads are cached under the key
 | `export-desktop.sh <linux\|windows\|macos> <version> <outdir>` | Exports one preset and writes the archive and `.sha256` |
 | `package.py <tar.gz\|zip> <root> <name> <archive>` | Packs a folder with stable bytes; refuses symlinks |
 | `notices.py <outdir>` | Writes `THIRD-PARTY-NOTICES.txt` and `SOURCE.txt`; add a row to its `COMPONENTS` for every library linked into the game |
+| `game-files.py stage <gamedir>` | Copies `CREDITS.md` and `LICENSE` into the Godot project and runs `notices.py` there |
+| `game-files.py check <gamedir> <export>` | Exits 1 unless every staged file's bytes are inside the exported game (a file or a `.app` folder) |
 | `notices/` | Verbatim upstream notice texts (Godot 4.4.1 `LICENSE.txt`, `COPYRIGHT.txt`) |
 | `smoke-test.sh <archive>` | Verifies, unpacks and runs a package on its own platform |
 

@@ -22,6 +22,7 @@ REPO_URL = "https://github.com/opsroller/montezuma"
 COMPONENTS = [
     ("Godot Engine 4.4.1 (MIT)", "tools/release/notices/godot/LICENSE.txt"),
     ("godot-cpp (MIT)", "thirdparty/godot-cpp/LICENSE.md"),
+    ("nlohmann/json 3.11.3 (MIT)", "thirdparty/nlohmann/LICENSE.MIT"),
     ("Third-party code included in Godot Engine 4.4.1",
      "tools/release/notices/godot/COPYRIGHT.txt"),
 ]
