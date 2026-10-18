@@ -54,9 +54,9 @@ python3 -m venv .venv
 .venv/bin/python tools/assets/validate_assets.py    # exits 1 on any error
 ```
 
-The hashes in `assets.txt` cover Linux x86_64 only. On macOS, Windows or
-ARM Linux, install with `.venv/bin/pip install pillow==11.3.0` instead.
-On Windows the venv's programs are in `.venv\Scripts\`.
+The hashes in `assets.txt` cover every platform Pillow ships wheels for,
+so the same commands work on Linux, macOS and Windows. On Windows the
+venv's programs are in `.venv\Scripts\`.
 
 ## Capture screenshots without a display
 
