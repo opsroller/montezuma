@@ -26,7 +26,7 @@ row in the PR that finishes the package.
 | 00 | Project profile, contracts, this plan | project-manager | `CLAUDE.md`, `.claude/`, `docs/README.md`, `docs/reference/project-profile.md`, `docs/reference/contracts.md`, `docs/reference/work-packages.md`, `CONTRIBUTING.md` | — | merged | done (#2) |
 | 01 | C++ core: board, moves, cascades, level state | gameplay-programmer (port thread) | `core/` | — | rules from the spec in C++20 with CTest tests | done (#1, #4) |
 | 02 | GDExtension scaffold, core bindings and Godot project | gameplay-programmer (port thread) | `extension/`, `game/`, `thirdparty/` | 01 | `Match3Board` and `BoardView3D` load in Godot headless on desktop CI | done (#3) |
-| 03 | Settle the rules spec | game-designer | `docs/rules-spec.md`, `docs/design/` | — | no **[verify]** left; totems, bonuses, mini-games and intro levels written; contract ids confirmed | todo |
+| 03 | Settle the rules spec | game-designer | `docs/reference/rules-*.md`, `docs/reference/progression.md`, `docs/explanation/about-the-rules.md`, `docs/explanation/about-rule-sets-and-themes.md`, `docs/design/` | — | no **[verify]** left; totems, bonuses, mini-games and intro levels written; contract ids confirmed | review (#14) |
 | 04 | Visual identity | graphic-designer | `design/` | — | logo, palette, type, style guide and tokens | active |
 
 ## Wave 1: build in parallel (17 at once)
@@ -46,7 +46,7 @@ row in the PR that finishes the package.
 | 15 | Sound effects | sound-designer | `game/assets/audio/sfx/`, `tools/audio/sfx*` | — | every effect cue in the contract exists | todo |
 | 16 | Audio system | sound-designer | `extension/src/audio/`, `game/scenes/audio/` | 02 | `GameAudio` autoload, cue table, buses, volume API | todo |
 | 17 | Music and ambience | sound-designer | `game/assets/audio/music/`, `tools/audio/music*` | — | menu theme, 5 episode loops, jungle ambience | todo |
-| 18 | UI theme and HUD | ui-developer | `game/ui/theme/`, `game/ui/hud/`, `extension/src/ui/hud*` | 02, 04 | quotas, timer, score, totem meters, bonus slots bound to game signals | todo |
+| 18 | UI theme and HUD | ui-developer | `game/ui/theme/`, `game/ui/hud/`, `extension/src/ui/hud*` | 02, 04 | gem counter, timer, score, 7 totem meters and Frenzy bar bound to game signals; quota counters only on levels with quotas | todo |
 | 19 | Screens and navigation | ui-developer | `game/ui/screens/`, `game/ui/widgets/`, `game/ui/strings.csv`, `extension/src/ui/screens*` | 02, 04 | title, episode map, intro, pause, results, trophies, settings, credits | todo |
 | 20 | Desktop builds in CI | devops-engineer | `game/export_presets.cfg`, `.github/workflows/build.yml` | 02 | Windows, macOS, Linux builds as CI artifacts on `main` | todo |
 | 21 | Web demo build | gameplay-programmer (port thread) | `.github/workflows/web.yml`, `tools/release/web*` | 02 | extension compiled with Emscripten; single-threaded web export of the intro level runs in Chrome, Firefox and Safari | todo |
@@ -60,7 +60,7 @@ row in the PR that finishes the package.
 | 24-27 | Episodes 2, 3, 4, 5 (one package each) | game-designer | `game/data/levels/e<N>/` | 23 | same | todo |
 | 28 | Game scene integration | graphics-programmer | `extension/src/game/`, `game/scenes/game/` | 05, 13, 16, 18 | a level plays start to finish with HUD, audio and results | todo |
 | 29 | Totem and bonus visuals | graphics-programmer | `extension/src/board/effects/`, `game/scenes/board/effects/` | 06, 07, 11, 13 | every effect animates | todo |
-| 30-33 | Bonus mini-games (one package each) | gameplay-programmer + graphics-programmer | `core/**/minigames/<id>.*`, `extension/src/minigames/<id>/`, `game/scenes/minigames/<id>/` | 03, 28 | playable and tested; split once WP-03 names them | todo |
+| 30-33 | Bonus games: 30 `bg_accuracy`, 31 `bg_memory`, 32 `bg_reaction`, 33 `bg_attention` (one package each; rules in `docs/reference/rules-bonus-games.md`) | gameplay-programmer + graphics-programmer | `core/**/minigames/<id>.*`, `extension/src/minigames/<id>/`, `game/scenes/minigames/<id>/` | 03, 28 | playable and tested per the rules | todo |
 | 34 | Intro-level mode | gameplay-programmer (port thread) | `extension/src/demo/`, `game/scenes/demo/` | 23, 28 | web build plays the intro level only and emits `level_completed` when it is won, forwarded to the page as a `montezuma:level-completed` DOM event through `JavaScriptBridge`; no-op off web | todo |
 | 35 | Website: demo page, download popup, credits | frontend-web-developer | `site/` | 04, 21 | site opens on the playable intro level; on `montezuma:level-completed` (or a skip link) a popup offers the visitor's platform download or store badge, all platforms listed; credits page from `CREDITS.md`; deploys on merge | todo |
 | 36 | Android build | devops-engineer | Android job in `.github/workflows/build.yml` | 20 | debug APK as a CI artifact | todo |
