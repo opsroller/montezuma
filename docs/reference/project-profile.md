@@ -40,19 +40,9 @@ updated in the same PR.
 
 ## Commands
 
-```sh
-git submodule update --init --recursive     # godot-cpp
-
-# core, extension and tests, from the repo root (as CI runs them)
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DMONTEZUMA_WERROR=ON
-cmake --build build -j && ctest --test-dir build --output-on-failure
-
-# load the extension headless; errors show here
-godot --headless --path game --quit
-
-# export (needs 4.4.1 export templates)
-godot --headless --path game --export-release "<Preset>" ../build/<target>/...
-```
+Building, testing and running are a how-to: see
+[`docs/how-to/build-and-test.md`](../how-to/build-and-test.md). CI runs the
+same commands.
 
 ## Role map
 
@@ -122,6 +112,10 @@ All docs follow [Diataxis](https://diataxis.fr), filed by kind:
 | `docs/reference/` | Reference | Facts to look up: this profile, contracts, work packages, rules spec |
 | `docs/explanation/` | Explanation | Why: design decisions, architecture, the port's direction |
 
+Everything we create (code, assets, docs, plugins) is GPL-2.0-or-later.
+Third-party inputs under the compatible licenses listed under Provenance
+are allowed.
+
 Every PR that changes behaviour updates the matching doc kind in the same
 PR. `docs/README.md` maps the docs. `docs/rules-spec.md` moves to
 `docs/reference/` in its owner's next PR.
@@ -144,10 +138,17 @@ credits screen and the website both read from it.
 
 - Godot: no logic in GDScript; GDExtension classes register in
   `extension/src/register_types.cpp`, one line per class; no per-frame allocations in `_process`; tweens
-  created from code are awaited, not left running; signals disconnected
+  created from C++ chain a finished callback instead of being left
+  running; signals disconnected
   on free.
 - C++: no Godot headers in `core/`; deterministic RNG and time; warnings
   as errors; sanitizers clean in Debug; SPDX header on every file.
+- Core exceptions never cross into Godot: the binding layer catches them
+  (or uses the non-throwing factory) and reports an error instead.
+- The extension builds with the same warning and exception flags as the
+  core, and CI builds it on Windows too.
+- Every CI job configures CMake with the options it needs
+  (`MONTEZUMA_BUILD_EXTENSION`, `MONTEZUMA_BUILD_TESTS`, `MONTEZUMA_WERROR`).
 - Docs: the right Diataxis kind in the right folder, updated with the
   change.
 - Every PR title is a Conventional Commit (it becomes the squash commit).

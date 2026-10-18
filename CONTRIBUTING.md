@@ -5,7 +5,8 @@ generic job-function role (plugins listed in
 [`opsroller/claude-plugins`](https://github.com/opsroller/claude-plugins)),
 plus humans.
 
-- **Project specifics** (stack, commands, who owns what): `docs/reference/project-profile.md`.
+- **Project specifics** (stack, who owns what, rules): `docs/reference/project-profile.md`.
+- **Build and test:** `docs/how-to/build-and-test.md`.
 - **What to work on:** `docs/reference/work-packages.md`.
 - **How packages fit together:** `docs/reference/contracts.md`.
 

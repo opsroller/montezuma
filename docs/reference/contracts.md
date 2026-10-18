@@ -8,6 +8,15 @@ one, message the owner (coordinate skill), and the owner lands it as a
 
 Status: **proposed** until the package that implements it merges.
 
+Each contract gives the C++ shape (namespace `montezuma`) and, where Godot
+sees it, the surface the binding exposes (`Dictionary`, `Array`,
+`Vector2i`). The binding converts one to the other; both sides build
+against both.
+
+Coordinates: `x` runs left to right and `y` top to bottom, from 0; pieces
+fall toward higher `y`. The 3D view maps `y` to depth or height, never
+the reverse.
+
 ## MoveResult events (owner: gameplay-programmer, WP-01) — proposed
 
 **Today** (`core/include/montezuma/board.hpp`, merged): a legal swap
