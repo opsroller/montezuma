@@ -1,0 +1,10 @@
+{
+  "id": "e1-l03",
+  "episode": 1,
+  "index": 3,
+  "board": { "width": 8, "height": 8, "kinds": 7 },
+  "gem_goal": { "normal": 20, "hard": 30 },
+  "totems_unlocked": ["fire"],
+  "powerups_unlocked": ["tnt", "color_clear"],
+  "seed": 3
+}
