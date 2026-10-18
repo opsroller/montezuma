@@ -4,8 +4,8 @@
 # Rules spec
 
 The reference for how *Montezuma's* plays in its `classic` rule set: the
-rules of *The Treasures of Montezuma* (Alawar, 2006 PC, later ported to
-iOS), rebuilt from public sources and written in our own words. Nothing
+rules of *The Treasures of Montezuma* (developed by Visual Shape,
+published by Alawar; PC 2006 [S8], iOS 2009 [S6]), rebuilt from public sources and written in our own words. Nothing
 here comes from the original's files.
 
 Companion pages:
