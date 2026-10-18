@@ -126,7 +126,11 @@ falls back to a placeholder primitive when a name is missing.
 
 ## Audio cues (owner: sound-designer, WP-15 to 17) — proposed
 
-Played by name with `GameAudio::play(name)`; a missing cue warns and is silent.
+Played by name with `GameAudio::play(name)` (C++:
+`GameAudio::get_singleton()`; scenes: the `/root/GameAudio` autoload); a
+missing cue warns and is silent. Volume per bus with
+`set_volume(bus, linear)`. Full API and when each cue plays:
+[audio.md](audio.md#audio-system).
 
 `swap`, `swap_illegal`, `match`, `cascade_1` … `cascade_8`, `piece_land`,
 `gem_collect`, `steel_break`, `chain_break`, `bonus_earned` (a power-up

@@ -28,6 +28,31 @@ the score:
 - Big moments (totem fire, level won, trophy) open with the conch, so
   the horn always means "something important happened".
 
+## Music that leaves room
+
+The music is played by the same instruments: clay flute melody over a
+log-drum ostinato, a wooden bass, a conch drone, and from episode 1 on
+a hide drum and rattles. Each episode raises the tempo and adds layers,
+so later episodes feel more urgent without a different style. Melodies
+sit around the flute's middle register and the music is mixed well
+under the effects, so the chimes that carry the score always cut
+through. Each loop has two tunes over 32 bars, long enough that a level
+rarely hears the same phrase twice.
+
+The tunes are composed by a seeded random walk over each piece's scale
+with fixed phrase rules (a motif, its answer, a contrast, a return home),
+not by imitating any existing music.
+
+## Code names events, the table decides sounds
+
+Game code calls a cue by what happened (`match`, `level_won`), never a
+file. Levels, variations, randomisation, voice limits and priority live
+in one data file, so tuning a sound never touches C++, and code can call
+a cue before its sound exists: an unknown cue warns once and stays
+silent. A fixed pool of voices with priority stealing means a long
+cascade can never starve a time warning, and important cues duck the
+music by a few dB so they read without being loud.
+
 ## Generated, not recorded
 
 The sounds are synthesised by Python scripts committed in `tools/audio/`.
