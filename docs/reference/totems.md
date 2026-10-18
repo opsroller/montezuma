@@ -56,12 +56,12 @@ out of `TotemId` order or a value out of range.
 ## Charging
 
 - Input is each move's own match kind, `MoveResult::matched_kind`.
-  Cascades do not charge.
+  Cascades do not charge. [verify]
 - The same kind as the previous match extends the streak and adds 1 to
   every unlocked totem's charge.
 - A different kind starts a new streak of 1: every unlocked totem's charge
   becomes 1.
-- A negative kind (no match) clears the streak and every charge to 0.
+- A negative kind (no match) clears the streak and every charge to 0. [verify]
 - A totem whose charge reaches its `threshold` fires and drops to 0. It
   then recharges along the same streak if it continues.
 - Locked totems never charge and never fire. `unlock` keeps the current
@@ -91,6 +91,11 @@ Applying an effect is the game layer's job: it passes `cells_to_clear` to
 the board's clear-and-cascade API (being added in parallel to `board.*`),
 adds `time_delta_seconds` to `LevelState`'s timer and applies the score
 multiplier. That integration is a later step.
+
+All effects returned by one `apply_move` are computed against the same
+board. Clear the union of their `cells_to_clear` in one clear-and-cascade
+step; applying them one by one with a cascade in between would clear
+pieces that have since moved.
 
 ## API
 
