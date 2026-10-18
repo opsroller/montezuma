@@ -5,6 +5,8 @@ build/
 game/bin/*
 !game/bin/.gitkeep
 game/.godot/
+# Local project-setting overrides (screenshot sizes); never committed.
+game/override.cfg
 # Copied in by CMake and tools/release/game-files.py
 game/CREDITS.md
 game/LICENSE.txt

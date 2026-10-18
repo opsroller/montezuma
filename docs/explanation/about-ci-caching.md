@@ -20,6 +20,14 @@ compiler version is a miss, never a stale hit. A cold run is still a
 correct run, only slower. That is the property the
 `cross-platform-builds` practice asks for.
 
+The cache keys name the godot-cpp major version
+(`tests-extension-godot-cpp-10-…`). A content-addressed cache cannot
+return a wrong object after a godot-cpp bump, but it would carry hundreds
+of megabytes of objects for the old bindings that will never hit again,
+crowding out the new ones under the size cap. A new key prefix starts the
+cache empty after an engine upgrade; change it whenever the submodule
+moves to a new major version or Godot API version.
+
 ccache is the common choice on Linux. On Windows, sccache has the more
 established MSVC support, so the Windows job uses it.
 

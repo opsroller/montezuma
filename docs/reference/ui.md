@@ -248,7 +248,7 @@ Translator context:
 | `settings.difficulty.normal/hard` | Match the level files' `normal` / `hard` keys (`DIFF-*`) |
 | `credits.fallback` | Shown when the full credits file is not packaged; names stay untranslated |
 
-Known gap: Godot 4.4 CSV has no plural forms and no locale number
+Known gap (checked in Godot 4.4): Godot CSV translations have no plural forms and no locale number
 grouping; no current string needs either. Plural strings will move to
 gettext `.po` when one is added.
 

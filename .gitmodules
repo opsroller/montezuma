@@ -1,4 +1,6 @@
+# The pin is the submodule commit (godot-cpp 10.0.0-stable), not this
+# branch: `git submodule update --remote` would move to master.
 [submodule "thirdparty/godot-cpp"]
 	path = thirdparty/godot-cpp
 	url = https://github.com/godotengine/godot-cpp
-	branch = 4.4
+	branch = master

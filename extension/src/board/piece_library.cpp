@@ -107,9 +107,9 @@ constexpr real_t kHalfHeight[PieceLibrary::kMaxKinds] = {0.5f, 0.3f, 0.175f, 0.2
 // Turns each placeholder so its outline faces the camera.
 Basis placeholder_basis(int kind) {
     switch (kind) {
-        case 1: return Basis(Vector3(0, 1, 0), static_cast<real_t>(Math_PI / 4.0));   // square -> diamond
-        case 3: return Basis(Vector3(1, 0, 0), static_cast<real_t>(-Math_PI / 2.0));  // triangle face up
-        case 5: return Basis(Vector3(0, 0, 1), static_cast<real_t>(Math_PI / 2.0));   // pill lies flat
+        case 1: return Basis(Vector3(0, 1, 0), static_cast<real_t>(Math::PI / 4.0));   // square -> diamond
+        case 3: return Basis(Vector3(1, 0, 0), static_cast<real_t>(-Math::PI / 2.0));  // triangle face up
+        case 5: return Basis(Vector3(0, 0, 1), static_cast<real_t>(Math::PI / 2.0));   // pill lies flat
         default: return Basis();
     }
 }
