@@ -5,7 +5,9 @@
 [benchmark and readability capture](benchmark.md), per machine, tier,
 driver and resolution, against the
 [tier budgets](visual-target.md#quality-tiers). How to run it and add a
-row: [Run the benchmark](../how-to/run-the-benchmark.md).*
+row: [Run the benchmark](../how-to/run-the-benchmark.md). Why the tiers and
+budgets are set as they are:
+[About quality tiers](../explanation/about-quality-tiers.md).*
 
 All times are milliseconds, nearest-rank percentiles over a 60 s capture
 after a 10 s warm-up, unless a row says otherwise. "Over budget" counts
@@ -33,7 +35,7 @@ Mac mini M4, Metal, Forward+, 2026-10-18.
 | `desktop-high` (second run) | 25.61 | 26.46 | 29.66 | false | 129 (170) | 144 630 (217 548) | 452 MB | false |
 | `desktop-standard` | 17.63 | 17.86 | 26.35 | false | 137 (192) | 131 586 (202 686) | 364 MB | false |
 
-What the numbers mean on this machine:
+Measurement notes:
 
 - **No GPU time on Metal.** Every `viewport_get_measured_render_time_gpu`
   sample is 0 with Godot 4.7.2's Metal driver, so `gpu_timing` is false
@@ -41,10 +43,11 @@ What the numbers mean on this machine:
 - **`cpu_ms` includes waiting for the GPU.** On Metal its p50 is above
   `frame_ms` p50, so it counts the wait for the next drawable, not only
   CPU work.
-- **`desktop-high` is GPU-bound.** Rerun for 30 s with `--disable-vsync`
-  it gives the same p95 (25.27), and the same scene at 1920×1080 keeps up
-  with the display. This is inferred from those two runs, not from a GPU
-  timer.
+- **`desktop-high` with `--disable-vsync`.** A 30 s run gives p50 22.34,
+  p95 25.27, p99 25.63, the same as with vsync.
+- **`cpu_ms` p99 of 2215 in the first `desktop-high` run** is in that
+  run's report as written; `frame_ms` for the same run has p99 25.58, so
+  those `cpu_ms` samples do not match the frames' wall-clock time.
 - **`desktop-standard` is capped by the display.** At 60 Hz each frame
   is 16.67 ms, just above the 16.6 ms budget, so frames that keep up still
   count as over budget. Godot's Metal driver stays display-synced with

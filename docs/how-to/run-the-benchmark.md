@@ -44,9 +44,11 @@ or a cloud machine without a GPU do not count against the
 
 3. Read the results in `bench-out/`:
 
-   - `benchmark.json`: `cpu_ms.p95` and `gpu_ms.p95` against the tier's
-     budget, `over_budget` frames, and `replay.diverged`, which must be
-     false.
+   - `benchmark.json`: `frame_ms.p95` against `budget_ms`, `over_budget`
+     frames, and `replay.diverged`, which must be false. `cpu_ms` and
+     `gpu_ms` split the time where the driver reports both; when
+     `gpu_timing` is false (as on Metal) `gpu_ms` is not measured. See the
+     notes in [Benchmark results](../reference/benchmark-results.md#frame-time).
    - `features.txt`: one line per feature row of the tier, `FAIL` where
      the scene does not match the target.
    - `readability.txt`: one line per rule; open the PNGs in
