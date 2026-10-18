@@ -32,13 +32,14 @@ Download, Credits, License and Source code.
 | `site/src/js/platform.js` | `detectPlatform(navigator)`, the only platform guess |
 | `site/src/js/main.js` | Demo loader, stub demo, download popup |
 | `site/data/releases.json` | Release data for the download list |
+| `site/data/notices.json`, `site/data/notices/` | Third-party software in the game and demo: name, URL, license, and the full license text shown on `/license/` |
 | `site/tests/` | `test_build.py` (unittest) and `platform.test.mjs` (`node --test`) |
 
 ## Build options
 
 | Option | Default | Effect |
 |---|---|---|
-| `--out DIR` | `site/_site` | Output folder; replaced on every build |
+| `--out DIR` | `site/_site` | Output folder; replaced on every build. An existing non-empty folder is deleted only if it holds the `.montezuma-site-build` marker an earlier build wrote |
 | `--base-url URL` | `https://opsroller.github.io/montezuma/` | Canonical URLs and sitemap |
 | `--demo-dir DIR` | none | Godot web export folder containing `montezuma.js`. Copied to `play/`; the page runs the real demo. Without it the page runs the stub demo |
 

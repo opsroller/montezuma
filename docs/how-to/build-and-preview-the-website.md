@@ -46,6 +46,14 @@ and `sha256` and set the top-level `version`; give a store listing its
 `url`. Rebuild: the build stops with the field to fix if anything is
 missing.
 
+## Add a third-party notice
+
+When the game or demo ships a new third-party component, add its license
+text as `site/data/notices/<name>.txt` (copied exactly from the
+component's release) and an entry in `site/data/notices.json` with its
+name, https URL, license and file. Add it under "Third-party works" in
+`CREDITS.md` too, then rebuild.
+
 ## Add a credit
 
 Add a line under the right heading in `CREDITS.md` (list items, links as

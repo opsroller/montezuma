@@ -108,6 +108,26 @@ class BuildTest(unittest.TestCase):
         self.assertIn("GNU GENERAL PUBLIC LICENSE", page)
         self.assertIn("Version 2, June 1991", page)
 
+    def test_license_page_carries_third_party_notices(self):
+        page = (self.run_build() / "license/index.html").read_text()
+        self.assertIn('id="notice-godot-engine"', page)
+        self.assertIn("Juan Linietsky, Ariel Manzur", page)
+        self.assertIn("Permission is hereby granted, free of charge", page)
+
+    def test_refuses_to_delete_a_folder_it_did_not_build(self):
+        precious = self.tmp / "out"
+        precious.mkdir()
+        (precious / "keep.txt").write_text("mine")
+        with self.assertRaises(build.BuildError):
+            self.run_build()
+        self.assertTrue((precious / "keep.txt").is_file())
+
+    def test_rebuilds_over_its_own_output(self):
+        out = self.run_build()
+        (out / "stale.txt").write_text("old")
+        self.run_build()
+        self.assertFalse((out / "stale.txt").exists())
+
     def test_demo_dir_switches_to_godot_and_is_copied(self):
         demo = self.tmp / "export"
         demo.mkdir()

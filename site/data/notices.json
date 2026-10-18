@@ -1,0 +1,4 @@
+[
+  { "name": "Godot Engine", "url": "https://godotengine.org", "license": "MIT", "file": "notices/godot-engine.txt" },
+  { "name": "godot-cpp", "url": "https://github.com/godotengine/godot-cpp", "license": "MIT", "file": "notices/godot-cpp.txt" }
+]

@@ -8,9 +8,9 @@ other people's lines.
 
 ## Inspiration
 
-- *The Treasures of Montezuma* (2009), the match-3 game by Alawar
-  Entertainment that Montezuma's is modelled on. None of its files are
-  used.
+- *The Treasures of Montezuma* (2007), the match-3 game developed by
+  Visual Shape and published by Alawar Entertainment, that Montezuma's is
+  modelled on. None of its files are used.
 
 ## Direction
 

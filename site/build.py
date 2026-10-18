@@ -29,6 +29,8 @@ PLATFORM_KEYS = ("windows", "macos", "linux", "android", "ios")
 STORE_NAMES = {"app-store": "the App Store", "google-play": "Google Play"}
 DEMO_ENTRY = "montezuma.js"
 PAGES = ("index.html", "credits/index.html", "license/index.html")
+# Written into every build; only a folder carrying it is ever deleted.
+MARKER = ".montezuma-site-build"
 
 
 class BuildError(Exception):
@@ -129,6 +131,30 @@ def render_release_line(data: dict) -> str:
     if _is_https(data.get("notes_url")):
         line += f' <a href="{html.escape(data["notes_url"])}">Release notes</a>.'
     return line + "</p>"
+
+
+def render_notices(path: Path) -> str:
+    """Full license texts of third-party software shipped in the game and demo."""
+    try:
+        entries = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise BuildError(f"{path}: {error}") from error
+    parts = []
+    for entry in entries:
+        for field in ("name", "url", "license", "file"):
+            if not entry.get(field):
+                raise BuildError(f"{path}: an entry is missing '{field}'")
+        if not _is_https(entry["url"]):
+            raise BuildError(f"{path}: {entry['name']}: 'url' must be https")
+        try:
+            text = (path.parent / entry["file"]).read_text(encoding="utf-8")
+        except OSError as error:
+            raise BuildError(f"{path}: {entry['name']}: {error}") from error
+        parts.append(f'<h3 id="notice-{_slug(entry["name"])}">'
+                     f'<a href="{html.escape(entry["url"])}">{html.escape(entry["name"])}</a> '
+                     f'({html.escape(entry["license"])})</h3>'
+                     f'<pre class="license-text">{html.escape(text)}</pre>')
+    return "\n".join(parts)
 
 
 def render_source_line(data: dict) -> str:
@@ -257,10 +283,12 @@ def fill(template: str, values: dict[str, str], name: str) -> str:
 def build(out: Path, base_url: str, demo_dir: Path | None,
           releases: Path = SITE / "data" / "releases.json",
           credits: Path = REPO / "CREDITS.md",
-          license_file: Path = REPO / "LICENSE") -> Path:
+          license_file: Path = REPO / "LICENSE",
+          notices: Path = SITE / "data" / "notices.json") -> Path:
     if not base_url.endswith("/"):
         base_url += "/"
     data = load_releases(releases)
+    notices_html = render_notices(notices)
     try:
         credits_html = render_markdown(credits.read_text(encoding="utf-8"))
         license_text = html.escape(license_file.read_text(encoding="utf-8"))
@@ -274,6 +302,9 @@ def build(out: Path, base_url: str, demo_dir: Path | None,
         demo_mode = "godot"
 
     if out.exists():
+        if not (out / MARKER).is_file() and any(out.iterdir()):
+            raise BuildError(f"{out}: not empty and not an earlier site build; "
+                             "refusing to delete it (pick an empty or new --out)")
         shutil.rmtree(out)
     shutil.copytree(SITE / "src", out, ignore=shutil.ignore_patterns("*.html"))
 
@@ -297,6 +328,7 @@ def build(out: Path, base_url: str, demo_dir: Path | None,
         "license/index.html": {
             "source_line": render_source_line(data),
             "license_text": license_text,
+            "notices": notices_html,
             "footer": render_footer("../", data["source_url"]),
         },
     }
@@ -317,6 +349,7 @@ def build(out: Path, base_url: str, demo_dir: Path | None,
         + "</urlset>\n", encoding="utf-8")
     (out / "robots.txt").write_text(f"Sitemap: {base_url}sitemap.xml\n", encoding="utf-8")
     (out / ".nojekyll").write_text("", encoding="utf-8")  # serve files as-is on GitHub Pages
+    (out / MARKER).write_text("Built by site/build.py; safe to delete.\n", encoding="utf-8")
     return out
 
 
