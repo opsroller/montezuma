@@ -34,6 +34,10 @@ mkdir -p "$stage"
 # Commit time for archive timestamps, so packaging adds no clock noise.
 export SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-$(git log -1 --format=%ct)}"
 
+# Credits and license files the game reads from res:// (generated, not
+# committed; the presets include them by name).
+python3 "$here/game-files.py" stage game
+
 mkdir -p "$outdir/logs"
 # The import pass prints errors for libraries of other targets; the export
 # below is what must succeed, so its log is the one that gates.
@@ -50,6 +54,8 @@ if grep -E "CodeSign|Code Signing" "$log" | grep -qiE "error|fail"; then
   grep -E "CodeSign|Code Signing" "$log" >&2
   exit 1
 fi
+
+python3 "$here/game-files.py" check game "$stage/$binary"
 
 cp LICENSE "$stage/LICENSE.txt"
 python3 "$here/notices.py" "$stage"

@@ -42,11 +42,16 @@ build folder: CMake caches options, so reusing the core-only `build/`
 would keep the extension off. The library lands in `game/bin/`.
 
 ```sh
-cmake -S . -B build-ext -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON -DMONTEZUMA_BUILD_TESTS=OFF
+cmake -S . -B build-ext -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON
 cmake --build build-ext -j
+ctest --test-dir build-ext --output-on-failure   # every test, as CI's extension job
 godot --headless --path game --import
 godot --headless --path game --quit-after 120    # errors show here
 ```
+
+This build also copies `CREDITS.md` and `LICENSE` into `game/` so the
+credits screen shows them. The tests include `ui_model_tests`, which
+needs the extension build.
 
 Play the intro level to its end headless, as CI does:
 
