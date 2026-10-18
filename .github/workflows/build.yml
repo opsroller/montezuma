@@ -57,7 +57,7 @@ jobs:
         uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
         with:
           variant: ${{ env.CACHE }}
-          key: build-extension-${{ matrix.platform }}
+          key: build-extension-godot-cpp-10-${{ matrix.platform }}
           max-size: 500M
       # Ninja or Makefiles so every compile goes through the launcher; the
       # Visual Studio generator would bypass it.

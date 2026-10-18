@@ -36,7 +36,7 @@ ctest --test-dir build-asan --output-on-failure
 
 ## Build the extension and load the game
 
-Needs the godot-cpp submodule and Godot 4.4.1. The extension is built
+Needs the godot-cpp submodule and Godot 4.7.2 (an older Godot refuses to load the extension). The extension is built
 from the root project, never from `extension/` on its own, and in its own
 build folder: CMake caches options, so reusing the core-only `build/`
 would keep the extension off. The library lands in `game/bin/`.
@@ -81,13 +81,21 @@ Godot's Movie Maker renders frames to PNG files. On a machine without a
 screen, run it under a virtual X display with the OpenGL driver (needs
 `xvfb-run`):
 
+Since Godot 4.7, Movie Maker ignores `--resolution`, so set the window
+size with a local `game/override.cfg` (ignored by git), then delete it:
+
 ```sh
+printf '[display]\nwindow/size/window_width_override=540\nwindow/size/window_height_override=1170\n' > game/override.cfg
 xvfb-run -a -s "-screen 0 1600x1600x24" godot --path game --rendering-driver opengl3 \
-  --resolution 540x1170 --write-movie /tmp/shots/frame.png --fixed-fps 30 --quit-after 20
+  --write-movie /tmp/shots/frame.png --fixed-fps 30 --quit-after 20
+rm game/override.cfg
 ```
 
-Each frame lands as `/tmp/shots/frameNNNNNNNN.png`. Change `--resolution`
-to check a phone (`540x1170`) and a desktop (`1280x720`) framing.
+Each frame lands as `/tmp/shots/frameNNNNNNNN.png`. Change the two sizes
+to check a phone (`540x1170`) and a desktop (`960x540` or `1280x720`)
+framing. The menu overlay (the `UiRoot` autoload) draws over the board;
+`docs/images/board-view-desktop.png` was captured from a scratch copy of
+`game/` with that autoload line removed from `project.godot`.
 
 ## Export a build
 
