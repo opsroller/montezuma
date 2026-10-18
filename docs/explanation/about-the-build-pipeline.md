@@ -51,3 +51,35 @@ downloadable builds. Pull requests build them whenever they change
 anything that goes into a package (the pipeline, the C++ code, the Godot
 project, godot-cpp), so a change that breaks an export is caught before
 it reaches `main`. Docs-only changes skip it.
+
+## The web demo
+
+The web demo is built by its own workflow, `web.yml`, in one Linux job:
+Emscripten and Godot's web templates both run there, so there is nothing
+to split across runners.
+
+**Single-threaded.** Godot's threaded web build needs `SharedArrayBuffer`,
+which browsers only allow on pages served with cross-origin isolation
+headers. Static hosts such as GitHub Pages cannot set them, and the
+demo should run wherever the site is served, so the export is
+single-threaded and the extension is built with `GODOTCPP_THREADS=OFF`.
+The intro level does not need threads.
+
+**The extension is a side module.** On the web, Godot loads a GDExtension
+as a WebAssembly side module that links against the engine's main module
+at start. That only works when both come from the same Emscripten
+version, so the pin is the version Godot's own release used for its
+templates, not the newest Emscripten. When the Godot pin moves, the
+Emscripten pin moves with it.
+
+**Tested in a real browser.** Running the export headless in Godot would
+not exercise what can break on the web: loading the side module,
+WebGL 2 and the events the page waits for. The smoke test serves the
+package the way the site does, starts it through Godot's `Engine` API
+with the site's settings, and checks both hand-off events arrive. It
+uses headless Chromium; Firefox and Safari are checked by hand until
+their headless WebGL runs reliably in CI.
+
+**Built, not deployed.** Nothing goes public until the game is polished,
+so the workflow only produces the package. The website deploy picks it up
+later.
