@@ -53,7 +53,7 @@ release jobs never restore one.
 
 Even with every compile a cache hit, the Windows extension job took about
 two minutes, against under 30 seconds for the Linux job. It set the pace
-for every PR. The desktop `build` workflow still builds and runs the
-Windows package on each push to `main`, so Windows breaks are caught
-within one merge rather than before it. That trade favours fast feedback
+for every PR. Pushes to `main` still run the Windows core tests, the
+Windows extension build and the Windows package, so Windows breaks are
+caught within one merge rather than before it. That trade favours fast feedback
 on the platforms most changes are developed on.
