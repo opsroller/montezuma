@@ -15,7 +15,8 @@ own folder.
 - [Project profile](reference/project-profile.md): stack, commands, who owns what, project rules.
 - [Contracts](reference/contracts.md): interfaces between work packages.
 - [Work packages](reference/work-packages.md): the plan and its status.
-- [Build pipeline](reference/build-pipeline.md): desktop build jobs, artifacts, versions and pinned tools.
+- [Build pipeline](reference/build-pipeline.md): desktop and web build jobs, artifacts, versions and pinned tools.
+- [IntroLevel](reference/intro-level.md): the web demo's scene root, its win signal and page events.
 - [Board themes](reference/board-themes.md): theme files, asset names, generators, budgets, validator.
 - [Audio](reference/audio.md): sound formats, levels and the files behind each cue.
 - [Power Totems](reference/totems.md): totem ids, charging, effects and tuning.
@@ -36,6 +37,7 @@ own folder.
 - [Match3Game](reference/match3-game.md): the game scene's controller, its signals, cues and self-test.
 - [Visual target](reference/visual-target.md): the look per quality tier, frame budgets and acceptance tests.
 - [Quality tiers](reference/quality-tiers.md): the `QualityTiers` autoload, settings key, feature ids, node groups and render settings per tier.
+- [Benchmark and readability capture](reference/benchmark.md): the benchmark replay, its JSON report, feature keys and readability checks.
 
 ## Explanation
 
@@ -46,6 +48,7 @@ own folder.
 
 - [Build and test](how-to/build-and-test.md): build the core and extension, run tests, load the game, capture screenshots.
 - [Export a desktop build](how-to/export-a-desktop-build.md): get or make the Windows, macOS and Linux packages.
+- [Export the web demo](how-to/export-a-web-build.md): get or make the web package and run it in a browser.
 - [Make a board theme](how-to/make-a-board-theme.md): change the temple look or add a new theme.
 - [Regenerate or add sounds](how-to/regenerate-or-add-sounds.md): rebuild the generated audio, add a cue.
 - [Play a sound from code](how-to/play-a-sound-from-code.md): call a cue from C++ or a scene, start and stop music.
@@ -56,6 +59,7 @@ own folder.
 - [Add a level](how-to/add-a-level.md): write a campaign level file from the progression tables, test it and play it.
 - [Make content depend on the quality tier](how-to/make-content-depend-on-the-quality-tier.md): desktop-only nodes, fallbacks, light shadows, texture variants.
 - [Capture the effects showcase](how-to/capture-the-effects-showcase.md): record every totem and power-up effect to frames.
+- [Run the benchmark](how-to/run-the-benchmark.md): measure frame time and check readability on a desktop or a phone.
 
 ## Explanation
 
@@ -66,7 +70,7 @@ own folder.
 - [About the visual target](explanation/about-the-visual-target.md): why a realistic high-end look, and what Godot can and cannot do with ray tracing.
 - [About quality tiers](explanation/about-quality-tiers.md): how a tier is picked, why the renderer is fixed per platform, why tiers only switch effects off.
 - [About CI caching](explanation/about-ci-caching.md): why CI uses a compiler cache and what it leaves uncached.
-- [About the build pipeline](explanation/about-the-build-pipeline.md): why builds compile natively and export once.
+- [About the build pipeline](explanation/about-the-build-pipeline.md): why builds compile natively and export once, and how the web demo is built.
 - [Sound direction](explanation/sound-direction.md): why the game sounds the way it does.
 - [About the website](explanation/about-the-website.md): why the front page is the playable intro level and how it hands off to downloads.
 

@@ -35,3 +35,6 @@ jobs:
           .venv/bin/pip install --quiet --no-deps --only-binary=:all: --require-hashes -r .github/requirements/assets.txt
       - name: Validate assets
         run: .venv/bin/python tools/assets/validate_assets.py
+      # The readability checks' maths on synthetic captures (tools/bench).
+      - name: Readability check tests
+        run: .venv/bin/python -m unittest discover -s tools/bench/tests

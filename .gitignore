@@ -15,3 +15,5 @@ game/SOURCE.txt
 site/_site/
 __pycache__/
 .venv/
+bench-out/
+dist/

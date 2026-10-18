@@ -267,21 +267,36 @@ Agreed by both sides on 2026-10-18. The site's side is described in
 `docs/reference/website.md`.
 
 **Files.** The Godot 4.7.2 single-threaded web export, named `montezuma`
-(`montezuma.js`, `montezuma.wasm`, `montezuma.pck`, plus any helper files
-the export emits). The site does not use the export's own HTML page.
+(`montezuma.js`, `montezuma.wasm`, `montezuma.side.wasm`, `montezuma.pck`,
+the audio worklet scripts) and the game's extension library
+`libmontezuma.web.template_release.wasm32.nothreads.wasm`, all in one
+folder: the `montezuma-<version>-web.zip` artifact of the `web` workflow
+(see [Build pipeline](build-pipeline.md#web-demo)). The site does not use
+the export's own HTML page.
 
 **Loading.** On the visitor's click, the page loads `play/montezuma.js`
 and starts it with Godot's `Engine` API:
 
 ```js
-new Engine({
+const lib = "libmontezuma.web.template_release.wasm32.nothreads.wasm";
+const engine = new Engine({
   executable: "play/montezuma",
-  canvas,                      // created by the page inside #stage
+  canvas,                      // created by the page inside #stage; needs an id
   canvasResizePolicy: 0,       // the page sizes the canvas
   ensureCrossOriginIsolationHeaders: false,
   onProgress(current, total) { /* updates the <progress> bar */ },
-}).startGame();
+});
+await engine.preloadFile(`play/${lib}`, lib);  // the game's extension
+await engine.startGame();
 ```
+
+The extension must be preloaded under its bare file name: Godot opens it
+by that name from the game's file system. Without it the game starts
+with no game classes and logs `Can't open dynamic library`. (Godot's
+`gdextensionLibs` setting does not work from a subfolder: it fetches the
+file relative to the page and opens it by the same path.) The canvas
+needs an `id`; Godot selects it with `#<id>`. Amended in WP-21
+(2026-10-18) after running the export in a browser.
 
 **Events, game to page.** Dispatched on `window` as `CustomEvent`s (from
 `JavaScriptBridge`). Unknown events and extra fields are ignored.
