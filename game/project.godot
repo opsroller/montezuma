@@ -20,11 +20,13 @@ pointing/emulate_touch_from_mouse=false
 
 [rendering]
 
+renderer/rendering_method="forward_plus"
 renderer/rendering_method.mobile="mobile"
 textures/vram_compression/import_etc2_astc=true
 
 [autoload]
 
+QualityTiers="*res://scenes/render/quality_tiers.tscn"
 GameAudio="*res://scenes/audio/game_audio.tscn"
 UiRoot="*res://ui/ui_root.tscn"
 
