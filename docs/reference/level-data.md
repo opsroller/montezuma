@@ -55,18 +55,18 @@ rule-variant level adds `quotas`, and a level with its own clock adds
 | `board.width` | integer | no | 8 | 3 to 64 |
 | `board.height` | integer | no | 8 | 3 to 64 |
 | `board.kinds` | integer | no | 7 | 3 to 7. The board uses kinds 0 to `kinds - 1` |
-| `gem_goal` | object | see [Goals](#goals) | absent | Keys `normal` and `hard` only, both required |
+| `gem_goal` | object | see [Goals](#goals) | absent | Keys `normal` and `hard` only, both required (`GOAL-01`) |
 | `gem_goal.normal` | integer | yes | | Gems to collect on Normal, 1 or more |
 | `gem_goal.hard` | integer | yes | | Gems to collect on Hard, 1 or more |
-| `quotas` | object | see [Goals](#goals) | absent | Rule-variant goal. Kind name to pieces to clear. At least one entry. Each count is an integer of 1 or more. Each kind's index is below `board.kinds` |
-| `time_limit` | object | no | absent: the [timer tier](#timer-tiers) decides | Keys `normal` and `hard` only, both required. Overrides the timer tier |
+| `quotas` | object | see [Goals](#goals) | absent | Rule-variant goal. Kind name to pieces to clear. At least one entry. Each count is an integer of 1 or more. Each kind's index is below `board.kinds`. With `gem_goal`, both goals must be met (`GOAL-06`) |
+| `time_limit` | object | no | absent: the [timer tier](#timer-tiers) decides | Keys `normal` and `hard` only, both required. Overrides the timer tier (`GOAL-03`) |
 | `time_limit.normal` | number | yes | | Seconds, greater than 0; integer or fraction |
 | `time_limit.hard` | number | yes | | Seconds, greater than 0; integer or fraction |
 | `totems_unlocked` | array of strings | yes | | Totem ids below, each at most once. May be empty |
 | `powerups_unlocked` | array of strings | no | `[]` | Power-up ids below, each at most once |
-| `steel_rate` | number | no | 0 | Chance per spawned piece to be steel, 0 to 1 inclusive |
+| `steel_rate` | number | no | 0 | Chance per spawned piece to be steel, 0 to 1 inclusive (`OBS-02`) |
 | `blocked_cells` | array of `[x, y]` | no | `[]` | Integer pairs; `0 <= x < width`, `0 <= y < height`; each cell at most once. `x` runs left to right, `y` top to bottom |
-| `chained_cells` | array of `[x, y]` | no | `[]` | Same rules as `blocked_cells`. A cell cannot be both chained and blocked |
+| `chained_cells` | array of `[x, y]` | no | `[]` | Same rules as `blocked_cells`. A cell cannot be both chained and blocked (`OBS-05`) |
 | `rules` | string | no | `"classic"` | Rule-set id: one or more of `a-z`, `0-9`, `_` |
 | `theme` | string | no | `"temple"` | Theme id: one or more of `a-z`, `0-9`, `_` |
 | `seed` | integer | yes | | 0 to 18446744073709551615 |
