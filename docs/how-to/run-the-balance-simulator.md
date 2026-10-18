@@ -52,8 +52,8 @@ that ended on a stuck board, the target and `PASS` or `FAIL`. Only
 `greedy`/normal, `random`/normal and `planner`/hard have targets. Below
 the rows, the two curve rules: `curve-1` for each pair of consecutive
 campaign levels (a jump of more than 10 points of `greedy` win rate
-fails; a level with a new idea must be easier than the one before), and
-`curve-2` for each episode's opener against its third level. A rule whose
+fails; a level with a new idea must be easier than the one before, or
+both must win every run), and `curve-2` for each episode's opener against its third level. A rule whose
 levels are not all in the run is `skipped`.
 
 ## How the bots play

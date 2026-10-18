@@ -324,8 +324,11 @@ std::vector<CurveCheck> curve_checks(const std::vector<LevelData>& levels, const
         }
         const long long diff = cross(b->wins, b->seeds, a->wins, a->seeds);  // (b - a) x seeds_a x seeds_b
         if (introduces_idea(*next, &l)) {
-            c.verdict = diff > 0 ? Verdict::Pass : Verdict::Fail;
-            c.detail = "new idea: " + fmt1(b->win_rate_pct()) + "% must be above " + fmt1(a->win_rate_pct()) + "%";
+            // A level can be no easier than winning every run.
+            const bool both_full = a->wins == a->seeds && b->wins == b->seeds;
+            c.verdict = diff > 0 || both_full ? Verdict::Pass : Verdict::Fail;
+            c.detail = "new idea: " + fmt1(b->win_rate_pct()) + "% must be above " + fmt1(a->win_rate_pct()) + "%" +
+                       (both_full ? " (both 100%)" : "");
         } else {
             // 100 (b/sb - a/sa) <= 10.
             c.verdict = diff * 100 <= 10LL * a->seeds * b->seeds ? Verdict::Pass : Verdict::Fail;
