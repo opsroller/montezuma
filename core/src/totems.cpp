@@ -14,7 +14,7 @@ namespace montezuma {
 namespace {
 
 constexpr std::array<std::string_view, kTotemCount> kNames{
-    "row_clear", "random_blast", "time", "lightning", "color_bomb", "multiplier",
+    "fire", "time", "gold", "gift", "harvest", "paint", "ward",
 };
 
 void sort_row_major(std::vector<Cell>& cells) {
@@ -23,22 +23,48 @@ void sort_row_major(std::vector<Cell>& cells) {
     cells.erase(std::unique(cells.begin(), cells.end()), cells.end());
 }
 
-std::vector<Cell> occupied_cells(const Board& board) {
+// Occupied cells in row-major order, optionally skipping one kind.
+std::vector<Cell> occupied_cells(const Board& board, int skip_kind = Board::kEmpty) {
     std::vector<Cell> cells;
     for (int y = 0; y < board.height(); ++y)
-        for (int x = 0; x < board.width(); ++x)
-            if (board.at(x, y) != Board::kEmpty) cells.push_back({x, y});
+        for (int x = 0; x < board.width(); ++x) {
+            const int k = board.at(x, y);
+            if (k != Board::kEmpty && k != skip_kind) cells.push_back({x, y});
+        }
     return cells;
 }
 
-void add_row(std::vector<Cell>& cells, const Board& board, int y) {
-    for (int x = 0; x < board.width(); ++x)
-        if (board.at(x, y) != Board::kEmpty) cells.push_back({x, y});
+// Moves up to `n` random cells of `pool` into `out` (partial Fisher-Yates,
+// one draw per cell taken). `used` counts the cells already taken from `pool`.
+void take_random(std::vector<Cell>& pool, std::size_t& used, std::size_t n, Rng& rng,
+                        std::vector<Cell>& out) {
+    const std::size_t take = std::min(n, pool.size() - used);
+    for (std::size_t i = 0; i < take; ++i, ++used) {
+        const auto pick = used + static_cast<std::size_t>(rng.below(static_cast<int>(pool.size() - used)));
+        std::swap(pool[used], pool[pick]);
+        out.push_back(pool[used]);
+    }
 }
 
-void add_column(std::vector<Cell>& cells, const Board& board, int x) {
-    for (int y = 0; y < board.height(); ++y)
-        if (board.at(x, y) != Board::kEmpty) cells.push_back({x, y});
+void validate(const TotemDef& d, std::size_t i) {
+    const std::string name(kNames[i]);
+    auto fail = [&](const std::string& what) { throw std::invalid_argument("Totem " + name + " " + what); };
+    if (static_cast<std::size_t>(d.id) != i) fail("table row has the wrong id");
+    if (d.charges_to_fire < 1) fail("charges_to_fire must be at least 1");
+    if (d.tier_count < 1 || d.tier_count > kMaxTotemTier) fail("tier_count must be 1..4");
+    for (int t = 0; t < d.tier_count; ++t) {
+        const TotemTierDef& td = d.tiers[static_cast<std::size_t>(t)];
+        const std::string at = "tier " + std::to_string(t + 1) + " ";
+        if (td.uses_per_level < 1) fail(at + "uses_per_level must be at least 1");
+        for (const Fireballs& f : td.fireballs)
+            if (f.count < 0 || f.size < 0) fail(at + "fireballs must not be negative");
+        if (!std::isfinite(td.time_seconds) || td.time_seconds < 0.0)
+            fail(at + "time_seconds must be finite and not negative");
+        if (td.points < 0) fail(at + "points must not be negative");
+        if (td.powerups_to_place < 0) fail(at + "powerups_to_place must not be negative");
+        if (td.gems_to_place < 0) fail(at + "gems_to_place must not be negative");
+        if (td.repaint_count < 0) fail(at + "repaint_count must not be negative");
+    }
 }
 
 }  // namespace
@@ -51,129 +77,130 @@ std::optional<TotemId> totem_from_name(std::string_view name) {
     return std::nullopt;
 }
 
-TotemSystem::TotemSystem(const std::vector<TotemId>& unlocked, const TotemTable& defs) : defs_(defs) {
-    for (std::size_t i = 0; i < kTotemCount; ++i) {
-        const TotemDef& d = defs_[i];
-        std::string name(kNames[i]);
-        if (index(d.id) != i) throw std::invalid_argument("Totem table row " + name + " has the wrong id");
-        if (d.threshold < 1) throw std::invalid_argument("Totem " + name + " threshold must be at least 1");
-        if (d.blast_count < 0) throw std::invalid_argument("Totem " + name + " blast_count must not be negative");
-        if (d.score_multiplier < 1)
-            throw std::invalid_argument("Totem " + name + " score_multiplier must be at least 1");
-        if (d.multiplier_moves < 0)
-            throw std::invalid_argument("Totem " + name + " multiplier_moves must not be negative");
-        if (!std::isfinite(d.time_delta_seconds))
-            throw std::invalid_argument("Totem " + name + " time_delta_seconds must be finite");
-    }
-    for (TotemId id : unlocked) unlock(id);
+TotemSystem::TotemSystem(const std::vector<TotemUnlock>& unlocked, const TotemTable& defs) : defs_(defs) {
+    for (std::size_t i = 0; i < kTotemCount; ++i) validate(defs_[i], i);
+    for (const TotemUnlock& u : unlocked) unlock(u.id, u.tier);
 }
 
 TotemSystem TotemSystem::from_names(const std::vector<std::string_view>& unlocked, const TotemTable& defs) {
-    std::vector<TotemId> ids;
+    std::vector<TotemUnlock> ids;
     for (std::string_view name : unlocked) {
         auto id = totem_from_name(name);
         if (!id) throw std::invalid_argument("Unknown totem id: " + std::string(name));
-        ids.push_back(*id);
+        ids.push_back({*id, 1});
     }
     return TotemSystem(ids, defs);
 }
 
-double TotemSystem::charge(TotemId id) const {
-    if (!unlocked(id)) return 0.0;
-    double fraction = static_cast<double>(charge_count(id)) / def(id).threshold;
-    return std::clamp(fraction, 0.0, 1.0);
+void TotemSystem::unlock(TotemId id, int tier) {
+    const TotemDef& d = def(id);
+    if (tier < 1 || tier > d.tier_count)
+        throw std::invalid_argument("Totem " + std::string(totem_name(id)) + " has no tier " + std::to_string(tier));
+    State& s = state_[index(id)];
+    s.unlocked = true;
+    s.tier = tier;
+    s.uses_left = d.tiers[static_cast<std::size_t>(tier - 1)].uses_per_level;
 }
 
-std::vector<TotemId> TotemSystem::record_match(int kind) {
-    std::vector<TotemId> fired;
-    if (kind < 0) {
-        streak_kind_ = -1;
-        streak_ = 0;
-        charge_.fill(0);
-        return fired;
-    }
-    const bool extends = kind == streak_kind_;
-    if (extends) {
-        ++streak_;
-    } else {
-        streak_kind_ = kind;
-        streak_ = 1;
-    }
+const TotemTierDef& TotemSystem::tier_def(TotemId id) const {
+    return def(id).tiers[static_cast<std::size_t>(tier(id) - 1)];
+}
+
+void TotemSystem::start_level() {
     for (std::size_t i = 0; i < kTotemCount; ++i) {
-        if (!unlocked_[i]) continue;
-        charge_[i] = extends ? charge_[i] + 1 : 1;
-        if (charge_[i] >= defs_[i].threshold) {
-            charge_[i] = 0;
+        State& s = state_[i];
+        s.charge = 0;
+        if (s.unlocked) s.uses_left = tier_def(static_cast<TotemId>(i)).uses_per_level;
+    }
+}
+
+double TotemSystem::charge(TotemId id) const {
+    const State& s = state_[index(id)];
+    if (!s.unlocked || s.uses_left == 0) return 0.0;
+    return std::clamp(static_cast<double>(s.charge) / def(id).charges_to_fire, 0.0, 1.0);
+}
+
+std::vector<TotemId> TotemSystem::record_move(const MoveResult& result) {
+    std::vector<TotemId> fired;
+    // rule: <tbd> effect results (no swap) leave charges alone.
+    if (result.steps.empty() || result.matched_kind == -1) return fired;
+    // rule: <tbd> only the swap's own step charges; cascades do not.
+    const auto& step0 = result.steps.front();
+    for (std::size_t i = 0; i < kTotemCount; ++i) {
+        State& s = state_[i];
+        if (!s.unlocked || s.uses_left == 0) continue;
+        // rule: <tbd> a move without this colour resets the charge.
+        s.charge = step0.count(static_cast<int>(i)) != 0 ? s.charge + 1 : 0;
+        if (s.charge >= defs_[i].charges_to_fire) {
+            s.charge = 0;
+            --s.uses_left;
             fired.push_back(static_cast<TotemId>(i));
         }
     }
     return fired;
 }
 
-TotemEffect TotemSystem::make_effect(TotemId id, const Board& board, Rng& rng, int target_kind) const {
-    const TotemDef& d = def(id);
+TotemEffect TotemSystem::make_effect(TotemId id, const Board& board, Rng& rng) const {
+    const TotemTierDef& td = tier_def(id);
     TotemEffect effect;
     effect.totem = id;
-    auto& cells = effect.cells_to_clear;
+    effect.tier = tier(id);
 
     switch (id) {
-    case TotemId::RowClear:
-        add_row(cells, board, rng.below(board.height()));
-        break;
-    case TotemId::RandomBlast: {
-        // Partial Fisher-Yates over occupied cells in row-major order.
+    case TotemId::Fire: {
+        // rule: <tbd> One shared pool: fireballs in table order each take
+        // `size` distinct pieces until the board runs out.
         std::vector<Cell> pool = occupied_cells(board);
-        const std::size_t n = std::min(pool.size(), static_cast<std::size_t>(d.blast_count));
-        for (std::size_t i = 0; i < n; ++i) {
-            const auto pick = i + static_cast<std::size_t>(rng.below(static_cast<int>(pool.size() - i)));
-            std::swap(pool[i], pool[pick]);
-            cells.push_back(pool[i]);
-        }
+        std::size_t used = 0;
+        for (const Fireballs& group : td.fireballs)
+            for (int f = 0; f < group.count; ++f)
+                take_random(pool, used, static_cast<std::size_t>(group.size), rng, effect.cells_to_clear);
+        sort_row_major(effect.cells_to_clear);
         break;
     }
     case TotemId::Time:
-        effect.time_delta_seconds = d.time_delta_seconds;
+        effect.time_delta_seconds = td.time_seconds;
         break;
-    case TotemId::Lightning:
-        if (d.lightning_shape == LightningShape::Column) {
-            add_column(cells, board, rng.below(board.width()));
-        } else {
-            const int x = rng.below(board.width());
-            const int y = rng.below(board.height());
-            add_column(cells, board, x);
-            add_row(cells, board, y);
-        }
+    case TotemId::Gold:
+        effect.points = td.points;
+        effect.start_frenzy = td.start_frenzy;
         break;
-    case TotemId::ColorBomb: {
-        // Aim at the streak's kind; if none of it is on the board, pick a
-        // kind that is, from those present in ascending order.
+    case TotemId::Gift:
+        effect.powerups_to_place = td.powerups_to_place;
+        break;
+    case TotemId::Harvest:
+        effect.collect_all_gems = td.collect_all_gems;
+        effect.gems_to_place = td.gems_to_place;
+        effect.remove_chains = td.remove_chains;
+        break;
+    case TotemId::Paint: {
+        // rule: <tbd> Target kind first (among kinds present, ascending),
+        // then the cells, from pieces not already that kind.
         std::vector<int> present;
         for (int k : board.cells())
             if (k != Board::kEmpty) present.push_back(k);
         std::sort(present.begin(), present.end());
         present.erase(std::unique(present.begin(), present.end()), present.end());
-        if (present.empty()) break;
-        int kind = target_kind;
-        if (!std::binary_search(present.begin(), present.end(), kind))
-            kind = present[static_cast<std::size_t>(rng.below(static_cast<int>(present.size())))];
-        for (int y = 0; y < board.height(); ++y)
-            for (int x = 0; x < board.width(); ++x)
-                if (board.at(x, y) == kind) cells.push_back({x, y});
+        if (present.empty() || td.repaint_count == 0) break;
+        effect.repaint_kind = present[static_cast<std::size_t>(rng.below(static_cast<int>(present.size())))];
+        std::vector<Cell> pool = occupied_cells(board, effect.repaint_kind);
+        std::size_t used = 0;
+        take_random(pool, used, static_cast<std::size_t>(td.repaint_count), rng, effect.cells_to_repaint);
+        sort_row_major(effect.cells_to_repaint);
         break;
     }
-    case TotemId::Multiplier:
-        effect.score_multiplier = d.score_multiplier;
-        effect.multiplier_moves = d.multiplier_moves;
+    case TotemId::Ward:
+        effect.destroy_steel = td.destroy_steel;
+        effect.stop_steel = td.stop_steel;
+        effect.clear_around_steel = td.clear_around_steel;
         break;
     }
-    sort_row_major(cells);
     return effect;
 }
 
 std::vector<TotemEffect> TotemSystem::apply_move(const MoveResult& result, const Board& board, Rng& rng) {
     std::vector<TotemEffect> effects;
-    for (TotemId id : record_match(result.matched_kind))
-        effects.push_back(make_effect(id, board, rng, result.matched_kind));
+    for (TotemId id : record_move(result)) effects.push_back(make_effect(id, board, rng));
     return effects;
 }
 

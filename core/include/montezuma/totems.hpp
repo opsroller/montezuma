@@ -14,123 +14,239 @@
 
 namespace montezuma {
 
-// Power Totems (docs/rules-spec.md, "Power Totems"). Ids follow the contract
-// in docs/reference/contracts.md; the enum order is the stable order in which
-// totems are charged, fired and reported.
-enum class TotemId { RowClear, RandomBlast, Time, Lightning, ColorBomb, Multiplier };
-inline constexpr std::size_t kTotemCount = 6;
+// Power Totems (docs/reference/totems.md). One totem per piece colour.
+//
+// Colour mapping, defined here and nowhere else: a totem's enum value is the
+// board kind index of its colour. Assumed until the rules spec confirms it.
+// rule: <tbd>
+enum class TotemId : int {
+    Fire = 0,     // red
+    Time = 1,     // orange
+    Gold = 2,     // yellow
+    Gift = 3,     // purple
+    Harvest = 4,  // green
+    Paint = 5,    // white
+    Ward = 6,     // blue
+};
+inline constexpr std::size_t kTotemCount = 7;
+inline constexpr int kMaxTotemTier = 4;
 
-// Contract id string ("row_clear", ...) for a totem.
+// Board kind (colour) that charges a totem.
+constexpr int totem_kind(TotemId id) { return static_cast<int>(id); }
+// The totem charged by a board kind; empty for a kind with no totem.
+constexpr std::optional<TotemId> totem_for_kind(int kind) {
+    if (kind < 0 || kind >= static_cast<int>(kTotemCount)) return std::nullopt;
+    return static_cast<TotemId>(kind);
+}
+
+// Contract id string ("fire", ...) for a totem.
 std::string_view totem_name(TotemId id);
 // Inverse of totem_name; empty for an unknown id.
 std::optional<TotemId> totem_from_name(std::string_view name);
 
-// Shape of the lightning totem's strike.
-enum class LightningShape {
-    Column,  // one whole column
-    Cross,   // one whole row plus one whole column through a centre cell
+// `count` fireballs that each clear `size` random pieces.
+struct Fireballs {
+    int count = 0;
+    int size = 0;
 };
 
-// Tuning for one totem. Only the fields its effect reads matter; the rest
-// keep their neutral defaults.
+// Tuning for one tier of one totem. Only the fields its totem's effect reads
+// matter; the rest keep their neutral defaults.
+struct TotemTierDef {
+    // Times the totem can fire per level at this tier.
+    int uses_per_level = 1;
+    // fire: fireball groups, drawn in array order.
+    std::array<Fireballs, 2> fireballs{};
+    // time: seconds added to the level timer.
+    double time_seconds = 0.0;
+    // gold: points awarded, and whether Score Frenzy starts.
+    int points = 0;
+    bool start_frenzy = false;
+    // gift: power-ups the game layer places.
+    int powerups_to_place = 0;
+    // harvest: collect every gem, then place new gems, and remove chains.
+    bool collect_all_gems = false;
+    int gems_to_place = 0;
+    bool remove_chains = false;
+    // paint: pieces repainted to one colour present on the board.
+    int repaint_count = 0;
+    // ward: destroy steel, stop it spawning, clear pieces next to it.
+    bool destroy_steel = false;
+    bool stop_steel = false;
+    bool clear_around_steel = false;
+};
+
+// Tuning for one totem.
 struct TotemDef {
     TotemId id;
-    // Consecutive same-kind matches (the swap's own match) needed to fire.
-    int threshold = 3;
-    // random_blast: pieces destroyed (capped at the pieces on the board).
-    int blast_count = 0;
-    // time: seconds added to the level timer.
-    double time_delta_seconds = 0.0;
-    // lightning: strike shape.
-    LightningShape lightning_shape = LightningShape::Column;
-    // multiplier: score factor and how many following moves it lasts.
-    int score_multiplier = 1;
-    int multiplier_moves = 0;
+    // Consecutive moves matching the totem's colour needed to fire.
+    // rule: <tbd>
+    int charges_to_fire = 2;
+    // Tiers in use, 1..kMaxTotemTier; tiers[tier_count..] are ignored.
+    int tier_count = kMaxTotemTier;
+    std::array<TotemTierDef, kMaxTotemTier> tiers{};
 };
 
 using TotemTable = std::array<TotemDef, kTotemCount>;
 
-// Default tuning, one row per totem in TotemId order. The spec gives no
-// numbers yet, so every value is a placeholder.
+// Default tuning, one row per totem in TotemId (kind) order, from the game
+// designer's sources (WP-03). Swap the table for a rule variant.
+// rule: <tbd>
 inline constexpr TotemTable kTotemDefs{{
-    // [verify] placeholder until WP-03: threshold; row chosen at random.
-    {.id = TotemId::RowClear, .threshold = 3},
-    // [verify] placeholder until WP-03: threshold, blast_count.
-    {.id = TotemId::RandomBlast, .threshold = 4, .blast_count = 8},
-    // [verify] placeholder until WP-03: threshold, time_delta_seconds.
-    {.id = TotemId::Time, .threshold = 3, .time_delta_seconds = 10.0},
-    // [verify] placeholder until WP-03: threshold, lightning_shape.
-    {.id = TotemId::Lightning, .threshold = 5, .lightning_shape = LightningShape::Cross},
-    // [verify] placeholder until WP-03: threshold; targets the streak's kind.
-    {.id = TotemId::ColorBomb, .threshold = 6},
-    // [verify] placeholder until WP-03: threshold, score_multiplier, multiplier_moves.
-    {.id = TotemId::Multiplier, .threshold = 4, .score_multiplier = 2, .multiplier_moves = 3},
+    // rule: <tbd>
+    {.id = TotemId::Fire,
+     .tiers = {{
+         {.uses_per_level = 1, .fireballs = {{{.count = 2, .size = 3}, {}}}},
+         {.uses_per_level = 1, .fireballs = {{{.count = 4, .size = 3}, {}}}},
+         {.uses_per_level = 2, .fireballs = {{{.count = 2, .size = 4}, {.count = 2, .size = 5}}}},
+         {.uses_per_level = 2, .fireballs = {{{.count = 4, .size = 5}, {}}}},
+     }}},
+    // rule: <tbd>
+    {.id = TotemId::Time,
+     .tiers = {{
+         {.uses_per_level = 1, .time_seconds = 60.0},
+         {.uses_per_level = 1, .time_seconds = 120.0},
+         {.uses_per_level = 2, .time_seconds = 180.0},
+         {.uses_per_level = 2, .time_seconds = 240.0},
+     }}},
+    // rule: <tbd>
+    // [verify] points: sources read 1500/2000/2000, 2500/2500, 3000.
+    {.id = TotemId::Gold,
+     .tiers = {{
+         {.uses_per_level = 1, .points = 1500},
+         {.uses_per_level = 1, .points = 2000, .start_frenzy = true},
+         {.uses_per_level = 2, .points = 2500, .start_frenzy = true},
+         {.uses_per_level = 2, .points = 3000, .start_frenzy = true},
+     }}},
+    // rule: <tbd>
+    {.id = TotemId::Gift,
+     .tiers = {{
+         {.uses_per_level = 1, .powerups_to_place = 1},
+         {.uses_per_level = 1, .powerups_to_place = 2},
+         {.uses_per_level = 2, .powerups_to_place = 3},
+         {.uses_per_level = 2, .powerups_to_place = 4},
+     }}},
+    // rule: <tbd>
+    {.id = TotemId::Harvest,
+     .tiers = {{
+         {.uses_per_level = 1, .collect_all_gems = true},
+         {.uses_per_level = 1, .collect_all_gems = true, .gems_to_place = 8},
+         {.uses_per_level = 2, .collect_all_gems = true, .gems_to_place = 9, .remove_chains = true},
+         {.uses_per_level = 2, .collect_all_gems = true, .gems_to_place = 10, .remove_chains = true},
+     }}},
+    // rule: <tbd>
+    {.id = TotemId::Paint,
+     .tiers = {{
+         {.uses_per_level = 1, .repaint_count = 4},
+         {.uses_per_level = 1, .repaint_count = 6},
+         {.uses_per_level = 2, .repaint_count = 8},
+         {.uses_per_level = 2, .repaint_count = 10},
+     }}},
+    // rule: <tbd>
+    {.id = TotemId::Ward,
+     .tier_count = 3,
+     .tiers = {{
+         {.uses_per_level = 1, .destroy_steel = true},
+         {.uses_per_level = 1, .destroy_steel = true, .stop_steel = true},
+         {.uses_per_level = 2, .destroy_steel = true, .stop_steel = true, .clear_around_steel = true},
+         {},
+     }}},
 }};
 
-// What a fired totem does, as data. Nothing here has touched the board: the
-// game layer clears `cells_to_clear` through the board's clear-and-cascade
-// API, adds `time_delta_seconds` to the timer and applies the multiplier.
+// What a fired totem does, as data. Nothing here has touched the board.
+// Gems, steel and chains are not in Board yet, so those outcomes are flags
+// and counts for the game layer. Unused fields keep these neutral values.
 struct TotemEffect {
-    TotemId totem = TotemId::RowClear;
-    // Unique, in bounds, sorted row-major (y, then x).
+    TotemId totem = TotemId::Fire;
+    int tier = 1;
+    // fire: unique, in bounds, occupied, sorted row-major (y, then x).
     std::vector<Cell> cells_to_clear;
+    // time
     double time_delta_seconds = 0.0;
-    int score_multiplier = 1;
-    int multiplier_moves = 0;
+    // gold
+    int points = 0;
+    bool start_frenzy = false;
+    // gift: placement and power-up type are the game layer's choice.
+    int powerups_to_place = 0;
+    // harvest
+    bool collect_all_gems = false;
+    int gems_to_place = 0;
+    bool remove_chains = false;
+    // paint: unique, in bounds, occupied, not already repaint_kind, sorted
+    // row-major. repaint_kind is -1 when nothing is repainted.
+    std::vector<Cell> cells_to_repaint;
+    int repaint_kind = -1;
+    // ward
+    bool destroy_steel = false;
+    bool stop_steel = false;
+    bool clear_around_steel = false;
 };
 
-// Per-level totem charge. Pure state: fed the kind of each move's own match,
-// it charges unlocked totems along the same-kind streak and reports which
-// ones fired. Locked totems never charge.
+// A totem to unlock, at a tier in 1..its def's tier_count.
+struct TotemUnlock {
+    TotemId id;
+    int tier = 1;
+};
+
+// Per-level totem state. Pure: fed each move's result, it charges unlocked
+// totems whose colour was in the swap's own match and reports which fired.
 class TotemSystem {
 public:
-    // Throws std::invalid_argument if `defs` is out of order or a value is
-    // out of range (threshold < 1, blast_count < 0, score_multiplier < 1,
-    // multiplier_moves < 0, time_delta_seconds not finite).
-    explicit TotemSystem(const std::vector<TotemId>& unlocked = {}, const TotemTable& defs = kTotemDefs);
-    // From LevelData's `totems_unlocked` strings. Throws std::invalid_argument
-    // naming an unknown id.
+    // Throws std::invalid_argument if `defs` is out of order or a value is out
+    // of range, or if an unlock names a tier the totem does not have.
+    explicit TotemSystem(const std::vector<TotemUnlock>& unlocked = {}, const TotemTable& defs = kTotemDefs);
+    // From LevelData's `totems_unlocked` strings, each at tier 1. Throws
+    // std::invalid_argument naming an unknown id.
     static TotemSystem from_names(const std::vector<std::string_view>& unlocked, const TotemTable& defs = kTotemDefs);
 
-    bool unlocked(TotemId id) const { return unlocked_[index(id)]; }
-    // Unlocking keeps the current streak; the totem charges from the next match.
-    void unlock(TotemId id) { unlocked_[index(id)] = true; }
+    bool unlocked(TotemId id) const { return state_[index(id)].unlocked; }
+    // Tier of the totem (1 if never unlocked).
+    int tier(TotemId id) const { return state_[index(id)].tier; }
+    // Unlocks (or re-tiers) a totem and refills its uses for that tier. Its
+    // charge is kept. Throws std::invalid_argument for a tier out of range.
+    void unlock(TotemId id, int tier = 1);
     const TotemDef& def(TotemId id) const { return defs_[index(id)]; }
+    const TotemTierDef& tier_def(TotemId id) const;
 
-    // Same-kind matches counted toward this totem since the streak began or
-    // the totem last fired. Always below the threshold between calls.
-    int charge_count(TotemId id) const { return charge_[index(id)]; }
-    // charge_count / threshold, in [0, 1); 0 for a locked totem. Feeds the
-    // HUD's totem_charge_changed signal.
+    // Refills every unlocked totem's uses and empties every charge.
+    void start_level();
+
+    // Consecutive qualifying moves counted so far; below charges_to_fire.
+    int charge_count(TotemId id) const { return state_[index(id)].charge; }
+    // charge_count / charges_to_fire, in [0, 1); 0 for a locked or spent
+    // totem. Feeds the HUD's totem_charge_changed signal.
     double charge(TotemId id) const;
+    // Fires left this level; 0 for a locked totem.
+    int uses_left(TotemId id) const { return state_[index(id)].uses_left; }
 
-    int streak_kind() const { return streak_kind_; }
-    int streak() const { return streak_; }
+    // Records one move. A result without a swap (steps empty or matched_kind
+    // -1) changes nothing. Otherwise, for each unlocked totem with uses left,
+    // its charge grows by 1 if its colour is a key of steps[0], else drops
+    // to 0; at charges_to_fire it fires, drops to 0 and spends a use. Returns
+    // the fired totems in kind order.
+    std::vector<TotemId> record_move(const MoveResult& result);
 
-    // Records one move's own match. The same kind as the last match extends
-    // the streak; another kind starts a new streak of 1, resetting every
-    // charge to that 1; a negative kind (no match) clears the streak and all
-    // charges. Each unlocked totem whose charge reaches its threshold fires
-    // and drops to 0. Returns the fired totems in TotemId order.
-    std::vector<TotemId> record_match(int kind);
+    // Builds a fired totem's effect at its current tier against the board as
+    // it is after the move resolved. Random choices draw from `rng` in a
+    // fixed order (docs/reference/totems.md).
+    TotemEffect make_effect(TotemId id, const Board& board, Rng& rng) const;
 
-    // Builds a fired totem's effect against the board as it is after the
-    // move resolved. Target choices draw from `rng` in a fixed order.
-    // `target_kind` is the kind that charged it (color_bomb aims at it).
-    TotemEffect make_effect(TotemId id, const Board& board, Rng& rng, int target_kind) const;
-
-    // record_match(result.matched_kind), then make_effect for each fired
-    // totem, in TotemId order.
+    // record_move, then make_effect for each fired totem in kind order, all
+    // against the same board.
     std::vector<TotemEffect> apply_move(const MoveResult& result, const Board& board, Rng& rng);
 
 private:
+    struct State {
+        bool unlocked = false;
+        int tier = 1;
+        int charge = 0;
+        int uses_left = 0;
+    };
+
     static std::size_t index(TotemId id) { return static_cast<std::size_t>(id); }
 
     TotemTable defs_;
-    std::array<bool, kTotemCount> unlocked_{};
-    std::array<int, kTotemCount> charge_{};
-    int streak_kind_ = -1;
-    int streak_ = 0;
+    std::array<State, kTotemCount> state_{};
 };
 
 }  // namespace montezuma
