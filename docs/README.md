@@ -18,6 +18,7 @@ own folder.
 - [MoveResult events](reference/move-result.md): cascade steps, falls, spawns and how to replay a move.
 - [Rules spec](rules-spec.md): the game's rules (moving to `reference/`).
 - [Board view](reference/board-view.md): the 3D board's classes, scenes, camera fit and feel constants.
+- [CI pipeline](reference/ci-pipeline.md): the tests workflow's triggers, jobs and caches.
 
 ## How-to guides
 
@@ -26,6 +27,7 @@ own folder.
 ## Explanation
 
 - [About the board view](explanation/about-the-board-view.md): why the view never applies rules, and how the camera frames the board.
+- [About CI caching](explanation/about-ci-caching.md): why CI uses a compiler cache and what it leaves uncached.
 
 Tutorials, more how-to guides and explanations are added by the work
 packages that create what they describe.
