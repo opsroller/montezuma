@@ -211,7 +211,8 @@ public:
 
     // --- Scenario setup, for tests and tools --------------------------------
     // Change state between commands with no rule checks: the caller keeps
-    // the board stable (no run showing).
+    // the board stable (no run showing). set_steel, set_gem and set_chain
+    // throw std::out_of_range for a cell off the board.
     void set_piece(Cell c, int kind);
     void set_steel(Cell c, bool on);
     void set_gem(Cell c, bool on);
@@ -236,6 +237,7 @@ private:
         return static_cast<std::size_t>(c.y) * static_cast<std::size_t>(board_.width()) +
                static_cast<std::size_t>(c.x);
     }
+    std::size_t checked_idx(Cell c, const char* what) const;
     bool movable(Cell c) const { return !steel(c) && !chained(c); }
     bool in_run_after_swap(const std::vector<int>& kinds, Cell c) const;
     int kind_for_run(const std::vector<int>& kinds, Cell c) const;

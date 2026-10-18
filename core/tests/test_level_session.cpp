@@ -1593,6 +1593,50 @@ void test_hint_not_charged_twice() {
     }
 }
 
+void test_setup_bounds_and_shuffle_idle() {
+    // Scenario setters reject cells off the board instead of writing past it.
+    {
+        LevelSession s(base_level(), Difficulty::Normal, {}, 1);
+        for (Cell c : {Cell{-1, 0}, Cell{0, -1}, Cell{8, 0}, Cell{0, 8}}) {
+            check(throws<std::out_of_range>([&] { s.set_steel(c, true); }), "set_steel off the board throws");
+            check(throws<std::out_of_range>([&] { s.set_gem(c, true); }), "set_gem off the board throws");
+            check(throws<std::out_of_range>([&] { s.set_chain(c, true); }), "set_chain off the board throws");
+        }
+        s.set_steel({7, 7}, true);
+        s.set_gem({0, 0}, true);
+        s.set_chain({3, 4}, true);
+        check(s.steel({7, 7}) && s.gem({0, 0}) && s.chained({3, 4}), "setters still work on the board");
+    }
+    // SHUF-05 a manual shuffle is player activity: it restarts the idle
+    // timer and lets the free hint show again.
+    {
+        LevelData l = base_level();
+        l.id = "e1-l01";
+        l.index = 1;
+        LevelSession s(l, Difficulty::Normal, {}, 1);
+        int hints = 0;
+        for (int i = 0; i < 7; ++i) {
+            auto t = s.tick(1.0);
+            if (t && t->free_hint) ++hints;
+        }
+        check(s.shuffle().has_value(), "manual shuffle works");
+        for (int i = 0; i < 7; ++i) {
+            auto t = s.tick(1.0);
+            if (t && t->free_hint) ++hints;
+        }
+        check(hints == 0, "SHUF-05 a manual shuffle restarts the idle timer");
+        auto t = s.tick(1.0);
+        check(t && t->free_hint, "SHUF-05 free hint 8 s after the shuffle");
+        check(s.shuffle().has_value(), "second manual shuffle works");
+        int again = 0;
+        for (int i = 0; i < 8; ++i) {
+            auto u = s.tick(1.0);
+            if (u && u->free_hint) ++again;
+        }
+        check(again == 1, "SHUF-05 free hint shows again after a shuffle");
+    }
+}
+
 int main() {
     test_construction();
     test_moves();
@@ -1611,6 +1655,7 @@ int main() {
     test_det_streams_do_not_alias();
     test_hint_not_charged_twice();
     test_chained_cells_out_of_bounds();
+    test_setup_bounds_and_shuffle_idle();
     std::printf("%d checks, %d failures\n", checks, failures);
     return failures == 0 ? 0 : 1;
 }
