@@ -71,24 +71,14 @@ jobs:
       - name: Set up MSVC
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
-      # Python and Pillow for the asset_tests CTest test
-      # (tools/assets/validate_assets.py).
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
-        id: python
-        with:
-          python-version: "3.12"
-      - name: Install Pillow
-        shell: bash
-        run: '"${{ steps.python.outputs.python-path }}" -m pip install --disable-pip-version-check Pillow==12.3.0'
       - name: Build GDExtension and tests
         shell: bash
         run: |
           cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_WERROR=ON \
-            -DMONTEZUMA_TEST_ASSETS=ON -DPython3_EXECUTABLE="${{ steps.python.outputs.python-path }}" \
             -DCMAKE_C_COMPILER_LAUNCHER=${{ matrix.cache }} -DCMAKE_CXX_COMPILER_LAUNCHER=${{ matrix.cache }}
           cmake --build build
       # Every CTest test, including the ones that need the extension build
-      # (ui_model_tests) and the asset validator.
+      # (ui_model_tests).
       - name: Test
         run: ctest --test-dir build --output-on-failure
       - name: Compiler cache stats

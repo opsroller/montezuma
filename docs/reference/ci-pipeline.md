@@ -21,7 +21,7 @@ Token permissions: `contents: read`.
 | Job | Runners | What red means |
 |---|---|---|
 | `core` | Ubuntu, Windows, macOS | the core or a Godot-free test fails to build with warnings as errors, or a CTest test fails |
-| `extension` | Ubuntu, Windows | the GDExtension (with godot-cpp) or a test fails to build, or a CTest test fails (every test, including `ui_model_tests` and `asset_tests`, the asset validator on Python 3.12 with Pillow 12.3.0); on Ubuntu, Godot 4.4.1 logs an error while loading the game headless |
+| `extension` | Ubuntu, Windows | the GDExtension (with godot-cpp) or a test fails to build, or a CTest test fails (every test, including `ui_model_tests`); on Ubuntu, Godot 4.4.1 logs an error while loading the game headless |
 | `sanitizers` | Ubuntu | a CTest test fails under ASan or UBSan |
 
 ## Caches

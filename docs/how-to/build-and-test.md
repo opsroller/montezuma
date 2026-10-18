@@ -46,10 +46,8 @@ godot --headless --path game --quit-after 120    # errors show here
 ```
 
 This build also copies `CREDITS.md` and `LICENSE` into `game/` so the
-credits screen shows them. The tests include `ui_model_tests` and, when
-Python 3 has Pillow (`python3 -m pip install Pillow`), `asset_tests`;
-pass `-DMONTEZUMA_TEST_ASSETS=ON` to make a missing Pillow an error, as
-CI does.
+credits screen shows them. The tests include `ui_model_tests`, which
+needs the extension build.
 
 ## Capture screenshots without a display
 

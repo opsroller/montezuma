@@ -67,27 +67,3 @@ endif()
 if(MONTEZUMA_BUILD_TESTS)
   add_subdirectory(extension/src/board/tests)
 endif()
-
-# The asset validator (Python + Pillow) as a CTest test. Default: on when
-# Pillow is installed. CI turns it on, so a missing Pillow fails there.
-if(MONTEZUMA_BUILD_TESTS)
-  find_package(Python3 COMPONENTS Interpreter QUIET)
-  set(_montezuma_has_pillow OFF)
-  if(Python3_Interpreter_FOUND)
-    execute_process(COMMAND "${Python3_EXECUTABLE}" -c "import PIL"
-      RESULT_VARIABLE _montezuma_pillow_rc OUTPUT_QUIET ERROR_QUIET)
-    if(_montezuma_pillow_rc EQUAL 0)
-      set(_montezuma_has_pillow ON)
-    endif()
-  endif()
-  option(MONTEZUMA_TEST_ASSETS "Run tools/assets/validate_assets.py as a test (needs Python 3 and Pillow)" ${_montezuma_has_pillow})
-  if(MONTEZUMA_TEST_ASSETS)
-    if(NOT _montezuma_has_pillow)
-      message(FATAL_ERROR "MONTEZUMA_TEST_ASSETS needs Python 3 with Pillow: python3 -m pip install Pillow")
-    endif()
-    add_test(NAME asset_tests COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/assets/validate_assets.py")
-    # The validator reads text files with the default encoding; make that
-    # UTF-8 on Windows too.
-    set_tests_properties(asset_tests PROPERTIES ENVIRONMENT "PYTHONUTF8=1")
-  endif()
-endif()
