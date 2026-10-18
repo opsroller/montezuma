@@ -15,6 +15,12 @@ GPL-2.0-or-later.
 | `game/data/levels/e1/l03.json` | Written from `docs/reference/progression.md` (Episode 1 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
 | `game/data/levels/e1/l04.json` | Written from `docs/reference/progression.md` (Episode 1 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
 | `game/data/levels/e1/l05.json` | Written from `docs/reference/progression.md` (Episode 1 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e2/l01.json` | Written from `docs/reference/progression.md` (Episode 2 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e2/l02.json` | Written from `docs/reference/progression.md` (Episode 2 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e2/l03.json` | Written from `docs/reference/progression.md` (Episode 2 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e2/l04.json` | Written from `docs/reference/progression.md` (Episode 2 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e2/l05.json` | Written from `docs/reference/progression.md` (Episode 2 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
+| `game/data/levels/e2/l06.json` | Written from `docs/reference/progression.md` (Episode 2 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
 
 ## Board theme `temple`
 
