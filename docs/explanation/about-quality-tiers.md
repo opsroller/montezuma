@@ -87,6 +87,11 @@ moves any tier setting the numbers say to move.
   environments for `desktop-high`.
 - The settings screen adds one option, `quality_tier`, shown only on
   desktop.
+- Material variants are swapped by `QualityTiers` on every mesh as it
+  enters the tree, not by each loader. The board view, the benchmark and
+  look-dev scenes get the desktop materials without their own code, and
+  a runtime switch reaches meshes already on screen; the cost is one
+  cached lookup per surface as a node enters the tree.
 - The benchmark (WP-46) runs each tier with `--quality=` and records
   `get_active_features()`.
 - A new tier means a new row in `quality.cpp`, its tests and the tables

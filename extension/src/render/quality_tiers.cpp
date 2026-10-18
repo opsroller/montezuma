@@ -9,13 +9,18 @@
 #include <utility>
 #include <vector>
 
+#include <godot_cpp/classes/box_mesh.hpp>
 #include <godot_cpp/classes/camera3d.hpp>
 #include <godot_cpp/classes/camera_attributes.hpp>
 #include <godot_cpp/classes/camera_attributes_practical.hpp>
 #include <godot_cpp/classes/config_file.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/environment.hpp>
+#include <godot_cpp/classes/geometry_instance3d.hpp>
 #include <godot_cpp/classes/light3d.hpp>
+#include <godot_cpp/classes/material.hpp>
+#include <godot_cpp/classes/mesh.hpp>
+#include <godot_cpp/classes/mesh_instance3d.hpp>
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/classes/omni_light3d.hpp>
 #include <godot_cpp/classes/os.hpp>
@@ -23,6 +28,7 @@
 #include <godot_cpp/classes/rendering_server.hpp>
 #include <godot_cpp/classes/resource_loader.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
+#include <godot_cpp/classes/standard_material3d.hpp>
 #include <godot_cpp/classes/viewport.hpp>
 #include <godot_cpp/classes/window.hpp>
 #include <godot_cpp/classes/world_environment.hpp>
@@ -216,6 +222,7 @@ void QualityTiers::switch_to(const String& choice, bool save) {
     const q::Tier next = q::resolve_tier(wanted, adapter_);
     if (next == tier_) return;
     tier_ = next;
+    variant_cache_.clear();  // resolved for the old tier's variant folder
     apply_all();
     emit_signal("tier_changed", get_tier());
 }
@@ -308,6 +315,7 @@ void QualityTiers::on_node_added(Node* node) {
 
 void QualityTiers::apply_node(Node* node) {
     const q::Profile& p = get_profile();
+    if (auto* geometry = Object::cast_to<GeometryInstance3D>(node)) apply_materials(geometry);
     if (auto* world = Object::cast_to<WorldEnvironment>(node)) {
         apply_environment(world->get_environment());
         apply_camera_attributes(world->get_camera_attributes());
@@ -342,6 +350,49 @@ void QualityTiers::apply_node(Node* node) {
             continue;
         }
         node->set("visible", p.has(*f) != fallback);
+    }
+}
+
+Ref<Material> QualityTiers::variant_of(const Ref<Material>& material) {
+    if (material.is_null()) return material;
+    const String path = material->get_path();
+    // Built in code, or embedded in a scene ("res://x.tscn::id"): no file to vary.
+    if (path.is_empty() || path.contains("::")) return material;
+    if (const Ref<Material>* hit = variant_cache_.getptr(path)) return *hit;
+    const String wanted = resolve_variant(to_godot(q::base_path(to_std(path))));
+    Ref<Material> out = material;
+    if (wanted != path) {
+        const Ref<Material> loaded = ResourceLoader::get_singleton()->load(wanted);
+        if (loaded.is_valid()) {
+            out = loaded;
+        } else {
+            UtilityFunctions::push_warning("QualityTiers: material variant ", wanted, " does not load; keeping ", path);
+        }
+    }
+    variant_cache_.insert(path, out);
+    return out;
+}
+
+void QualityTiers::apply_materials(GeometryInstance3D* geometry) {
+    if (const Ref<Material> m = geometry->get_material_override(); m.is_valid()) {
+        if (const Ref<Material> v = variant_of(m); v != m) geometry->set_material_override(v);
+    }
+    if (const Ref<Material> m = geometry->get_material_overlay(); m.is_valid()) {
+        if (const Ref<Material> v = variant_of(m); v != m) geometry->set_material_overlay(v);
+    }
+    auto* mesh_instance = Object::cast_to<MeshInstance3D>(geometry);
+    if (!mesh_instance) return;
+    const Ref<Mesh> mesh = mesh_instance->get_mesh();
+    const int32_t surfaces = mesh_instance->get_surface_override_material_count();
+    for (int32_t i = 0; i < surfaces; ++i) {
+        // A surface without an override shows the mesh's own material; its
+        // variant goes in as an override.
+        Ref<Material> current = mesh_instance->get_surface_override_material(i);
+        if (current.is_null() && mesh.is_valid()) current = mesh->surface_get_material(i);
+        if (current.is_null()) continue;
+        if (const Ref<Material> v = variant_of(current); v != current) {
+            mesh_instance->set_surface_override_material(i, v);
+        }
     }
 }
 
@@ -448,6 +499,32 @@ void QualityTiers::run_self_test() {
         scratch->add_child(light);
         lights.push_back(light);
     }
+    // Material variants: gold has a hi/ variant, lapis has none; a material
+    // made in code has no file and is never swapped.
+    const String gold_path = "res://assets/materials/temple/MI_Gold.tres";
+    const String lapis_path = "res://assets/materials/temple/MI_Lapis.tres";
+    ResourceLoader* loader = ResourceLoader::get_singleton();
+    const Ref<Material> gold = loader->exists(gold_path) ? Ref<Material>(loader->load(gold_path)) : Ref<Material>();
+    const Ref<Material> lapis = loader->exists(lapis_path) ? Ref<Material>(loader->load(lapis_path)) : Ref<Material>();
+    check(gold.is_valid() && lapis.is_valid(), get_tier(), "temple materials do not load");
+    Ref<StandardMaterial3D> made;
+    made.instantiate();
+    Ref<BoxMesh> box;
+    box.instantiate();
+    box->set_material(gold);  // the mesh's own material, no override
+    auto* surfaces = memnew(MeshInstance3D);
+    surfaces->set_mesh(box);
+    surfaces->set_material_overlay(made);
+    scratch->add_child(surfaces);
+    Ref<BoxMesh> plain;
+    plain.instantiate();
+    auto* overrides = memnew(MeshInstance3D);
+    overrides->set_mesh(plain);
+    overrides->set_surface_override_material(0, lapis);
+    overrides->set_material_override(gold);
+    scratch->add_child(overrides);
+    auto material_path = [](const Ref<Material>& m) { return m.is_valid() ? m->get_path() : String(); };
+
     get_tree()->get_root()->add_child(scratch);
 
     // switch_to(..., false): a test never writes the player's settings file.
@@ -471,6 +548,22 @@ void QualityTiers::run_self_test() {
         for (Light3D* light : lights) shadowed += light->has_shadow() ? 1 : 0;
         check(shadowed == std::min(3, p.shadow_casting_lights), id, "shadow-casting light budget");
         check(get_active_features().size() > 0, id, "active feature list empty");
+        if (gold.is_valid() && lapis.is_valid()) {
+            const String gold_variant = resolve_variant(gold_path);
+            const String gold_file = to_godot(q::variant_path(to_std(gold_path), p.texture_variant));
+            check(gold_variant == (loader->exists(gold_file) ? gold_file : gold_path), id,
+                  "resolve_variant names neither the variant nor the base");
+            check(p.texture_variant != "hi" || gold_variant != gold_path, id, "desktop tier shows the base gold");
+            check(material_path(surfaces->get_active_material(0)) == gold_variant, id, "mesh material variant");
+            check(material_path(overrides->get_material_override()) == gold_variant, id, "material_override variant");
+            check(material_path(overrides->get_surface_override_material(0)) == lapis_path, id,
+                  "material without a variant changed");
+            check(surfaces->get_material_overlay() == made, id, "material made in code changed");
+            // A pooled node leaves the tree and comes back.
+            scratch->remove_child(overrides);
+            scratch->add_child(overrides);
+            check(material_path(overrides->get_material_override()) == gold_variant, id, "variant lost on re-entry");
+        }
     }
     // Back to the first tier: everything the theme authored comes back.
     if (get_available_tiers().size() > 0) {

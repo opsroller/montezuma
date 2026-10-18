@@ -46,23 +46,45 @@ Autoload `/root/QualityTiers`; from C++ `QualityTiers::get_singleton()`
 | `has_feature(id)` | bool | Whether the active tier has a feature (ids below) |
 | `get_active_features()` | PackedStringArray | Feature ids of the active tier, for the benchmark's feature list |
 | `resolve_variant(path)` | String | The active tier's asset variant, `dir/hi/file` on desktop and `dir/lo/file` on web, or `path` itself when that file does not exist or the tier has none (mobile) |
-| `apply_to(node)` | — | Re-applies the tier to a subtree; nodes entering the tree are handled already |
+| `apply_to(node)` | — | Re-applies the tier to a subtree, materials included; nodes entering the tree are handled already |
 | signal `tier_changed(tier)` | — | After a runtime switch is applied |
+
+### Material variants
+
+Every `GeometryInstance3D` shows the active tier's variant of each
+material loaded from a file, swapped as the node enters the tree and
+again on every tier switch:
+
+| Slot | Swapped |
+|---|---|
+| `material_override`, `material_overlay` | yes |
+| `MeshInstance3D` surface override | yes |
+| A mesh's own surface material (no override) | yes, the variant is set as the surface override |
+| A material made in code or embedded in a scene (`res://x.tscn::id`) | no, it has no file to vary |
+
+The variant is `resolve_variant` of the base path, so a `hi/` material
+turns back into its base on `mobile` and `web`, and a material with no
+variant file stays the base. Content loads the base path; the board
+view, the benchmark and look-dev scenes need no code for it. Each
+resolved path is cached until the tier changes.
 
 ### Settings key
 
-The settings screen shows the key **`quality_tier`**: an option list of
-`auto` plus `get_available_tiers()`, read with `get_choice()` and written
-with `set_choice()`. It is stored by `QualityTiers` in
-`user://quality.cfg` (`[quality] tier=...`), not in the UI's settings
-file. Hide the option when `get_available_tiers()` has one entry.
+The settings screen's **Graphics quality** row (`%Quality` in
+`game/ui/screens/settings/settings.tscn`) is the key **`quality_tier`**:
+an option list of `auto` plus `get_available_tiers()`, labelled with the
+strings `settings.quality.<id>`, read with `get_choice()` and written with
+`set_choice()`, so a change applies at once. It is stored by
+`QualityTiers` in `user://quality.cfg` (`[quality] tier=...`), not in the
+UI's settings file. The row is hidden when `get_available_tiers()` has
+one entry (phones, web).
 
 ### Command line
 
 | Argument (after `--`) | Effect |
 |---|---|
 | `--quality=<tier id or auto>` | Uses that tier for this run without saving it (benchmark captures) |
-| `--quality-selftest` | Switches through every available tier on scratch nodes, checks each switch, prints `QualityTiers self-test: N checks, F failures` |
+| `--quality-selftest` | Switches through every available tier on scratch nodes, checks each switch (environment, groups, shadow budget and material variants of `MI_Gold` and `MI_Lapis`, also after a node leaves and re-enters the tree), prints `QualityTiers self-test: N checks, F failures` |
 
 ## Feature ids
 

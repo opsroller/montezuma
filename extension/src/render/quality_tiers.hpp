@@ -4,6 +4,9 @@
 #pragma once
 
 #include <godot_cpp/classes/node.hpp>
+#include <godot_cpp/classes/ref.hpp>
+#include <godot_cpp/classes/material.hpp>
+#include <godot_cpp/templates/hash_map.hpp>
 #include <godot_cpp/variant/packed_string_array.hpp>
 #include <godot_cpp/variant/string.hpp>
 
@@ -13,6 +16,7 @@ namespace godot {
 class Environment;
 class CameraAttributes;
 class Light3D;
+class GeometryInstance3D;
 }  // namespace godot
 
 namespace montezuma::godot_binding {
@@ -32,7 +36,11 @@ namespace montezuma::godot_binding {
 // - nodes in group "quality:<feature>" show only where the tier has the
 //   feature, nodes in "quality_fallback:<feature>" only where it lacks it;
 // - Light3Ds in group "quality_shadow_light": the nearest N to the camera
-//   keep their shadows, N per tier.
+//   keep their shadows, N per tier;
+// - materials loaded from files on every GeometryInstance3D (override,
+//   overlay, surface overrides and the mesh's own surface materials) show
+//   the tier's variant (resolve_variant), and the base again on a tier
+//   without one; so the board view, look-dev and benchmark need no code.
 class QualityTiers : public godot::Node {
     GDCLASS(QualityTiers, godot::Node)
 
@@ -84,6 +92,8 @@ private:
     void apply_node(godot::Node* node);
     void apply_environment(const godot::Ref<godot::Environment>& env);
     void apply_camera_attributes(const godot::Ref<godot::CameraAttributes>& attributes);
+    void apply_materials(godot::GeometryInstance3D* geometry);
+    godot::Ref<godot::Material> variant_of(const godot::Ref<godot::Material>& material);
     void request_shadow_budget();
     void apply_shadow_budget();
     void on_node_added(godot::Node* node);
@@ -97,6 +107,9 @@ private:
     godot::String choice_ = "auto";
     godot::String settings_path_ = "user://quality.cfg";
     bool shadow_budget_pending_ = false;
+    // Material path shown -> material to show on this tier; cleared on a
+    // tier change. One lookup per surface as pieces enter the tree.
+    godot::HashMap<godot::String, godot::Ref<godot::Material>> variant_cache_;
 };
 
 }  // namespace montezuma::godot_binding
