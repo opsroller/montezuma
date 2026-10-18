@@ -171,8 +171,7 @@ void BoardView3D::stop_animation() {
     // rebuild never leaves shrunken pieces behind or tweens moving pooled nodes.
     if (tween_.is_valid()) tween_->kill();
     tween_.unref();
-    if (grow_tween_.is_valid()) grow_tween_->kill();
-    grow_tween_.unref();
+    finish_grow();
     if (pieces_root_) release_dying();
     redealing_ = false;
     busy_ = false;
@@ -248,8 +247,19 @@ void BoardView3D::sync_to_board(bool animate) {
     }
 }
 
+void BoardView3D::finish_grow() {
+    // The new deal growing in after a redeal outlives busy_; end it at full size.
+    if (grow_tween_.is_null()) return;
+    grow_tween_->kill();
+    grow_tween_.unref();
+    for (Node3D* piece : pieces_) {
+        if (piece) piece->set_scale(Vector3(1, 1, 1));
+    }
+}
+
 Ref<Tween> BoardView3D::begin_animation() {
     if (tween_.is_valid()) tween_->kill();
+    finish_grow();
     clear_selection();
     gesture_.reset(grid_.width, grid_.height);
     busy_ = true;
@@ -381,13 +391,7 @@ void BoardView3D::reconcile() {
 void BoardView3D::skip_animation() {
     if (!busy_) return;
     if (tween_.is_valid()) tween_->kill();
-    if (grow_tween_.is_valid()) {
-        grow_tween_->kill();
-        grow_tween_.unref();
-        for (Node3D* piece : pieces_) {
-            if (piece) piece->set_scale(Vector3(1, 1, 1));
-        }
-    }
+    finish_grow();
     finish_animation();
 }
 

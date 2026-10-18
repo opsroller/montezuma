@@ -85,6 +85,8 @@ private:
     void finish_animation();
     // Stops all animation at once, before a rebuild.
     void stop_animation();
+    // Ends the redeal grow at once, every piece at full size.
+    void finish_grow();
 
     input::Output press(int pointer, godot::Vector2 screen_pos);
     void apply_input(const input::Output& out);
