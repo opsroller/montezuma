@@ -80,8 +80,9 @@ tree is swapped at the next `apply_to` or tier change.
 Cost (measured headless with the dummy renderer on a cloud CPU, so an
 estimate for real devices): no GPU cost of its own; the `hi/` materials'
 cost is the [benchmark](benchmark.md)'s to measure. A pooled piece
-re-entering the tree adds under 1 µs; a new copy on a desktop tier about
-30 µs; a tier switch with a full board under 1 ms. Loading a variant
+re-entering the tree adds about 1 µs; a new copy on a desktop tier 6 to
+40 µs; a tier switch about 1 ms with one board and up to 5 ms with 700
+pieces in the tree. Loading a variant
 takes up to a few hundred ms for 2048² sets, which is why loaders call
 `preload_variants` when a theme loads; the self-test fails when a
 preloaded piece's first copy takes 1 ms or more to enter the tree.
