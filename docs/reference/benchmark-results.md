@@ -66,6 +66,30 @@ Measurement notes:
   times `process_ms` per frame instead of `Performance.TIME_PROCESS`, a
   once-a-second maximum that explains the 2215 ms `cpu_ms` p99 above.
 
+## Draw calls
+
+Draw calls are a count: a software renderer gives the same numbers a GPU
+does with the same renderer, scene and size, so these runs count against
+the cap though their frame times do not. Cloud container, llvmpipe (Mesa,
+LLVM 20.1.2) under Xvfb, `opengl3` driver, Compatibility renderer,
+`--quality=web`, 1280×720, 60 s capture after 10 s warm-up, extension
+built `Release`, 2026-10-18. The replay matched its plan in every run.
+
+| Build | Draw calls p95 | max | Primitives p95 | Web cap |
+|---|---|---|---|---|
+| `main` at b7a7157, before the fire | 313 | 355 | 106 602 | 200 |
+| `main` at b23a88a, with the WP-49 fire | 324 | 366 | 99 614 | 200 |
+| Same, with web batching and one sun cascade | 74 | 116 | 51 852 | 200 |
+
+Where the draws went, from 30 s runs at b7a7157 changing one thing each:
+the sun's shadow (four cascades on Compatibility, each drawing every
+caster again) was about 195 of 304; one orthogonal cascade alone brought
+304 to 211; batching the pieces and markers ([Board view](board-view.md#draw-calls))
+took it the rest of the way, to 60. The four omni torch lights cost no
+draws (Compatibility shades unshadowed lights in the base pass). Godot
+4.7.2's Compatibility renderer reports its shadow-map draws under the
+scene pass, so `draw_calls_by_pass.shadow_p95` is 0 there.
+
 ## WP-29 effects
 
 The busiest-board replay plays every totem and power-up effect, so the

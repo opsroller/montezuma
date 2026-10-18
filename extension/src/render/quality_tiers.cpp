@@ -16,6 +16,7 @@
 #include <godot_cpp/classes/config_file.hpp>
 #include <godot_cpp/classes/cpu_particles3d.hpp>
 #include <godot_cpp/classes/csg_box3d.hpp>
+#include <godot_cpp/classes/directional_light3d.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/environment.hpp>
 #include <godot_cpp/classes/geometry_instance3d.hpp>
@@ -135,6 +136,20 @@ double authored_number(Object* owner, const char* key, double current) {
         owner->set_meta(kAuthoredMeta, memo);
     }
     return memo[key];
+}
+
+int shadow_splits(DirectionalLight3D::ShadowMode mode) {
+    switch (mode) {
+        case DirectionalLight3D::SHADOW_ORTHOGONAL: return 1;
+        case DirectionalLight3D::SHADOW_PARALLEL_2_SPLITS: return 2;
+        default: return 4;
+    }
+}
+
+DirectionalLight3D::ShadowMode shadow_mode(int splits) {
+    if (splits <= 1) return DirectionalLight3D::SHADOW_ORTHOGONAL;
+    if (splits == 2 || splits == 3) return DirectionalLight3D::SHADOW_PARALLEL_2_SPLITS;
+    return DirectionalLight3D::SHADOW_PARALLEL_4_SPLITS;
 }
 
 }  // namespace
@@ -334,6 +349,12 @@ void QualityTiers::apply_node(Node* node) {
     } else if (auto* camera = Object::cast_to<Camera3D>(node)) {
         apply_environment(camera->get_environment());
         apply_camera_attributes(camera->get_attributes());
+    }
+    if (auto* sun = Object::cast_to<DirectionalLight3D>(node)) {
+        // Each cascade draws every shadow caster again; a tier with fewer
+        // cascades than the theme authored uses its own count.
+        const int wanted = static_cast<int>(authored_number(sun, "shadow_splits", shadow_splits(sun->get_shadow_mode())));
+        sun->set_shadow_mode(shadow_mode(std::min(wanted, p.sun_shadow_splits)));
     }
     if (auto* light = Object::cast_to<Light3D>(node); light && light->is_in_group(kFogLightGroup)) {
         const double energy = authored_number(light, "volumetric_fog_energy",
@@ -634,6 +655,10 @@ void QualityTiers::run_self_test() {
         scratch->add_child(light);
         lights.push_back(light);
     }
+    auto* sun = memnew(DirectionalLight3D);
+    sun->set_shadow(true);
+    sun->set_shadow_mode(DirectionalLight3D::SHADOW_PARALLEL_4_SPLITS);
+    scratch->add_child(sun);
     // Material variants: gold has a hi/ variant, lapis has none; a material
     // made in code has no file and is never swapped.
     const String gold_path = "res://assets/materials/temple/MI_Gold.tres";
@@ -706,6 +731,7 @@ void QualityTiers::run_self_test() {
         int shadowed = 0;
         for (Light3D* light : lights) shadowed += light->has_shadow() ? 1 : 0;
         check(shadowed == std::min(3, p.shadow_casting_lights), id, "shadow-casting light budget");
+        check(shadow_splits(sun->get_shadow_mode()) == std::min(4, p.sun_shadow_splits), id, "sun shadow cascades");
         check(get_active_features().size() > 0, id, "active feature list empty");
         if (gold.is_valid() && lapis.is_valid()) {
             const String gold_variant = resolve_variant(gold_path);

@@ -14,6 +14,7 @@
 #include <godot_cpp/classes/input_event_screen_touch.hpp>
 #include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/classes/property_tweener.hpp>
+#include <godot_cpp/classes/rendering_server.hpp>
 #include <godot_cpp/classes/callback_tweener.hpp>
 #include <godot_cpp/classes/interval_tweener.hpp>
 #include <godot_cpp/classes/viewport.hpp>
@@ -24,6 +25,7 @@
 
 #include "animator.hpp"
 #include "feel.hpp"
+#include "../render/quality_tiers.hpp"
 
 using namespace godot;
 
@@ -387,7 +389,12 @@ void BoardView3D::rebuild() {
         hints_root_ = memnew(Node3D);
         hints_root_->set_name("Hints");
         add_child(hints_root_);
+        auto* batches = memnew(Node3D);
+        batches->set_name("PieceBatches");
+        add_child(batches);
+        batcher_.attach(batches);
     }
+    batcher_.clear();  // batches hold the old theme's meshes
     pieces_.assign(static_cast<size_t>(grid_.width * grid_.height), nullptr);
     kinds_.assign(pieces_.size(), -1);
     marks_.assign(pieces_.size(), fx::marks::kNone);
@@ -881,6 +888,25 @@ void BoardView3D::_notification(int what) {
     // Window focus events are not used: some X11 setups send one on every
     // click (pointer grab), which would cancel every swipe.
     if (what == NOTIFICATION_APPLICATION_FOCUS_OUT) gesture_.cancel();
+    // The pieces' batches follow the pieces once every tween has moved them
+    // (tweens run after _process), so they never trail by a frame.
+    RenderingServer* rs = RenderingServer::get_singleton();
+    const Callable sync = callable_mp(this, &BoardView3D::sync_batches);
+    if (what == NOTIFICATION_ENTER_TREE && !rs->is_connected("frame_pre_draw", sync)) rs->connect("frame_pre_draw", sync);
+    if (what == NOTIFICATION_EXIT_TREE && rs->is_connected("frame_pre_draw", sync)) rs->disconnect("frame_pre_draw", sync);
+}
+
+void BoardView3D::sync_batches() {
+    if (!pieces_root_) return;
+    const QualityTiers* tiers = QualityTiers::get_singleton();
+    batcher_.sync(pieces_root_, tiers && tiers->get_profile().batch_pieces);
+}
+
+Dictionary BoardView3D::get_piece_draws() const {
+    Dictionary out;
+    out["batches"] = batcher_.batches_drawn();
+    out["meshes_batched"] = batcher_.meshes_batched();
+    return out;
 }
 
 input::Output BoardView3D::press(int pointer, Vector2 screen_pos) {
@@ -958,6 +984,7 @@ void BoardView3D::clear_selection() {
 
 void BoardView3D::_bind_methods() {
     ClassDB::bind_method(D_METHOD("show_board", "board"), &BoardView3D::show_board);
+    ClassDB::bind_method(D_METHOD("get_piece_draws"), &BoardView3D::get_piece_draws);
     ClassDB::bind_method(D_METHOD("play", "result"), &BoardView3D::play);
     ClassDB::bind_method(D_METHOD("play_illegal", "a", "b"), &BoardView3D::play_illegal);
     ClassDB::bind_method(D_METHOD("is_busy"), &BoardView3D::is_busy);
