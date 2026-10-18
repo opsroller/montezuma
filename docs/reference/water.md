@@ -130,4 +130,4 @@ repeatable at a fixed frame rate.
 | Measured | not on a real GPU yet: the [benchmark](benchmark.md) (WP-46) measures it with the rest of the scene, see [Benchmark results](benchmark-results.md); compare a run with the four `Water*` nodes hidden to get the water's share |
 | Estimate | software rendering (lavapipe, llvmpipe) runs the look-dev scene at 1 to 2 fps with or without the water, so it cannot resolve the cost. By count: `SH_WaterSimple` is up to 5 noise evaluations (2 for the ripples, 3 for the caustics), each 4 integer hashes and no trigonometry, and no texture samples; `SH_Water` up to 7 noise evaluations and up to 23 depth and 2 screen samples |
 | Triangles | 12 per strip slab (60 in all); the channel adds about 400 to the backdrop |
-| Reflection probes | 4, rendered once at load |
+| Reflection probes | 4, rendered once at load. Godot 4.7.2 prints "7 RIDs of type Texture were leaked" at quit whenever a scene has a reflection probe (an engine issue, reproduced in a bare project); it is harmless |
