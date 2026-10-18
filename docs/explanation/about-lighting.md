@@ -94,9 +94,8 @@ benchmark on the reference Mac mini M4 replaces them.
 9. **Emission in nits, with `lo/` copies for web.** Under physical units
    the RD renderers scale emission by the exposure, Compatibility in Godot
    4.7.2 does not. Base materials carry emission in nits, and each emissive
-   material has a `lo/` copy at 1 nit that the web tier loads. This also
-   made `QualityTiers` swap material files for their tier variant, so the
-   board view now shows `hi/` materials on desktop.
+   material has a `lo/` copy at 1 nit that `QualityTiers` loads on the
+   web tier, the same way it loads `hi/` materials on desktop.
 
 ## Bake settings
 
