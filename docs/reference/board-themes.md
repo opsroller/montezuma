@@ -72,11 +72,14 @@ manifest, never to these paths.
 A material or texture that differs on desktop has a second file with the
 same name in a `hi/` folder next to the base one. The base file is what
 `mobile` and `web` load and what every tier falls back to; `desktop-high`
-and `desktop-standard` load the `hi/` file when it exists (the quality
-tier system, WP-45, resolves this; until then the game loads the base
-files and `LD_<Theme>_Hi.tscn` shows the desktop look). Mobile and web
-export presets list `*/hi/*` in `exclude_filter`, so those builds carry
-only their own sizes.
+and `desktop-standard` load the `hi/` file when it exists:
+`QualityTiers::resolve_variant` maps a path to it and falls back to the
+base ([Quality tiers](quality-tiers.md)). The board view does not call it
+for materials yet, so the game shows the base files for now;
+`LD_<Theme>_Hi.tscn` shows the desktop look. Mobile and web export presets
+list `*/hi/*` in `exclude_filter`, so those builds carry only their own
+sizes. The web tier's `lo/` folder is not used by the temple: its base
+sets fit the web texture budget.
 
 | Material | Base (mobile, web) | `hi/` (desktop) |
 |---|---|---|
