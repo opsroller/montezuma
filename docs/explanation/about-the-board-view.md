@@ -19,6 +19,28 @@ score or a cascade. And the same view serves the intro level on the web,
 the full game and later rule variants under the "Montezuma's" umbrella,
 since it knows nothing about any of them.
 
+## Timing a move
+
+A move arrives as a list of events the rules already resolved: the swap,
+then for each cascade step the cells cleared, the pieces that fell and the
+new pieces. The animator turns that list into a timed plan and nothing
+else. It does not look at the board while planning, so the picture always
+tells the story the rules reported, in their order.
+
+Steps play one after another because that is how a player reads a chain:
+a match pops, the gap is visible for an instant, pieces fall, and only
+then does the next match pop. Inside a step everything happens together,
+as in the rules. Falls use gravity rather than a fixed time, so a long
+drop accelerates and a one-row drop stays quick; that is most of what
+makes a cascade feel physical.
+
+The plan and the walk that tracks which piece is in which cell are plain
+C++ with no Godot types. Tests run them on boards where the answer is
+known, and prove that speeding the animation up changes nothing but its
+length. When the animation ends, or the player skips it, the view checks
+itself against the board and resyncs, so a bug in presentation can never
+turn into a wrong board on screen for more than one move.
+
 ## A camera that fits, and nothing more
 
 The original was a flat 2D board. A camera close to top-down (15° of

@@ -21,13 +21,23 @@ own folder.
 - [MoveResult events](reference/move-result.md): cascade steps, falls, spawns and how to replay a move.
 - [Match3Level](reference/match3-level.md): the level timer, score, quotas and outcome in Godot.
 - [Level data](reference/level-data.md): the level file format, defaults, limits and errors.
-- [Rules spec](rules-spec.md): the game's rules (moving to `reference/`).
 - [Board view](reference/board-view.md): the 3D board's classes, scenes, camera fit and feel constants.
+- [Rules spec](reference/rules-spec.md): how the game plays, with
+  [Power Totems](reference/rules-totems.md), [power-ups](reference/rules-power-ups.md),
+  [bonus games](reference/rules-bonus-games.md) and [sources](reference/rules-sources.md).
+- [Progression](reference/progression.md): episodes, levels, unlocks, upgrades, trophies, intro level.
+- [Balance targets](reference/balance.md): what the simulator checks each level against.
+
+## Explanation
+
+- [About the rules](explanation/about-the-rules.md): which original we follow, and every choice and deviation.
+- [About rule sets and themes](explanation/about-rule-sets-and-themes.md): how mini games fit the design.
 
 ## How-to guides
 
 - [Build and test](how-to/build-and-test.md): build the core and extension, run tests, load the game, capture screenshots.
 - [Regenerate or add sounds](how-to/regenerate-or-add-sounds.md): rebuild the generated audio, add a cue.
+- [Play a sound from code](how-to/play-a-sound-from-code.md): call a cue from C++ or a scene, start and stop music.
 
 ## Explanation
 

@@ -17,6 +17,8 @@ add_library(montezuma_extension SHARED
   src/board/board_playtest.cpp
   src/board/piece_library.cpp
   src/board/register_board.cpp
+  src/audio/game_audio.cpp
+  src/audio/register_audio.cpp
 )
 target_include_directories(montezuma_extension PRIVATE src)
 target_link_libraries(montezuma_extension PRIVATE montezuma_core godot-cpp)

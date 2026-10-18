@@ -7,6 +7,7 @@
 #include <godot_cpp/core/defs.hpp>
 #include <godot_cpp/godot.hpp>
 
+#include "audio/register_audio.hpp"
 #include "board/register_board.hpp"
 #include "match3_board.hpp"
 #include "match3_level.hpp"
@@ -20,6 +21,7 @@ void initialize_montezuma(ModuleInitializationLevel level) {
     GDREGISTER_CLASS(montezuma::godot_binding::Match3Board);
     GDREGISTER_CLASS(montezuma::godot_binding::Match3Level);
     montezuma::godot_binding::register_board();
+    montezuma::godot_binding::register_audio();
 }
 
 void uninitialize_montezuma(ModuleInitializationLevel) {}
