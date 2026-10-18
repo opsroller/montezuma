@@ -2,3 +2,6 @@
 *.import
 export/
 build/
+game/bin/*
+!game/bin/.gitkeep
+game/.godot/
