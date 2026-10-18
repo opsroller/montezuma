@@ -37,7 +37,7 @@ shows up on `main` after merge, and the next PR fixes it.
 | Cache | Job | Tool | Key | Size cap |
 |---|---|---|---|---|
 | Compiler cache | `extension (ubuntu-latest)` | ccache | `tests-extension-godot-cpp-10-ubuntu-latest` + timestamp | 500 MB |
-| Compiler cache | `extension (windows-latest)`, `main` only | sccache | `tests-extension-godot-cpp-10-windows-latest` + timestamp | 500 MB |
+| Compiler cache | `extension (windows-latest)` on `main`; `build and test (windows)` in the `windows` workflow | sccache | `tests-extension-godot-cpp-10-windows-latest` + timestamp | 500 MB |
 
 - The newest cache with the key prefix is restored, and a new one is saved
   at the end of every run.
