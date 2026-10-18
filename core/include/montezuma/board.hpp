@@ -31,7 +31,7 @@ struct Fall {
 };
 
 // A new piece entering from above the board. It starts `drop` rows above the
-// top edge (at y = to.y - drop, so drop >= 1) and falls to `to`.
+// top edge (at y = -drop, so drop >= 1) and falls to `to`.
 struct Spawn {
     Cell to;
     int kind = -1;
