@@ -30,7 +30,7 @@
   </header>
 
   <main id="main">
-    <section id="play" class="play" data-demo="{{demo_mode}}" aria-labelledby="play-title">
+    <section id="play" class="play" data-demo="{{demo_mode}}" data-file-sizes="{{demo_file_sizes}}" aria-labelledby="play-title">
       <h1 id="play-title">Montezuma's</h1>
       <p class="lede">A free, open-source 3D match-3 game. Beat the intro level to get the full game.</p>
 
@@ -45,10 +45,11 @@
 
       <div class="demo-controls">
         <progress id="demo-progress" hidden aria-label="Loading the demo"></progress>
-        <p id="demo-status" class="status" role="status" aria-live="polite"></p>
-        <button type="button" class="button" id="leave-button" hidden>Leave game</button>
+        <p id="demo-status" class="status" role="status" aria-live="polite" tabindex="-1"></p>
+        <button type="button" class="button" id="leave-button" hidden>Back to the page</button>
         <a id="skip-link" href="#download" data-open-downloads>Skip the level and get the game</a>
       </div>
+      <p id="demo-help" class="help demo-help">Swap two neighbouring gems by clicking or tapping one and then the other, or by swiping. Escape pauses. The game keeps the keyboard while it has focus; press Shift+Escape to get back to the page.</p>
 
       <template id="stub-template">
         <div class="stub">

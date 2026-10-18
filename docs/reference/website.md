@@ -1,10 +1,13 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- Copyright (C) 2026 Charles (opsroller) and Montezuma contributors -->
 # Website
 
 Facts about the project website in `site/` (owner: frontend-web-developer,
 WP-35). To build it, see
 [How to build and preview the website](../how-to/build-and-preview-the-website.md);
 for the reasons behind its shape, see
-[About the website](../explanation/about-the-website.md).
+[About the website](../explanation/about-the-website.md). What it passes
+and what is open is in the [website audit](website-audit.md).
 
 ## Pages
 
@@ -41,7 +44,7 @@ Download, Credits, License and Source code.
 |---|---|---|
 | `--out DIR` | `site/_site` | Output folder; replaced on every build. An existing non-empty folder is deleted only if it holds the `.montezuma-site-build` marker an earlier build wrote |
 | `--base-url URL` | `https://opsroller.github.io/montezuma/` | Canonical URLs and sitemap |
-| `--demo-dir DIR` | none | Godot web export folder containing `montezuma.js`. Copied to `play/`; the page runs the real demo. Without it the page runs the stub demo |
+| `--demo-dir DIR` | none | Unzipped `montezuma-<version>-web` folder from the `web` workflow. It must hold `montezuma.js`, `montezuma.wasm`, `montezuma.side.wasm`, `montezuma.pck`, `libmontezuma.web.template_release.wasm32.nothreads.wasm`, `SOURCE.txt` and `THIRD-PARTY-NOTICES.txt`, or the build fails naming what is missing. Copied to `play/` without the export's own `montezuma.html` and its `*.png` icons (Godot's logo); `/license/` names the demo's version and commit from `SOURCE.txt` and links both notice files; the page runs the real demo, gets the byte sizes of `montezuma.wasm`, `montezuma.side.wasm`, `montezuma.pck` and the extension in `#play[data-file-sizes]` (Godot's loader needs them to report progress; the bar's total is their sum) and the play button reads "Play the intro level (N MB)", N being those five files gzipped, about what a compressing host sends. Without it the page runs the stub demo |
 
 The build fails, naming the file and field, when release data is invalid,
 a credits link is not `https://` or `#…`, or a template placeholder has no
@@ -106,7 +109,9 @@ folder: the `montezuma-<version>-web.zip` artifact of the `web` workflow
 the export's own HTML page.
 
 **Loading.** On the visitor's click, the page loads `play/montezuma.js`
-and starts it with Godot's `Engine` API:
+and starts it with Godot's `Engine` API. The contract's minimal form
+(the page also passes `focusCanvas: false` and `fileSizes`, and waits on
+`startGame()` under the watch described below):
 
 ```js
 const lib = "libmontezuma.web.template_release.wasm32.nothreads.wasm";
@@ -123,38 +128,89 @@ await engine.startGame();
 
 The extension must be preloaded under its bare file name: Godot opens it
 by that name from the game's file system. Without it the game starts
-with no game classes and logs `Can't open dynamic library`. (Godot's
-`gdextensionLibs` setting does not work from a subfolder: it fetches the
-file relative to the page and opens it by the same path.) The canvas
-needs an `id`; Godot selects it with `#<id>`. Amended in WP-21
-(2026-10-18) after running the export in a browser.
+with no game classes and logs `Can't open dynamic library`. Godot's
+`gdextensionLibs` setting is not used. The canvas needs an `id`; Godot
+selects it with `#<id>`.
 
-It checks `WebAssembly` and `Engine.isWebGLAvailable(2)` first and shows a
-message pointing to the downloads when either is missing.
+It checks `WebAssembly` and `Engine.isWebGLAvailable(2)` first. When
+either is missing the status line says which and links to the downloads,
+and no retry is offered.
+
+**Watching the download.** Once the visitor clicks, the page wraps
+`window.fetch` for URLs under `play/`. Godot's runtime fetches
+`montezuma.side.wasm` (about half the download) outside its loader's
+progress reports; the wrapper counts its bytes into the progress bar as
+they arrive, so it is still downloaded once. Godot also leaves
+`startGame()` pending when one of its files fails; the wrapper sees the
+failed requests instead. Godot's loader tries `montezuma.wasm`,
+`montezuma.pck` and the extension 4 times, 1 second apart, so any demo
+file but the side module counts as failed on its 4th failed request;
+the side module has no retry and counts as failed on its first.
+
+**Load failures.** A demo file that cannot be fetched, or loading that
+makes no progress for 60 seconds (a backstop), puts the poster back in
+the stage with a "Try again" button and focuses it. Once Godot's engine has been created, "Try again" reloads the
+page; a
+`sessionStorage` flag (`montezuma-demo-retry`) makes the reloaded page
+start the demo without another click.
+
+**Stage and canvas.** The stage is 16:9, or square on screens up to
+40rem wide held upright, and keeps its size before and after the demo
+loads. The canvas (`#game-canvas`) fills it; the page sets its pixel size
+to its CSS size times `devicePixelRatio`, capped at 2, and again on every
+resize. While loading, focus rests on the status line (`tabindex="-1"`,
+with the usual focus ring);
+when the game starts it moves to the canvas, unless the visitor has moved
+it somewhere else meanwhile. The canvas's focus ring is drawn on the stage
+in `--color-focus`, outside the game picture.
+
+**Keyboard.** The game takes every key, Tab included. Shift+Escape moves
+focus from the canvas to the "Back to the page" button, which is shown
+from the moment the canvas exists; Escape alone is the game's pause. The
+canvas has `role="application"` and is described by `#demo-help`, a
+note always shown under the controls in Godot mode with the controls and
+the way out.
+
+**Layout.** The status line has its own row with room for two lines, and
+the hidden progress bar and button keep their places, so the game
+starting does not push the page down. Without JavaScript the play button
+and the controls help are hidden (the help keeps its space) and only the
+`<noscript>` message shows.
 
 **Events, game to page.** Dispatched on `window` as `CustomEvent`s (from
-`JavaScriptBridge`). Unknown events and extra fields are ignored.
+`JavaScriptBridge`). Unknown events and extra fields are ignored, and so
+is any event whose `detail.v` is not 1 or whose fields have the wrong
+type.
 
 | Event | `detail` | When | Page does |
 |---|---|---|---|
 | `montezuma:level-completed` | `{ v: 1, level: "<level id>", score: <int> }` | Once, when the intro level is won | Opens the download popup with "You beat the intro level!" |
-| `montezuma:ready` (optional) | `{ v: 1, version: "<game version>" }` | First frame shown | Nothing yet |
+| `montezuma:ready` (optional) | `{ v: 1, version: "<game version>" }` | First frame shown | Status line changes from "Starting the intro level…" to "Intro level running…" |
 
-**Events, page to game.** None.
+**Events, page to game.** None. Godot stops its main loop itself while the
+tab is hidden, so the page sends no pause or resume.
 
 **Skip.** The "Skip the level and get the game" link opens the same popup
 without the win heading. Without JavaScript it jumps to `#download`.
 
 ## Hosting
 
-**Not public yet.** The site stays unpublished until the game itself is
-polished. The team owns that quality bar and decides when the site is
-ready; the project-manager then takes that decision to the owner, whose
-only sign-off is going public. Until
-then CI builds the site as a downloadable preview artifact only; there is
-no Pages deployment.
+**Not public yet.** There is no Pages deployment, and no CI job builds a
+site preview yet; CI runs the site's tests (CTest `site_build_tests` and
+`site_js_tests`). Going public is decided as described
+in [About the website](../explanation/about-the-website.md).
 
 When it goes live, the target is GitHub Pages, deployed from `main` by a
 workflow owned by devops-engineer. The single-threaded export needs no
 cross-origin-isolation headers; GitHub Pages serves `.wasm` as
 `application/wasm`.
+
+The play button's size assumes the host gzips `play/*.wasm` and
+`play/montezuma.pck`: the five files are about 62 MB uncompressed and
+22 MB gzipped. To confirm it on a deployment, see
+[How to build and preview the website](../how-to/build-and-preview-the-website.md#check-a-deployed-demo).
+
+No page sets a Content-Security-Policy. Pages cannot send headers, so one
+would be a `<meta http-equiv>` tag, and on `/` it must allow
+`script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval'`: Godot's
+`montezuma.js` calls `eval` for its side module and JavaScript bridge.
