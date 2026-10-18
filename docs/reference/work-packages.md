@@ -41,8 +41,8 @@ row in the PR that finishes the package.
 | 10 | Temple board and environment | technical-artist | `game/assets/models/temple/`, `tools/assets/temple*` | 04 | board and backdrop in the manifest, fits 8×8 | active (placeholder style until 04) |
 | 11 | Materials and effect shaders | technical-artist | `game/assets/materials/`, `game/assets/textures/` | 04 | stone, gold, jade, highlight, match flash on Mobile, Forward+ and Compatibility | active (placeholder style until 04) |
 | 12 | Board view and camera | graphics-programmer | `extension/src/board/`, `game/scenes/board/` | 02 | `BoardView3D` shows a board with placeholders, camera and lights set | done |
-| 13 | Swap, match and cascade animation | graphics-programmer | `extension/src/board/animator.*` | 01, 12 | plays any MoveResult in order at feel targets; view equals board after | review |
-| 14 | Input | graphics-programmer | `extension/src/board/input.*` | 12 | tap-tap and swipe, mouse, illegal bounce | todo |
+| 13 | Swap, match and cascade animation | graphics-programmer | `extension/src/board/animator.*` | 01, 12 | plays any MoveResult in order at feel targets; view equals board after | done |
+| 14 | Input | graphics-programmer | `extension/src/board/input.*` | 12 | tap-tap and swipe, mouse, illegal bounce | review |
 | 15 | Sound effects | sound-designer | `game/assets/audio/sfx/`, `tools/audio/sfx*` | — | every effect cue in the contract exists | done |
 | 16 | Audio system | sound-designer | `extension/src/audio/`, `game/scenes/audio/` | 02 | `GameAudio` autoload, cue table, buses, volume API | done |
 | 17 | Music and ambience | sound-designer | `game/assets/audio/music/`, `tools/audio/music*` | — | menu theme, 5 episode loops, jungle ambience | done |
