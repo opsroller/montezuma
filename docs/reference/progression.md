@@ -570,17 +570,19 @@ after two moves in a row whose swap match is blue (`TOT-02`, `TOT-03`).
 
 | Level | File | Gems normal / hard | Totems | Power-ups | Obstacles | Seed |
 |---|---|---|---|---|---|---|
-| e4-l01 | | 105 / 160 | all seven | all six | steel 0.04 | |
-| e4-l02 | | 110 / 165 | all seven | all six | steel 0.06 | |
-| e4-l03 | | 115 / 175 | all seven | all six | steel 0.02, 8 chains | |
-| e4-l04 | | 120 / 180 | all seven | all six | steel 0.05, 8 chains | |
-| e4-l05 | | 125 / 190 | all seven | all six | steel 0.02, 2 chains | |
-| e4-l06 | | 130 / 195 | all seven | all six | steel 0.03, 10 chains | |
-| e4-l07 | | 135 / 205 | all seven | all six | steel 0.05, 4 chains | |
-| e4-l08 | | 140 / 210 | all seven | all six | steel 0.06, 10 chains | |
-| e4-l09 | | 145 / 220 | all seven | all six | steel 0.03, 4 chains | |
-| e4-l10 | | 150 / 225 | all seven | all six | steel 0.06, 10 chains | |
+| e4-l01 | [`l01.json`](../../game/data/levels/e4/l01.json) | 105 / 160 | all seven | all six | steel 0.04 | 20090701 |
+| e4-l02 | [`l02.json`](../../game/data/levels/e4/l02.json) | 110 / 165 | all seven | all six | steel 0.06 | 20090702 |
+| e4-l03 | [`l03.json`](../../game/data/levels/e4/l03.json) | 115 / 175 | all seven | all six | steel 0.02, 8 chains | 20090703 |
+| e4-l04 | [`l04.json`](../../game/data/levels/e4/l04.json) | 120 / 180 | all seven | all six | steel 0.05, 8 chains | 20090704 |
+| e4-l05 | [`l05.json`](../../game/data/levels/e4/l05.json) | 125 / 190 | all seven | all six | steel 0.02, 2 chains | 20090705 |
+| e4-l06 | [`l06.json`](../../game/data/levels/e4/l06.json) | 130 / 195 | all seven | all six | steel 0.03, 10 chains | 20090706 |
+| e4-l07 | [`l07.json`](../../game/data/levels/e4/l07.json) | 135 / 205 | all seven | all six | steel 0.05, 4 chains | 20090707 |
+| e4-l08 | [`l08.json`](../../game/data/levels/e4/l08.json) | 140 / 210 | all seven | all six | steel 0.06, 10 chains | 20090708 |
+| e4-l09 | [`l09.json`](../../game/data/levels/e4/l09.json) | 145 / 220 | all seven | all six | steel 0.03, 4 chains | 20090709 |
+| e4-l10 | [`l10.json`](../../game/data/levels/e4/l10.json) | 150 / 225 | all seven | all six | steel 0.06, 10 chains | 20090710 |
 
 Every episode 4 level has all seven totems and six power-ups unlocked.
 `chained_cells` and `steel_rate` are defined in [level data](level-data.md);
-y = 0 is the top row. File, seed and base clock are set when the levels are authored.
+y = 0 is the top row. Each sets `base_clock` from the
+[clock rule](balance.md#clock): 560 to 710 s on normal and 870 to 1080 s
+on hard, peaking at e4-l08.
