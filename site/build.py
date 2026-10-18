@@ -31,6 +31,7 @@ STORE_NAMES = {"app-store": "the App Store", "google-play": "Google Play"}
 DEMO_ENTRY = "montezuma.js"
 # The game's extension, which the page preloads into Godot's file system.
 DEMO_EXTENSION = "libmontezuma.web.template_release.wasm32.nothreads.wasm"
+DEMO_OWN_PAGE = "montezuma.html"
 # What the page fetches after the click (contract: Web demo hand-off).
 DEMO_FETCHED = (DEMO_ENTRY, "montezuma.wasm", "montezuma.side.wasm",
                 "montezuma.pck", DEMO_EXTENSION)
@@ -308,6 +309,7 @@ def build(out: Path, base_url: str, demo_dir: Path | None,
 
     demo_mode = "stub"
     play_label = "Try the demo preview"
+    file_sizes = {}
     if demo_dir is not None:
         if not (demo_dir / DEMO_ENTRY).is_file():
             raise BuildError(f"{demo_dir}: no {DEMO_ENTRY}; is this the web export?")
@@ -316,6 +318,10 @@ def build(out: Path, base_url: str, demo_dir: Path | None,
             raise BuildError(f"{demo_dir}: the web export is missing {', '.join(missing)}")
         demo_mode = "godot"
         play_label = f"Play the intro level ({format_size(demo_download_size(demo_dir))})"
+        # Godot's loader needs the sizes up front to report progress; it
+        # looks them up by the URL it fetches.
+        file_sizes = {f"play/{f}": (demo_dir / f).stat().st_size
+                      for f in ("montezuma.wasm", "montezuma.pck", DEMO_EXTENSION)}
 
     if out.exists():
         if not (out / MARKER).is_file() and any(out.iterdir()):
@@ -332,6 +338,7 @@ def build(out: Path, base_url: str, demo_dir: Path | None,
         "index.html": {
             "demo_mode": demo_mode,
             "play_label": play_label,
+            "demo_file_sizes": html.escape(json.dumps(file_sizes, sort_keys=True)),
             "release_line": render_release_line(data),
             "platform_list_h3": render_platforms(data, 3),
             "platform_list_h4": render_platforms(data, 4),
@@ -355,7 +362,9 @@ def build(out: Path, base_url: str, demo_dir: Path | None,
         target.write_text(fill(template, common | values[page], page), encoding="utf-8")
 
     if demo_dir is not None:
-        shutil.copytree(demo_dir, out / "play")
+        # The export's own page is a second, unlinked way into the game
+        # without the site's fallbacks; the site never uses it.
+        shutil.copytree(demo_dir, out / "play", ignore=shutil.ignore_patterns(DEMO_OWN_PAGE))
 
     urls = [base_url + page.removesuffix("index.html") for page in PAGES]
     (out / "sitemap.xml").write_text(

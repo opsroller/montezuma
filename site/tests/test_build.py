@@ -142,6 +142,18 @@ class BuildTest(unittest.TestCase):
         self.assertTrue((out / "play/montezuma.wasm").is_file())
         self.assertTrue((out / "play" / build.DEMO_EXTENSION).is_file())
 
+    def test_demo_file_sizes_and_no_export_page(self):
+        demo = self.make_export()
+        (demo / "montezuma.html").write_text("<!doctype html>")
+        out = self.run_build(demo_dir=demo)
+        page = (out / "index.html").read_text()
+        self.assertIn('data-file-sizes="{&quot;play/libmontezuma.web.template_release.wasm32.nothreads.wasm&quot;: 4, '
+                      '&quot;play/montezuma.pck&quot;: 4, &quot;play/montezuma.wasm&quot;: 4}"', page)
+        self.assertFalse((out / "play/montezuma.html").exists())
+
+    def test_stub_has_no_file_sizes(self):
+        self.assertIn('data-file-sizes="{}"', (self.run_build() / "index.html").read_text())
+
     def test_play_button_shows_download_size(self):
         demo = self.make_export()
         size = build.format_size(build.demo_download_size(demo))

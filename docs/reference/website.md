@@ -41,7 +41,7 @@ Download, Credits, License and Source code.
 |---|---|---|
 | `--out DIR` | `site/_site` | Output folder; replaced on every build. An existing non-empty folder is deleted only if it holds the `.montezuma-site-build` marker an earlier build wrote |
 | `--base-url URL` | `https://opsroller.github.io/montezuma/` | Canonical URLs and sitemap |
-| `--demo-dir DIR` | none | Unzipped `montezuma-<version>-web` folder from the `web` workflow. It must hold `montezuma.js`, `montezuma.wasm`, `montezuma.side.wasm`, `montezuma.pck` and `libmontezuma.web.template_release.wasm32.nothreads.wasm`, or the build fails naming what is missing. Copied to `play/`; the page runs the real demo and the play button reads "Play the intro level (N MB)", N being those five files gzipped, about what a compressing host sends. Without it the page runs the stub demo |
+| `--demo-dir DIR` | none | Unzipped `montezuma-<version>-web` folder from the `web` workflow. It must hold `montezuma.js`, `montezuma.wasm`, `montezuma.side.wasm`, `montezuma.pck` and `libmontezuma.web.template_release.wasm32.nothreads.wasm`, or the build fails naming what is missing. Copied to `play/` without the export's own `montezuma.html`; the page runs the real demo, gets the byte sizes of `montezuma.wasm`, `montezuma.pck` and the extension in `#play[data-file-sizes]` (Godot's loader needs them to fill the progress bar) and the play button reads "Play the intro level (N MB)", N being those five files gzipped, about what a compressing host sends. Without it the page runs the stub demo |
 
 The build fails, naming the file and field, when release data is invalid,
 a credits link is not `https://` or `#…`, or a template placeholder has no
@@ -129,8 +129,15 @@ file relative to the page and opens it by the same path.) The canvas
 needs an `id`; Godot selects it with `#<id>`. Amended in WP-21
 (2026-10-18) after running the export in a browser.
 
-It checks `WebAssembly` and `Engine.isWebGLAvailable(2)` first and shows a
-message pointing to the downloads when either is missing.
+It checks `WebAssembly` and `Engine.isWebGLAvailable(2)` first. When
+either is missing the status line says which and links to the downloads,
+and no retry is offered.
+
+**Load failures.** A failed fetch, or loading that makes no progress for
+60 seconds (Godot leaves `startGame()` pending when its `.wasm` fails),
+puts the poster back in the stage with a "Try again" button and focuses
+it. Once Godot's engine has been created, "Try again" reloads the page,
+because Godot keeps a failed start in its module state.
 
 **Stage and canvas.** The stage is 16:9, or square on screens up to
 40rem wide held upright, and keeps its size before and after the demo
@@ -139,19 +146,29 @@ to its CSS size times `devicePixelRatio`, capped at 2, and again on every
 resize. Focus moves to the canvas when the game starts.
 
 **Keyboard.** The game takes every key, Tab included. Shift+Escape moves
-focus from the canvas to the "Leave game" button; Escape alone is the
-game's pause. The canvas's accessible name and the status line both say
-so.
+focus from the canvas to the "Back to the page" button, which is shown
+from the moment the canvas exists; Escape alone is the game's pause. The
+canvas has `role="application"` and is described by `#demo-help`, a
+note always shown under the controls in Godot mode with the controls and
+the way out.
+
+**Layout.** The status line keeps room for two lines and the hidden
+button keeps its place, so the game starting does not push the page down.
+Without JavaScript the play button is hidden and only the `<noscript>`
+message shows.
 
 **Events, game to page.** Dispatched on `window` as `CustomEvent`s (from
-`JavaScriptBridge`). Unknown events and extra fields are ignored.
+`JavaScriptBridge`). Unknown events and extra fields are ignored, and so
+is any event whose `detail.v` is not 1 or whose fields have the wrong
+type.
 
 | Event | `detail` | When | Page does |
 |---|---|---|---|
 | `montezuma:level-completed` | `{ v: 1, level: "<level id>", score: <int> }` | Once, when the intro level is won | Opens the download popup with "You beat the intro level!" |
 | `montezuma:ready` (optional) | `{ v: 1, version: "<game version>" }` | First frame shown | Status line changes from "Starting the intro level…" to "Intro level running…" |
 
-**Events, page to game.** None.
+**Events, page to game.** None. Godot stops its main loop itself while the
+tab is hidden, so the page sends no pause or resume.
 
 **Skip.** The "Skip the level and get the game" link opens the same popup
 without the win heading. Without JavaScript it jumps to `#download`.
@@ -169,3 +186,13 @@ When it goes live, the target is GitHub Pages, deployed from `main` by a
 workflow owned by devops-engineer. The single-threaded export needs no
 cross-origin-isolation headers; GitHub Pages serves `.wasm` as
 `application/wasm`.
+
+To check at the first deployment: that Pages gzips `play/*.wasm` and
+`play/montezuma.pck` (`curl -sI -H 'Accept-Encoding: gzip' <url>` shows
+`Content-Encoding: gzip`). The play button's size assumes it; uncompressed
+the five files are about 62 MB against 22 MB gzipped.
+
+No page sets a Content-Security-Policy. Pages cannot send headers, so one
+would be a `<meta http-equiv>` tag, and on `/` it must allow
+`script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval'`: Godot's
+`montezuma.js` calls `eval` for its side module and JavaScript bridge.
