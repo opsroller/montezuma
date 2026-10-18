@@ -58,6 +58,21 @@ theme left off.
 When the variant file is missing the base path comes back, so a theme
 works before its variants exist.
 
+## Ship a tier variant of a material
+
+1. Put the desktop material in a `hi/` folder next to the base one, with
+   the same file name: `materials/temple/hi/MI_Gold.tres` beside
+   `materials/temple/MI_Gold.tres`.
+2. Keep naming the base material in prefabs, meshes and the manifest.
+
+`QualityTiers` swaps it in on every mesh on desktop and back on mobile
+and web, including after a runtime tier change; no code is needed. On
+particles, give the effect one material (in `material_override` or on
+every draw-pass surface), and keep it in its own `.tres` file, not
+embedded in the scene. A loader outside `PieceLibrary` calls
+`preload_variants(scene)` when it loads a scene, so the desktop textures
+load then and not in the frame the first copy appears.
+
 ## Check it on every tier
 
 ```sh

@@ -8,6 +8,10 @@
 import { detectPlatform } from "./platform.js";
 
 const LEVEL_COMPLETED = "montezuma:level-completed";
+const READY = "montezuma:ready";
+// The game's extension: preloaded into Godot's file system under this bare
+// name, where the game opens it (contract: Web demo hand-off).
+const EXTENSION = "libmontezuma.web.template_release.wasm32.nothreads.wasm";
 
 const dialog = document.getElementById("download-dialog");
 const stage = document.getElementById("stage");
@@ -50,7 +54,25 @@ function openDownloads(won) {
   if (!dialog.open) dialog.showModal();
 }
 
-window.addEventListener(LEVEL_COMPLETED, () => openDownloads(true));
+// Events from the game carry a versioned detail (contract: Web demo
+// hand-off). Only version 1 is understood; anything else is ignored.
+function isV1(event) {
+  return Boolean(event.detail) && event.detail.v === 1;
+}
+
+window.addEventListener(LEVEL_COMPLETED, (event) => {
+  const { level, score } = event.detail || {};
+  if (isV1(event) && typeof level === "string" && Number.isInteger(score)) openDownloads(true);
+});
+// First frame on screen: the game is playable now, not just loaded. It can
+// arrive before startGame() resolves.
+let ready = false;
+window.addEventListener(READY, (event) => {
+  if (!isV1(event) || typeof event.detail.version !== "string") return;
+  ready = true;
+  section.dataset.gameVersion = event.detail.version;
+  say("Intro level running. Match three or more to clear the board.");
+});
 
 document.querySelectorAll("[data-open-downloads]").forEach((el) => {
   el.addEventListener("click", (event) => {
@@ -67,15 +89,55 @@ dialog.addEventListener("click", (event) => {
 
 // ---- Demo loading ---------------------------------------------------------
 
+// Without JavaScript the play button would do nothing; it shows once this
+// module runs (see site.css).
+document.documentElement.classList.add("js");
+
+const poster = stage.querySelector(".poster");
+// Godot keeps a failed start in module state, so once its engine has been
+// created a retry needs a fresh page.
+let retryReloads = false;
+// No download progress and no start for this long means a load failed
+// somewhere Godot does not report (it leaves startGame() pending).
+const STALL_MS = 60_000;
+let lastProgress = 0;
+// Godot's loader reports its own files; the side module's bytes are
+// counted by watchFetches, and the bar adds the two.
+const SIDE_MODULE = "montezuma.side.wasm";
+const loaded = { godot: 0, side: 0 };
+// Set before a retry's reload so the new page starts the demo by itself.
+const RETRY_KEY = "montezuma-demo-retry";
+
 function say(text) {
   status.textContent = text;
 }
 
+// A load failure: the message, and the poster back in the stage with a
+// "Try again" button, so no dead canvas keeps the focus.
 function fail(text) {
   progress.hidden = true;
+  leaveButton.hidden = true;
   say(text);
+  stage.replaceChildren(poster);
   playButton.hidden = false;
   playButton.textContent = "Try again";
+  playButton.focus();
+}
+
+// The browser can't run the demo at all: say what is missing and point to
+// the downloads; retrying would not help.
+function unsupported(missing) {
+  progress.hidden = true;
+  stage.replaceChildren(poster);
+  const link = document.createElement("a");
+  link.href = "#download";
+  link.textContent = "Get the game for your computer or phone";
+  link.addEventListener("click", (event) => {
+    event.preventDefault();
+    openDownloads(false);
+  });
+  status.replaceChildren(`Your browser can't run the demo (no ${missing}). `, link, ".");
+  link.focus();
 }
 
 function startStub() {
@@ -91,6 +153,29 @@ function startStub() {
   say("Demo preview loaded.");
 }
 
+// Keep the canvas's pixel size equal to its CSS size times the screen's
+// pixel ratio (capped at 2 to spare phones); canvasResizePolicy 0 leaves
+// sizing to the page, and Godot renders at whatever size the canvas has.
+function fitCanvas(canvas) {
+  const fit = () => {
+    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.max(1, Math.round(canvas.clientWidth * ratio));
+    canvas.height = Math.max(1, Math.round(canvas.clientHeight * ratio));
+  };
+  fit();
+  if (typeof ResizeObserver === "function") new ResizeObserver(fit).observe(canvas);
+}
+
+// The game takes every key, Tab included, so Shift+Escape hands the
+// keyboard back to the page (WCAG 2.1.2). Escape alone is the game's pause.
+window.addEventListener("keydown", (event) => {
+  const canvas = document.getElementById("game-canvas");
+  if (event.key !== "Escape" || !event.shiftKey || !canvas || document.activeElement !== canvas) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  leaveButton.focus();
+}, true);
+
 function loadScript(src) {
   return new Promise((resolve, reject) => {
     const script = document.createElement("script");
@@ -101,55 +186,155 @@ function loadScript(src) {
   });
 }
 
+function showProgress() {
+  lastProgress = Date.now();
+  progress.value = loaded.godot + loaded.side;
+}
+
+// Godot's loader tries each of its files this many times, 1 s apart; the
+// side module, fetched by its runtime, gets one try.
+const GODOT_ATTEMPTS = 4;
+
+// Godot does not report a failed fetch of its files (startGame() stays
+// pending), and its runtime fetches the side module, about half the
+// download, outside its loader's progress reports. Wrapping fetch for the
+// demo's files catches the first and counts the second, with one download.
+// A file fails the load only once Godot has no tries left for it.
+function watchFetches(onFailure) {
+  const realFetch = window.fetch.bind(window);
+  const failures = new Map();
+  const failed = (url, error) => {
+    const count = (failures.get(url) || 0) + 1;
+    failures.set(url, count);
+    if (url.endsWith(SIDE_MODULE) || count >= GODOT_ATTEMPTS) onFailure(error);
+  };
+  window.fetch = async (input, init) => {
+    const url = String(input instanceof Request ? input.url : input);
+    if (!url.includes("play/")) return realFetch(input, init);
+    let response;
+    try {
+      response = await realFetch(input, init);
+    } catch (error) {
+      failed(url, error);
+      throw error;
+    }
+    if (!response.ok) {
+      failed(url, new Error(`${url}: HTTP ${response.status}`));
+      return response;
+    }
+    if (!url.endsWith(SIDE_MODULE) || !response.body) return response;
+    const counted = response.body.pipeThrough(new TransformStream({
+      transform(chunk, controller) {
+        loaded.side += chunk.byteLength;
+        showProgress();
+        controller.enqueue(chunk);
+      },
+    }));
+    return new Response(counted, { status: response.status, statusText: response.statusText, headers: response.headers });
+  };
+}
+
+// Resolves with the game's start, or rejects when a demo file fails to load
+// or loading has made no progress for STALL_MS.
+function watch(start) {
+  lastProgress = Date.now();
+  return new Promise((resolve, reject) => {
+    watchFetches(reject);
+    const timer = setInterval(() => {
+      if (Date.now() - lastProgress > STALL_MS) {
+        clearInterval(timer);
+        reject(new Error("loading stalled"));
+      }
+    }, 1000);
+    start.then(resolve, reject).finally(() => clearInterval(timer));
+  });
+}
+
 async function startGodot() {
   if (typeof WebAssembly !== "object") {
-    fail("Your browser can't run the demo (no WebAssembly). The downloads below work on every platform.");
+    unsupported("WebAssembly");
     return;
   }
+  const sizes = JSON.parse(section.dataset.fileSizes || "{}"); // written by site/build.py
+  const total = Object.values(sizes).reduce((sum, size) => sum + size, 0);
   progress.hidden = false;
   progress.removeAttribute("value");
+  if (total > 0) progress.max = total;
   say("Loading the intro level…");
   try {
-    await loadScript("play/montezuma.js");
+    if (typeof Engine === "undefined") await loadScript("play/montezuma.js");
     /* global Engine */
     if (!Engine.isWebGLAvailable(2)) {
-      fail("Your browser can't run the demo (no WebGL 2). The downloads below work on every platform.");
+      unsupported("WebGL 2");
       return;
     }
     const canvas = document.createElement("canvas");
     canvas.id = "game-canvas";
     canvas.tabIndex = 0;
+    canvas.setAttribute("role", "application");
     canvas.setAttribute("aria-label", "Montezuma's intro level");
+    canvas.setAttribute("aria-describedby", "demo-help");
     stage.replaceChildren(canvas);
+    fitCanvas(canvas);
+    leaveButton.hidden = false;
+    retryReloads = true;
     const engine = new Engine({
       executable: "play/montezuma",
       canvas,
       canvasResizePolicy: 0, // the page sizes the canvas (see site.css)
       ensureCrossOriginIsolationHeaders: false, // single-threaded export
-      onProgress(current, total) {
-        if (total > 0) {
-          progress.max = total;
-          progress.value = current;
-        }
+      focusCanvas: false, // main.js decides (below)
+      fileSizes: sizes,
+      onProgress(current) {
+        loaded.godot = current;
+        if (total > 0) showProgress();
+        else lastProgress = Date.now();
       },
     });
-    await engine.startGame();
+    const start = engine.preloadFile(`play/${EXTENSION}`, EXTENSION).then(() => engine.startGame());
+    await watch(start);
     progress.hidden = true;
-    leaveButton.hidden = false;
-    say("Intro level running. Match three or more to clear the board.");
-    canvas.focus();
+    if (!ready) say("Starting the intro level…");
+    // Into the game, unless the visitor moved focus elsewhere while it loaded.
+    const active = document.activeElement;
+    if (!active || active === document.body || active === canvas || active === status) canvas.focus();
   } catch (error) {
     console.error(error);
     fail("The demo didn't load. Check your connection and try again, or download the game below.");
   }
 }
 
-playButton.addEventListener("click", () => {
+function play() {
   playButton.hidden = true;
+  // Keep focus in the demo area while the button is gone.
+  status.focus();
   if (section.dataset.demo === "godot") startGodot();
   else startStub();
+}
+
+playButton.addEventListener("click", () => {
+  if (!retryReloads) {
+    play();
+    return;
+  }
+  try {
+    sessionStorage.setItem(RETRY_KEY, "1");
+  } catch {
+    // Storage blocked: the reloaded page waits for a click instead.
+  }
+  location.reload();
 });
 
 leaveButton.addEventListener("click", () => {
   document.getElementById("skip-link").focus();
+  say("The keyboard is back on the page. Press Shift+Tab twice to return to the game.");
 });
+
+try {
+  if (sessionStorage.getItem(RETRY_KEY)) {
+    sessionStorage.removeItem(RETRY_KEY);
+    play();
+  }
+} catch {
+  // Storage blocked: nothing to resume.
+}

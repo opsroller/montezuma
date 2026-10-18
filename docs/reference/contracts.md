@@ -234,10 +234,11 @@ The LevelData fields above were agreed with the LevelData owner and land with WP
 screen (ui-developer): the key `quality_tier`, values `auto` plus
 `get_available_tiers()`, read with `get_choice()`, written with
 `set_choice(value)`, which saves and applies at once; hide it when only
-one tier is available. Content (technical-artist): node groups
+one tier is available (implemented: the Graphics quality row). Content (technical-artist): node groups
 `quality:<feature id>`, `quality_fallback:<feature id>`,
 `quality_shadow_light`, `quality_fog_light`; texture variants through
-`resolve_variant(path)`. Benchmark (WP-46): `-- --quality=<tier>` and
+`resolve_variant(path)`; material variants are swapped by `QualityTiers`
+on every mesh, so content names the base material. Benchmark (WP-46): `-- --quality=<tier>` and
 `get_active_features()`. Ids, groups and settings:
 [quality-tiers.md](quality-tiers.md).
 

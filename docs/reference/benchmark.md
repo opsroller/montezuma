@@ -4,7 +4,8 @@
 *Reference. The benchmark scene, its replay, its report, and the
 readability capture and checks that measure a build against the
 [Visual target](visual-target.md#acceptance-tests). Running them:
-[Run the benchmark](../how-to/run-the-benchmark.md).*
+[Run the benchmark](../how-to/run-the-benchmark.md). Measured numbers:
+[Benchmark results](benchmark-results.md).*
 
 ## Files
 
