@@ -40,6 +40,28 @@ inline constexpr double kShuffleSeconds = 0.35;
 inline constexpr double kRedealOutSeconds = 0.18;
 inline constexpr double kRedealInSeconds = 0.22;
 
+// Totem and power-up effects (WP-29). A firing totem gets a lead-in before
+// its clear: fireballs fall, labels rise, a repaint morphs. Every transient
+// effect ends by the end of the step it belongs to (visual target,
+// readability rule 3); the planner clamps them to it.
+inline constexpr double kTotemLeadSeconds = 0.32;
+// Fireballs fall from this many cells above the board during the lead.
+inline constexpr double kFireballDropCells = 5.0;
+// A power-up going off: blasts, beams and flashes.
+inline constexpr double kPowerUpBurstSeconds = 0.28;
+// Floating text (+60 s, x2, +1500) rises this far while it fades.
+inline constexpr double kLabelSeconds = 0.5;
+inline constexpr double kLabelRiseCells = 0.9;
+// A collected gem flies up and fades; steel shatters; a chain falls away.
+inline constexpr double kGemFlySeconds = 0.3;
+inline constexpr double kGemFlyCells = 1.5;
+inline constexpr double kBreakSeconds = 0.25;
+// A marker (power-up badge, gem, steel, chain) pops in or shrinks away.
+inline constexpr double kMarkPopSeconds = 0.18;
+inline constexpr double kMarkGoneSeconds = 0.12;
+// A hint ring pulses this often while it shows.
+inline constexpr double kHintPulseSeconds = 0.6;
+
 // Selected piece grows and lifts so it reads against its neighbours.
 inline constexpr double kSelectedScale = 1.18;
 inline constexpr double kSelectedLiftCells = 0.12;

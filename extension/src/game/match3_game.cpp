@@ -17,14 +17,21 @@
 #include <godot_cpp/variant/packed_string_array.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
+#include <godot_cpp/classes/scene_tree_timer.hpp>
+#include <godot_cpp/variant/packed_int32_array.hpp>
+
 #include "../audio/game_audio.hpp"
 #include "../board/board_view_3d.hpp"
+#include "display_move.hpp"
 
 using namespace godot;
 
 namespace montezuma::godot_binding {
 
 namespace {
+
+// Effects stages: each totem, then each power-up.
+constexpr int kEffectStages = fx::kTotemCount + fx::kPowerUpCount;
 
 // The last cascade cue; deeper steps repeat it (audio.md, When each cue plays).
 constexpr int kMaxCascadeCue = 8;
@@ -60,13 +67,116 @@ String level_file(const String& id) {
     return episode + String("/") + level + String(".json");
 }
 
-// Appends a core result's cascades to a Dictionary's, as later display steps.
-void append_cascades(Dictionary& into, const MoveResult& result) {
-    const Dictionary more = Match3Board::to_dictionary(result);
-    Array cascades = into["cascades"];
-    const Array extra = more["cascades"];
-    for (int64_t i = 0; i < extra.size(); ++i) cascades.push_back(extra[i]);
-    into["cascades"] = cascades;
+Vector2i to_vec(anim::Cell c) { return Vector2i(c.x, c.y); }
+
+Array to_array(const std::vector<anim::Cell>& cells) {
+    Array out;
+    for (const anim::Cell& c : cells) out.push_back(to_vec(c));
+    return out;
+}
+
+String power_up_id(int id) { return id >= 0 && id < fx::kPowerUpCount ? str(fx::kPowerUpNames[static_cast<std::size_t>(id)]) : String(); }
+
+Array to_array(const std::vector<fx::Placement>& placements) {
+    Array out;
+    for (const fx::Placement& p : placements) {
+        Dictionary d;
+        d["cell"] = to_vec(p.cell);
+        d["id"] = power_up_id(p.id);
+        out.push_back(d);
+    }
+    return out;
+}
+
+Array to_array(const std::vector<anim::Repaint>& repaints) {
+    Array out;
+    for (const anim::Repaint& r : repaints) {
+        Dictionary d;
+        d["cell"] = to_vec(r.cell);
+        d["kind"] = r.kind;
+        out.push_back(d);
+    }
+    return out;
+}
+
+// One display step's effects, in the keys BoardView3D reads (board-view.md,
+// Effects).
+Dictionary fx_dictionary(const fx::StepFx& f) {
+    Dictionary d;
+    Array power_ups;
+    for (const fx::PowerUpGoOff& p : f.power_ups) {
+        Dictionary g;
+        g["cell"] = to_vec(p.cell);
+        g["id"] = power_up_id(p.id);
+        g["cells"] = to_array(p.cells);
+        g["time"] = p.time_seconds;
+        g["multiplier"] = p.multiplier;
+        g["hint"] = p.hint_seconds;
+        power_ups.push_back(g);
+    }
+    d["power_ups"] = power_ups;
+    d["power_ups_placed"] = to_array(f.power_ups_placed);
+    d["gems_collected"] = to_array(f.gems_collected);
+    d["gems_placed"] = to_array(f.gems_placed);
+    d["steel_spawned"] = to_array(f.steel_spawned);
+    d["steel_removed"] = to_array(f.steel_removed);
+    d["chains_broken"] = to_array(f.chains_broken);
+    if (f.totem) {
+        const fx::TotemFire& t = *f.totem;
+        Dictionary td;
+        td["id"] = str(fx::kTotemNames[static_cast<std::size_t>(t.id)]);
+        td["targets"] = to_array(t.targets);
+        td["repaints"] = to_array(t.repaints);
+        td["time"] = t.time_seconds;
+        td["points"] = t.points;
+        td["gems_harvested"] = to_array(t.gems_harvested);
+        td["gems_placed"] = to_array(t.gems_placed);
+        td["chains_removed"] = to_array(t.chains_removed);
+        td["power_ups_placed"] = to_array(t.power_ups_placed);
+        d["totem"] = td;
+    }
+    return d;
+}
+
+// The display move's steps as the result's `cascades`.
+Array cascades_array(const DisplayMove& dm) {
+    Array out;
+    for (std::size_t i = 0; i < dm.events.steps.size(); ++i) {
+        const anim::Step& s = dm.events.steps[i];
+        Dictionary d;
+        d["cleared"] = to_array(s.cleared);
+        Array falls;
+        for (const anim::Fall& f : s.falls) {
+            Dictionary fd;
+            fd["from"] = to_vec(f.from);
+            fd["to"] = to_vec(f.to);
+            fd["kind"] = f.kind;
+            falls.push_back(fd);
+        }
+        d["falls"] = falls;
+        Array spawns;
+        for (const anim::Spawn& sp : s.spawns) {
+            Dictionary sd;
+            sd["to"] = to_vec(sp.to);
+            sd["kind"] = sp.kind;
+            sd["drop"] = sp.drop;
+            spawns.push_back(sd);
+        }
+        d["spawns"] = spawns;
+        if (s.lead > 0.0) d["lead"] = s.lead;
+        if (!s.repaints.empty()) d["repaints"] = to_array(s.repaints);
+        d["fx"] = fx_dictionary(dm.fx[i]);
+        out.push_back(d);
+    }
+    return out;
+}
+
+PackedInt32Array marks_array(const LevelSession& s) {
+    const std::vector<int> marks = session_marks(s);
+    PackedInt32Array out;
+    out.resize(static_cast<int64_t>(marks.size()));
+    for (std::size_t i = 0; i < marks.size(); ++i) out[static_cast<int64_t>(i)] = marks[i];
+    return out;
 }
 
 void step_cues(const StepReport& step, int index, std::vector<String>& out) {
@@ -97,7 +207,8 @@ void Match3Game::_ready() {
         self_test_ = true;
         callable_mp(this, &Match3Game::run_self_test).call_deferred();
     } else if (!autostart_level_.is_empty()) {
-        start_level(autostart_level_, autostart_difficulty_);
+        if (start_level(autostart_level_, autostart_difficulty_) && effects_showcase_)
+            callable_mp(this, &Match3Game::next_showcase_stage).call_deferred();
     }
 }
 
@@ -195,9 +306,12 @@ bool Match3Game::start_level(const String& level_id, const String& difficulty) {
     finished_ = false;
     warned_ = false;
     board_->set_core_board(session_->board());
+    hint_left_ = 0.0;
+    pending_hint_.reset();
     if (BoardView3D* v = view()) {
         v->skip_animation();
         v->show_board(board_);
+        v->show_marks(marks_array(*session_));
     }
     send("level_started", level_dictionary(), difficulty_);
     publish(true);
@@ -235,9 +349,14 @@ bool Match3Game::request_swap(Vector2i a, Vector2i b) {
         return false;
     }
 
-    // One animation: the swap's cascades, then each fired totem's, then the
-    // automatic reshuffle. The view ends on the session's board either way.
+    // One animation: the swap's cascades, then each fired totem's (one that
+    // clears nothing gets an empty step for its effect), then the automatic
+    // reshuffle, with what each step set off. The view ends on the
+    // session's board and markers either way.
+    const DisplayMove dm = display_move(*report);
     Dictionary result = Match3Board::to_dictionary(report->result);
+    result["cascades"] = cascades_array(dm);
+    result["marks"] = marks_array(*session_);
     step_cues_.clear();
     for (std::size_t i = 0; i < report->steps.size(); ++i) {
         step_cues_.emplace_back();
@@ -246,15 +365,16 @@ bool Match3Game::request_swap(Vector2i a, Vector2i b) {
     cue("swap");
     for (const TotemFiring& firing : report->totems_fired) {
         const String fire = "totem_fire_" + str(totem_name(firing.effect.totem));
-        if (!firing.result || firing.steps.empty()) {
-            cue(fire);  // time and gold change no cells
+        // The same steps display_move() lays out: one per cascade.
+        if (!firing.result || firing.result->cascades.empty()) {
+            step_cues_.push_back({fire});  // its own empty step: the effect alone
             continue;
         }
-        append_cascades(result, *firing.result);
-        for (std::size_t i = 0; i < firing.steps.size(); ++i) {
+        for (std::size_t i = 0; i < firing.result->cascades.size(); ++i) {
             step_cues_.emplace_back();
             if (i == 0) step_cues_.back().push_back(fire);
-            step_cues(firing.steps[i], static_cast<int>(step_cues_.size() - 1), step_cues_.back());
+            if (i < firing.steps.size())
+                step_cues(firing.steps[i], static_cast<int>(step_cues_.size() - 1), step_cues_.back());
         }
     }
     if (report->auto_shuffle && report->auto_shuffle->shuffled) {
@@ -270,6 +390,9 @@ bool Match3Game::request_swap(Vector2i a, Vector2i b) {
         }
         result["shuffle_map"] = map;
     }
+    // PWR-11: the hint power-up shows every legal swap for a while; a new
+    // one restarts it. The view shows it once this move has played.
+    if (report->hint_seconds > 0.0) hint_left_ = report->hint_seconds;
 
     // Each display step has its cues; a gap means the report and the board
     // result disagree, which the self-test fails on.
@@ -313,7 +436,9 @@ void Match3Game::shuffle() {
     as_result.redealt = sh->redealt;
     as_result.shuffle_map = sh->shuffle_map;
     step_cues_.clear();
-    play_board(Match3Board::to_dictionary(as_result));
+    Dictionary result = Match3Board::to_dictionary(as_result);
+    result["marks"] = marks_array(*session_);
+    play_board(result);
     publish(false);
     after_command();
 }
@@ -327,7 +452,7 @@ void Match3Game::buy_hint() {
         ERR_FAIL_MSG("Match3Game: buy_hint failed: " + String::utf8(e.what()));
     }
     if (!hint) return;
-    send("hint_shown", to_vec((*hint)[0]), to_vec((*hint)[1]));
+    show_hint(*hint);
     publish(false);
 }
 
@@ -344,7 +469,8 @@ void Match3Game::_process(double delta) {
     const bool low = t->time_left > 0.0 && t->time_left <= warning_seconds_;
     if (low && !warned_) cue("time_warning");
     warned_ = low;
-    if (t->free_hint) send("hint_shown", to_vec((*t->free_hint)[0]), to_vec((*t->free_hint)[1]));
+    if (t->free_hint) show_hint(*t->free_hint);
+    if (hint_left_ > 0.0) hint_left_ = std::max(0.0, hint_left_ - delta);
     publish(false);
     if (t->outcome_changed) finish_if_over();
 }
@@ -390,6 +516,32 @@ void Match3Game::on_cascade_step(int step) {
 void Match3Game::on_animation_finished() {
     step_cues_.clear();
     if (finish_pending_ && session_) emit_finished();
+    // The hint power-up's time is still running: show the new board's swaps.
+    if (hint_left_ > 0.0 && is_playing()) {
+        if (BoardView3D* v = view()) v->show_hints(get_legal_moves(), hint_left_);
+    } else if (pending_hint_ && is_playing()) {
+        // A free hint that arrived mid-move rings once the board settles.
+        show_hint(*pending_hint_);
+    }
+    pending_hint_.reset();
+    if (showcase_running_) advance_showcase();
+}
+
+void Match3Game::show_hint(const Swap& hint) {
+    if (!pending_hint_ || *pending_hint_ != hint) send("hint_shown", to_vec(hint[0]), to_vec(hint[1]));
+    BoardView3D* v = view();
+    if (!v) return;
+    if (v->is_busy()) {
+        pending_hint_ = hint;
+        return;
+    }
+    pending_hint_.reset();
+    Array pair;
+    pair.push_back(to_vec(hint[0]));
+    pair.push_back(to_vec(hint[1]));
+    Array pairs;
+    pairs.push_back(pair);
+    v->show_hints(pairs, 0.0);  // until the next move
 }
 
 void Match3Game::cue(const String& name) {
@@ -521,6 +673,86 @@ Array Match3Game::get_legal_moves() const {
     return out;
 }
 
+// ---- Effects stages (self-test and look-dev showcase) -------------------------
+
+bool Match3Game::run_effect_stage(int stage) {
+    BoardView3D* v = view();
+    if (!session_ || !is_playing() || (v && v->is_busy()) || stage < 0 || stage >= kEffectStages) return false;
+    LevelSession& s = *session_;
+    s.set_gems_collected(0);  // keep the level going through every stage
+    const int w = s.board().width();
+    const int h = s.board().height();
+    auto plain = [&](Cell c) {
+        return !s.gem(c) && !s.steel(c) && !s.chained(c) && !s.power_ups().has(c) && s.board().at(c.x, c.y) >= 0;
+    };
+    auto used = [](const Swap& m, const Run& run, Cell c) {
+        if (c == m[0] || c == m[1]) return true;
+        return std::find(run.cells.begin(), run.cells.end(), c) != run.cells.end();
+    };
+    for (const Swap& m : s.legal_moves()) {
+        for (const Run& run : s.runs_for_swap(m[0], m[1])) {
+            if (stage < fx::kTotemCount) {
+                const auto id = static_cast<TotemId>(stage);
+                if (run.kind != totem_kind(id)) continue;
+                TotemSystem& totems = s.totems_for_setup();
+                totems.unlock(id, 3);  // tier 3: every totem has it (ward's highest)
+                // Charged once, as if the last move matched this colour too.
+                MoveResult charge;
+                charge.swap = m;
+                charge.cascades.emplace_back();
+                charge.cascades.back().runs.push_back(run);
+                totems.record_move(charge);
+                // Something for ward to break and harvest to unchain.
+                int staged = 0;
+                for (int i = 0; i < w * h && staged < 3; i += 7) {
+                    const Cell c{i % w, i / w};
+                    if (used(m, run, c) || !plain(c)) continue;
+                    if (id == TotemId::Ward) s.set_steel(c, true);
+                    if (id == TotemId::Harvest) s.set_chain(c, true);
+                    ++staged;
+                }
+                totem_charge_[static_cast<std::size_t>(stage)] = totems.charge(id);
+            } else {
+                Cell at{-1, -1};
+                for (const Cell& c : run.cells)
+                    if (c != m[0] && c != m[1] && plain(c)) at = c;
+                if (at.x < 0) continue;
+                s.set_power_up(at, PowerUp{static_cast<PowerUpId>(stage - fx::kTotemCount), 3});
+            }
+            if (v) v->show_marks(marks_array(s));
+            return request_swap(Vector2i(m[0].x, m[0].y), Vector2i(m[1].x, m[1].y));
+        }
+    }
+    return false;
+}
+
+void Match3Game::next_showcase_stage() {
+    if (!effects_showcase_ || !is_inside_tree()) return;
+    if (!is_playing()) {
+        if (!start_level(autostart_level_.is_empty() ? String("e1-l01") : autostart_level_, autostart_difficulty_)) return;
+    }
+    showcase_running_ = true;
+    if (run_effect_stage(showcase_stage_)) {
+        showcase_stage_ = (showcase_stage_ + 1) % kEffectStages;
+        return;
+    }
+    // No move of the colour this stage needs: play another and try again.
+    const Array legal = get_legal_moves();
+    if (!legal.is_empty()) {
+        const Array m = legal[0];
+        if (request_swap(m[0], m[1])) return;
+    }
+    // Nothing played, so no animation_finished will follow: try again later.
+    advance_showcase();
+}
+
+void Match3Game::advance_showcase() {
+    // A pause between stages, so each effect reads on its own.
+    showcase_running_ = false;
+    get_tree()->create_timer(0.6)->connect("timeout", callable_mp(this, &Match3Game::next_showcase_stage),
+                                           Object::CONNECT_ONE_SHOT);
+}
+
 // ---- Self-test -----------------------------------------------------------------
 
 void Match3Game::run_self_test() {
@@ -540,6 +772,7 @@ void Match3Game::run_self_test() {
     BoardView3D* v = view();
     if (!v) fail("no board view");
     int moves = 0;
+    int first_outcome = PLAYING;
     if (session_) {
         if (get_gem_goal() != 10) fail("e1-l01 normal goal is not 10 gems");
         shuffle();
@@ -567,7 +800,46 @@ void Match3Game::run_self_test() {
                     }
         }
         if (is_playing()) fail("e1-l01 did not end");
+        first_outcome = get_outcome();
+        if (first_outcome != WON) fail("e1-l01 played by the first legal move did not win");
         _process(1.0);  // no ticks after the end
+    }
+
+    // Effects (WP-29): fire every totem and set off every power-up through
+    // the real session; the view must schedule each one's beat and end with
+    // the session's markers.
+    int effect_moves = 0;
+    if (start_level("e1-l01", "normal") && v) {
+        for (int stage = 0; stage < kEffectStages; ++stage) {
+            bool played = false;
+            for (int attempt = 0; attempt < 40 && !played && is_playing(); ++attempt) {
+                played = run_effect_stage(stage);
+                if (!played) {
+                    const Array legal = get_legal_moves();
+                    if (legal.is_empty()) break;
+                    const Array m = legal[static_cast<int64_t>(attempt) % legal.size()];
+                    request_swap(m[0], m[1]);
+                }
+                v->skip_animation();
+                ++effect_moves;
+            }
+            const String name = stage < fx::kTotemCount
+                                    ? "totem_" + str(totem_name(static_cast<TotemId>(stage)))
+                                    : "power_up_" + str(power_up_name(static_cast<PowerUpId>(stage - fx::kTotemCount)));
+            if (!played) fail(String("could not stage ") + name);
+            if (static_cast<int>(v->get_effects_played().get(name, 0)) < 1) fail(name + String(" played no effect"));
+            if (session_ && v->get_marks() != marks_array(*session_)) fail(String("markers differ from the session after ") + name);
+        }
+        const Dictionary played = v->get_effects_played();
+        for (const char* name : {"gem_collect", "steel_break", "chain_break", "mark_placed"})
+            if (static_cast<int>(played.get(name, 0)) < 1) fail(String(name) + " never played");
+        // Readability rule 3: every move's effects end within its plan, so
+        // animation_finished (and input) is never held past plan.total.
+        if (const double over = played.get("overrun_seconds", 0.0); over > 1e-6)
+            fail("effects ran " + String::num(over, 3) + " s past their move's plan");
+        stop_level();
+    } else {
+        fail("e1-l01 did not start again for the effects");
     }
     const int finished = signal_counts_["level_finished"];
     if (finished != 1) fail("level_finished fired " + String::num_int64(finished) + " times");
@@ -585,10 +857,9 @@ void Match3Game::run_self_test() {
         checked[key] = true;
         if (audio && !audio->has_cue(name)) fail("cue '" + name + "' is not in the cue table");
     }
-    const int outcome = get_outcome();
-    if (outcome != WON) fail("e1-l01 played by the first legal move did not win");
-    stop_level();
-    UtilityFunctions::print("Match3Game self-test: ", moves, " moves, outcome ", outcome, ", ",
+    UtilityFunctions::print("Match3Game effects: ", fx::kTotemCount, " totems and ", fx::kPowerUpCount,
+                            " power-ups staged in ", effect_moves, " moves");
+    UtilityFunctions::print("Match3Game self-test: ", moves, " moves, outcome ", first_outcome, ", ",
                             int64_t(checked.size()), " cues, ", failures, " failures");
 }
 
@@ -620,6 +891,8 @@ void Match3Game::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_autostart_difficulty"), &Match3Game::get_autostart_difficulty);
     ClassDB::bind_method(D_METHOD("set_warning_seconds", "seconds"), &Match3Game::set_warning_seconds);
     ClassDB::bind_method(D_METHOD("get_warning_seconds"), &Match3Game::get_warning_seconds);
+    ClassDB::bind_method(D_METHOD("set_effects_showcase", "on"), &Match3Game::set_effects_showcase);
+    ClassDB::bind_method(D_METHOD("get_effects_showcase"), &Match3Game::get_effects_showcase);
 
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "board_view_path", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "BoardView3D"),
                  "set_board_view_path", "get_board_view_path");
@@ -628,6 +901,7 @@ void Match3Game::_bind_methods() {
     ADD_PROPERTY(PropertyInfo(Variant::STRING, "autostart_difficulty", PROPERTY_HINT_ENUM, "normal,hard"),
                  "set_autostart_difficulty", "get_autostart_difficulty");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "warning_seconds"), "set_warning_seconds", "get_warning_seconds");
+    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "effects_showcase"), "set_effects_showcase", "get_effects_showcase");
 
     BIND_ENUM_CONSTANT(PLAYING);
     BIND_ENUM_CONSTANT(WON);

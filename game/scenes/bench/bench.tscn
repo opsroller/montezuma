@@ -10,3 +10,5 @@
 [node name="BenchmarkRunner" type="BenchmarkRunner" parent="."]
 board_view_path = NodePath("../Board/View")
 seed = 52
+
+[connection signal="bench_event" from="BenchmarkRunner" to="Board/View" method="play_effect"]

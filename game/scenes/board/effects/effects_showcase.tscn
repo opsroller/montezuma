@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3 uid="uid://bmzfxshowcase"]
+; SPDX-License-Identifier: GPL-2.0-or-later
+; Look-dev for totem and power-up effects (WP-29): plays e1-l01 and fires
+; every totem and power-up in turn, forever. Capture with Movie Maker; see
+; docs/how-to/capture-the-effects-showcase.md.
+
+[ext_resource type="PackedScene" uid="uid://bmzgamescene" path="res://scenes/game/game.tscn" id="1_game"]
+
+[node name="EffectsShowcase" instance=ExtResource("1_game")]
+autostart_level = "e1-l01"
+effects_showcase = true
