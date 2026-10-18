@@ -20,6 +20,7 @@ own folder.
 - [Power-ups](reference/bonuses.md): on-board power-up ids, tiers, placement, triggering and effects.
 - [MoveResult events](reference/move-result.md): cascade steps, falls, spawns and how to replay a move.
 - [Match3Level](reference/match3-level.md): the level timer, score, quotas and outcome in Godot.
+- [Level data](reference/level-data.md): the level file format, defaults, limits and errors.
 - [Board view](reference/board-view.md): the 3D board's classes, scenes, camera fit and feel constants.
 - [CI pipeline](reference/ci-pipeline.md): the tests workflow's triggers, jobs and caches.
 - [Rules spec](reference/rules-spec.md): how the game plays, with
