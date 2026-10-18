@@ -4,11 +4,10 @@
 name: tests
 
 on:
+  # No path filter on push: GitHub would match it against the files of
+  # that push alone, so a docs-only push would leave its head unchecked.
   push:
-    branches: [main]
-    paths-ignore:
-      - "docs/**"
-      - "**/*.md"
+    branches: ["**"]
   pull_request:
     paths-ignore:
       - "docs/**"
@@ -17,18 +16,22 @@ on:
 permissions:
   contents: read
 
-# A new push to a PR cancels the run it replaces; runs on main always finish.
+# A new push to a branch or PR cancels the run it replaces; runs on main
+# always finish.
 concurrency:
   group: tests-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   core:
+    # A branch of this repository is checked by its push run on the same
+    # commit; pull_request runs only for forks.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork
     strategy:
       fail-fast: false
       matrix:
-        # Windows is off the PR path for speed; pushes to main still run it.
-        os: ${{ fromJSON(github.event_name == 'pull_request' && '["ubuntu-latest","macos-latest"]' || '["ubuntu-latest","windows-latest","macos-latest"]') }}
+        # Windows is off feature branches and PRs for speed; main still runs it.
+        os: ${{ fromJSON((github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && '["ubuntu-latest","windows-latest","macos-latest"]' || '["ubuntu-latest","macos-latest"]') }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     steps:
@@ -43,11 +46,14 @@ jobs:
         run: ctest --test-dir build -C Release --output-on-failure
 
   extension:
+    # A branch of this repository is checked by its push run on the same
+    # commit; pull_request runs only for forks.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork
     strategy:
       fail-fast: false
       matrix:
-        # Windows only on pushes to main, as for core.
-        os: ${{ fromJSON(github.event_name == 'pull_request' && '["ubuntu-latest"]' || '["ubuntu-latest","windows-latest"]') }}
+        # Windows only on main and manual runs, as for core.
+        os: ${{ fromJSON((github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && '["ubuntu-latest","windows-latest"]' || '["ubuntu-latest"]') }}
     env:
       CACHE: ${{ fromJSON('{"ubuntu-latest":"ccache","windows-latest":"sccache"}')[matrix.os] }}
     runs-on: ${{ matrix.os }}
@@ -149,6 +155,9 @@ jobs:
           python3 -c 'import json, sys; r = json.load(open(sys.argv[1])); assert r["cpu_ms"]["frames"] > 0 and r["replay"]["beats"] > 0 and not r["replay"]["diverged"] and r["features"], r' "$RUNNER_TEMP/bench.json"
 
   sanitizers:
+    # A branch of this repository is checked by its push run on the same
+    # commit; pull_request runs only for forks.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

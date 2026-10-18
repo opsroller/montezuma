@@ -14,7 +14,7 @@ name: assets
 # skips would wait on it forever).
 on:
   push:
-    branches: [main]
+    branches: ["**"]
   pull_request:
 
 permissions:
@@ -22,10 +22,13 @@ permissions:
 
 concurrency:
   group: assets-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   validate:
+    # A branch of this repository is checked by its push run on the same
+    # commit; pull_request runs only for forks.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:

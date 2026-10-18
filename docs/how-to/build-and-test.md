@@ -153,4 +153,5 @@ xvfb-run -a -s "-screen 0 1280x720x24" \
 ## Export a build
 
 See [Export a desktop build](export-a-desktop-build.md). CI builds the
-Windows, macOS and Linux packages on every push to `main`.
+Windows, macOS and Linux packages on every push to `main`, and the macOS
+and Linux packages on every push to any other branch.
