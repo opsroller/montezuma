@@ -258,6 +258,12 @@ bool Match3Game::request_swap(Vector2i a, Vector2i b) {
         result["shuffle_map"] = map;
     }
 
+    // Each display step has its cues; a gap means the report and the board
+    // result disagree, which the self-test fails on.
+    if (static_cast<int64_t>(step_cues_.size()) != Array(result["cascades"]).size()) {
+        ++step_mismatches_;
+        ERR_PRINT("Match3Game: report steps do not line up with the animation's steps.");
+    }
     for (const TotemCharge& c : report->totem_charges) {
         const auto i = static_cast<std::size_t>(c.id);
         if (c.charge > totem_charge_[i] && c.charge < 1.0) cue("totem_charge");
@@ -510,6 +516,7 @@ void Match3Game::run_self_test() {
         ++failures;
     };
     signal_counts_.clear();
+    step_mismatches_ = 0;
     if (start_level("e1-l99", "normal")) fail("a missing level started");
     if (start_level("nonsense", "normal")) fail("a bad id started");
     if (!start_level("e1-l01", "normal")) fail("e1-l01 did not start");
@@ -549,6 +556,7 @@ void Match3Game::run_self_test() {
     if (finished != 1) fail("level_finished fired " + String::num_int64(finished) + " times");
     for (const char* name : {"level_started", "score_changed", "gems_changed", "shuffles_changed", "hint_cost_changed"})
         if (signal_counts_[name] < 1) fail(String(name) + " never fired");
+    if (step_mismatches_ > 0) fail("report steps did not line up with the animation");
     if (signal_counts_["gems_changed"] < 2) fail("gems_changed did not follow the gems");
 
     GameAudio* audio = GameAudio::get_singleton();

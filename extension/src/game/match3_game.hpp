@@ -145,6 +145,7 @@ private:
     bool self_test_ = false;
     std::vector<godot::String> cues_played_;
     std::map<std::string, int> signal_counts_;
+    int step_mismatches_ = 0;
 };
 
 }  // namespace montezuma::godot_binding

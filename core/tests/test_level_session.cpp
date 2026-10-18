@@ -1637,6 +1637,36 @@ void test_setup_bounds_and_shuffle_idle() {
     }
 }
 
+void test_report_steps_line_up_with_results() {
+    // The game scene animates a move as the board result's cascades, then
+    // each fired totem's: every step report must sit on one of those steps.
+    LevelData l = base_level();
+    l.gem_goal = GemGoal{1000, 1000};
+    l.totems_unlocked = {"fire", "time", "gold", "harvest", "ward", "gift", "paint"};
+    l.powerups_unlocked = {"tnt", "color_clear", "lightning", "clock", "multiplier", "hint"};
+    l.steel_rate = 0.05;
+    int moves = 0;
+    int fired = 0;
+    bool aligned = true;
+    for (std::uint64_t seed = 1; seed <= 20; ++seed) {
+        LevelSession s(l, Difficulty::Normal, {}, seed);
+        for (int i = 0; i < 60 && s.outcome() == Outcome::Playing; ++i) {
+            const auto m = s.legal_moves();
+            if (m.empty()) break;
+            const auto r = s.swap(m[static_cast<std::size_t>(i) % m.size()][0], m[static_cast<std::size_t>(i) % m.size()][1]);
+            if (!r) break;
+            ++moves;
+            aligned = aligned && r->steps.size() == r->result.cascades.size();
+            for (const TotemFiring& f : r->totems_fired) {
+                ++fired;
+                aligned = aligned && f.steps.size() == (f.result ? f.result->cascades.size() : 0u);
+            }
+        }
+    }
+    check(moves > 100 && fired > 0, "report alignment covers moves and totem firings");
+    check(aligned, "step reports line up with the board result's and each totem's cascades");
+}
+
 int main() {
     test_construction();
     test_moves();
@@ -1656,6 +1686,7 @@ int main() {
     test_hint_not_charged_twice();
     test_chained_cells_out_of_bounds();
     test_setup_bounds_and_shuffle_idle();
+    test_report_steps_line_up_with_results();
     std::printf("%d checks, %d failures\n", checks, failures);
     return failures == 0 ? 0 : 1;
 }
