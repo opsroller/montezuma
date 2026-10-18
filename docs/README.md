@@ -15,11 +15,17 @@ own folder.
 - [Project profile](reference/project-profile.md): stack, commands, who owns what, project rules.
 - [Contracts](reference/contracts.md): interfaces between work packages.
 - [Work packages](reference/work-packages.md): the plan and its status.
+- [Board themes](reference/board-themes.md): theme files, asset names, generators, budgets, validator.
 - [Rules spec](rules-spec.md): the game's rules (moving to `reference/`).
 
 ## How-to guides
 
 - [Build and test](how-to/build-and-test.md): build the core and extension, run tests, load the game.
+- [Make a board theme](how-to/make-a-board-theme.md): change the temple look or add a new theme.
+
+## Explanation
+
+- [Art direction](explanation/art-direction.md): why the board looks the way it does, and the rules new art follows.
 
 Tutorials, more how-to guides and explanations are added by the work
 packages that create what they describe.

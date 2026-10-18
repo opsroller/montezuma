@@ -37,9 +37,9 @@ row in the PR that finishes the package.
 | 06 | Power Totems | gameplay-programmer | `core/**/totems.*`, `core/tests/test_totems.cpp` | 01, 03 | each totem charges from streaks and returns a tested effect result | todo |
 | 07 | Bonuses | gameplay-programmer | `core/**/bonuses.*`, `core/tests/test_bonuses.cpp` | 01, 03 | earned, stored, used and upgraded per spec, tested | todo |
 | 08 | Progress, save and trophies | gameplay-programmer | `core/**/progress.*`, `core/**/trophies.*`, tests | 05 | unlocks, best scores and 9 trophies serialise; tested | todo |
-| 09 | Artifact piece models | technical-artist | `game/assets/models/artifacts/`, `tools/assets/artifacts*` | 04 | 7 pieces, distinct colour and silhouette, in the manifest, under budget | todo |
-| 10 | Temple board and environment | technical-artist | `game/assets/models/temple/`, `tools/assets/temple*` | 04 | board and backdrop in the manifest, fits 8×8 | todo |
-| 11 | Materials and effect shaders | technical-artist | `game/assets/materials/`, `game/assets/textures/` | 04 | stone, gold, jade, highlight, match flash on Mobile, Forward+ and Compatibility | todo |
+| 09 | Artifact piece models | technical-artist | `game/assets/models/<theme>/artifacts/`, piece shapes in `tools/assets/gen_theme_meshes.py` | 04 | 7 pieces, distinct colour and silhouette, in the manifest, under budget | review |
+| 10 | Temple board and environment | technical-artist | `game/assets/models/<theme>/{board,backdrop}/`, `tools/assets/themes/` | 04 | board and backdrop in the manifest, fits 8×8 | review |
+| 11 | Materials and effect shaders | technical-artist | `game/assets/materials/`, `game/assets/textures/`, `tools/assets/gen_theme_textures.py` | 04 | stone, gold, jade, highlight, match flash on Mobile, Forward+ and Compatibility | review |
 | 12 | Board view and camera | graphics-programmer | `extension/src/board/`, `game/scenes/board/` | 02 | `BoardView3D` shows a board with placeholders, camera and lights set | todo |
 | 13 | Swap, match and cascade animation | graphics-programmer | `extension/src/board/animator.*` | 01, 12 | plays any MoveResult in order at feel targets; view equals board after | todo |
 | 14 | Input | graphics-programmer | `extension/src/board/input.*` | 12 | tap-tap and swipe, mouse, illegal bounce | todo |

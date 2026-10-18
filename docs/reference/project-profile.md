@@ -31,7 +31,7 @@ to do the job; this file says with what, and where.
 | Build | CMake (core, extension, tools), Godot export presets for packaging |
 | Tests | Core unit tests via CTest in `core/tests/`; extension load check headless in Godot. CI (`.github/workflows/tests.yml`) runs Linux, Windows and macOS with warnings as errors, plus an ASan/UBSan job |
 | Not allowed | GDScript, JavaScript or TypeScript for game logic. Scenes (`.tscn`) and resources are data and are fine |
-| Offline tools | Blender (headless, Python) for models; Python + numpy + ffmpeg for audio. Tools live in `tools/` and never ship |
+| Offline tools | Blender (headless, Python; the `bpy` module from pip works the same) for models; Python + numpy + ffmpeg for audio. Tools live in `tools/` and never ship |
 | Renderers | Mobile (Android, iOS), Forward+ (desktop), Compatibility (web demo) |
 | Web demo | Same C++ code compiled to WebAssembly with Emscripten; Godot 4.4 single-threaded web export with GDExtension support, so no special server headers are needed. The game emits `level_completed` when the intro level is won and forwards it to the page through `JavaScriptBridge` as a `montezuma:level-completed` DOM event; the page shows the download popup. The page is the only JavaScript |
 | Website | Static HTML/CSS in `site/`, minimal JavaScript for platform detection and the demo hand-off. The native-code rule covers the game, not the site |
@@ -55,7 +55,7 @@ Each role loads `engineering-practices` plus its own plugin from
 | `game-designer` | `docs/rules-spec.md`, `docs/design/`, `game/data/levels/` | Level files are JSON in the LevelData contract. Sim targets in `docs/design/balance.md` |
 | `gameplay-programmer` | `core/`, `extension/src/match3_board.*`, `tools/sim/` | Namespace `montezuma`; bindings in `montezuma::godot_binding` |
 | `graphics-programmer` | `extension/src/board/`, `extension/src/game/`, `game/scenes/` | Feel constants in `extension/src/board/feel.hpp` |
-| `technical-artist` | `game/assets/models/`, `game/assets/materials/`, `game/assets/textures/`, `game/assets/manifest.json`, `tools/assets/` | Budgets below |
+| `technical-artist` | `game/assets/models/`, `game/assets/materials/`, `game/assets/textures/`, `game/assets/lookdev/`, `game/assets/manifest.json`, `tools/assets/` | Budgets below; themes, naming and validator in `docs/reference/board-themes.md`; look in `docs/explanation/art-direction.md` |
 | `sound-designer` | `game/assets/audio/`, `extension/src/audio/`, `tools/audio/` | Cue list in contracts |
 | `ui-developer` | `game/ui/`, `extension/src/ui/` | Credits screen reads `CREDITS.md`; implements the graphic designer's specs |
 | `devops-engineer` | `.github/`, `game/export_presets.cfg`, `tools/release/`, `docs/stores/` | Builds every target including the wasm demo; store checklists in `docs/stores/` |
