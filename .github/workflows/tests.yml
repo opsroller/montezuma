@@ -87,6 +87,9 @@ jobs:
           "$CACHE" --show-stats
       # Same pinned editor as the build pipeline: one version and checksum,
       # in tools/release/godot.env. Not cached; the download takes seconds.
+      - name: Generate textures
+        if: runner.os == 'Linux'
+        uses: ./.github/actions/textures
       - name: Download Godot
         if: runner.os == 'Linux'
         run: |
