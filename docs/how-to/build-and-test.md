@@ -46,9 +46,5 @@ godot --headless --path game --quit-after 120    # errors show here
 
 ## Export a build
 
-Needs the Godot 4.4.1 export templates and a preset in
-`game/export_presets.cfg`.
-
-```sh
-godot --headless --path game --export-release "<Preset>" ../build/<target>/<file>
-```
+See [Export a desktop build](export-a-desktop-build.md). CI builds the
+Windows, macOS and Linux packages on every push to `main`.
