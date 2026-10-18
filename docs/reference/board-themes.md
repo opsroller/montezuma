@@ -110,7 +110,7 @@ byte-identical files.
 | Command | Writes | Needs |
 |---|---|---|
 | `python3 tools/assets/gen_theme_meshes.py [params]` | `SM_*.obj`, prints triangle counts, fails over budget | Blender 4.2+ as `bpy` (`pip install bpy`) or `blender -b --factory-startup -P <script> -- [params]` |
-| `python3 tools/assets/gen_theme_textures.py [params]` | `T_*_{BC,N,ORM,H}.png` (tiling), base and `hi/` | numpy, Pillow |
+| `python3 tools/assets/gen_theme_textures.py [params]` | `T_*_{BC,N,ORM,H}.png` (tiling), base and `hi/`, each with its `.import` | numpy, Pillow |
 | `python3 tools/assets/gen_theme_scenes.py [params]` | `MI_*.tres` and `hi/MI_*.tres`, `PF_*.tscn`, `LD_*.tscn`, the theme's manifest entry, `design/tokens/<theme>-board.json` | standard library |
 | `python3 tools/assets/validate_assets.py` | nothing; exits 1 on errors | Pillow |
 
@@ -123,12 +123,36 @@ The `T_*` texture sets are build outputs, not committed: git ignores
 Hand-made textures elsewhere in `game/assets/textures/` are still
 committed. `gen_theme_textures.py` writes a theme's `.inputs` stamp, a
 SHA-256 of the script, the theme's parameters and the numpy and Pillow
-versions, and skips the theme when the stamp matches and every file
-exists. Three things run it: the CMake target `textures` (part of `all`
+versions, and skips drawing the theme when the stamp matches and every
+file exists (it still writes any missing or wrong `.import` file). Three things run it: the CMake target `textures` (part of `all`
 when CMake finds Python 3 with numpy and Pillow; otherwise configure
 prints how to run it), the CI action `.github/actions/textures` (see
 [CI pipeline](ci-pipeline.md#assets-workflow)), and you, before opening
 the project in Godot from a fresh checkout.
+
+### Import settings
+
+Git ignores the `.import` files too, so `gen_theme_textures.py` writes
+one beside every PNG on every run, from `tools/assets/texture_import.py`,
+and leaves alone a file Godot has rewritten as long as it still agrees.
+Godot's defaults (no mipmaps; `detect_3d` switching a texture to VRAM
+compression the first time the editor sees it in 3D) never apply.
+
+| Parameter | `_BC`, `_ORM`, `_H`, `_R` | `_N` | Why |
+|---|---|---|---|
+| `compress/mode` | `2` (VRAM compressed) | `2` | GPU formats: S3TC/BPTC on desktop and web, ETC2/ASTC on mobile |
+| `compress/high_quality` | `false` | `false` | BC1/BC4 and ETC2, half the memory of BC7/ASTC 4×4 |
+| `compress/normal_map` | `2` (off) | `1` (on) | normal maps go two-channel (RGTC/BC5 on desktop and web, EAC RG11 on mobile); the shaders rebuild Z (`tri_unpack`) |
+| `mipmaps/generate` | `true` | `true` | the triplanar samplers filter with mipmaps; without them minified tiles alias |
+| `detect_3d/compress_to` | `0` (off) | `0` | no silent reimport in the editor |
+
+Change the settings in `texture_import.py`, not in the editor's Import
+dock: the generator puts them back on the next run. Another texture
+generator writing under `game/assets/textures/` writes its own `.import`
+files with mipmaps and compression set and `detect_3d/compress_to=0`.
+Git ignores every `.import`, so a hand-made texture under
+`game/assets/textures/` also needs its `.import` committed (a `!` line in
+`.gitignore`) to pass the validator.
 
 ### Parameter file
 
@@ -186,9 +210,11 @@ the whole scene stays near 31k triangles. Draw calls: one per piece (64),
 materials. Textures: seven base sets at 1024² (`Stone_01` with `_H`;
 22 PNGs, 15 MB generated) and 2048² `hi/` sets for the hero surfaces
 `Stone_01` and `Gold_01` (7 PNGs, 23 MB generated); all are VRAM-compressed
-on import. In VRAM (BPTC/ASTC, about 1 byte per pixel with mipmaps) the
-base sets take about 30 MB and the `hi/` sets add about 40 MB, well
-inside every tier's texture budget. Frame time on target phones
+on import ([Import settings](#import-settings)). In VRAM on desktop
+(BC1/BC4 about 0.7 and RGTC about 1.3 bytes per pixel with mipmaps; ETC2
+and EAC on mobile are the same sizes) the base sets take about 20 MB and
+the `hi/` sets add about 25 MB, well inside every tier's texture budget.
+Frame time on target phones
 is not measured yet; that is WP-41.
 
 ## Look-dev reference frames
@@ -235,6 +261,11 @@ each as `error: <file>: <rule and fix>`:
   30-240 sRGB and metal (where `_ORM` blue ≥ 0.5) at 180 or more; normals
   unit length, facing out, averaging flat; metallic 0 or 1 except at most
   5% of pixels; roughness ≥ 0.02; height spans a real range.
+- Every PNG under `game/assets/textures/` has a `.import` beside it.
+  `_BC`, `_N`, `_ORM`, `_H` and `_R` maps carry exactly the
+  [import settings](#import-settings); any other texture there sets
+  `compress/mode` and `mipmaps/generate` and turns
+  `detect_3d/compress_to` off.
 - No `.tres`, `.tscn` or `.gdshader` filters anisotropically with repeat
   (`texture_filter = 4` or `5` without `texture_repeat = false`, or a
   `filter_*_anisotropic` sampler without `repeat_disable`); see texture

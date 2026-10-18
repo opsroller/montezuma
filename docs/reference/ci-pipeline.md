@@ -83,7 +83,8 @@ runs `tools/assets/validate_assets.py` against `game/assets/` and the
 theme manifest. Rules it enforces:
 [Board themes: validator rules](board-themes.md#validator-rules).
 It then runs the readability-check and `check_run.py` tests in
-`tools/bench/tests/` with the same Pillow ([Benchmark](benchmark.md#readability-checks)).
+`tools/bench/tests/` with the same Pillow ([Benchmark](benchmark.md#readability-checks)),
+and the texture import settings tests in `tools/assets/tests/`.
 
 | Item | Value |
 |---|---|
@@ -91,8 +92,8 @@ It then runs the readability-check and `check_run.py` tests in
 | Job | `validate`, on `ubuntu-24.04`, 10-minute timeout |
 | Token permissions | `contents: read` |
 | Python packages | `.github/requirements/assets.txt`: numpy 2.5.3 and Pillow 12.3.0, installed with `--require-hashes` into a virtual environment |
-| Textures | composite action `.github/actions/textures`: restores `game/assets/textures/*/T_*.png`, `*/hi/T_*.png` and `.inputs` from the Actions cache, key `textures-` plus a hash of `gen_theme_textures.py`, `tools/assets/themes/*.json` and `assets.txt`; on a miss runs `gen_theme_textures.py` (about 40 s). The `tests` extension job (Linux), the `build` export job and the `web` job use the same action before Godot imports the project |
-| What red means | a failed `Generate textures` step (a generator error), or an `error:` line in the log names the file and the broken rule: a manifest path or scene reference that does not exist, a file that does not parse as its format, a piece or board over its triangle budget, a texture over 1024 px (2048 px in `hi/`) or not power-of-two, a texture map in the wrong colour space, slot or value range, a desktop `hi/` variant without a base file, a mobile or web export preset that ships `hi/`, a missing provenance record or SPDX line, or a name off the naming table |
+| Textures | composite action `.github/actions/textures`: restores `game/assets/textures/*/T_*.png`, `*/hi/T_*.png` and `.inputs` from the Actions cache, key `textures-` plus a hash of `gen_theme_textures.py`, `tools/assets/themes/*.json` and `assets.txt`; then always runs `gen_theme_textures.py`, which on a hit only checks the stamp and writes the `.import` files the cache does not hold (about 40 s on a miss). The `tests` extension job (Linux), the `build` export job and the `web` job use the same action before Godot imports the project |
+| What red means | a failed `Generate textures` step (a generator error), or an `error:` line in the log names the file and the broken rule: a manifest path or scene reference that does not exist, a file that does not parse as its format, a piece or board over its triangle budget, a texture over 1024 px (2048 px in `hi/`) or not power-of-two, a texture map in the wrong colour space, slot or value range, a texture without its `.import` or with the wrong import settings, a desktop `hi/` variant without a base file, a mobile or web export preset that ships `hi/`, a missing provenance record or SPDX line, or a name off the naming table |
 
 The job takes seconds, so it has no path filter: a check that a PR can
 skip could never be made required.

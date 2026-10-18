@@ -4,7 +4,8 @@
 # Generates the board theme texture sets (git ignores them) before anything validates,
 # imports or exports the game. The output is cached by a hash of its inputs:
 # the generator, every theme's parameters and the pinned numpy and Pillow.
-# On a cache hit the generator only confirms its .inputs stamp and exits.
+# On a cache hit the generator only confirms its .inputs stamp and writes the
+# Godot .import files (the cache does not hold them).
 # Reference: docs/reference/ci-pipeline.md
 name: Generate textures
 description: Restore or generate the board theme textures
