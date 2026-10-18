@@ -43,6 +43,7 @@ void vertex() {
 
 vec3 behind(vec2 uv, float frag_depth) {
 	// Keep only what lies behind this fragment; anything in front would smear in.
+	// Godot 4.3+ uses reversed Z on every renderer: a smaller depth is farther.
 	float d = textureLod(depth_texture, uv, 0.0).r;
 	return d < frag_depth ? textureLod(screen_texture, uv, 0.0).rgb : vec3(-1.0);
 }
