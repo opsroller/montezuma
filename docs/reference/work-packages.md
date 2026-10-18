@@ -23,11 +23,11 @@ row in the PR that finishes the package.
 
 | WP | Package | Role | Owns | Depends on | Done when | Status |
 |---|---|---|---|---|---|---|
-| 00 | Project profile, contracts, this plan | project-manager | `CLAUDE.md`, `.claude/`, `docs/README.md`, `docs/reference/project-profile.md`, `docs/reference/contracts.md`, `docs/reference/work-packages.md`, `CONTRIBUTING.md` | — | merged | review |
+| 00 | Project profile, contracts, this plan | project-manager | `CLAUDE.md`, `.claude/`, `docs/README.md`, `docs/reference/project-profile.md`, `docs/reference/contracts.md`, `docs/reference/work-packages.md`, `CONTRIBUTING.md` | — | merged | done (#2) |
 | 01 | C++ core: board, moves, cascades, level state | gameplay-programmer (port thread) | `core/` | — | rules from the spec in C++20 with CTest tests | done (#1, #4) |
-| 02 | GDExtension scaffold, core bindings and Godot project | gameplay-programmer (port thread) | `extension/`, `game/`, `thirdparty/` | 01 | `Match3Board` and `BoardView3D` load in Godot headless on desktop CI | active (#3) |
+| 02 | GDExtension scaffold, core bindings and Godot project | gameplay-programmer (port thread) | `extension/`, `game/`, `thirdparty/` | 01 | `Match3Board` and `BoardView3D` load in Godot headless on desktop CI | done (#3) |
 | 03 | Settle the rules spec | game-designer | `docs/rules-spec.md`, `docs/design/` | — | no **[verify]** left; totems, bonuses, mini-games and intro levels written; contract ids confirmed | todo |
-| 04 | Visual identity | graphic-designer | `design/` | — | logo, palette, type, style guide and tokens | todo |
+| 04 | Visual identity | graphic-designer | `design/` | — | logo, palette, type, style guide and tokens | active |
 
 ## Wave 1: build in parallel (17 at once)
 
@@ -37,9 +37,9 @@ row in the PR that finishes the package.
 | 06 | Power Totems | gameplay-programmer | `core/**/totems.*`, `core/tests/test_totems.cpp` | 01, 03 | each totem charges from streaks and returns a tested effect result | todo |
 | 07 | Bonuses | gameplay-programmer | `core/**/bonuses.*`, `core/tests/test_bonuses.cpp` | 01, 03 | earned, stored, used and upgraded per spec, tested | todo |
 | 08 | Progress, save and trophies | gameplay-programmer | `core/**/progress.*`, `core/**/trophies.*`, tests | 05 | unlocks, best scores and 9 trophies serialise; tested | todo |
-| 09 | Artifact piece models | technical-artist | `game/assets/models/artifacts/`, `tools/assets/artifacts*` | 04 | 7 pieces, distinct colour and silhouette, in the manifest, under budget | todo |
-| 10 | Temple board and environment | technical-artist | `game/assets/models/temple/`, `tools/assets/temple*` | 04 | board and backdrop in the manifest, fits 8×8 | todo |
-| 11 | Materials and effect shaders | technical-artist | `game/assets/materials/`, `game/assets/textures/` | 04 | stone, gold, jade, highlight, match flash on Mobile, Forward+ and Compatibility | todo |
+| 09 | Artifact piece models | technical-artist | `game/assets/models/artifacts/`, `tools/assets/artifacts*` | 04 | 7 pieces, distinct colour and silhouette, in the manifest, under budget | active (placeholder style until 04) |
+| 10 | Temple board and environment | technical-artist | `game/assets/models/temple/`, `tools/assets/temple*` | 04 | board and backdrop in the manifest, fits 8×8 | active (placeholder style until 04) |
+| 11 | Materials and effect shaders | technical-artist | `game/assets/materials/`, `game/assets/textures/` | 04 | stone, gold, jade, highlight, match flash on Mobile, Forward+ and Compatibility | active (placeholder style until 04) |
 | 12 | Board view and camera | graphics-programmer | `extension/src/board/`, `game/scenes/board/` | 02 | `BoardView3D` shows a board with placeholders, camera and lights set | review |
 | 13 | Swap, match and cascade animation | graphics-programmer | `extension/src/board/animator.*` | 01, 12 | plays any MoveResult in order at feel targets; view equals board after | todo |
 | 14 | Input | graphics-programmer | `extension/src/board/input.*` | 12 | tap-tap and swipe, mouse, illegal bounce | todo |

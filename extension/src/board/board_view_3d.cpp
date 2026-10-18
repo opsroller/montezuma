@@ -63,6 +63,8 @@ void BoardView3D::rebuild() {
     }
     grid_.width = board_->get_width();
     grid_.height = board_->get_height();
+    // Pooled pieces were built for the old cell size.
+    library_.clear();
     library_.load(grid_.cell);
 
     slab_ = library_.make_board(grid_.width, grid_.height, grid_.cell);
@@ -138,6 +140,7 @@ void BoardView3D::play(const Dictionary& result) {
     ERR_FAIL_COND_MSG(board_.is_null(), "play() before show_board().");
     Vector2i a = last_request_[0];
     Vector2i b = last_request_[1];
+    last_request_[0] = last_request_[1] = kNoCell;
     if (result.has("swap")) {
         const Array swap = result["swap"];
         if (swap.size() == 2) {
@@ -212,6 +215,8 @@ Vector2i BoardView3D::cell_at_screen(Vector2 screen_pos) const {
 
 void BoardView3D::_unhandled_input(const Ref<InputEvent>& event) {
     if (Ref<InputEventMouseButton> mb = event; mb.is_valid()) {
+        // Touches also arrive as emulated mouse events; take the touch only.
+        if (mb->get_device() == InputEvent::DEVICE_ID_EMULATION) return;
         if (mb->is_pressed() && mb->get_button_index() == MOUSE_BUTTON_LEFT) handle_press(mb->get_position());
     } else if (Ref<InputEventScreenTouch> touch = event; touch.is_valid()) {
         if (touch->is_pressed()) handle_press(touch->get_position());
