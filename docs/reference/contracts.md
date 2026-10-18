@@ -113,10 +113,14 @@ falls back to a placeholder primitive when a name is missing.
 Played by name with `GameAudio::play(name)`; a missing cue warns and is silent.
 
 `swap`, `swap_illegal`, `match`, `cascade_1` … `cascade_8`, `piece_land`,
-`bonus_earned`, `bonus_use_<id>`, `totem_charge`, `totem_fire_<id>`,
-`quota_done`, `time_warning`, `level_won`, `level_lost`, `ui_click`,
-`ui_back`, `trophy`, `music_menu`, `music_play_<episode>`,
-`ambience_jungle`.
+`gem_collect`, `steel_break`, `chain_break`, `bonus_earned` (a power-up
+appears on the board), `bonus_use_<power-up id>`, `totem_charge`,
+`totem_fire_<totem id>`, `quota_done`, `time_warning`, `level_won`,
+`level_lost`, `ui_click`, `ui_back`, `trophy`, `music_menu`,
+`music_play_<episode>`, `ambience_jungle`.
+
+Ids are the settled totem and power-up ids below. Files, levels and
+status per cue: [audio.md](audio.md).
 
 ## Totem and bonus ids (owner: game-designer, WP-03) — proposed
 

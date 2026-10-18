@@ -36,7 +36,7 @@ peak-normalised.
 
 Every file is rendered with a true-peak ceiling of -1.5 dBTP (0.5 dB of
 margin under the -1 dBTP limit). Where the ceiling binds, the file lands
-a little under its category target (`bonus_use_hammer`).
+a little under its category target (`steel_break`).
 
 ## Sound effects
 
@@ -57,19 +57,23 @@ Measured values from `tools/audio/reports/sfx_loudness.json`.
 | `cascade_8` | `cascade_8.wav` | feedback | 1.83 | -19.0 | -10.4 |
 | `piece_land` | `piece_land_01` … `_04.wav` | frequent | 0.10 | -24.1 | -8.2 |
 | `bonus_earned` | `bonus_earned.wav` | feedback | 1.29 | -19.0 | -8.4 |
-| `bonus_use_hammer` | `bonus_use_hammer.wav` | feedback | 1.80 | -20.3 | -1.4 |
+| `bonus_use_tnt` | `bonus_use_tnt.wav` | feedback | 2.11 | -19.0 | -4.6 |
+| `bonus_use_color_clear` | `bonus_use_color_clear.wav` | feedback | 2.36 | -19.0 | -8.1 |
 | `bonus_use_lightning` | `bonus_use_lightning.wav` | feedback | 2.10 | -19.0 | -5.4 |
-| `bonus_use_extra_time` | `bonus_use_extra_time.wav` | feedback | 1.69 | -19.0 | -8.6 |
-| `bonus_use_shuffle` | `bonus_use_shuffle.wav` | feedback | 0.75 | -19.0 | -1.6 |
-| `bonus_use_dynamite` | `bonus_use_dynamite.wav` | feedback | 2.10 | -19.0 | -3.5 |
-| `bonus_use_freeze` | `bonus_use_freeze.wav` | feedback | 2.43 | -19.0 | -9.5 |
+| `bonus_use_clock` | `bonus_use_clock.wav` | feedback | 1.57 | -19.0 | -8.9 |
+| `bonus_use_multiplier` | `bonus_use_multiplier.wav` | feedback | 2.18 | -19.0 | -9.0 |
+| `bonus_use_hint` | `bonus_use_hint.wav` | frequent | 0.93 | -24.0 | -17.0 |
+| `gem_collect` | `gem_collect_01` … `_03.wav` | feedback | 0.95 | -19.0 | -7.4 |
+| `steel_break` | `steel_break_01` … `_02.wav` | feedback | 1.50 | -21.7 | -1.8 |
+| `chain_break` | `chain_break_01` … `_02.wav` | feedback | 0.72 | -19.1 | -4.2 |
 | `totem_charge` | `totem_charge.wav` | feedback | 1.24 | -19.0 | -8.3 |
-| `totem_fire_row_clear` | `totem_fire_row_clear.wav` | stinger | 2.70 | -16.0 | -5.7 |
-| `totem_fire_random_blast` | `totem_fire_random_blast.wav` | stinger | 2.74 | -16.0 | -5.2 |
+| `totem_fire_fire` | `totem_fire_fire.wav` | stinger | 2.70 | -16.0 | -4.8 |
 | `totem_fire_time` | `totem_fire_time.wav` | stinger | 2.70 | -16.0 | -5.1 |
-| `totem_fire_lightning` | `totem_fire_lightning.wav` | stinger | 2.70 | -16.0 | -5.2 |
-| `totem_fire_color_bomb` | `totem_fire_color_bomb.wav` | stinger | 2.98 | -16.0 | -3.9 |
-| `totem_fire_multiplier` | `totem_fire_multiplier.wav` | stinger | 2.98 | -16.0 | -4.4 |
+| `totem_fire_gold` | `totem_fire_gold.wav` | stinger | 2.87 | -16.0 | -5.5 |
+| `totem_fire_harvest` | `totem_fire_harvest.wav` | stinger | 2.75 | -16.0 | -5.0 |
+| `totem_fire_ward` | `totem_fire_ward.wav` | stinger | 3.73 | -16.0 | -1.7 |
+| `totem_fire_gift` | `totem_fire_gift.wav` | stinger | 2.70 | -16.0 | -4.8 |
+| `totem_fire_paint` | `totem_fire_paint.wav` | stinger | 2.93 | -16.0 | -5.2 |
 | `quota_done` | `quota_done.wav` | alert | 1.72 | -17.0 | -4.8 |
 | `time_warning` | `time_warning.wav` | alert | 0.32 | -17.1 | -5.2 |
 | `level_won` | `level_won.wav` | stinger | 3.80 | -16.0 | -9.1 |
@@ -78,8 +82,9 @@ Measured values from `tools/audio/reports/sfx_loudness.json`.
 | `ui_back` | `ui_back.wav` | frequent | 0.12 | -24.2 | -10.1 |
 | `trophy` | `trophy.wav` | stinger | 3.19 | -16.0 | -4.7 |
 
-44 files, 5.7 MB as WAV on disk; Godot's QOA import stores them at
+51 files, 6.8 MB as WAV on disk; Godot's QOA import stores them at
 roughly a fifth of that.
 
-Totem and bonus cues use the placeholder ids in the contract; when WP-03
-renames an id, the cue and file are renamed with it.
+Totem and power-up cues use the ids WP-03 settled (`totem_fire_<id>` for
+the seven totems, `bonus_use_<id>` for the six power-ups). If an id
+changes, the cue and its file are renamed with it in one PR.

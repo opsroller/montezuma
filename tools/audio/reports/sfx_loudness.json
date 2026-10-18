@@ -6,33 +6,26 @@
     "seconds": 1.29,
     "true_peak_dbtp": -8.4
   },
-  "bonus_use_dynamite.wav": {
+  "bonus_use_clock.wav": {
     "category": "feedback",
-    "cue": "bonus_use_dynamite",
+    "cue": "bonus_use_clock",
     "momentary_lufs": -19.0,
-    "seconds": 2.097,
-    "true_peak_dbtp": -3.5
+    "seconds": 1.567,
+    "true_peak_dbtp": -8.9
   },
-  "bonus_use_extra_time.wav": {
+  "bonus_use_color_clear.wav": {
     "category": "feedback",
-    "cue": "bonus_use_extra_time",
+    "cue": "bonus_use_color_clear",
     "momentary_lufs": -19.0,
-    "seconds": 1.685,
-    "true_peak_dbtp": -8.6
+    "seconds": 2.36,
+    "true_peak_dbtp": -8.1
   },
-  "bonus_use_freeze.wav": {
-    "category": "feedback",
-    "cue": "bonus_use_freeze",
-    "momentary_lufs": -19.0,
-    "seconds": 2.426,
-    "true_peak_dbtp": -9.5
-  },
-  "bonus_use_hammer.wav": {
-    "category": "feedback",
-    "cue": "bonus_use_hammer",
-    "momentary_lufs": -20.3,
-    "seconds": 1.8,
-    "true_peak_dbtp": -1.4
+  "bonus_use_hint.wav": {
+    "category": "frequent",
+    "cue": "bonus_use_hint",
+    "momentary_lufs": -24.0,
+    "seconds": 0.932,
+    "true_peak_dbtp": -17.0
   },
   "bonus_use_lightning.wav": {
     "category": "feedback",
@@ -41,12 +34,19 @@
     "seconds": 2.1,
     "true_peak_dbtp": -5.4
   },
-  "bonus_use_shuffle.wav": {
+  "bonus_use_multiplier.wav": {
     "category": "feedback",
-    "cue": "bonus_use_shuffle",
+    "cue": "bonus_use_multiplier",
     "momentary_lufs": -19.0,
-    "seconds": 0.75,
-    "true_peak_dbtp": -1.6
+    "seconds": 2.18,
+    "true_peak_dbtp": -9.0
+  },
+  "bonus_use_tnt.wav": {
+    "category": "feedback",
+    "cue": "bonus_use_tnt",
+    "momentary_lufs": -19.0,
+    "seconds": 2.109,
+    "true_peak_dbtp": -4.6
   },
   "cascade_1.wav": {
     "category": "feedback",
@@ -103,6 +103,41 @@
     "momentary_lufs": -19.0,
     "seconds": 1.826,
     "true_peak_dbtp": -10.4
+  },
+  "chain_break_01.wav": {
+    "category": "feedback",
+    "cue": "chain_break",
+    "momentary_lufs": -19.1,
+    "seconds": 0.649,
+    "true_peak_dbtp": -4.2
+  },
+  "chain_break_02.wav": {
+    "category": "feedback",
+    "cue": "chain_break",
+    "momentary_lufs": -19.2,
+    "seconds": 0.716,
+    "true_peak_dbtp": -7.1
+  },
+  "gem_collect_01.wav": {
+    "category": "feedback",
+    "cue": "gem_collect",
+    "momentary_lufs": -19.0,
+    "seconds": 0.955,
+    "true_peak_dbtp": -7.4
+  },
+  "gem_collect_02.wav": {
+    "category": "feedback",
+    "cue": "gem_collect",
+    "momentary_lufs": -19.0,
+    "seconds": 0.911,
+    "true_peak_dbtp": -8.1
+  },
+  "gem_collect_03.wav": {
+    "category": "feedback",
+    "cue": "gem_collect",
+    "momentary_lufs": -19.0,
+    "seconds": 0.95,
+    "true_peak_dbtp": -9.1
   },
   "level_lost.wav": {
     "category": "stinger",
@@ -181,6 +216,20 @@
     "seconds": 1.72,
     "true_peak_dbtp": -4.8
   },
+  "steel_break_01.wav": {
+    "category": "feedback",
+    "cue": "steel_break",
+    "momentary_lufs": -21.7,
+    "seconds": 1.5,
+    "true_peak_dbtp": -2.7
+  },
+  "steel_break_02.wav": {
+    "category": "feedback",
+    "cue": "steel_break",
+    "momentary_lufs": -21.7,
+    "seconds": 1.5,
+    "true_peak_dbtp": -1.8
+  },
   "swap_01.wav": {
     "category": "frequent",
     "cue": "swap",
@@ -223,40 +272,40 @@
     "seconds": 1.239,
     "true_peak_dbtp": -8.3
   },
-  "totem_fire_color_bomb.wav": {
+  "totem_fire_fire.wav": {
     "category": "stinger",
-    "cue": "totem_fire_color_bomb",
-    "momentary_lufs": -16.0,
-    "seconds": 2.979,
-    "true_peak_dbtp": -3.9
-  },
-  "totem_fire_lightning.wav": {
-    "category": "stinger",
-    "cue": "totem_fire_lightning",
+    "cue": "totem_fire_fire",
     "momentary_lufs": -16.0,
     "seconds": 2.7,
-    "true_peak_dbtp": -5.2
+    "true_peak_dbtp": -4.8
   },
-  "totem_fire_multiplier.wav": {
+  "totem_fire_gift.wav": {
     "category": "stinger",
-    "cue": "totem_fire_multiplier",
-    "momentary_lufs": -16.0,
-    "seconds": 2.98,
-    "true_peak_dbtp": -4.4
-  },
-  "totem_fire_random_blast.wav": {
-    "category": "stinger",
-    "cue": "totem_fire_random_blast",
-    "momentary_lufs": -16.0,
-    "seconds": 2.74,
-    "true_peak_dbtp": -5.2
-  },
-  "totem_fire_row_clear.wav": {
-    "category": "stinger",
-    "cue": "totem_fire_row_clear",
+    "cue": "totem_fire_gift",
     "momentary_lufs": -16.0,
     "seconds": 2.7,
-    "true_peak_dbtp": -5.7
+    "true_peak_dbtp": -4.8
+  },
+  "totem_fire_gold.wav": {
+    "category": "stinger",
+    "cue": "totem_fire_gold",
+    "momentary_lufs": -16.0,
+    "seconds": 2.873,
+    "true_peak_dbtp": -5.5
+  },
+  "totem_fire_harvest.wav": {
+    "category": "stinger",
+    "cue": "totem_fire_harvest",
+    "momentary_lufs": -16.0,
+    "seconds": 2.75,
+    "true_peak_dbtp": -5.0
+  },
+  "totem_fire_paint.wav": {
+    "category": "stinger",
+    "cue": "totem_fire_paint",
+    "momentary_lufs": -16.0,
+    "seconds": 2.934,
+    "true_peak_dbtp": -5.2
   },
   "totem_fire_time.wav": {
     "category": "stinger",
@@ -264,6 +313,13 @@
     "momentary_lufs": -16.0,
     "seconds": 2.7,
     "true_peak_dbtp": -5.1
+  },
+  "totem_fire_ward.wav": {
+    "category": "stinger",
+    "cue": "totem_fire_ward",
+    "momentary_lufs": -16.0,
+    "seconds": 3.73,
+    "true_peak_dbtp": -1.7
   },
   "trophy.wav": {
     "category": "stinger",

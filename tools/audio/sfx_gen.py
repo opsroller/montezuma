@@ -98,48 +98,75 @@ def piece_land(r, v):
 
 
 def bonus_earned(r, v):
-    """A bonus drops into its slot: rising gold shimmer over a wooden pickup."""
+    """A power-up appears on the board: rising gold shimmer over a wooden
+    pickup."""
     up = s.shimmer(0.5, r, 74, 98, count=10)
     hit = s.wood_knock(62, 0.2, r, hollowness=0.8) * 0.6
     return s.reverb(s.mix((hit, 0.0), (up, 0.02)), r, 1.0, 0.2)
 
 
 def bonus_use(kind):
+    """A power-up on the board goes off when its piece is cleared."""
     def design(r, v):
-        if kind == "hammer":
-            hit = s.membrane_drum(36, 0.6, r, drop=0.8)
-            crack = s.highpass(s.noise(int(0.25 * s.RATE), r), 1500) * s.env_ad(int(0.25 * s.RATE), 0.001, 0.04) * 0.6
-            stone = s.wood_knock(48, 0.3, r, 0.2)
-            return s.reverb(s.mix((hit, 0.0), (crack, 0.0), (stone, 0.0)), r, 1.2, 0.2)
-        if kind == "lightning":
-            n = int(0.7 * s.RATE)
-            zap = s.noise(n, r) * (s.rattle(0.7, r, grains=60, centre=3000) != 0)
-            buzz = np.sign(np.sin(2 * np.pi * 110 * s.t_axis(0.7))) * 0.3
-            body = s.bandpass(zap + buzz * s.noise(n, r) * 0.2, 2500, 0.7) * s.env_ad(n, 0.002, 0.18)
-            return s.reverb(body + s.membrane_drum(33, 0.7, r, 1.0) * 0.5, r, 1.4, 0.25)
-        if kind == "extra_time":
-            ticks = [(s.wood_knock(79 if i % 2 == 0 else 74, 0.1, r, 0.3) * 0.6, i * 0.09) for i in range(4)]
-            rise = s.shimmer(0.4, r, 79, 96, count=6)
-            return s.reverb(s.mix(*ticks, (rise, 0.34)), r, 1.0, 0.2)
-        if kind == "shuffle":
-            rat = s.mix(*[(s.rattle(0.18, r, grains=25, centre=c), i * 0.12)
-                          for i, c in enumerate((4500, 6500, 5000, 7000, 5500))])
-            swirl = s.sweep(0.75, r, 600, 3000, q=2.5) * s.env_ad(int(0.75 * s.RATE), 0.2, 0.25) * 0.5
-            return s.mix((rat, 0.0), (swirl, 0.0))
-        if kind == "dynamite":
+        if kind == "tnt":
             n = int(1.4 * s.RATE)
             fizz = s.highpass(s.noise(int(0.3 * s.RATE), r), 4000) * 0.15
             boom = s.lowpass(s.noise(n, r, "brown"), 900) * s.env_ad(n, 0.003, 0.3)
             body = s.membrane_drum(28, 1.2, r, drop=1.5)
             debris = s.rattle(0.9, r, grains=70, centre=2500) * 0.4
             return s.reverb(s.mix((fizz, 0.0), (boom, 0.3), (body, 0.3), (debris, 0.4)), r, 1.6, 0.22)
-        if kind == "freeze":
-            notes = [96, 91, 89, 84, 81]
-            parts = [(s.jade_chime(nn, 0.9, r, bright=1.6) * 0.5, i * 0.06) for i, nn in enumerate(notes)]
-            frost = s.highpass(s.noise(int(0.8 * s.RATE), r, "pink"), 6000) * s.env_ad(int(0.8 * s.RATE), 0.05, 0.25) * 0.25
-            return s.reverb(s.mix(*parts, (frost, 0.0)), r, 1.8, 0.35)
+        if kind == "color_clear":
+            n = int(0.9 * s.RATE)
+            whoomp = s.lowpass(s.noise(n, r, "brown"), 600) * s.env_ad(n, 0.01, 0.2) * 0.8
+            return s.reverb(s.mix((whoomp, 0.0), (s.shimmer(0.7, r, 70, 100, count=16) * 0.8, 0.05)), r, 1.4, 0.25)
+        if kind == "lightning":
+            n = int(0.7 * s.RATE)
+            zap = s.noise(n, r) * (s.rattle(0.7, r, grains=60, centre=3000) != 0)
+            buzz = np.sign(np.sin(2 * np.pi * 110 * s.t_axis(0.7))) * 0.3
+            body = s.bandpass(zap + buzz * s.noise(n, r) * 0.2, 2500, 0.7) * s.env_ad(n, 0.002, 0.18)
+            return s.reverb(body + s.membrane_drum(33, 0.7, r, 1.0) * 0.5, r, 1.4, 0.25)
+        if kind == "clock":
+            ticks = [(s.wood_knock(79 if i % 2 == 0 else 74, 0.1, r, 0.3) * 0.6, i * 0.09) for i in range(4)]
+            rise = s.shimmer(0.4, r, 79, 96, count=6)
+            return s.reverb(s.mix(*ticks, (rise, 0.34)), r, 1.0, 0.2)
+        if kind == "multiplier":
+            chord = [(s.jade_chime(nn, 0.8, r) * 0.6, i * 0.06) for i, nn in enumerate((62, 69, 74, 81))]
+            return s.reverb(s.mix(*chord, (s.wood_knock(62, 0.3, r, 1.0) * 0.6, 0.0)), r, 1.2, 0.22)
+        if kind == "hint":
+            # Quiet on purpose: a hint should guide the eye, not reward.
+            return s.reverb(s.mix((s.jade_chime(93, 0.5, r, bright=0.5) * 0.6, 0.0),
+                                  (s.jade_chime(98, 0.4, r, bright=0.4) * 0.3, 0.08)), r, 1.0, 0.3)
         raise ValueError(kind)
     return design
+
+
+def gem_collect(r, v):
+    """A gem piece is cleared and counts toward the goal: a bright glint
+    above the match chime, so gems are heard apart from plain matches."""
+    glint = s.jade_chime(SCALE[10] + [0, 0.1, -0.1][v], 0.5, r, bright=1.4)
+    sparkle = s.shimmer(0.18, r, 96, 104, count=3) * 0.5
+    return s.reverb(s.mix((glint, 0.0), (sparkle, 0.03)), r, 0.8, 0.2)
+
+
+def steel_break(r, v):
+    """A steel piece is destroyed: hard metallic crack, inharmonic ring."""
+    n = int(0.6 * s.RATE)
+    t = s.t_axis(0.6)
+    ring = sum(np.sin(2 * np.pi * f * t) * np.exp(-t / d) for f, d in
+               ((1230 + 40 * v, 0.25), (2710, 0.12), (4190, 0.07), (6330, 0.04)))
+    crack = s.highpass(s.noise(n, r), 2000) * s.env_ad(n, 0.0005, 0.02)
+    return s.reverb(s.mix((ring * 0.4 + crack, 0.0), (s.wood_knock(45, 0.2, r, 0.2) * 0.5, 0.0)), r, 0.9, 0.18)
+
+
+def chain_break(r, v):
+    """Chains on a cell snap: a few small metal clinks falling away."""
+    parts = []
+    for i in range(4):
+        tt = s.t_axis(0.12)
+        f = r.uniform(2500, 4200)
+        clink = np.sin(2 * np.pi * f * tt) * np.exp(-tt / 0.03) + s.noise(len(tt), r) * np.exp(-tt / 0.002) * 0.4
+        parts.append((clink * (1 - i * 0.18), i * r.uniform(0.04, 0.07) + i * 0.02))
+    return s.reverb(s.mix(*parts), r, 0.7, 0.15)
 
 
 def totem_charge(r, v):
@@ -152,25 +179,30 @@ def totem_charge(r, v):
 
 
 def totem_fire(kind):
+    """A Power Totem fires: conch and drum say "totem", the layer on top
+    says which one."""
     def design(r, v):
         horn = s.conch(50, 0.9, r) * 0.6
         drum = s.membrane_drum(33, 0.8, r, drop=0.8)
-        if kind == "row_clear":
-            fx = s.sweep(0.6, r, 300, 6000, q=2.0) * s.env_ad(int(0.6 * s.RATE), 0.3, 0.12)
-        elif kind == "random_blast":
-            fx = s.mix(*[(s.membrane_drum(40 + 3 * i, 0.35, r, 1.0) * 0.6, 0.15 + i * 0.11) for i in range(5)])
-        elif kind == "time":
+        if kind == "fire":        # fireballs clear random pieces
+            fx = s.mix(*[(s.sweep(0.35, r, 400, 2500, q=1.5) * s.env_ad(int(0.35 * s.RATE), 0.05, 0.1)
+                          + s.membrane_drum(40 + 3 * i, 0.35, r, 1.0) * 0.6, 0.15 + i * 0.12) for i in range(4)])
+        elif kind == "time":      # adds time: rising log-drum ticks
             fx = s.mix(*[(s.wood_knock(nn, 0.25, r, 1.0) * 0.6, 0.1 + i * 0.12)
                          for i, nn in enumerate((62, 69, 74, 81))])
-        elif kind == "lightning":
-            n = int(0.9 * s.RATE)
-            fx = s.bandpass(s.noise(n, r) * (s.rattle(0.9, r, 90, 2500) != 0), 2000, 0.6) * s.env_ad(n, 0.002, 0.3)
-        elif kind == "color_bomb":
-            fx = s.mix((s.lowpass(s.noise(int(1.0 * s.RATE), r, "brown"), 700)
-                        * s.env_ad(int(1.0 * s.RATE), 0.004, 0.25), 0.15),
-                       (s.shimmer(0.7, r, 70, 100, count=16) * 0.7, 0.25))
-        elif kind == "multiplier":
-            fx = s.mix(*[(s.jade_chime(nn, 0.8, r) * 0.6, 0.1 + i * 0.07) for i, nn in enumerate((62, 69, 74, 81, 86))])
+        elif kind == "gold":      # points: a falling shower of gold
+            fx = s.shimmer(0.9, r, 76, 104, count=24, rising=False) * 0.8
+        elif kind == "harvest":   # gathers every gem: fast rising glints
+            fx = s.mix(*[(s.jade_chime(SCALE[i % len(SCALE)] + 12, 0.4, r, bright=1.3) * 0.5, 0.1 + i * 0.05)
+                         for i in range(10)])
+        elif kind == "ward":      # breaks steel: cracks and ring
+            fx = s.mix(*[(steel_break(r, i % 2) * 0.7, 0.15 + i * 0.14) for i in range(3)])
+        elif kind == "gift":      # places power-ups: wooden pops with sparkle
+            fx = s.mix(*[(s.wood_knock(74 + 5 * i, 0.3, r, 0.8) * 0.6 + s.jade_chime(86 + 5 * i, 0.3, r) * 0.3,
+                          0.15 + i * 0.15) for i in range(3)])
+        elif kind == "paint":     # repaints pieces: a swirl and soft bells
+            fx = s.mix((s.sweep(0.8, r, 500, 4000, q=2.5) * s.env_ad(int(0.8 * s.RATE), 0.3, 0.2) * 0.6, 0.1),
+                       (s.shimmer(0.6, r, 79, 91, count=8) * 0.5, 0.3))
         else:
             raise ValueError(kind)
         return s.reverb(s.mix((horn, 0.0), (drum, 0.0), (fx, 0.0)), r, 1.8, 0.25)
@@ -228,8 +260,9 @@ def trophy(r, v):
                           (s.shimmer(1.2, r, 80, 104, count=20) * 0.5, 0.2)), r, 2.2, 0.28)
 
 
-TOTEMS = ["row_clear", "random_blast", "time", "lightning", "color_bomb", "multiplier"]
-BONUSES = ["hammer", "lightning", "extra_time", "shuffle", "dynamite", "freeze"]
+# Ids from the contract (WP-03): one totem per kind, six power-ups.
+TOTEMS = ["fire", "time", "gold", "harvest", "ward", "gift", "paint"]
+POWER_UPS = ["tnt", "color_clear", "lightning", "clock", "multiplier", "hint"]
 
 # cue name -> (design, variations, category). Variations exist only for
 # sounds that fire often enough for repetition to show.
@@ -240,7 +273,10 @@ CUES = {
     **{f"cascade_{i}": (cascade(i), 1, "feedback") for i in range(1, 9)},
     "piece_land": (piece_land, 4, "frequent"),
     "bonus_earned": (bonus_earned, 1, "feedback"),
-    **{f"bonus_use_{b}": (bonus_use(b), 1, "feedback") for b in BONUSES},
+    **{f"bonus_use_{b}": (bonus_use(b), 1, "frequent" if b == "hint" else "feedback") for b in POWER_UPS},
+    "gem_collect": (gem_collect, 3, "feedback"),
+    "steel_break": (steel_break, 2, "feedback"),
+    "chain_break": (chain_break, 2, "feedback"),
     "totem_charge": (totem_charge, 1, "feedback"),
     **{f"totem_fire_{t}": (totem_fire(t), 1, "stinger") for t in TOTEMS},
     "quota_done": (quota_done, 1, "alert"),
@@ -287,6 +323,9 @@ def main() -> None:
     ap.add_argument("--only", help="comma-separated cue names")
     args = ap.parse_args()
     cues = args.only.split(",") if args.only else list(CUES)
+    unknown = [c for c in cues if c not in CUES]
+    if unknown:
+        raise SystemExit(f"unknown cue(s): {', '.join(unknown)}. Known: {', '.join(CUES)}")
     report_path = Path(__file__).resolve().parent / "reports" / "sfx_loudness.json"
     report = {}
     if args.only and report_path.exists():
