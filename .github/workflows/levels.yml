@@ -42,11 +42,20 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
+      # Content-addressed compiler cache, as in tests.yml: a hit is the
+      # object a cold build would make. See docs/explanation/about-ci-caching.md.
+      - name: Compiler cache
+        uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
+        with:
+          key: levels-sim
+          max-size: 200M
       - name: Build the simulator
         run: |
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_WERROR=ON \
-            -DMONTEZUMA_BUILD_EXTENSION=OFF -DMONTEZUMA_BUILD_TESTS=OFF -DMONTEZUMA_BUILD_SIM=ON
+            -DMONTEZUMA_BUILD_EXTENSION=OFF -DMONTEZUMA_BUILD_TESTS=OFF -DMONTEZUMA_BUILD_SIM=ON \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           cmake --build build --target montezuma_sim -j "$(nproc)"
+          ccache --show-stats
       - name: Check every level against the balance targets
         run: |
           status=0

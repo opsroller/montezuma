@@ -51,6 +51,9 @@ shows up on `main` after merge, and the next PR fixes it.
 |---|---|---|---|---|
 | Compiler cache | `extension (ubuntu-latest)` | ccache | `tests-extension-godot-cpp-10-ubuntu-latest` + timestamp | 500 MB |
 | Compiler cache | `extension (windows-latest)` on `main`; `build and test (windows)` in the `windows` workflow | sccache | `tests-extension-godot-cpp-10-windows-latest` + timestamp | 500 MB |
+| Compiler cache | `core (ubuntu-latest)`, `core (macos-latest)` | ccache | `tests-core-<os>` + timestamp | 200 MB |
+| Compiler cache | `sanitizers` | ccache | `tests-sanitizers` + timestamp | 200 MB |
+| Compiler cache | `balance` in the `levels` workflow | ccache | `levels-sim` + timestamp | 200 MB |
 
 - The newest cache with the key prefix is restored, and a new one is saved
   at the end of every run.
@@ -62,7 +65,9 @@ shows up on `main` after merge, and the next PR fixes it.
   Branches and PRs read the caches written on `main`.
 - Godot itself (one download of about 60 MB, a few seconds) is not cached. The job fetches the editor pinned in `tools/release/godot.env` with `tools/release/fetch-godot.sh`, the same script and checksum the build pipeline uses.
 
-The `core` and `sanitizers` jobs build in seconds and use no cache.
+`core (windows-latest)` uses no cache: it builds with the Visual Studio
+generator, which ignores compiler launchers, and runs only on `main` and
+manual runs.
 
 See [About CI caching](../explanation/about-ci-caching.md) for why the
 caches are set up this way.
