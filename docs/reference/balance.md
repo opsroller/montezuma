@@ -23,22 +23,23 @@ difficulty, with the upgrades a player would own on reaching it
 
 ## Targets
 
-| Levels | `greedy` win rate, normal | `greedy` median time left | `random` win rate, normal | `planner` win rate, hard |
-|---|---|---|---|---|
-| e1-l01 | 100 % | ≥ 150 s | ≥ 95 % | ≥ 99 % |
-| rest of e1 | ≥ 98 % | ≥ 100 s | ≥ 70 % | ≥ 90 % |
-| e2 | ≥ 95 % | ≥ 70 s | ≥ 40 % | ≥ 80 % |
-| e3 | ≥ 90 % | ≥ 50 s | ≥ 20 % | ≥ 70 % |
-| e4 | ≥ 85 % | ≥ 35 s | ≤ 20 % | ≥ 60 % |
-| e5 | ≥ 80 % | ≥ 25 s | ≤ 10 % | ≥ 50 % |
+| Levels | `greedy` win rate, normal | `greedy` median time left | `greedy` mean moves, normal | `random` win rate, normal | `planner` win rate, hard |
+|---|---|---|---|---|---|
+| e1-l01 | 100 % | ≥ 150 s | no floor | ≥ 95 % | ≥ 99 % |
+| rest of e1 | ≥ 98 % | ≥ 100 s | no floor | ≥ 70 % | ≥ 90 % |
+| e2 | ≥ 95 % | ≥ 70 s | ≥ 50 | ≥ 40 % | ≥ 80 % |
+| e3 | ≥ 90 % | ≥ 50 s | ≥ 70 | ≥ 20 % | ≥ 70 % |
+| e4 | ≥ 85 % | ≥ 35 s | ≥ 90 | ≤ 20 % | ≥ 60 % |
+| e5 | ≥ 80 % | ≥ 25 s | ≥ 110 | ≤ 10 % | ≥ 50 % |
 
-- Too easy: from episode 2 on, `greedy`'s mean moves on normal must be
-  at least 50 (e2), 70 (e3), 90 (e4) and 110 (e5). Moves, not time used,
+- Too easy: from episode 2 on, `greedy`'s mean moves on normal (over
+  all runs, wins and losses) must be at least the floor in the table:
+  50 (e2), 70 (e3), 90 (e4) and 110 (e5). Moves, not time used,
   because bots move every 1.5 s and moves resolve without animation:
   a human at about 3.5 s a move takes sim moves × 3.5 s, so e1-l01's 18
   moves are about 63 s, inside its brief. Episode 1 has no floor; its
-  briefs ask for quick first wins. The simulator does not check this
-  floor yet; read it from the `moves` column.
+  briefs ask for quick first wins. `--check` counts the floor as part of
+  the `greedy`/normal target (WP-56).
 - No level may be harder than the next by more than 10 points of
   `greedy` win rate, except a level that introduces a new idea, which
   must be easier than the level before it (the rest after a spike). Two
