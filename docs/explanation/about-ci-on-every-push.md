@@ -16,11 +16,23 @@ machine and toolchain they had. Running on every push closes that gap:
 the first push of a branch is checked on the same pinned runners, tools
 and options as `main`.
 
+## Why branch pushes have no path filter
+
+GitHub matches a `push` path filter against the files changed by that one
+push, not against everything the branch changes. A branch that touches a
+level and then pushes a docs fix would get no `levels` or `tests` run on
+its head, the commit that is reviewed and merged. So pushes run every
+check. The exception is the `windows` workflow, whose 30-minute MSVC
+build only matters when the build system changes: it keeps its filter on
+`push` and also runs on `pull_request` for every PR, where the filter
+covers the whole PR.
+
 ## Why a branch PR skips its own pull_request run
 
 With both triggers, a PR from a branch of this repository would run every
 check twice per push: once for the push and once for the PR. Every job
-therefore skips on a `pull_request` event unless the PR comes from a fork.
+therefore skips on a `pull_request` event unless the PR comes from a fork
+(`windows` aside, above).
 The push run reports on the same head commit, and GitHub shows those
 results on the PR, so each commit is checked once and runner time is not
 spent twice. Forks still run on `pull_request`, because their pushes run

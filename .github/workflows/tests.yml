@@ -4,11 +4,10 @@
 name: tests
 
 on:
+  # No path filter on push: GitHub would match it against the files of
+  # that push alone, so a docs-only push would leave its head unchecked.
   push:
     branches: ["**"]
-    paths-ignore:
-      - "docs/**"
-      - "**/*.md"
   pull_request:
     paths-ignore:
       - "docs/**"

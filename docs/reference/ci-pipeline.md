@@ -11,17 +11,22 @@ workflow. To run any check locally, use the commands in
 
 | Event | Runs when | Concurrency |
 |---|---|---|
-| `push` to `main` | the push changes anything outside `docs/**` and `*.md` | every run finishes |
-| `push` to any other branch | the push changes anything outside `docs/**` and `*.md` | a new push cancels the branch's older run |
+| `push` to `main` | every push | every run finishes |
+| `push` to any other branch | every push | a new push cancels the branch's older run |
 | `pull_request` | the PR comes from a fork and changes anything outside `docs/**` and `*.md` | a new push cancels the PR's older run |
-
-A push that only changes documentation gets no `tests` run.
 
 Every workflow in this page and in the [build pipeline](build-pipeline.md)
 follows the same rule: a push to any branch of this repository runs the
 checks on the pushed commit, and a PR from a branch of this repository
 shows those push runs. Its own `pull_request` run skips every job, so each
-commit is checked once. PRs from forks run on `pull_request`. Why:
+commit is checked once. PRs from forks run on `pull_request`.
+
+Every head commit of a branch gets a run. A path filter on `push` would
+be matched against the files of that one push, not the branch's whole
+change, so a final docs-only push would leave the head unchecked; `push`
+therefore has no path filter in any workflow except `windows`. There the
+`pull_request` run also runs for branches of this repository, with a
+filter that covers the whole PR. Why:
 [About CI on every push](../explanation/about-ci-on-every-push.md).
 
 Token permissions: `contents: read`.
@@ -71,7 +76,7 @@ CTest test with MSVC and warnings as errors, then runs CTest, on
 | Event | Runs when |
 |---|---|
 | `push` to any branch but `main` | the push changes `CMakeLists.txt`, any `**/CMakeLists.txt`, any `**/*.cmake`, `.gitmodules`, `thirdparty/**` or `windows.yml` |
-| `pull_request` | a PR from a fork changes the same paths |
+| `pull_request` | any PR, from this repository or a fork, changes the same paths; the filter covers the whole PR, so its head is always checked |
 | `workflow_dispatch` | on demand, from the Actions tab |
 
 | Job | What red means |
@@ -116,13 +121,13 @@ level under `game/data/levels/` against the
 
 | Item | Value |
 |---|---|
-| Triggers | `push` to any branch, and `pull_request` from forks, only when the change touches `game/data/levels/**`, `tools/sim/**`, `core/**`, `thirdparty/nlohmann/**` (the JSON library the core parses levels with), `CMakeLists.txt` or `.github/workflows/levels.yml`; a new push cancels the branch's or PR's older run (not on `main`) |
+| Triggers | every `push` to any branch, no path filter; `pull_request` from forks only when the PR touches `game/data/levels/**`, `tools/sim/**`, `core/**`, `thirdparty/nlohmann/**` (the JSON library the core parses levels with), `CMakeLists.txt` or `.github/workflows/levels.yml`; a new push cancels the branch's or PR's older run (not on `main`) |
 | Job | `balance`, on `ubuntu-24.04`, 10-minute timeout |
 | Build | Release, `MONTEZUMA_WERROR=ON`, `MONTEZUMA_BUILD_EXTENSION=OFF`, `MONTEZUMA_BUILD_TESTS=OFF`, `MONTEZUMA_BUILD_SIM=ON`; target `montezuma_sim` only |
 | Command | `montezuma_sim game/data/levels --check` (200 seeds, all bots, both difficulties) |
 | Token permissions | `contents: read` |
 | Secrets, artifacts, caches | none |
-| Required check | no: a path-filtered check never reports on PRs it skips, so requiring it would block them |
+| Required check | no: fork PRs are path-filtered, and a filtered check never reports on PRs it skips, so requiring it would block them |
 | What red means | exit 2: a level file does not parse or uses an unsupported feature, and stderr names the file and the error; exit 1: a level misses a balance target or curve rule, shown as `FAIL` rows in the report. The log ends with the local command |
 
 Run it locally:
@@ -134,5 +139,6 @@ build-rel/tools/sim/montezuma_sim game/data/levels --check
 ```
 
 The `assets` workflow has no path filter so that it can be made required;
-`levels` is filtered because building the simulator only matters when one
-of its inputs changes.
+`levels` is filtered for fork PRs because building the simulator only
+matters when one of its inputs changes; branch pushes always run it so
+every head has a result.

@@ -8,6 +8,9 @@
 # main still builds Windows in the tests and build workflows. Reference: docs/reference/ci-pipeline.md
 name: windows
 
+# The push filter sees only the files of that push; the pull_request run
+# matches the whole PR, so a PR's head is always checked when the PR
+# touches the build system. Windows runs too long to drop the filter.
 on:
   push:
     branches-ignore: [main]
@@ -37,9 +40,6 @@ concurrency:
 
 jobs:
   build-and-test:
-    # A branch of this repository is checked by its push run on the same
-    # commit; pull_request runs only for forks.
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork
     name: build and test (windows)
     runs-on: windows-latest
     timeout-minutes: 30
