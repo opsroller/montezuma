@@ -171,8 +171,8 @@ void ReadabilityCapture::_process(double) {
     if (!running_) return;
     running_ = false;
     set_process(false);
-    UtilityFunctions::print("ReadabilityCapture: wrote ", kSets.size(), " captures and layout.json to ",
-                            ProjectSettings::get_singleton()->globalize_path(output_dir_));
+    UtilityFunctions::print("ReadabilityCapture: wrote ", static_cast<int64_t>(kSets.size()),
+                            " captures and layout.json to ", ProjectSettings::get_singleton()->globalize_path(output_dir_));
     get_tree()->quit(0);
 }
 
