@@ -93,6 +93,15 @@ sets fit the web texture budget.
 | Carnelian, jade, moonstone | `ORMMaterial3D` with backlight for cheap translucency | sub-surface scattering with a transmittance colour; moonstone adds a stronger clearcoat |
 | Lapis | `ORMMaterial3D`, `Lapis_01` (blue, calcite, metallic pyrite flecks) | none; the base is used everywhere |
 
+Texture filtering: the `ORMMaterial3D` set uses Godot's default trilinear
+filter with repeat. `SH_TriplanarPBR` and `SH_Gem` filter anisotropically
+(the tier's 2× to 16×) through a clamped sampler and wrap the coordinates
+in `SH_Triplanar.gdshaderinc` (`tri_tex`). No material filters
+anisotropically with repeat: Godot's Metal backend gives that sampler slot
+17, and Metal GPUs without argument buffers (Apple5 family and older, such
+as the macOS CI runner) address slots 0 to 15 only, so the material fails
+to compile there.
+
 ## Generators
 
 Run from the repository root, in this order. Same parameters and seed give
@@ -226,6 +235,10 @@ each as `error: <file>: <rule and fix>`:
   30-240 sRGB and metal (where `_ORM` blue ≥ 0.5) at 180 or more; normals
   unit length, facing out, averaging flat; metallic 0 or 1 except at most
   5% of pixels; roughness ≥ 0.02; height spans a real range.
+- No `.tres`, `.tscn` or `.gdshader` filters anisotropically with repeat
+  (`texture_filter = 4` or `5` without `texture_repeat = false`, or a
+  `filter_*_anisotropic` sampler without `repeat_disable`); see texture
+  filtering above.
 - Every file in a `hi/` folder has a base file of the same name; a `hi/`
   texture is the same map at the same or a larger size.
 - Android, iOS and Web export presets list `*/hi/*` in `exclude_filter`;

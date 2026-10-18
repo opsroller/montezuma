@@ -70,6 +70,13 @@ godot --headless --path game --quit-after 120 res://scenes/demo/intro_level.tscn
 
 It ends with `IntroLevel self-test: <n> moves, outcome 1, 1 completions, 0 failures`.
 
+Quit from inside a level, with music playing, as CI does; nothing may
+print an error or a leak at exit:
+
+```sh
+godot --headless --path game --quit-after 600 -- --start-level=e1-l01 --quit-after-frames=60
+```
+
 ## Build and test on Windows
 
 Needs Visual Studio 2022 with the C++ workload, CMake 3.22+ and Ninja
