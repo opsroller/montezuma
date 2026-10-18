@@ -45,7 +45,9 @@ Array to_array(const std::vector<Cell>& cells) {
     return out;
 }
 
-Dictionary to_dictionary(const MoveResult& result) {
+}  // namespace
+
+Dictionary Match3Board::to_dictionary(const MoveResult& result) {
     Dictionary out;
     Array steps;
     for (const auto& step : result.steps) {
@@ -108,8 +110,6 @@ Dictionary to_dictionary(const MoveResult& result) {
     out["redealt"] = result.redealt;
     return out;
 }
-
-}  // namespace
 
 Dictionary Match3Board::try_swap(Vector2i a, Vector2i b) {
     auto result = board_.try_swap({a.x, a.y}, {b.x, b.y});
