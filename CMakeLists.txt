@@ -47,6 +47,8 @@ if(MONTEZUMA_BUILD_TESTS)
     add_executable(montezuma_${test_name} ${test_source})
     target_link_libraries(montezuma_${test_name} PRIVATE montezuma_core)
     montezuma_warnings(montezuma_${test_name})
+    # Tests that read committed data (such as game/data/levels) find it here.
+    target_compile_definitions(montezuma_${test_name} PRIVATE MONTEZUMA_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
     add_test(NAME ${test_name} COMMAND montezuma_${test_name})
   endforeach()
 endif()

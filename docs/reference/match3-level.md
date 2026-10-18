@@ -2,8 +2,10 @@
 
 `Match3Level` is a `RefCounted` class from the montezuma GDExtension. It
 exposes the core `LevelState`: per-kind quotas, the countdown timer, score,
-the same-kind streak and the win/lose outcome. The game scene (WP-28) feeds
-it every move result and the frame delta.
+the same-kind streak and the win/lose outcome, fed every move result and
+the frame delta. The game scene plays levels with the full rules through
+[Match3Game](match3-game.md) instead; `Match3Level` stays for quota-only
+rule variants and tools.
 
 Gem goals (`GOAL-01`) come with the gem rules in the core; until then the
 goal is per-kind quotas (`GOAL-06`).

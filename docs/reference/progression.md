@@ -181,3 +181,69 @@ Data, in the LevelData fields, in
 
 In the web demo the player has base upgrades (270 s, 5 gems) and no
 stars; winning emits `level_completed`.
+
+## Episode 1 levels
+
+Briefs for the rest of episode 1 (WP-23). Each level adds one idea to the
+intro level's swap-and-collect loop and stays a quick win: episode 1
+teaches, it does not test. Simulator targets are the "rest of e1" row in
+[balance](balance.md); every level also has every item unlocked so far,
+the player's timer tier and 5 gems on the board.
+
+### e1-l02: Solidarity
+
+- **Teaches:** a run of 5 makes two power-ups, and `color_clear` clears
+  every piece of one kind; the timer has its first upgrade (300 s).
+- **Feeling:** "bigger matches pay more", a second easy win that ends on a
+  big clear.
+- **Target:** median 90 to 120 s; at least 95 % of players win on the
+  first try. Simulator: `greedy` wins every seed.
+- **Afterwards the player knows:** runs of 4 and 5 are worth looking for,
+  and upgrades buy more time.
+- **Help:** free move hint after 8 s idle (`SHUF-05`), the last level
+  with it.
+
+### e1-l03: First totem
+
+- **Teaches:** the `fire` totem charges on two moves in a row whose own
+  match is red, then clears random pieces.
+- **Feeling:** discovery: planning one move ahead in one colour pays off
+  with fireballs.
+- **Target:** median 100 to 140 s; at least 95 % of players win on the
+  first try. Simulator: `greedy` wins every seed, though it never aims at
+  the totem.
+- **Afterwards the player knows:** totems exist, which colour feeds which
+  totem, and that matching the same colour twice in a row fires it.
+
+### e1-l04: Frenzy
+
+- **Teaches:** `lightning`, which clears the column above its piece, and
+  Score Frenzy: the bar fills with every cleared piece and doubles points
+  for 15 s when full.
+- **Feeling:** a rush: the first level where the board lights up on its
+  own.
+- **Target:** median 120 to 160 s; at least 95 % of players win on the
+  first try. Simulator: `greedy` wins every seed.
+- **Afterwards the player knows:** cascades and big clears fill the
+  Frenzy bar, and Frenzy is the time to score.
+
+### e1-l05: Borrowed time
+
+- **Teaches:** the `time` totem, two orange moves in a row add 60 s; the
+  level combines every episode 1 idea before the first bonus level.
+- **Feeling:** the episode's finale, the first time the clock is worth
+  watching, and the relief of winning time back.
+- **Target:** median 140 to 180 s; at least 90 % of players win on the
+  first try. Simulator: the "rest of e1" row.
+- **Afterwards the player knows:** the timer can be refilled, and the
+  episode's ideas work together.
+
+| Level | File | Gems normal / hard | Totems | Power-ups | Seed |
+|---|---|---|---|---|---|
+| e1-l01 | [`l01.json`](../../game/data/levels/e1/l01.json) | 10 / 15 | | `tnt` | 20090326 |
+| e1-l02 | [`l02.json`](../../game/data/levels/e1/l02.json) | 15 / 25 | | `tnt`, `color_clear` | 20090402 |
+| e1-l03 | [`l03.json`](../../game/data/levels/e1/l03.json) | 20 / 30 | `fire` | `tnt`, `color_clear` | 20090403 |
+| e1-l04 | [`l04.json`](../../game/data/levels/e1/l04.json) | 25 / 40 | `fire` | `tnt`, `color_clear`, `lightning` | 20090404 |
+| e1-l05 | [`l05.json`](../../game/data/levels/e1/l05.json) | 30 / 45 | `fire`, `time` | `tnt`, `color_clear`, `lightning` | 20090405 |
+
+No episode 1 level has chains, steel or a time override.

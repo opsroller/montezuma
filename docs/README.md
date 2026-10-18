@@ -33,6 +33,7 @@ own folder.
 - [Progression](reference/progression.md): episodes, levels, unlocks, upgrades, trophies, intro level.
 - [Balance targets](reference/balance.md): what the simulator checks each level against.
 - [Level session](reference/level-session.md): one level by the full rules, its commands, reports and defaults.
+- [Match3Game](reference/match3-game.md): the game scene's controller, its signals, cues and self-test.
 - [Visual target](reference/visual-target.md): the look per quality tier, frame budgets and acceptance tests.
 - [Quality tiers](reference/quality-tiers.md): the `QualityTiers` autoload, settings key, feature ids, node groups and render settings per tier.
 
@@ -52,13 +53,14 @@ own folder.
 - [Add a UI screen](how-to/add-a-ui-screen.md): a new menu screen or modal, opened from a button.
 - [Check UI text and layout](how-to/check-ui-text-and-layout.md): pseudo-localization, large text, window sizes, controller only.
 - [Build and preview the website](how-to/build-and-preview-the-website.md): build `site/`, preview it with or without the web demo, run its tests.
-- [Add a level](how-to/add-a-level.md): write a campaign level file from the progression tables.
+- [Add a level](how-to/add-a-level.md): write a campaign level file from the progression tables, test it and play it.
 - [Make content depend on the quality tier](how-to/make-content-depend-on-the-quality-tier.md): desktop-only nodes, fallbacks, light shadows, texture variants.
 
 ## Explanation
 
 - [UI architecture](explanation/ui-architecture.md): why a C++ screen stack, an overlay and a tokens-built theme.
 - [About the board view](explanation/about-the-board-view.md): why the view never applies rules, and how the camera frames the board.
+- [About the game scene](explanation/about-the-game-scene.md): why the scene is a thin layer over the level session, and why a move is one animation.
 - [Art direction](explanation/art-direction.md): why the board looks the way it does, and the rules new art follows.
 - [About the visual target](explanation/about-the-visual-target.md): why a realistic high-end look, and what Godot can and cannot do with ray tracing.
 - [About quality tiers](explanation/about-quality-tiers.md): how a tier is picked, why the renderer is fixed per platform, why tiers only switch effects off.

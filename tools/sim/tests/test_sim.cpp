@@ -176,6 +176,8 @@ void test_curves() {
     check(run(b, 80, 50)[0].verdict == Verdict::Pass, "curve-1 harder next level passes");
     check(run(idea, 80, 81)[0].verdict == Verdict::Pass, "curve-1 idea level easier passes");
     check(run(idea, 80, 80)[0].verdict == Verdict::Fail, "curve-1 idea level not easier fails");
+    check(run(idea, 100, 100)[0].verdict == Verdict::Pass, "curve-1 idea level after 100% at 100% passes");
+    check(run(idea, 100, 99)[0].verdict == Verdict::Fail, "curve-1 idea level below 100% after 100% fails");
     // Missing next level or rows: skipped.
     auto lone = curve_checks({a}, {row(2, 2, Bot::Greedy, Difficulty::Normal, 100, 80)});
     check(!lone.empty() && lone[0].verdict == Verdict::Skipped, "curve-1 missing level skipped");
