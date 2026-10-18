@@ -27,6 +27,10 @@ struct MoveResult {
     // Kind that made up most of the swap's own match; drives Power Totem streaks.
     int matched_kind = -1;
     bool shuffled = false;
+    // No legal move was left and no playable arrangement could be found; the
+    // caller should end or restart the level. Practically unreachable for
+    // boards that passed construction, but never thrown.
+    bool stuck = false;
 
     std::map<int, int> cleared_by_kind() const;
     // 10 points per piece, multiplied by the cascade step (1-based).
@@ -69,9 +73,12 @@ public:
     bool is_legal_swap(Cell a, Cell b);
     bool has_legal_move();
     // Applies a swap and resolves all cascades. Empty for an illegal swap.
+    // Never throws for game reasons (see MoveResult::stuck).
     std::optional<MoveResult> try_swap(Cell a, Cell b);
-    // Reorders existing pieces until no match shows and a legal move exists.
-    void shuffle();
+    // Reorders existing pieces until no match shows and a legal move exists,
+    // dealing a fresh board if reordering fails. Returns false, leaving the
+    // board unchanged, if neither works.
+    bool shuffle() noexcept;
 
 private:
     static constexpr int kMaxFillAttempts = 1000;

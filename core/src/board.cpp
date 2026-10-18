@@ -122,8 +122,8 @@ std::optional<MoveResult> Board::try_swap(Cell a, Cell b) {
         collapse_and_refill();
     }
     if (!has_legal_move()) {
-        shuffle();
-        result.shuffled = true;
+        result.shuffled = shuffle();
+        result.stuck = !result.shuffled;
     }
     return result;
 }
@@ -150,14 +150,21 @@ void Board::collapse_and_refill() {
     }
 }
 
-void Board::shuffle() {
+bool Board::shuffle() noexcept {
+    const std::vector<int> before = cells_;
     for (int attempt = 0; attempt < kMaxShuffleAttempts; ++attempt) {
         for (int i = static_cast<int>(cells_.size()) - 1; i > 0; --i)
             std::swap(cells_[i], cells_[rng_.below(i + 1)]);
-        if (find_matches().empty() && has_legal_move()) return;
+        if (find_matches().empty() && has_legal_move()) return true;
     }
     // The current pieces can't be arranged into a playable board; deal a new one.
-    fill_fresh();
+    try {
+        fill_fresh();
+        return true;
+    } catch (const std::exception&) {
+        cells_ = before;
+        return false;
+    }
 }
 
 }  // namespace montezuma
