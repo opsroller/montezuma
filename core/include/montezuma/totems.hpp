@@ -286,7 +286,17 @@ private:
 // `cells_to_clear` plus every run now on the board with Board::clear_cells,
 // which falls, refills and cascades (TOT-05, RES-07). Empty when nothing was
 // cleared. Time, points, Frenzy, gems, chains, steel and power-ups are the
-// game layer's.
-std::optional<MoveResult> apply_board_effect(const TotemEffect& effect, Board& board);
+// game layer's. `hooks` go to Board::clear_cells.
+//
+// With power-ups on the board, a totem's clear must set them off (PWR-04):
+// call prepare_board_effect and pass its cells to clear_cells_with_power_ups
+// (bonuses.hpp) instead, skipping it when the cells are empty.
+std::optional<MoveResult> apply_board_effect(const TotemEffect& effect, Board& board,
+                                             const StepHooks* hooks = nullptr);
+
+// The first half of apply_board_effect: repaints, then returns the cells to
+// clear (the effect's plus every run the repaint made), row-major. Does not
+// clear them.
+std::vector<Cell> prepare_board_effect(const TotemEffect& effect, Board& board);
 
 }  // namespace montezuma

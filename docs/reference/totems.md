@@ -185,6 +185,12 @@ which clears them in one step and resolves the cascades. It returns that
 so recording it leaves charges unchanged. A clear that wins the level
 still resolves fully (`GOAL-02`).
 
+When power-ups are on the board, a totem's clear must set off the ones it
+reaches (`PWR-04`). Call `prepare_board_effect(effect, board)`, which does
+the repaint and returns the cells to clear, and pass those cells to
+`clear_cells_with_power_ups` ([power-ups](bonuses.md)) instead of calling
+`apply_board_effect`. Skip the call when the cells are empty.
+
 ## API
 
 ```cpp
@@ -214,7 +220,8 @@ public:
     TotemEffect make_effect(TotemId, const Board&, Rng&) const;   // at the current tier and use
 };
 
-std::optional<MoveResult> apply_board_effect(const TotemEffect&, Board&);
+std::optional<MoveResult> apply_board_effect(const TotemEffect&, Board&, const StepHooks* = nullptr);
+std::vector<Cell> prepare_board_effect(const TotemEffect&, Board&);   // repaint, return cells to clear
 }
 ```
 

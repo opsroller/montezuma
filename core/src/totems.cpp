@@ -221,7 +221,7 @@ TotemEffect TotemSystem::make_effect(TotemId id, const Board& board, Rng& rng) c
     return effect;
 }
 
-std::optional<MoveResult> apply_board_effect(const TotemEffect& effect, Board& board) {
+std::vector<Cell> prepare_board_effect(const TotemEffect& effect, Board& board) {
     // rule: TOT-16 repaint; gems and power-ups (game layer) stay put.
     for (Cell c : effect.cells_to_repaint)
         if (board.in_bounds(c.x, c.y) && board.at(c.x, c.y) != Board::kEmpty) board.set(c.x, c.y, effect.repaint_kind);
@@ -230,8 +230,13 @@ std::optional<MoveResult> apply_board_effect(const TotemEffect& effect, Board& b
     std::vector<Cell> cells = effect.cells_to_clear;
     for (const Run& run : board.find_runs()) cells.insert(cells.end(), run.cells.begin(), run.cells.end());
     sort_row_major(cells);
+    return cells;
+}
+
+std::optional<MoveResult> apply_board_effect(const TotemEffect& effect, Board& board, const StepHooks* hooks) {
+    const std::vector<Cell> cells = prepare_board_effect(effect, board);
     if (cells.empty()) return std::nullopt;
-    return board.clear_cells(cells);
+    return board.clear_cells(cells, hooks);
 }
 
 }  // namespace montezuma
