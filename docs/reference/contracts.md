@@ -117,6 +117,20 @@ bonus_changed(bonus_id: String, count: int)
 level_finished(outcome: int, score: int)                # LevelState.Outcome
 ```
 
+Also emitted for the HUD (consumer: ui-developer, WP-18) — proposed:
+
+```
+gems_changed(collected: int, goal: int)                 # goal 0 hides the counter
+totem_changed(totem_id: String, charge: float, uses_left: int)   # charge 0..1
+frenzy_changed(bar: float, seconds_left: float)         # bar 0..1; seconds_left > 0 while Frenzy is on
+shuffles_changed(left: int)
+hint_cost_changed(cost: int, affordable: bool)
+```
+
+Commands the HUD calls on `Match3Game` (no arguments): `shuffle()` and
+`buy_hint()`. The HUD finds the node through group `match3_game`, which
+must be set in the scene (`node_added` fires before `_ready`).
+
 `BoardView3D` API: `show_board(board: Match3Board)`, `play(result: Dictionary)`
 (emits `animation_finished` when done), `play_illegal(a, b)`, signals `swap_requested(a: Vector2i,
 b: Vector2i)` and `animation_finished`.
@@ -139,6 +153,9 @@ mini games can swap the whole look without code changes:
 Each value is a `res://` path to a `PackedScene`. `BoardView3D` takes a
 `theme` property (empty means `default_theme`), reads the manifest once and
 falls back to a placeholder primitive for any name the theme lacks.
+**Implemented** for `artifact_*`, `board`, `environment`, `cell_highlight`
+and `fx_match` in `extension/src/board/piece_library.cpp`; see
+[Board view](board-view.md#piecelibrary-c-only).
 
 Names, theme-neutral: `artifact_0` … `artifact_6` (by kind index; origin at
 the cell centre on the board plane), `board` (replaces the slab; tile tops
@@ -195,7 +212,7 @@ menus' side of the hand-off to play. Details in `docs/reference/ui.md`.
 
 ```
 # UiRoot emits, for the game scene:
-play_requested(level_id: String, difficulty: String)   # "e1-l03", "relaxed" | "normal"
+play_requested(level_id: String, difficulty: String)   # "e1-l03", "normal" | "hard"
 level_quit_requested()                                  # left from the pause menu
 # The game scene calls:
 show_results(outcome: int, score: int, level_id: String = "")   # LevelState.Outcome

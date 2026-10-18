@@ -55,6 +55,32 @@ trophy.t08.name,Trophy 8
 trophy.t08.desc,To be designed.
 trophy.t09.name,Trophy 9
 trophy.t09.desc,To be designed.
+hud.pause,Pause
+hud.score,Score: {score}
+hud.gems,Gems: {collected} / {goal}
+hud.quotas,Collect
+hud.quota.done,Done
+hud.totems,Totems
+hud.totem.ready,Ready
+hud.totem.uses,{uses} left
+hud.frenzy,Score Frenzy
+hud.frenzy.on,Frenzy! {seconds} s
+hud.shuffle,Shuffle ({left})
+hud.hint,Hint ({cost} points)
+kind.red,Red
+kind.orange,Orange
+kind.yellow,Yellow
+kind.green,Green
+kind.blue,Blue
+kind.purple,Purple
+kind.white,White
+totem.fire,Fire
+totem.time,Time
+totem.gold,Gold
+totem.harvest,Harvest
+totem.ward,Ward
+totem.gift,Gift
+totem.paint,Paint
 settings.title,Settings
 settings.music,Music volume
 settings.sfx,Sound effects volume
@@ -64,8 +90,8 @@ settings.fullscreen,Full screen
 settings.language,Language
 settings.language.system,System language
 settings.difficulty,Difficulty
-settings.difficulty.relaxed,Relaxed
 settings.difficulty.normal,Normal
+settings.difficulty.hard,Hard
 credits.title,Credits
 credits.fallback,"Montezuma's
 

@@ -10,4 +10,6 @@ game/CREDITS.md
 game/LICENSE.txt
 game/THIRD-PARTY-NOTICES.txt
 game/SOURCE.txt
+site/_site/
 __pycache__/
+.venv/

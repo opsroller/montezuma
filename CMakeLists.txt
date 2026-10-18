@@ -67,3 +67,21 @@ endif()
 if(MONTEZUMA_BUILD_TESTS)
   add_subdirectory(extension/src/board/tests)
 endif()
+
+# The website's tests (site/tests), when Python 3.10+ and Node are on the
+# machine. Docs: docs/how-to/build-and-preview-the-website.md
+if(MONTEZUMA_BUILD_TESTS)
+  find_package(Python3 3.10 COMPONENTS Interpreter QUIET)
+  if(Python3_Interpreter_FOUND)
+    add_test(NAME site_build_tests
+      COMMAND "${Python3_EXECUTABLE}" -m unittest discover site/tests
+      WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+    # Read and write text as UTF-8 on Windows too.
+    set_tests_properties(site_build_tests PROPERTIES ENVIRONMENT "PYTHONUTF8=1")
+  endif()
+  find_program(MONTEZUMA_NODE node)
+  if(MONTEZUMA_NODE)
+    file(GLOB MONTEZUMA_SITE_JS_TESTS CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/site/tests/*.test.mjs")
+    add_test(NAME site_js_tests COMMAND "${MONTEZUMA_NODE}" --test ${MONTEZUMA_SITE_JS_TESTS})
+  endif()
+endif()

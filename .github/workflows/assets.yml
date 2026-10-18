@@ -1,0 +1,37 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
+#
+# Checks game/assets against the theme manifest and the asset rules: every
+# referenced file exists and parses, meshes and textures stay in budget,
+# every theme has a provenance record and source files carry the SPDX line.
+# Reference: docs/reference/ci-pipeline.md
+name: assets
+
+# No path filter: the check takes seconds, and a filtered check could never
+# be made required (a PR it skips would wait on it forever).
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: assets-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Install Pillow (pinned, hash-checked)
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install --quiet --no-deps --only-binary=:all: --require-hashes -r .github/requirements/assets.txt
+      - name: Validate assets
+        run: .venv/bin/python tools/assets/validate_assets.py

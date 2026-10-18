@@ -46,8 +46,8 @@ void SettingsScreen::on_open(const Dictionary& params) {
             names.push_back(TranslationServer::get_singleton()->get_locale_name(loaded[i]));
         }
         bind_option("Language", "locale", locales, names);
-        bind_option("Difficulty", "difficulty", PackedStringArray({"relaxed", "normal"}),
-                    PackedStringArray({"settings.difficulty.relaxed", "settings.difficulty.normal"}));
+        bind_option("Difficulty", "difficulty", PackedStringArray({"normal", "hard"}),
+                    PackedStringArray({"settings.difficulty.normal", "settings.difficulty.hard"}));
     }
     // Window mode only means something on desktop.
     OS* os = OS::get_singleton();

@@ -1,4 +1,3 @@
-<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
 # Credits
 
 Montezuma's is a new game that plays like *The Treasures of Montezuma*.

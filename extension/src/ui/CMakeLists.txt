@@ -5,6 +5,7 @@
 # Engine-independent view logic, testable without Godot.
 add_library(montezuma_ui_model STATIC
   model/format.cpp
+  model/hud_model.cpp
   model/nav_stack.cpp
   model/settings.cpp
 )
