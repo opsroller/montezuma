@@ -22,7 +22,7 @@ Token permissions: `contents: read`.
 | Job | Runners | What red means |
 |---|---|---|
 | `core` | Ubuntu, macOS; Windows too on pushes to `main` | the core or a Godot-free test fails to build with warnings as errors, or a CTest test fails, including the website's `site_build_tests` (Python) and `site_js_tests` (Node), which CTest adds when the runner has Python 3.10+ and Node |
-| `extension` | Ubuntu; Windows too on pushes to `main` | the GDExtension (with godot-cpp) or a test fails to build, or a CTest test fails (every test, including `ui_model_tests`); on Ubuntu, Godot 4.4.1 logs an error while loading the game headless |
+| `extension` | Ubuntu; Windows too on pushes to `main` | the GDExtension (with godot-cpp) or a test fails to build, or a CTest test fails (every test, including `ui_model_tests`); on Ubuntu, Godot (the version in `tools/release/godot.env`) logs an error while loading the game headless |
 | `sanitizers` | Ubuntu | a CTest test fails under ASan or UBSan |
 
 Windows does not run on PRs. Pushes to `main` run the Windows `core` and
@@ -34,8 +34,8 @@ fixes it.
 
 | Cache | Job | Tool | Key | Size cap |
 |---|---|---|---|---|
-| Compiler cache | `extension (ubuntu-latest)` | ccache | `tests-extension-ubuntu-latest` + timestamp | 500 MB |
-| Compiler cache | `extension (windows-latest)`, `main` only | sccache | `tests-extension-windows-latest` + timestamp | 500 MB |
+| Compiler cache | `extension (ubuntu-latest)` | ccache | `tests-extension-godot-cpp-10-ubuntu-latest` + timestamp | 500 MB |
+| Compiler cache | `extension (windows-latest)`, `main` only | sccache | `tests-extension-godot-cpp-10-windows-latest` + timestamp | 500 MB |
 
 - The newest cache with the key prefix is restored, and a new one is saved
   at the end of every run.
@@ -45,7 +45,7 @@ fixes it.
 - The **Compiler cache stats** step prints hits and misses for the run.
 - Caches written by a PR are visible only to that PR. PRs read the caches
   written on `main`.
-- Godot itself (one 60 MB download, about one second) is not cached.
+- Godot itself (one download of about 60 MB, a few seconds) is not cached. The job fetches the editor pinned in `tools/release/godot.env` with `tools/release/fetch-godot.sh`, the same script and checksum the build pipeline uses.
 
 The `core` and `sanitizers` jobs build in seconds and use no cache.
 
