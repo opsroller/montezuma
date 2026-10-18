@@ -42,17 +42,45 @@ difficulty, with the upgrades a player would own on reaching it
   the `greedy`/normal target (WP-56).
 - No level may be harder than the next by more than 10 points of
   `greedy` win rate, except a level that introduces a new idea, which
-  must be easier than the level before it (the rest after a spike). Two
-  levels that both win every run count as easier: 100 % is the ceiling,
-  and every episode 1 level introduces an idea. There is no tiebreak on
+  must be easier than the level before it (the rest after a spike). A
+  new idea is a totem or power-up, chains or steel on its first level in
+  campaign order; chains coming back after a level without them are not
+  new. Two levels that both win every run count as easier: 100 % is the
+  ceiling, and every episode 1 level introduces an idea. There is no tiebreak on
   median time left: episode 1 is a teaching ramp whose gem goal rises by
   5 a level, so it does not follow the spike-and-rest shape, and a time
   tiebreak would need flat or falling goals there.
 - The first level of each episode is a rest: its `greedy` win rate is at
   least that of the episode's third level.
-- Tuning levers, in this order: chains and `steel_rate`, then the gem
-  goal (in steps of 5, keeping the +5 curve within ±10), then the time
-  override. Change one at a time and record before and after in the PR.
+- Tuning levers, in this order: the gem goal (in steps of 5, keeping the
+  +5 curve within ±10), then `steel_rate`, then chains. Change one at a
+  time and record before and after in the PR, and set the base clock
+  last (below). Chains are a weak lever: the simulator applies their rule
+  (a chained piece cannot be swapped; a run through it frees it), but a
+  run soon passes through each one. On e3-l04 with no upgrades, its ten
+  chains moved `greedy` from 100 % to 98.5 % and its median from 149 s
+  to 141 s on normal, and from 86.5 % to 84 % on hard; even 32 chains
+  gave only 97.5 % and 129.5 s.
+
+## Clock
+
+A level's clock must cover a human's pace, not just the bots'. Bots move
+every 1.5 s; a human takes about 3.5 s a move. For each difficulty:
+
+```
+required clock = ceil(greedy mean moves × 3.5 s × 1.15 / 10) × 10
+```
+
+with `greedy`'s mean moves from the `--check` run (200 seeds, `auto`
+upgrades) and a 15 % margin, rounded up to whole 10 s. The level's base
+clock at timer tier 0, a player who bought no timer upgrade, must reach
+it. Each level's `base_clock` is the larger of 270 s and the required
+clock; a level whose requirement fits in 270 s leaves `base_clock` out.
+Timer upgrades add 30 s a tier on top (`GOAL-03`), so they always buy
+time. A longer clock lets losing runs play longer, which raises the mean
+moves, so a level's clock is set again until it stops changing.
+`--check` fails a level and difficulty whose base clock is below the
+required clock (the `clock` lines).
 
 ## Current results
 

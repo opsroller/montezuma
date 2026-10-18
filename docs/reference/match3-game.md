@@ -60,7 +60,7 @@ changes nothing.
 
 | Signal | When |
 |---|---|
-| `level_started(level: Dictionary, difficulty: String)` | A level starts. `level` holds the LevelData fields with kind names as `quotas` keys; `time_limit` holds the time the session starts from for the chosen difficulty (`GOAL-03`) |
+| `level_started(level: Dictionary, difficulty: String)` | A level starts. `level` holds the LevelData fields with kind names as `quotas` keys; `time_limit` holds, per difficulty, the time a session starts from: the level's base clock plus the timer tier bonus (`GOAL-03`) |
 | `time_changed(seconds_left: float)` | On start, every frame while playing, and after a move that changes the time |
 | `score_changed(score: int)` | On start and when the score changes (moves, bought hints) |
 | `gems_changed(collected: int, goal: int)` | On start and when gems are collected; goal 0 means the level has no gem goal |

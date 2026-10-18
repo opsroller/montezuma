@@ -39,7 +39,7 @@ every one must be a valid level). Levels run in campaign order.
 | `--difficulty` | `both` | `normal`, `hard`, `both` |
 | `--upgrades` | `auto` | `auto`: every tier a player owns on reaching the level; `none`: base timer and gems, listed items at tier 1, Frenzy tier 1 from e1-l04 |
 | `--format` | `table` | `table`, `csv`, `json` |
-| `--check` | off | exit 1 if a target (moves floor included) or curve rule fails |
+| `--check` | off | exit 1 if a target (moves floor included), curve rule or clock rule fails |
 
 Exit codes: 0 done, 1 a failure with `--check`, 2 bad options or a bad
 level file (its errors go to stderr and nothing runs).
@@ -53,12 +53,18 @@ that ended on a stuck board, the target and `PASS` or `FAIL`. Only
 episode 2 on, the `greedy`/normal target also names the moves floor
 (for example `win>=95% median>=70.0s moves>=50`): a level whose mean
 `moves` is under it fails as too easy, even when it wins every run in
-time. Lengthen it with the tuning levers below, chains and steel first. Below
+time. Lengthen it with the tuning levers below, the gem goal first. Below
 the rows, the two curve rules: `curve-1` for each pair of consecutive
 campaign levels (a jump of more than 10 points of `greedy` win rate
 fails; a level with a new idea must be easier than the one before, or
-both must win every run), and `curve-2` for each episode's opener against its third level. A rule whose
-levels are not all in the run is `skipped`.
+both must win every run), and `curve-2` for each episode's opener against its third level. A new idea
+is a totem or power-up id, chains or steel that no earlier level in the
+run has, so chains returning after a steel-only level are practice, not
+a new idea. Then one `clock` line per level and difficulty: the level's
+base clock (timer tier 0) must reach the [clock rule](../reference/balance.md#clock)'s
+seconds for `greedy`'s mean moves on that difficulty, for example
+`clock e2-l03 hard FAIL base 270.0s must reach 490s (119.7 moves x 3.5 s x 1.15)`.
+A rule whose levels or rows are not all in the run is `skipped`.
 
 ## How the bots play
 
@@ -74,6 +80,7 @@ difficulties are in the run, and the same command prints the same report.
 
 ## Tune a level
 
-Change one lever at a time (balance.md: chains and `steel_rate`, then the
-gem goal in steps of 5, then the time override), rerun the level and its
-neighbours, and record before and after in the PR.
+Change one lever at a time (balance.md: the gem goal in steps of 5, then
+`steel_rate`, then chains), rerun the level and its neighbours, and record
+before and after in the PR. Set `base_clock` last, from the `clock`
+lines, since every other lever changes the moves it is based on.

@@ -43,7 +43,7 @@ level each becomes available:
 
 | Item | Base | Tier 1 | Tier 2 | Tier 3 | Tier 4 | Source |
 |---|---|---|---|---|---|---|
-| Timer | 270 s | 300 s (e1-l02) | 330 s (e3-l04) | 360 s (e4-l06) | 390 s (e5-l08) | [S1]; base chosen |
+| Timer, added to the level's base clock (`GOAL-03`) | +0 s | +30 s (e1-l02) | +60 s (e3-l04) | +90 s (e4-l06) | +120 s (e5-l08) | [S1]; amounts chosen. The base clock is 270 s unless the level sets `base_clock` ([clock rule](balance.md#clock)) |
 | Gems on board | 5 | 6 (e2-l05) | 7 (e3-l08) | 8 (e5-l02) | — | [S1] |
 | Score Frenzy | — | 15 s (e1-l04, free) | 20 s (e3-l03) | 25 s (e4-l05) | 30 s (e5-l07) | [S1] |
 
@@ -122,7 +122,7 @@ listed under [S1].
 | e5-l11 | 40 | 200 | 300 | | |
 | e5-l12 | 41 | 200 | 300 | finale | |
 
-Every level: 8 × 8 board, 7 kinds, the player's timer tier, every item
+Every level: 8 × 8 board, 7 kinds, its base clock plus the player's timer tier, every item
 unlocked so far. Steel rate and chains per level are set in WP-23 to
 WP-27 against the simulator targets in
 [balance](balance.md); guidance: chains 2 to 10 cells,
