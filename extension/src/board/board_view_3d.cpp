@@ -713,6 +713,8 @@ void BoardView3D::clear_hints() {
 
 void BoardView3D::play_effect(const String& label, const Array& cells) {
     ERR_FAIL_COND_MSG(board_.is_null(), "play_effect() before show_board().");
+    // Labels without a kind (a benchmark "swap") have no effect of their own.
+    if (!label.contains(":")) return;
     const PackedStringArray parts = label.split(":");
     ERR_FAIL_COND_MSG(parts.size() != 2, "play_effect label must be totem:<id> or powerup:<id>, got '" + label + "'.");
     const bool totem = parts[0] == "totem";

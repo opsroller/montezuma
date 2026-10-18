@@ -27,7 +27,7 @@ Draws a `Match3Board` and plays back results. It never applies a rule.
 | `get_marks() -> PackedInt32Array` | method | The markers the pieces show now |
 | `show_hints(pairs: Array, seconds: float = 0)` | method | A pulsing ring under both cells of each `[a, b]` swap, until the next move, or for `seconds` when above 0 |
 | `clear_hints()`, `has_hints()` | method | Removes the hint rings; whether any show |
-| `play_effect(label: String, cells: Array)` | method | Plays one effect outside a move: `label` is `totem:<id>` or `powerup:<id>`. For the benchmark's `bench_event` (WP-46) and look-dev |
+| `play_effect(label: String, cells: Array)` | method | Plays one effect outside a move: `label` is `totem:<id>` or `powerup:<id>`; a label without a colon, such as `swap`, plays nothing. For the benchmark's `bench_event` (WP-46) and look-dev |
 | `get_effects_played() -> Dictionary` | method | Effect beats scheduled since the board was built, by name (`totem_<id>`, `power_up_<id>`, `gem_collect`, `steel_break`, `chain_break`, `mark_placed`), and `overrun_seconds`: the most any move's effects ran past its plan (0 when rule 3 holds); for tests |
 | `play_illegal(a: Vector2i, b: Vector2i)` | method | Bounces the two pieces toward each other and back, then emits `animation_finished` |
 | `is_busy()` | method | True while an animation plays; taps are ignored then |
