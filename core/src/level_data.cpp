@@ -293,9 +293,9 @@ private:
                 error(path, "expected [x, y], got " + (v.is_array() ? "an array of " + std::to_string(v.size()) : describe(v)));
                 continue;
             }
-            // With an invalid board only the sign can be checked.
-            const std::optional<int> width = board_ok ? std::optional<int>(level.board.width) : std::nullopt;
-            const std::optional<int> height = board_ok ? std::optional<int>(level.board.height) : std::nullopt;
+            // With an invalid board only the sign can be checked (size 0 means unknown).
+            const int width = board_ok ? level.board.width : 0;
+            const int height = board_ok ? level.board.height : 0;
             const std::optional<int> x = coordinate(v[0], element(path, 0), "x", width);
             const std::optional<int> y = coordinate(v[1], element(path, 1), "y", height);
             if (!x || !y) continue;
@@ -309,17 +309,17 @@ private:
     }
 
     std::optional<int> coordinate(const json& j, const std::string& path, std::string_view axis,
-                                  std::optional<int> size) {
+                                  int size) {
         const std::optional<std::int64_t> v = integer(j, path);
         if (!v) return std::nullopt;
-        if (!size) {
+        if (size <= 0) {
             if (*v >= 0 && *v <= INT_MAX) return static_cast<int>(*v);
             error(path, std::string(axis) + " " + std::to_string(*v) + " is outside the board");
             return std::nullopt;
         }
-        if (*v < 0 || *v >= *size) {
+        if (*v < 0 || *v >= size) {
             error(path, std::string(axis) + " " + std::to_string(*v) + " is outside the board (0 to " +
-                            std::to_string(*size - 1) + ")");
+                            std::to_string(size - 1) + ")");
             return std::nullopt;
         }
         return static_cast<int>(*v);
