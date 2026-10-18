@@ -17,6 +17,7 @@ else()
 endif()
 option(MONTEZUMA_BUILD_EXTENSION "Build the Godot GDExtension (needs thirdparty/godot-cpp)" ${_montezuma_has_godot_cpp})
 option(MONTEZUMA_WERROR "Treat compiler warnings as errors" OFF)
+option(MONTEZUMA_BUILD_SIM "Build the balance simulator (tools/sim)" ON)
 
 # Engine-independent game rules. The Godot GDExtension links against this.
 # Sources are picked up automatically so parallel work packages can add
@@ -48,6 +49,11 @@ if(MONTEZUMA_BUILD_TESTS)
     montezuma_warnings(montezuma_${test_name})
     add_test(NAME ${test_name} COMMAND montezuma_${test_name})
   endforeach()
+endif()
+
+# Balance simulator CLI (WP-22); a desktop tool, never shipped.
+if(MONTEZUMA_BUILD_SIM)
+  add_subdirectory(tools/sim)
 endif()
 
 if(MONTEZUMA_BUILD_EXTENSION)
