@@ -28,6 +28,11 @@ const LevelData& validated(const LevelData& level, Difficulty difficulty, const 
         throw std::invalid_argument("difficulty must be normal or hard");
     if (!level.blocked_cells.empty()) throw std::invalid_argument("blocked cells are not supported yet");
     if (!level.gem_goal && level.quotas.empty()) throw std::invalid_argument("level has no goal");
+    // rule: OBS-05, BOARD-04 chained cells must be on the board.
+    for (Cell c : level.chained_cells)
+        if (c.x < 0 || c.y < 0 || c.x >= level.board.width || c.y >= level.board.height)
+            throw std::invalid_argument("chained cell (" + std::to_string(c.x) + ", " + std::to_string(c.y) +
+                                        ") is off the board");
     // rule: GOAL-03 throws for a timer tier out of range.
     (void)level.time_limit_for(difficulty, up.timer_tier);
     if (up.gems_tier < 0 || up.gems_tier > kMaxGemsTier)
@@ -51,12 +56,27 @@ const LevelData& validated(const LevelData& level, Difficulty difficulty, const 
 
 }  // namespace
 
-std::uint64_t derive_seed(std::uint64_t seed, std::uint64_t stream) noexcept {
-    std::uint64_t z = seed ^ (stream * 0x9E3779B97F4A7C15ull);
+namespace {
+
+std::uint64_t splitmix(std::uint64_t z) noexcept {
     z += 0x9E3779B97F4A7C15ull;
     z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ull;
     z = (z ^ (z >> 27)) * 0x94D049BB133111EBull;
     return z ^ (z >> 31);
+}
+
+}  // namespace
+
+std::uint64_t derive_seed(std::uint64_t seed, std::uint64_t stream) noexcept {
+    // Mix the seed and the stream key apart before combining them, so no
+    // linear relation between two seeds maps one's stream onto another's.
+    return splitmix(splitmix(seed) ^ splitmix(~stream));
+}
+
+std::int64_t to_micros(double seconds) {
+    // Clamped to about 31,700 years either way so the rounding cannot overflow.
+    constexpr double kLimit = 1e15;
+    return std::llround(std::clamp(seconds * 1e6, -kLimit, kLimit));
 }
 
 // Per-move bookkeeping shared by the board hooks.
@@ -95,7 +115,7 @@ LevelSession::LevelSession(const LevelData& level, Difficulty difficulty, const 
 
     gems_max_ = kBaseGemsOnBoard + up.gems_tier;
     if (level_.gem_goal) gem_goal_ = difficulty == Difficulty::Hard ? level_.gem_goal->hard : level_.gem_goal->normal;
-    time_left_ = level_.time_limit_for(difficulty, up.timer_tier);
+    time_left_us_ = to_micros(level_.time_limit_for(difficulty, up.timer_tier));
     frenzy_tier_ = up.frenzy_tier;
     free_hints_ = std::find(kFreeHintLevels.begin(), kFreeHintLevels.end(), level_.id) != kFreeHintLevels.end();
 
@@ -321,7 +341,7 @@ void LevelSession::on_step_clear(MoveContext& ctx, const std::vector<Cell>& cell
     sr.frenzy_bar_after = frenzy_bar_;
     // rule: PWR-09, PWR-10, PWR-11, GOAL-05
     for (const PowerUpEffect& e : sc.effects) {
-        time_left_ += e.time_delta_seconds;
+        time_left_us_ += to_micros(e.time_delta_seconds);
         ctx.report.time_delta_seconds += e.time_delta_seconds;
         ctx.multiplier = std::max(ctx.multiplier, e.score_multiplier);
         if (e.hint_seconds > 0.0) ctx.report.hint_seconds = e.hint_seconds;
@@ -390,7 +410,7 @@ void LevelSession::on_step_refill(MoveContext& ctx, const CascadeStep& step, int
     if (ctx.frenzy_fill) {
         ctx.frenzy_fill = false;
         frenzy_on_ = true;
-        frenzy_left_ = kFrenzySeconds[static_cast<std::size_t>(frenzy_tier_)];
+        frenzy_left_us_ = to_micros(kFrenzySeconds[static_cast<std::size_t>(frenzy_tier_)]);
         sr.frenzy_started = true;
         ctx.report.frenzy_started = true;
     }
@@ -413,7 +433,7 @@ std::optional<MoveResult> LevelSession::clear_effect(MoveContext& ctx, const std
 void LevelSession::start_frenzy(MoveContext& ctx, bool& started, bool& restarted) {
     // rule: FRZ-03, TOT-12 start, or restart the duration during one.
     if (frenzy_tier_ < 1) return;
-    frenzy_left_ = kFrenzySeconds[static_cast<std::size_t>(frenzy_tier_)];
+    frenzy_left_us_ = to_micros(kFrenzySeconds[static_cast<std::size_t>(frenzy_tier_)]);
     if (frenzy_on_) {
         restarted = true;
         ctx.report.frenzy_restarted = true;
@@ -435,7 +455,7 @@ void LevelSession::fire_totem(MoveContext& ctx, TotemId id, TotemFiring& firing)
         break;
     case TotemId::Time:
         // rule: TOT-11, GOAL-05
-        time_left_ += e.time_delta_seconds;
+        time_left_us_ += to_micros(e.time_delta_seconds);
         ctx.report.time_delta_seconds += e.time_delta_seconds;
         break;
     case TotemId::Gold: {
@@ -533,7 +553,7 @@ std::optional<MoveReport> LevelSession::swap(Cell a, Cell b) {
     // rule: MOVE-01, SHUF-04 a move; it clears a bought hint.
     ++moves_;
     hint_.reset();
-    idle_seconds_ = 0.0;
+    idle_us_ = 0;
     free_hint_shown_ = false;
 
     // rule: TOT-02..04, RES-07 totems after the last cascade, kind order.
@@ -568,10 +588,10 @@ std::optional<MoveReport> LevelSession::swap(Cell a, Cell b) {
         sh.time_delta_seconds = -kAutoShufflePenaltySeconds;
         rep.time_delta_seconds -= kAutoShufflePenaltySeconds;
         // AMBIGUOUS: the penalty clamps at 0 and loses at once.
-        time_left_ = std::max(0.0, time_left_ - kAutoShufflePenaltySeconds);
+        time_left_us_ = std::max<std::int64_t>(0, time_left_us_ - to_micros(kAutoShufflePenaltySeconds));
         if (sh.stuck) rep.stuck = true;
         rep.auto_shuffle = sh;
-        if (rep.stuck || time_left_ <= 0.0) outcome_ = Outcome::Lost;
+        if (rep.stuck || time_left_us_ <= 0) outcome_ = Outcome::Lost;
     }
     rep.outcome = outcome_;
     return std::move(ctx.report);
@@ -627,35 +647,38 @@ std::optional<TickReport> LevelSession::tick(double dt) {
     if (!(dt >= 0.0)) throw std::invalid_argument("tick: dt must not be negative");
     if (outcome_ != Outcome::Playing) return std::nullopt;
     TickReport t;
-    if (dt > 0.0) {
+    // Game time counts in whole microseconds, so the same time gives the
+    // same game however it is split into ticks.
+    const std::int64_t us = to_micros(dt);
+    if (us > 0) {
         // rule: GOAL-04, FRZ-05
-        time_left_ -= dt;
+        time_left_us_ -= us;
         if (frenzy_on_) {
-            frenzy_left_ -= dt;
-            if (frenzy_left_ <= 0.0) {
+            frenzy_left_us_ -= us;
+            if (frenzy_left_us_ <= 0) {
                 // rule: FRZ-03
                 frenzy_on_ = false;
-                frenzy_left_ = 0.0;
+                frenzy_left_us_ = 0;
                 frenzy_bar_ = 0;
                 t.frenzy_ended = true;
             }
         }
-        idle_seconds_ += dt;
+        idle_us_ += us;
         // rule: SHUF-05
-        if (free_hints_ && !free_hint_shown_ && idle_seconds_ >= kFreeHintIdleSeconds) {
+        if (free_hints_ && !free_hint_shown_ && idle_us_ >= to_micros(kFreeHintIdleSeconds)) {
             const std::vector<Swap> moves = legal_moves();
             if (!moves.empty()) t.free_hint = moves.front();
             free_hint_shown_ = true;
         }
         // rule: GOAL-01
-        if (time_left_ <= 0.0) {
-            time_left_ = 0.0;
+        if (time_left_us_ <= 0) {
+            time_left_us_ = 0;
             outcome_ = Outcome::Lost;
             t.outcome_changed = true;
         }
     }
-    t.time_left = time_left_;
-    t.frenzy_left = frenzy_left_;
+    t.time_left = time_left();
+    t.frenzy_left = frenzy_left();
     t.outcome = outcome_;
     return t;
 }
@@ -672,8 +695,11 @@ std::optional<ShuffleReport> LevelSession::shuffle() {
 }
 
 std::optional<Swap> LevelSession::buy_hint() {
-    // rule: SHUF-04
-    if (outcome_ != Outcome::Playing || score_ < kHintCost) return std::nullopt;
+    // rule: SHUF-04 a hint stays shown until the next move: asking again
+    // returns it at no further cost.
+    if (outcome_ != Outcome::Playing) return std::nullopt;
+    if (hint_) return hint_;
+    if (score_ < kHintCost) return std::nullopt;
     const std::vector<Swap> moves = legal_moves();
     if (moves.empty()) return std::nullopt;
     score_ -= kHintCost;
@@ -693,7 +719,7 @@ void LevelSession::set_power_up(Cell c, std::optional<PowerUp> p) {
 }
 void LevelSession::set_frenzy(bool on, double left) {
     frenzy_on_ = on;
-    frenzy_left_ = on ? left : 0.0;
+    frenzy_left_us_ = on ? to_micros(left) : 0;
 }
 
 }  // namespace montezuma

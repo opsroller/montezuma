@@ -1437,9 +1437,12 @@ void test_totems() {
     {
         LevelData l = level_with_totems({"fire", "time"});
         l.gem_goal = GemGoal{1, 1};
-        LevelSession s = scene(kBlank, l);
+        // Seed 2: the charging move's refill collects no gem, so the goal is
+        // still open when the totems fire.
+        LevelSession s = scene(kBlank, l, {}, 2);
         paint(s, kRedOrange);
         s.swap(kRedOrangeSwap[0], kRedOrangeSwap[1]);
+        check(s.outcome() == Outcome::Playing, "GOAL-02 setup: the charging move does not win");
         paint(s, kRedOrange);
         for (int y = 0; y < 6; ++y)
             for (int x = 0; x < 8; ++x) s.set_gem({x, y}, true);  // fire will hit one
@@ -1502,6 +1505,94 @@ void test_reports_and_replay() {
 
 }  // namespace
 
+void test_det_failed_shuffle_leaves_no_hidden_state() {
+    // A manual shuffle that finds nothing playable "changes nothing"
+    // (level-session.md); the same moves afterwards must give the same game.
+    LevelSession a = scene(kSimple, base_level(), {}, 5);
+    LevelSession b = scene(kSimple, base_level(), {}, 5);
+    for (LevelSession* s : {&a, &b})
+        for (int y = 0; y < 8; ++y)
+            for (int x = 0; x < 8; ++x) s->set_chain({x, y}, !(y == 0 && x < 2));
+    auto sh = b.shuffle();
+    check(sh && sh->stuck && snap(a) == snap(b), "failed shuffle is reported stuck and leaves the board");
+    for (LevelSession* s : {&a, &b})
+        for (int y = 0; y < 8; ++y)
+            for (int x = 0; x < 8; ++x) s->set_chain({x, y}, false);
+    auto ra = a.swap(kSimpleSwap[0], kSimpleSwap[1]);
+    auto rb = b.swap(kSimpleSwap[0], kSimpleSwap[1]);
+    check(ra && rb, "determinism: swap legal after failed shuffle");
+    check(snap(a) == snap(b), "determinism: a failed shuffle does not change later refills");
+}
+
+void test_det_timer_independent_of_tick_size() {
+    // 270 s of game time is 270 s whether it arrives in 27 s or 0.1 s ticks.
+    LevelSession coarse(base_level(), Difficulty::Normal, {}, 1);
+    LevelSession fine(base_level(), Difficulty::Normal, {}, 1);
+    for (int i = 0; i < 10; ++i) coarse.tick(27.0);
+    for (int i = 0; i < 2700; ++i) fine.tick(0.1);
+    check(coarse.outcome() == Outcome::Lost, "GOAL-04 270 s in 27 s ticks loses");
+    check(fine.outcome() == coarse.outcome(), "determinism: 270 s in 0.1 s ticks gives the same outcome");
+    // SHUF-05: the free hint after 8 s idle, whatever the tick size.
+    LevelData l = base_level();
+    l.id = "e1-l01";
+    l.index = 1;
+    LevelSession h(l, Difficulty::Normal, {}, 1);
+    int hints = 0;
+    for (int i = 0; i < 80; ++i) {
+        auto t = h.tick(0.1);
+        if (t && t->free_hint) ++hints;
+    }
+    check(hints == 1, "determinism: free hint after 8 s of 0.1 s ticks");
+}
+
+void test_det_streams_do_not_alias() {
+    // derive_seed must give independent streams: no other seed's stream 1
+    // may equal this seed's stream 2 (bots derive stream 3 the same way).
+    constexpr std::uint64_t g = 0x9E3779B97F4A7C15ull;
+    const std::uint64_t a = 12345;
+    const std::uint64_t b = a ^ (1 * g) ^ (2 * g);
+    check(derive_seed(a, 2) != derive_seed(b, 1), "determinism: level stream of a is not board stream of b");
+    Rng level_a(derive_seed(a, 2));
+    Rng board_b(derive_seed(b, 1));
+    check(level_a.next() != board_b.next(), "determinism: streams of different seeds are independent");
+}
+
+// BOARD-04 / OBS-05: chained_cells come from the level data. A cell off the
+// board is invalid input and must throw std::invalid_argument, not alias
+// another cell or write outside the mark vectors.
+void test_chained_cells_out_of_bounds() {
+    // A chained cell outside the board is rejected, not written out of bounds.
+    {
+        LevelData l = base_level();
+        l.chained_cells = {Cell{0, 8}};
+        check(throws<std::invalid_argument>([&] { LevelSession s(l, Difficulty::Normal, {}, 1); }),
+              "OBS-05 chained cell outside the board throws");
+    }
+    LevelData right = base_level();
+    right.chained_cells = {{9, 0}};  // x past width: today it silently chains (1, 1)
+    check(throws<std::invalid_argument>([&] { LevelSession s(right, Difficulty::Normal, {}, 1); }),
+          "OBS-05 chained cell right of the board throws");
+    LevelData neg = base_level();
+    neg.chained_cells = {{-1, 0}};
+    check(throws<std::invalid_argument>([&] { LevelSession s(neg, Difficulty::Normal, {}, 1); }),
+          "OBS-05 chained cell left of the board throws");
+    LevelData below = base_level();
+    below.chained_cells = {{3, 8}};  // y == height: today a heap overflow
+    check(throws<std::invalid_argument>([&] { LevelSession s(below, Difficulty::Normal, {}, 1); }),
+          "OBS-05 chained cell below the board throws");
+}
+
+void test_hint_not_charged_twice() {
+    // SHUF-04 a second purchase while the hint is still shown costs nothing more.
+    {
+        LevelSession s = scene(kSimple);
+        s.set_score(900);
+        auto h1 = s.buy_hint();
+        auto h2 = s.buy_hint();
+        check(h1 && h2 && *h1 == *h2 && s.score() == 600, "SHUF-04 a hint already shown is not charged again");
+    }
+}
+
 int main() {
     test_construction();
     test_moves();
@@ -1515,6 +1606,11 @@ int main() {
     test_power_ups();
     test_totems();
     test_reports_and_replay();
+    test_det_failed_shuffle_leaves_no_hidden_state();
+    test_det_timer_independent_of_tick_size();
+    test_det_streams_do_not_alias();
+    test_hint_not_charged_twice();
+    test_chained_cells_out_of_bounds();
     std::printf("%d checks, %d failures\n", checks, failures);
     return failures == 0 ? 0 : 1;
 }

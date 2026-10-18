@@ -144,6 +144,10 @@ struct TickReport {
     bool outcome_changed = false;
 };
 
+// Seconds to whole microseconds, rounded to nearest: the session's unit of
+// game time.
+std::int64_t to_micros(double seconds);
+
 class LevelSession {
 public:
     // Throws std::invalid_argument for a tier out of range, an unknown
@@ -192,12 +196,12 @@ public:
     std::optional<int> gem_goal() const { return gem_goal_; }
     const std::map<int, int>& quotas() const { return level_.quotas; }
     const std::map<int, int>& cleared_by_kind() const { return cleared_by_kind_; }
-    double time_left() const { return time_left_; }
+    double time_left() const { return static_cast<double>(time_left_us_) / 1e6; }
     int score() const { return score_; }
     int frenzy_tier() const { return frenzy_tier_; }
     int frenzy_bar() const { return frenzy_bar_; }
     bool frenzy_on() const { return frenzy_on_; }
-    double frenzy_left() const { return frenzy_left_; }
+    double frenzy_left() const { return static_cast<double>(frenzy_left_us_) / 1e6; }
     int star_sand() const { return star_sand_; }
     int manual_shuffles_left() const { return manual_shuffles_left_; }
     std::optional<Swap> hint() const { return hint_; }
@@ -214,7 +218,7 @@ public:
     void set_chain(Cell c, bool on);
     void set_power_up(Cell c, std::optional<PowerUp> p);
     void set_gems_collected(int n) { gems_collected_ = n; }
-    void set_time_left(double t) { time_left_ = t; }
+    void set_time_left(double t) { time_left_us_ = to_micros(t); }
     void set_score(int s) { score_ = s; }
     void set_frenzy_bar(int b) { frenzy_bar_ = b; }
     void set_frenzy(bool on, double left);
@@ -261,12 +265,12 @@ private:
     std::optional<int> gem_goal_;
     std::map<int, int> cleared_by_kind_;
     int gems_collected_ = 0;
-    double time_left_ = 0.0;
+    std::int64_t time_left_us_ = 0;  // game time counts in whole microseconds
     int score_ = 0;
     int frenzy_tier_ = 0;
     int frenzy_bar_ = 0;
     bool frenzy_on_ = false;
-    double frenzy_left_ = 0.0;
+    std::int64_t frenzy_left_us_ = 0;
     int star_sand_ = 0;
     int manual_shuffles_left_ = kManualShufflesPerLevel;
     std::optional<Swap> hint_;
@@ -274,7 +278,7 @@ private:
     int moves_ = 0;
     bool steel_stopped_ = false;
     bool free_hints_ = false;
-    double idle_seconds_ = 0.0;
+    std::int64_t idle_us_ = 0;
     bool free_hint_shown_ = false;
 };
 

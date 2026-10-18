@@ -30,8 +30,8 @@ LevelSession s(level, Difficulty::Normal, upgrades, seed);
 Totem and power-up tiers apply only to the ids the level lists; a listed
 id with tier 0 is owned at tier 1 (`PROG-03`); unlisted ids are not owned.
 The constructor throws `std::invalid_argument` for a tier out of range, an
-unknown difficulty, a level with no goal, and a level with `blocked_cells`
-(not supported yet), and `std::runtime_error` when no playable board can
+unknown difficulty, a level with no goal, a chained cell off the board
+(`OBS-05`), and a level with `blocked_cells` (not supported yet), and `std::runtime_error` when no playable board can
 be dealt.
 
 At the start: `gems_max` gems on distinct plain pieces, the level's
@@ -45,9 +45,9 @@ movable pieces are reshuffled at no cost); totems at `start_level()`
 | Command | Returns | Notes |
 |---|---|---|
 | `swap(a, b)` | `optional<MoveReport>` | empty, with nothing changed, for an illegal swap or after the level ended |
-| `tick(dt)` | `optional<TickReport>` | lowers `time_left` and `frenzy_left`; `dt < 0` throws; empty after the level ended |
+| `tick(dt)` | `optional<TickReport>` | lowers `time_left` and `frenzy_left`; `dt < 0` throws; empty after the level ended. Game time counts in whole microseconds (`dt` rounded to nearest), so the same time gives the same game however it is split into ticks |
 | `shuffle()` | `optional<ShuffleReport>` | manual shuffle, twice per level, free, not a move (`SHUF-01`) |
-| `buy_hint()` | `optional<Swap>` | one legal move for 300 points, cleared by the next move (`SHUF-04`) |
+| `buy_hint()` | `optional<Swap>` | one legal move for 300 points, cleared by the next move or shuffle (`SHUF-04`); while a hint is shown it is returned again at no cost |
 
 The session has no pause: the caller does not tick while paused or on a
 result screen (`GOAL-04`). Moves resolve instantly, so the caller decides
@@ -123,7 +123,9 @@ redeal has no map: read the session again.
 
 ## Determinism
 
-The session seed derives three streams with `derive_seed(seed, stream)`:
+The session seed derives three streams with `derive_seed(seed, stream)`,
+which mixes the seed and the stream key separately before combining them,
+so no two seeds share a stream by construction:
 1 for the board's refills and shuffles, 2 for the level generator (gems,
 steel, power-ups, totems). Callers derive their own from stream 3 up (the
 simulator's bots use 3). No clock is read. Inside one refill the draws
@@ -160,6 +162,7 @@ may change any of them.
 - Gold's Frenzy needs Frenzy unlocked (tier 1+); with Frenzy locked it
   starts nothing.
 - A manual shuffle that finds nothing playable is reported `stuck`,
-  changes nothing and does not use up a shuffle.
+  changes nothing (the board's random stream included) and does not use
+  up a shuffle.
 - `DIFF-03`'s default hard goal (normal × 1.5, rounded up to 5) is not
   applied: the level data always has `gem_goal.hard`.

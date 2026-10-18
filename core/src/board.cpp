@@ -282,6 +282,8 @@ bool Board::shuffle_movable(const StepHooks& hooks, std::vector<std::pair<Cell, 
     map.clear();
     redealt = false;
     const std::vector<int> before = cells_;
+    // A shuffle that finds nothing playable leaves no trace, the stream included.
+    const Rng rng_before = rng_;
     std::vector<int> movable;
     for (int i = 0; i < static_cast<int>(cells_.size()); ++i)
         if (cells_[i] != kEmpty && (!hooks.movable || hooks.movable(*this, cell_of(i)))) movable.push_back(i);
@@ -312,6 +314,7 @@ bool Board::shuffle_movable(const StepHooks& hooks, std::vector<std::pair<Cell, 
         }
     }
     cells_ = before;
+    rng_ = rng_before;
     return false;
 }
 
@@ -319,6 +322,7 @@ bool Board::shuffle_tracked(std::vector<std::pair<Cell, Cell>>& map, bool& redea
     map.clear();
     redealt = false;
     const std::vector<int> before = cells_;
+    const Rng rng_before = rng_;
     // origin[i] = where the piece now at i stood before the shuffle.
     std::vector<int> origin(cells_.size());
     for (std::size_t i = 0; i < origin.size(); ++i) origin[i] = static_cast<int>(i);
@@ -341,6 +345,7 @@ bool Board::shuffle_tracked(std::vector<std::pair<Cell, Cell>>& map, bool& redea
         return true;
     } catch (const std::exception&) {
         cells_ = before;
+        rng_ = rng_before;
         return false;
     }
 }
