@@ -26,7 +26,7 @@ The workflow token is read-only (`contents: read`). No job uses secrets.
 | `extension (windows)` | `windows-2022` | Builds `libmontezuma.windows.template_release.x86_64.dll` (MSVC) | The extension does not compile with MSVC |
 | `extension (macos)` | `macos-14` | Builds `libmontezuma.macos.template_release.universal.dylib` (arm64 + x86_64, macOS 10.15+) | The extension does not compile with Apple Clang for both architectures |
 | `export` | `ubuntu-24.04` | Fetches the pinned Godot, exports the three presets and packages them | A preset is wrong, a library is missing, or ad-hoc signing of the macOS app failed. The `export-logs` artifact has Godot's output |
-| `smoke (<platform>)` | Same runner as the matching `extension` job | Verifies the checksum, unpacks the package and runs the game headless for 120 frames | The packaged game does not start or logs an engine error, for example the extension not loading |
+| `smoke (<platform>)` | Same runner as the matching `extension` job | Verifies the checksum, unpacks the package, runs the game headless for 120 frames, then renders the title screen and the first level at 1280×720 with Godot's Movie Maker | The packaged game does not start or logs an engine error, for example the extension not loading; or the game renders no frame on that OS |
 
 All extension builds use `-DGODOTCPP_TARGET=template_release
 -DMONTEZUMA_BUILD_EXTENSION=ON -DMONTEZUMA_BUILD_TESTS=OFF
@@ -39,6 +39,7 @@ All extension builds use `-DGODOTCPP_TARGET=template_release
 | `montezuma-linux` | `montezuma-<version>-linux-x86_64.tar.gz` and its `.sha256` | 90 days (repository default) |
 | `montezuma-windows` | `montezuma-<version>-windows-x86_64.zip` and its `.sha256` | 90 days |
 | `montezuma-macos` | `montezuma-<version>-macos-universal.zip` and its `.sha256` | 90 days |
+| `screenshots-<platform>` | `title.png` (title screen) and `board.png` (level `e1-l01` in play, with the HUD), rendered by that platform's package | 90 days |
 | `export-logs` | Godot's import and export output per platform | 7 days |
 | `extension-<platform>` | The compiled libraries, passed from `extension` to `export` | 3 days |
 
@@ -72,6 +73,26 @@ exported game. They are generated and ignored by git.
 Archives are packed by `tools/release/package.py` with sorted entries,
 no owners, and every timestamp set to the commit time
 (`SOURCE_DATE_EPOCH`).
+
+Artifacts stay on the Actions run: no job publishes a release, a page or
+a store upload. Open a run in the Actions tab and download them from its
+**Artifacts** list (GitHub requires signing in to download).
+
+### Screenshot rendering
+
+| Platform | Renderer | Display |
+|---|---|---|
+| Linux | `opengl3` (Mesa software) | Xvfb, `1280x720x24` |
+| Windows | `opengl3_angle` (ANGLE over Direct3D 11) | The runner's desktop session |
+| macOS | `metal`, then `opengl3` if Metal fails: on the runner's paravirtual GPU Metal has crashed (Godot 4.4), Vulkan runs out of device memory, and OpenGL is Apple's software renderer at several seconds a frame | The runner's desktop session |
+
+Each shot runs the game at the project's 1280×720 window size with
+`--write-movie`, `--fixed-fps 30` and `--quit-after` (15 frames for the
+title, 30 for the board, so the opening fade and the deal have finished)
+and keeps the last frame. If a renderer exits with an error or writes no
+frame, the next one in the table is tried. The board shot passes
+`-- --start-level=e1-l01`, which skips the menus and plays that level
+(see [UI](ui.md#command-line-arguments)).
 
 ## Versions
 
@@ -120,7 +141,7 @@ compiler cache is safe for release builds.
 | `game-files.py stage <gamedir>` | Copies `CREDITS.md` and `LICENSE` into the Godot project and runs `notices.py` there |
 | `game-files.py check <gamedir> <export>` | Exits 1 unless every staged file's bytes are inside the exported game (a file or a `.app` folder) |
 | `notices/` | Verbatim upstream notice texts (Godot 4.7.2 `LICENSE.txt`, `COPYRIGHT.txt`) |
-| `smoke-test.sh <archive>` | Verifies, unpacks and runs a package on its own platform |
+| `smoke-test.sh <archive> [<screens-dir>]` | Verifies, unpacks and runs a package on its own platform; with a folder, also saves `title.png` and `board.png` there |
 | `web-fetch-emsdk.sh <dir>` | Installs the pinned Emscripten (`EMSDK_VERSION` in `godot.env`) into `<dir>` and prints its `emsdk_env.sh` |
 | `web-export.sh <version> <outdir>` | Exports the `Web` preset, checks the download budget and writes the zip and `.sha256` |
 | `web-smoke.py <archive> [browser...]` | Verifies and serves a web package, starts it the way the site does and checks the hand-off events |
