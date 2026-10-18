@@ -62,6 +62,16 @@ inline constexpr double kMarkGoneSeconds = 0.12;
 // A hint ring pulses this often while it shows.
 inline constexpr double kHintPulseSeconds = 0.6;
 
+// Reduced motion (the `reduced_motion` setting): board animations play this
+// many times faster, so pieces travel for less time; outcomes and order
+// never change. Owner: the feel pass (WP-40).
+inline constexpr double kReducedMotionAnimationSpeed = 2.0;
+
+// Animation speed for BoardView3D under the reduced-motion setting.
+inline constexpr double animation_speed_for(bool reduced_motion) {
+    return reduced_motion ? kReducedMotionAnimationSpeed : 1.0;
+}
+
 // Selected piece grows and lifts so it reads against its neighbours.
 inline constexpr double kSelectedScale = 1.18;
 inline constexpr double kSelectedLiftCells = 0.12;

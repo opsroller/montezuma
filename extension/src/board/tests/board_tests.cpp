@@ -443,6 +443,13 @@ void test_pointer_rules() {
 
 }  // namespace
 
+void test_reduced_motion_speeds_animations_up() {
+    check(feel::animation_speed_for(false) == 1.0, "normal motion plays at feel speed");
+    check(feel::animation_speed_for(true) == feel::kReducedMotionAnimationSpeed, "reduced motion uses its speed");
+    check(feel::kReducedMotionAnimationSpeed > 1.0 && feel::kReducedMotionAnimationSpeed <= 10.0,
+          "reduced motion shortens animations within animation_speed's range");
+}
+
 void test_board_padding_measures_the_frame() {
     layout::Grid g{8, 8, 1.0};
     check(near(layout::board_padding(g, -4.2, -4.2, 4.2, 4.2), 0.2), "slab 0.2 past the cells");
@@ -474,6 +481,7 @@ int main() {
     test_swipe_off_the_edge_and_from_selection();
     test_phone_tap_pair_counts_once();
     test_pointer_rules();
+    test_reduced_motion_speeds_animations_up();
     std::printf("%d checks, %d failures\n", checks, failures);
     return failures == 0 ? 0 : 1;
 }

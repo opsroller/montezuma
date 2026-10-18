@@ -23,7 +23,7 @@ Token permissions: `contents: read`.
 | Job | Runners | What red means |
 |---|---|---|
 | `core` | Ubuntu, macOS; Windows too on pushes to `main` | the core or a Godot-free test fails to build with warnings as errors, or a CTest test fails, including `test_level_files`, which parses every level file and checks its id against its path on every PR (the balance check `montezuma_sim --check` also parses them), and the website's `site_build_tests` (Python) and `site_js_tests` (Node), which CTest adds when the runner has Python 3.10+ and Node |
-| `extension` | Ubuntu; Windows too on pushes to `main` | the GDExtension (with godot-cpp) or a test fails to build, or a CTest test fails (every test, including `ui_model_tests`); on Ubuntu, Godot (the version in `tools/release/godot.env`) logs an error while loading the game headless, the audio or game self-test reports a failure ([Match3Game self-test](match3-game.md#self-test)), quitting from level `e1-l01` with `--quit-after-frames` prints an error or a leak ([Audio: Quitting](audio.md#quitting)), or the quality tier self-test (`--quality-selftest`, run once each with `--rendering-method forward_plus`, `mobile` and `gl_compatibility`) reports a failure, or the [benchmark](benchmark.md) smoke run (3 s headless) logs an error, drifts from its plan or writes no report |
+| `extension` | Ubuntu; Windows too on pushes to `main` | the GDExtension (with godot-cpp) or a test fails to build, or a CTest test fails (every test, including `ui_model_tests`); on Ubuntu, Godot (the version in `tools/release/godot.env`) logs an error while loading the game headless, the audio or game self-test reports a failure ([Match3Game self-test](match3-game.md#self-test)), quitting from level `e1-l01` with `--quit-after-frames` prints an error or a leak ([Audio: Quitting](audio.md#quitting)), or the quality tier self-test (`--quality-selftest`, run once each with `--rendering-method forward_plus`, `mobile` and `gl_compatibility`) reports a failure, or the [benchmark](benchmark.md) smoke run (3 s headless at a locked 640×360) logs an error, drifts from its plan, loses its render size or writes no report (`check_run.py --no-budget`) |
 | `sanitizers` | Ubuntu | a CTest test fails under ASan or UBSan |
 
 Windows does not run in this workflow on PRs. Pushes to `main` run the
@@ -82,8 +82,8 @@ Why it runs only on these PRs:
 runs `tools/assets/validate_assets.py` against `game/assets/` and the
 theme manifest. Rules it enforces:
 [Board themes: validator rules](board-themes.md#validator-rules).
-It then runs the readability-check tests in `tools/bench/tests/` with the
-same Pillow ([Benchmark](benchmark.md#readability-checks)).
+It then runs the readability-check and `check_run.py` tests in
+`tools/bench/tests/` with the same Pillow ([Benchmark](benchmark.md#readability-checks)).
 
 | Item | Value |
 |---|---|

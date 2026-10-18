@@ -13,17 +13,24 @@
 #                     list against it (default: the tier QualityTiers picks)
 #   --driver NAME     --rendering-driver for Godot, e.g. vulkan, metal, d3d12,
 #                     opengl3 (default: the project's)
-#   --size WxH        window size for the benchmark (default 1920x1080)
+#   --size WxH        render size for the benchmark (default 1920x1080); the
+#                     runner locks it and the run fails if it does not hold
+#   --vsync off       turn vsync off, so frame time is the work, not the
+#                     display's pace (default: the project's vsync)
+#   --tolerance F     how far over a whole 60 Hz period a percentile may sit
+#                     (default 0.05)
 #   --seconds N       capture length (default 60)
 #   --warmup N        warm-up before the capture (default 10)
 #   --out DIR         where reports and captures go (default bench-out/)
 #   --readability     also capture at 540x1170 and check rules 2, 4, 5 and 6
 #   --xvfb            run under xvfb-run (machines without a display)
-# Exit status: 0 when every run and check passed, 1 otherwise.
+# Exit status: 0 when every run and check passed (budget, render size,
+# replay, features, readability), 1 otherwise.
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 godot=godot tier="" driver="" size=1920x1080 seconds=60 warmup=10 out=bench-out readability=0 xvfb=0
+vsync="" tolerance=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --godot) godot="$2"; shift 2 ;;
@@ -31,6 +38,8 @@ while [[ $# -gt 0 ]]; do
     --driver) driver="$2"; shift 2 ;;
     --size) size="$2"; shift 2 ;;
     --seconds) seconds="$2"; shift 2 ;;
+    --vsync) vsync="$2"; shift 2 ;;
+    --tolerance) tolerance="$2"; shift 2 ;;
     --warmup) warmup="$2"; shift 2 ;;
     --out) out="$2"; shift 2 ;;
     --readability) readability=1; shift ;;
@@ -38,6 +47,8 @@ while [[ $# -gt 0 ]]; do
     *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
 done
+if [[ ! "$size" =~ ^[1-9][0-9]*x[1-9][0-9]*$ ]]; then echo "--size must look like 1920x1080, got $size" >&2; exit 2; fi
+if [[ -n "$vsync" && "$vsync" != off ]]; then echo "--vsync takes only off" >&2; exit 2; fi
 mkdir -p "$out"
 out="$(cd "$out" && pwd)"
 
@@ -63,12 +74,21 @@ run_godot() {
 quality=()
 [[ -n "$tier" ]] && quality=("--quality=$tier")
 
+bench=("--bench-seconds=$seconds" "--bench-warmup=$warmup" "--bench-size=$size" "--bench-out=$out/benchmark.json")
+[[ "$vsync" == off ]] && bench+=(--bench-vsync=off)
+[[ -n "$tolerance" ]] && bench+=("--bench-tolerance=$tolerance")
+
 status=0
+# A stale report from an earlier run must not pass for this one.
+rm -f "$out/benchmark.json"
 window "$size"
-run_godot res://scenes/bench/bench.tscn -- "--bench-seconds=$seconds" "--bench-warmup=$warmup" \
-  "--bench-out=$out/benchmark.json" "${quality[@]}" || status=1
+run_godot res://scenes/bench/bench.tscn -- "${bench[@]}" "${quality[@]}" || status=1
 if [[ -f "$out/benchmark.json" ]]; then
+  python3 "$root/tools/bench/check_run.py" "$out/benchmark.json" --size "$size" | tee "$out/run.txt" || status=1
   python3 "$root/tools/bench/check_features.py" "$out/benchmark.json" | tee "$out/features.txt" || status=1
+else
+  echo "FAIL benchmark: no report written" >&2
+  status=1
 fi
 
 if [[ "$readability" == 1 ]]; then
