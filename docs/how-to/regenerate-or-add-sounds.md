@@ -20,6 +20,28 @@ Files land in `game/assets/audio/sfx/`; measured levels land in
 file has a fixed random seed, so an unchanged script gives identical
 files.
 
+## Regenerate the music and ambience
+
+```sh
+python3 tools/audio/music_gen.py                       # every piece, about 3 minutes
+python3 tools/audio/music_gen.py --only music_play_2   # one piece
+```
+
+Files land in `game/assets/audio/music/`, levels in
+`tools/audio/reports/music_loudness.json`. Each piece's seed is in its
+`Piece(...)` row, so a render is repeatable.
+
+## Change or add a music piece
+
+1. Edit or add a `Piece(...)` row in `PIECES` in
+   `tools/audio/music_gen.py`: tempo, bars (a multiple of 16), the bass
+   note, a scale, the bass progression per 4-bar block, the intensity
+   (0 to 4, which layers play) and a seed. A new seed gives a new tune.
+2. Render it with `--only`, then listen to the loop point: play the end
+   into the start and check for a gap, click or jump in level.
+3. Update the music table in `docs/reference/audio.md`. A new cue also
+   needs its contract line and a cue table entry.
+
 ## Add a sound effect cue
 
 1. Agree the cue name with the gameplay programmer and add it to the

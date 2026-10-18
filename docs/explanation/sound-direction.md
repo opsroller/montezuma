@@ -28,6 +28,21 @@ the score:
 - Big moments (totem fire, level won, trophy) open with the conch, so
   the horn always means "something important happened".
 
+## Music that leaves room
+
+The music is played by the same instruments: clay flute melody over a
+log-drum ostinato, a wooden bass, a conch drone, and from episode 1 on
+a hide drum and rattles. Each episode raises the tempo and adds layers,
+so later episodes feel more urgent without a different style. Melodies
+sit around the flute's middle register and the music is mixed well
+under the effects, so the chimes that carry the score always cut
+through. Each loop has two tunes over 32 bars, long enough that a level
+rarely hears the same phrase twice.
+
+The tunes are composed by a seeded random walk over each piece's scale
+with fixed phrase rules (a motif, its answer, a contrast, a return home),
+not by imitating any existing music.
+
 ## Generated, not recorded
 
 The sounds are synthesised by Python scripts committed in `tools/audio/`.
