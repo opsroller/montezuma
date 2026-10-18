@@ -20,16 +20,14 @@ namespace montezuma {
 inline constexpr std::array<std::string_view, 7> kKindNames{
     "red", "orange", "yellow", "green", "blue", "purple", "white"};
 
-// Power Totem ids a level may unlock (contracts: Totem and bonus ids).
-inline constexpr std::array<std::string_view, 6> kTotemIds{
-    "row_clear", "random_blast", "time", "lightning", "color_bomb", "multiplier"};
-
 // Kind index for a kind name, or empty for an unknown name.
 std::optional<int> kind_index(std::string_view name);
 
-enum class Difficulty { Relaxed, Normal };
+// The original has Adventure (our Normal) and Hard, and no Relaxed mode.
+// rule: <tbd>
+enum class Difficulty { Normal, Hard };
 
-// "relaxed" or "normal"; empty for anything else.
+// "normal" or "hard"; empty for anything else.
 std::optional<Difficulty> difficulty_from_name(std::string_view name);
 
 struct BoardSpec {
@@ -44,10 +42,36 @@ struct BoardSpec {
     int kinds = kDefaultKinds;
 };
 
+// Per-difficulty level time in seconds, when the level sets its own.
 struct TimeLimit {
-    double relaxed = 0.0;  // seconds
-    double normal = 0.0;   // seconds
+    double normal = 0.0;  // seconds
+    double hard = 0.0;    // seconds
 };
+
+// Gems to collect to win, per difficulty. The original's level goal.
+// rule: <tbd>
+struct GemGoal {
+    int normal = 0;
+    int hard = 0;
+};
+
+// Which goal kinds a level has. A parsed level has at least one.
+struct LevelGoal {
+    bool gems = false;    // gem_goal is set
+    bool quotas = false;  // quotas is non-empty (rule-variant goal)
+};
+
+// Level time from the timer tier when a level has no time_limit:
+// 270 s at tier 0, then 300, 330, 360 and 390 s with upgrades.
+// rule: <tbd>
+inline constexpr int kMinTimerTier = 0;
+inline constexpr int kMaxTimerTier = 4;
+inline constexpr double kBaseTimerSeconds = 270.0;
+inline constexpr double kTimerTierStepSeconds = 30.0;
+
+// Defaults for the optional rule-set and theme ids.
+inline constexpr std::string_view kDefaultRules = "classic";
+inline constexpr std::string_view kDefaultTheme = "temple";
 
 // One validation problem. `path` names the field, e.g. "quotas.pink" or
 // "blocked_cells[2][0]"; it is empty for problems with the whole document.
@@ -67,10 +91,16 @@ struct LevelData {
     int episode = 0;
     int index = 0;
     BoardSpec board;
-    std::map<int, int> quotas;  // kind index -> pieces to clear
-    TimeLimit time_limit;
+    std::optional<GemGoal> gem_goal;
+    std::map<int, int> quotas;             // kind index -> pieces to clear; empty when absent
+    std::optional<TimeLimit> time_limit;   // absent: the timer tier decides
     std::vector<std::string> totems_unlocked;
+    std::vector<std::string> powerups_unlocked;
+    double steel_rate = 0.0;               // chance per spawned piece, 0 to 1
     std::vector<Cell> blocked_cells;
+    std::vector<Cell> chained_cells;
+    std::string rules{kDefaultRules};      // rule-set id
+    std::string theme{kDefaultTheme};      // theme id
     std::uint64_t seed = 0;
 
     // Parses and validates a level file's JSON text. Never throws: on failure
@@ -80,9 +110,18 @@ struct LevelData {
     // one per line, for core callers that use exceptions.
     static LevelData load(std::string_view json);
 
-    double time_limit_for(Difficulty difficulty) const;
-    // Fresh level state for this level's quotas and the difficulty's timer.
-    LevelState make_state(Difficulty difficulty) const;
+    // Which goal kinds this level has.
+    LevelGoal goal() const;
+
+    // Seconds for the difficulty: time_limit when the level has one,
+    // otherwise the timer tier's time. Throws std::invalid_argument when
+    // timer_tier is outside kMinTimerTier..kMaxTimerTier, even when
+    // time_limit overrides it.
+    double time_limit_for(Difficulty difficulty, int timer_tier = 0) const;
+    // Fresh level state for this level's quotas and time_limit_for()'s timer.
+    // Throws std::invalid_argument for a bad timer_tier, and for a level with
+    // a gem goal and no quotas: LevelState cannot track gems yet.
+    LevelState make_state(Difficulty difficulty, int timer_tier = 0) const;
 };
 
 struct LevelParseResult {

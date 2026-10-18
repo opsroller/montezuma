@@ -34,10 +34,16 @@ const Fields kValid = {
     {"episode", "2"},
     {"index", "7"},
     {"board", R"({"width": 9, "height": 7, "kinds": 6})"},
+    {"gem_goal", R"({"normal": 40, "hard": 60})"},
     {"quotas", R"({"red": 10, "blue": 8, "purple": 3})"},
-    {"time_limit", R"({"relaxed": 240, "normal": 150.5})"},
-    {"totems_unlocked", R"(["row_clear", "time"])"},
+    {"time_limit", R"({"normal": 240, "hard": 150.5})"},
+    {"totems_unlocked", R"(["fire", "time"])"},
+    {"powerups_unlocked", R"(["tnt", "hint"])"},
+    {"steel_rate", "0.25"},
     {"blocked_cells", "[[0, 0], [8, 6]]"},
+    {"chained_cells", "[[1, 1], [2, 3]]"},
+    {"rules", R"("classic")"},
+    {"theme", R"("jungle_2")"},
     {"seed", "12345"},
 };
 
@@ -87,12 +93,20 @@ void test_valid_full_level_parses() {
     check(l.id == "e2-l07", "id read");
     check(l.episode == 2 && l.index == 7, "episode and index read");
     check(l.board.width == 9 && l.board.height == 7 && l.board.kinds == 6, "board read");
+    check(l.gem_goal && l.gem_goal->normal == 40 && l.gem_goal->hard == 60, "gem goal read");
     check(l.quotas == std::map<int, int>{{0, 10}, {4, 8}, {5, 3}}, "quotas mapped to kind indices");
-    check(l.time_limit.relaxed == 240.0 && l.time_limit.normal == 150.5, "time limits read, int and float");
-    check(l.totems_unlocked == std::vector<std::string>{"row_clear", "time"}, "totems read in order");
+    check(l.time_limit && l.time_limit->normal == 240.0 && l.time_limit->hard == 150.5,
+          "time limits read, int and float");
+    check(l.totems_unlocked == std::vector<std::string>{"fire", "time"}, "totems read in order");
+    check(l.powerups_unlocked == std::vector<std::string>{"tnt", "hint"}, "power-ups read in order");
+    check(l.steel_rate == 0.25, "steel rate read");
     check(l.blocked_cells.size() == 2 && l.blocked_cells[0] == Cell{0, 0} && l.blocked_cells[1] == Cell{8, 6},
           "blocked cells read");
+    check(l.chained_cells.size() == 2 && l.chained_cells[0] == Cell{1, 1} && l.chained_cells[1] == Cell{2, 3},
+          "chained cells read");
+    check(l.rules == "classic" && l.theme == "jungle_2", "rules and theme read");
     check(l.seed == 12345u, "seed read");
+    check(l.goal().gems && l.goal().quotas, "both goal kinds reported");
 }
 
 void test_defaults_apply() {
@@ -111,12 +125,109 @@ void test_defaults_apply() {
     check(empty.ok() && empty.level->board.kinds == 7, "empty board object and empty blocked_cells accepted");
     const LevelParseResult no_totems = LevelData::parse(level({{"totems_unlocked", "[]"}}));
     check(no_totems.ok() && no_totems.level->totems_unlocked.empty(), "empty totems_unlocked accepted");
+
+    const LevelParseResult minimal = LevelData::parse(level({{"quotas", ""},
+                                                              {"time_limit", ""},
+                                                              {"powerups_unlocked", ""},
+                                                              {"steel_rate", ""},
+                                                              {"chained_cells", ""},
+                                                              {"rules", ""},
+                                                              {"theme", ""}}));
+    check(minimal.ok(), "level without the optional designer fields parses");
+    if (minimal.ok()) {
+        const LevelData& l = *minimal.level;
+        check(l.quotas.empty() && !l.time_limit, "quotas and time_limit default to absent");
+        check(l.powerups_unlocked.empty(), "powerups_unlocked defaults to empty");
+        check(l.steel_rate == 0.0, "steel_rate defaults to 0");
+        check(l.chained_cells.empty(), "chained_cells defaults to empty");
+        check(l.rules == "classic" && l.theme == "temple", "rules and theme default to classic and temple");
+    }
+    const LevelParseResult empties = LevelData::parse(level({{"powerups_unlocked", "[]"}, {"chained_cells", "[]"}}));
+    check(empties.ok() && empties.level->powerups_unlocked.empty() && empties.level->chained_cells.empty(),
+          "empty powerups_unlocked and chained_cells accepted");
+}
+
+void test_goal_kinds() {
+    const LevelParseResult gems = LevelData::parse(level({{"quotas", ""}}));
+    check(gems.ok() && gems.level->goal().gems && !gems.level->goal().quotas, "gem goal alone accepted");
+    const LevelParseResult quotas = LevelData::parse(level({{"gem_goal", ""}}));
+    check(quotas.ok() && !quotas.level->goal().gems && quotas.level->goal().quotas && !quotas.level->gem_goal,
+          "quotas alone accepted");
+    expect_error(level({{"gem_goal", ""}, {"quotas", ""}}), "", "needs a goal: gem_goal, quotas or both");
+    // A present but broken goal reports its own error, not a missing goal.
+    const LevelParseResult bad = LevelData::parse(level({{"gem_goal", "5"}, {"quotas", ""}}));
+    check(!bad.ok() && bad.errors.size() == 1 && has_error(bad, "gem_goal", "expected an object"),
+          "broken gem_goal is not also a missing goal");
+    const LevelParseResult bad_quotas = LevelData::parse(level({{"gem_goal", ""}, {"quotas", "{}"}}));
+    check(!bad_quotas.ok() && bad_quotas.errors.size() == 1 && has_error(bad_quotas, "quotas", "at least one kind"),
+          "empty quotas is not also a missing goal");
+}
+
+void test_gem_goal_errors() {
+    expect_error(level({{"gem_goal", "40"}}), "gem_goal", "expected an object with normal and hard, got 40");
+    expect_error(level({{"gem_goal", R"({"normal": 40})"}}), "gem_goal.hard", "required field missing");
+    expect_error(level({{"gem_goal", R"({"hard": 40})"}}), "gem_goal.normal", "required field missing");
+    expect_error(level({{"gem_goal", R"({"normal": 0, "hard": 5})"}}), "gem_goal.normal", "must be at least 1, got 0");
+    expect_error(level({{"gem_goal", R"({"normal": 5, "hard": -1})"}}), "gem_goal.hard", "must be at least 1");
+    expect_error(level({{"gem_goal", R"({"normal": 5, "hard": 2.5})"}}), "gem_goal.hard", "expected an integer");
+    expect_error(level({{"gem_goal", R"({"normal": 5, "hard": 6, "relaxed": 3})"}}), "gem_goal.relaxed",
+                 "unknown field");
+    check(LevelData::parse(level({{"gem_goal", R"({"normal": 1, "hard": 1})"}})).ok(), "gem goal of 1 accepted");
+}
+
+void test_powerup_errors() {
+    expect_error(level({{"powerups_unlocked", R"("tnt")"}}), "powerups_unlocked", "expected an array of power-up ids");
+    expect_error(level({{"powerups_unlocked", R"(["tnt", "laser"])"}}), "powerups_unlocked[1]",
+                 "unknown power-up \"laser\" (expected one of tnt, color_clear, lightning, clock, multiplier, hint)");
+    expect_error(level({{"powerups_unlocked", "[1]"}}), "powerups_unlocked[0]", "expected a power-up id string");
+    expect_error(level({{"powerups_unlocked", R"(["clock", "hint", "clock"])"}}), "powerups_unlocked[2]",
+                 "duplicate power-up \"clock\"");
+    check(LevelData::parse(level({{"powerups_unlocked",
+                                   R"(["tnt", "color_clear", "lightning", "clock", "multiplier", "hint"])"}}))
+              .ok(),
+          "every power-up id accepted");
+}
+
+void test_steel_rate() {
+    for (const char* ok : {"0", "1", "0.0", "1.0", "0.5"})
+        check(LevelData::parse(level({{"steel_rate", ok}})).ok(), std::string("steel_rate ") + ok + " accepted");
+    expect_error(level({{"steel_rate", "-0.01"}}), "steel_rate", "must be between 0 and 1, got -0.01");
+    expect_error(level({{"steel_rate", "1.01"}}), "steel_rate", "must be between 0 and 1, got 1.01");
+    expect_error(level({{"steel_rate", "2"}}), "steel_rate", "must be between 0 and 1, got 2");
+    expect_error(level({{"steel_rate", R"("0.1")"}}), "steel_rate", "expected a number from 0 to 1, got string");
+    expect_error(level({{"steel_rate", "null"}}), "steel_rate", "expected a number");
+}
+
+void test_chained_cells() {
+    expect_error(level({{"chained_cells", R"({"x": 1})"}}), "chained_cells", "expected an array of [x, y] pairs");
+    expect_error(level({{"chained_cells", "[[1]]"}}), "chained_cells[0]", "expected [x, y], got an array of 1");
+    expect_error(level({{"chained_cells", "[[9, 0]]"}}), "chained_cells[0][0]", "x 9 is outside the board (0 to 8)");
+    expect_error(level({{"chained_cells", "[[0, 7]]"}}), "chained_cells[0][1]", "y 7 is outside the board (0 to 6)");
+    expect_error(level({{"chained_cells", "[[1, 2], [1, 2]]"}}), "chained_cells[1]", "duplicate of chained_cells[0]");
+    // kValid blocks [0, 0] and [8, 6].
+    expect_error(level({{"chained_cells", "[[3, 3], [8, 6]]"}}), "chained_cells[1]",
+                 "cell is also blocked (blocked_cells[1])");
+    const LevelParseResult both = LevelData::parse(level({{"chained_cells", "[[0, 0], [8, 6]]"}}));
+    check(!both.ok() && both.errors.size() == 2, "each chained-and-blocked cell reported");
+}
+
+void test_rules_and_theme() {
+    for (const char* key : {"rules", "theme"}) {
+        for (const char* ok : {R"("classic")", R"("a")", R"("rule_set_2")", R"("_")", R"("0")"})
+            check(LevelData::parse(level({{key, ok}})).ok(), std::string(key) + " " + ok + " accepted");
+        for (const char* bad : {R"("")", R"("Classic")", R"("two words")", R"("dash-ed")", R"("dot.ted")",
+                                R"("café")"})
+            expect_error(level({{key, bad}}), key, "expected a non-empty id of a-z, 0-9 and _");
+        expect_error(level({{key, "3"}}), key, "expected a string, got 3");
+        expect_error(level({{key, "null"}}), key, "expected a string, got null");
+    }
 }
 
 void test_boundary_values_accepted() {
     check(LevelData::parse(level({{"board", R"({"width": 3, "height": 3, "kinds": 3})"},
                                   {"quotas", R"({"yellow": 1})"},
-                                  {"blocked_cells", "[[2, 2]]"}}))
+                                  {"blocked_cells", "[[2, 2]]"},
+                                  {"chained_cells", "[[0, 1]]"}}))
               .ok(),
           "smallest board (3x3, 3 kinds) accepted");
     check(LevelData::parse(level({{"board", R"({"kinds": 7})"}, {"quotas", R"({"white": 1})"}, {"blocked_cells", ""}})).ok(),
@@ -125,7 +236,7 @@ void test_boundary_values_accepted() {
           "multi-digit episode and three-digit index accepted");
     check(LevelData::parse(level({{"seed", "0"}})).ok(), "seed 0 accepted");
     check(LevelData::parse(level({{"seed", "18446744073709551615"}})).ok(), "largest uint64 seed accepted");
-    check(LevelData::parse(level({{"time_limit", R"({"relaxed": 0.5, "normal": 0.25})"}})).ok(),
+    check(LevelData::parse(level({{"time_limit", R"({"normal": 0.5, "hard": 0.25})"}})).ok(),
           "fractional time limits accepted");
     check(LevelData::parse("\n  " + level() + "\n").ok(), "surrounding whitespace accepted");
 }
@@ -135,6 +246,13 @@ void test_document_errors() {
     expect_error("{\"id\": ", "", "invalid JSON");
     expect_error(level() + " trailing", "", "invalid JSON");
     expect_error("// comment\n" + level(), "", "invalid JSON");
+    // nlohmann reports number overflow as out_of_range, not parse_error; its id is stripped too.
+    {
+        const LevelParseResult r = LevelData::parse(level({{"steel_rate", "1e400"}}));
+        check(!r.ok() && r.errors.size() == 1 && r.errors[0].message.rfind("could not read level data: ", 0) == 0 &&
+                  r.errors[0].message.find("[json.exception") == std::string::npos,
+              "json::exception message has its id stripped: " + r.error_text());
+    }
     expect_error("[]", "", "expected an object at the top level, got array");
     expect_error("42", "", "expected an object at the top level");
     expect_error(level({{"extra", "1"}}), "extra", "unknown field");
@@ -143,10 +261,10 @@ void test_document_errors() {
 }
 
 void test_required_fields() {
-    for (const char* key : {"id", "episode", "index", "quotas", "time_limit", "totems_unlocked", "seed"})
+    for (const char* key : {"id", "episode", "index", "totems_unlocked", "seed"})
         expect_error(level({{key, ""}}), key, "required field missing");
-    expect_error(level({{"time_limit", R"({"relaxed": 60})"}}), "time_limit.normal", "required field missing");
-    expect_error(level({{"time_limit", R"({"normal": 60})"}}), "time_limit.relaxed", "required field missing");
+    expect_error(level({{"time_limit", R"({"normal": 60})"}}), "time_limit.hard", "required field missing");
+    expect_error(level({{"time_limit", R"({"hard": 60})"}}), "time_limit.normal", "required field missing");
 }
 
 void test_id_errors() {
@@ -194,24 +312,29 @@ void test_quota_errors() {
 }
 
 void test_time_limit_errors() {
-    expect_error(level({{"time_limit", "120"}}), "time_limit", "expected an object");
-    expect_error(level({{"time_limit", R"({"relaxed": 0, "normal": 60})"}}), "time_limit.relaxed",
+    expect_error(level({{"time_limit", "120"}}), "time_limit", "expected an object with normal and hard");
+    expect_error(level({{"time_limit", R"({"normal": 0, "hard": 60})"}}), "time_limit.normal",
                  "must be greater than 0 seconds, got 0");
-    expect_error(level({{"time_limit", R"({"relaxed": 60, "normal": -1.5})"}}), "time_limit.normal",
+    expect_error(level({{"time_limit", R"({"normal": 60, "hard": -1.5})"}}), "time_limit.hard",
                  "must be greater than 0 seconds");
-    expect_error(level({{"time_limit", R"({"relaxed": "60", "normal": 60})"}}), "time_limit.relaxed",
+    expect_error(level({{"time_limit", R"({"normal": "60", "hard": 60})"}}), "time_limit.normal",
                  "expected a number of seconds, got string");
-    expect_error(level({{"time_limit", R"({"relaxed": 60, "normal": 60, "hard": 30})"}}), "time_limit.hard",
+    expect_error(level({{"time_limit", R"({"relaxed": 60, "normal": 60, "hard": 30})"}}), "time_limit.relaxed",
                  "unknown field");
 }
 
 void test_totem_errors() {
     expect_error(level({{"totems_unlocked", R"("time")"}}), "totems_unlocked", "expected an array");
-    expect_error(level({{"totems_unlocked", R"(["time", "laser"])"}}), "totems_unlocked[1]", "unknown totem \"laser\"");
+    expect_error(level({{"totems_unlocked", R"(["time", "laser"])"}}), "totems_unlocked[1]",
+                 "unknown totem \"laser\" (expected one of fire, time, gold, gift, harvest, paint, ward)");
     expect_error(level({{"totems_unlocked", "[3]"}}), "totems_unlocked[0]", "expected a totem id string");
-    expect_error(level({{"totems_unlocked", R"(["time", "row_clear", "time"])"}}), "totems_unlocked[2]",
+    expect_error(level({{"totems_unlocked", R"(["time", "fire", "time"])"}}), "totems_unlocked[2]",
                  "duplicate totem \"time\"");
-    expect_error(level({{"totems_unlocked", R"(["hammer"])"}}), "totems_unlocked[0]", "unknown totem");
+    // Ids from the earlier draft are gone.
+    expect_error(level({{"totems_unlocked", R"(["row_clear"])"}}), "totems_unlocked[0]", "unknown totem");
+    check(LevelData::parse(level({{"totems_unlocked", R"(["fire", "time", "gold", "gift", "harvest", "paint", "ward"])"}}))
+              .ok(),
+          "every totem id accepted");
 }
 
 void test_blocked_cell_errors() {
@@ -255,15 +378,57 @@ void test_invalid_board_skips_dependent_checks() {
                  "x -2 is outside the board");
 }
 
+template <typename F>
+std::string invalid_argument_message(F&& f) {
+    try {
+        f();
+    } catch (const std::invalid_argument& e) {
+        return e.what();
+    }
+    return "<no throw>";
+}
+
+void test_timer_tiers() {
+    const LevelData untimed = LevelData::load(level({{"time_limit", ""}}));
+    check(untimed.time_limit_for(Difficulty::Normal) == 270.0 && untimed.time_limit_for(Difficulty::Hard) == 270.0,
+          "tier 0 is the default: 270 s");
+    const double expected[] = {270.0, 300.0, 330.0, 360.0, 390.0};
+    for (int tier = 0; tier <= 4; ++tier)
+        check(untimed.time_limit_for(Difficulty::Normal, tier) == expected[tier] &&
+                  untimed.make_state(Difficulty::Hard, tier).time_left() == expected[tier],
+              "tier " + std::to_string(tier) + " time");
+
+    const LevelData timed = LevelData::load(level());
+    check(timed.time_limit_for(Difficulty::Normal, 4) == 240.0 && timed.time_limit_for(Difficulty::Hard, 3) == 150.5,
+          "time_limit overrides the tier");
+
+    for (int bad : {-1, 5, 100}) {
+        const std::string expect = "timer_tier must be between 0 and 4, got " + std::to_string(bad);
+        check(invalid_argument_message([&] { (void)untimed.time_limit_for(Difficulty::Normal, bad); }) == expect,
+              "out-of-range tier " + std::to_string(bad) + " throws");
+        check(invalid_argument_message([&] { (void)timed.time_limit_for(Difficulty::Normal, bad); }) == expect,
+              "out-of-range tier " + std::to_string(bad) + " throws even with time_limit");
+        check(invalid_argument_message([&] { (void)timed.make_state(Difficulty::Normal, bad); }) == expect,
+              "make_state rejects tier " + std::to_string(bad));
+    }
+}
+
 void test_load_and_level_state() {
     const LevelData l = LevelData::load(level());
-    check(l.time_limit_for(Difficulty::Relaxed) == 240.0, "relaxed time limit selected");
-    check(l.time_limit_for(Difficulty::Normal) == 150.5, "normal time limit selected");
-    const LevelState relaxed = l.make_state(Difficulty::Relaxed);
+    check(l.time_limit_for(Difficulty::Normal) == 240.0, "normal time limit selected");
+    check(l.time_limit_for(Difficulty::Hard) == 150.5, "hard time limit selected");
     const LevelState normal = l.make_state(Difficulty::Normal);
-    check(relaxed.time_left() == 240.0 && normal.time_left() == 150.5, "level state uses the difficulty's timer");
-    check(normal.quotas() == l.quotas && normal.outcome() == LevelState::Outcome::Playing,
+    const LevelState hard = l.make_state(Difficulty::Hard);
+    check(normal.time_left() == 240.0 && hard.time_left() == 150.5, "level state uses the difficulty's timer");
+    check(hard.quotas() == l.quotas && hard.outcome() == LevelState::Outcome::Playing,
           "level state starts with the level's quotas");
+
+    const LevelData quotas_only = LevelData::load(level({{"gem_goal", ""}}));
+    check(quotas_only.make_state(Difficulty::Normal).quotas() == quotas_only.quotas, "quota-only level makes a state");
+    const LevelData gems_only = LevelData::load(level({{"quotas", ""}}));
+    check(invalid_argument_message([&] { (void)gems_only.make_state(Difficulty::Normal); }) ==
+              "gem goals need the gem rules (coming)",
+          "gem-only level cannot make a state yet");
 
     bool threw = false;
     try {
@@ -278,8 +443,8 @@ void test_name_helpers() {
     check(kind_index("red") == 0 && kind_index("white") == 6 && !kind_index("pink"), "kind names map to indices");
     for (int i = 0; i < static_cast<int>(kKindNames.size()); ++i)
         check(kind_index(kKindNames[static_cast<std::size_t>(i)]) == i, "kind name round trip " + std::to_string(i));
-    check(difficulty_from_name("relaxed") == Difficulty::Relaxed && difficulty_from_name("normal") == Difficulty::Normal &&
-              !difficulty_from_name("hard"),
+    check(difficulty_from_name("normal") == Difficulty::Normal && difficulty_from_name("hard") == Difficulty::Hard &&
+              !difficulty_from_name("relaxed") && !difficulty_from_name("adventure") && !difficulty_from_name("Hard"),
           "difficulty names map");
 }
 
@@ -294,6 +459,12 @@ void test_parse_is_deterministic() {
 int main() {
     test_valid_full_level_parses();
     test_defaults_apply();
+    test_goal_kinds();
+    test_gem_goal_errors();
+    test_powerup_errors();
+    test_steel_rate();
+    test_chained_cells();
+    test_rules_and_theme();
     test_boundary_values_accepted();
     test_document_errors();
     test_required_fields();
@@ -307,6 +478,7 @@ int main() {
     test_seed_errors();
     test_all_errors_are_reported_together();
     test_invalid_board_skips_dependent_checks();
+    test_timer_tiers();
     test_load_and_level_state();
     test_name_helpers();
     test_parse_is_deterministic();

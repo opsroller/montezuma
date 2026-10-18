@@ -24,10 +24,26 @@ using nlohmann::json;
 // 800 from allocating a huge board or overflowing cell indices.
 constexpr int kMaxBoardSize = 64;
 
-constexpr std::array<std::string_view, 9> kTopLevelFields{
-    "id", "episode", "index", "board", "quotas", "time_limit", "totems_unlocked", "blocked_cells", "seed"};
+// ---------------------------------------------------------------------------
+// Contract id lists: the only copies of the totem and power-up ids in the
+// level parser. Temporary: once PR #6 (totems) and PR #8 (power-ups) land,
+// replace these with totem_from_name() and the power-up equivalent so the
+// ids have a single source in core.
+// rule: <tbd>
+constexpr std::array<std::string_view, 7> kTotemIdsUntilPr6{
+    "fire", "time", "gold", "gift", "harvest", "paint", "ward"};
+// rule: <tbd>
+constexpr std::array<std::string_view, 6> kPowerupIdsUntilPr8{
+    "tnt", "color_clear", "lightning", "clock", "multiplier", "hint"};
+// ---------------------------------------------------------------------------
+
+constexpr std::array<std::string_view, 15> kTopLevelFields{
+    "id",         "episode",         "index",      "board",         "gem_goal",
+    "quotas",     "time_limit",      "totems_unlocked", "powerups_unlocked",
+    "steel_rate", "blocked_cells",   "chained_cells",   "rules",    "theme",
+    "seed"};
 constexpr std::array<std::string_view, 3> kBoardFields{"width", "height", "kinds"};
-constexpr std::array<std::string_view, 2> kTimeLimitFields{"relaxed", "normal"};
+constexpr std::array<std::string_view, 2> kDifficultyFields{"normal", "hard"};
 
 template <std::size_t N>
 bool contains(const std::array<std::string_view, N>& list, std::string_view value) {
@@ -60,6 +76,13 @@ std::string expected_id(int episode, int index) {
     std::string nn = std::to_string(index);
     if (nn.size() < 2) nn.insert(0, 2 - nn.size(), '0');
     return "e" + std::to_string(episode) + "-l" + nn;
+}
+
+// A rule-set or theme id: non-empty, only a-z, 0-9 and _.
+bool valid_symbol(std::string_view s) {
+    return !s.empty() && std::all_of(s.begin(), s.end(), [](char c) {
+        return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_';
+    });
 }
 
 bool all_digits(std::string_view s) {
@@ -96,15 +119,35 @@ public:
         if (index) level.index = *index;
         read_id(root, episode, index, level);
         const bool board_ok = read_board(root, level.board);
-        read_quotas(root, board_ok, level);
-        read_time_limit(root, level.time_limit);
-        read_totems(root, level.totems_unlocked);
-        read_blocked_cells(root, board_ok, level);
+        const bool has_gem_goal = read_gem_goal(root, level);
+        const bool has_quotas = read_quotas(root, board_ok, level);
+        // rule: <tbd>
+        if (!has_gem_goal && !has_quotas) error("", "needs a goal: gem_goal, quotas or both");
+        read_time_limit(root, level);
+        read_id_list(root, "totems_unlocked", true, "totem", kTotemIdsUntilPr6, level.totems_unlocked);
+        read_id_list(root, "powerups_unlocked", false, "power-up", kPowerupIdsUntilPr8, level.powerups_unlocked);
+        read_steel_rate(root, level);
+        // With an invalid board only the sign can be checked (size 0 means unknown).
+        const int width = board_ok ? level.board.width : 0;
+        const int height = board_ok ? level.board.height : 0;
+        const CellSet blocked = read_cells(root, "blocked_cells", width, height, level.blocked_cells);
+        const CellSet chained = read_cells(root, "chained_cells", width, height, level.chained_cells);
+        // rule: <tbd>
+        for (const auto& [cell, i] : chained) {
+            const auto it = blocked.find(cell);
+            if (it != blocked.end())
+                error(element("chained_cells", i),
+                      "cell is also blocked (" + element("blocked_cells", it->second) + ")");
+        }
+        read_symbol(root, "rules", level.rules);
+        read_symbol(root, "theme", level.theme);
         read_seed(root, level);
         return level;
     }
 
 private:
+    using CellSet = std::map<std::pair<int, int>, std::size_t>;  // valid cell -> first index
+
     // The field's value, or null after reporting it missing when required.
     const json* field(const json& object, const std::string& path, std::string_view key, bool required) {
         const auto it = object.find(key);
@@ -198,12 +241,31 @@ private:
         return ok;
     }
 
-    void read_quotas(const json& root, bool board_ok, LevelData& level) {
-        const json* j = field(root, "", "quotas", true);
-        if (!j) return;
+    // True when gem_goal is present (valid or not), so a bad gem_goal does not
+    // also report a missing goal.
+    // rule: <tbd>
+    bool read_gem_goal(const json& root, LevelData& level) {
+        const json* j = field(root, "", "gem_goal", false);
+        if (!j) return false;
+        if (!j->is_object()) {
+            error("gem_goal", "expected an object with normal and hard, got " + describe(*j));
+            return true;
+        }
+        reject_unknown(*j, "gem_goal", kDifficultyFields);
+        const std::optional<int> normal = required_int(*j, "gem_goal", "normal", 1, INT_MAX);
+        const std::optional<int> hard = required_int(*j, "gem_goal", "hard", 1, INT_MAX);
+        if (normal && hard) level.gem_goal = GemGoal{*normal, *hard};
+        return true;
+    }
+
+    // Optional rule-variant goal. True when quotas is present (valid or not).
+    // rule: <tbd>
+    bool read_quotas(const json& root, bool board_ok, LevelData& level) {
+        const json* j = field(root, "", "quotas", false);
+        if (!j) return false;
         if (!j->is_object()) {
             error("quotas", "expected an object of kind name to count, got " + describe(*j));
-            return;
+            return true;
         }
         if (j->empty()) error("quotas", "must list at least one kind");
         for (const auto& item : j->items()) {
@@ -222,90 +284,137 @@ private:
             }
             level.quotas[*kind] = *count;
         }
+        return true;
     }
 
-    void read_time_limit(const json& root, TimeLimit& limit) {
-        const json* j = field(root, "", "time_limit", true);
+    // Optional; when absent the timer tier decides the time.
+    // rule: <tbd>
+    void read_time_limit(const json& root, LevelData& level) {
+        const json* j = field(root, "", "time_limit", false);
         if (!j) return;
         if (!j->is_object()) {
-            error("time_limit", "expected an object with relaxed and normal, got " + describe(*j));
+            error("time_limit", "expected an object with normal and hard, got " + describe(*j));
             return;
         }
-        reject_unknown(*j, "time_limit", kTimeLimitFields);
-        auto read = [&](std::string_view key, double& out) {
+        reject_unknown(*j, "time_limit", kDifficultyFields);
+        bool ok = true;
+        auto read = [&](std::string_view key) -> double {
             const json* v = field(*j, "time_limit", key, true);
-            if (!v) return;
+            if (!v) {
+                ok = false;
+                return 0.0;
+            }
             const std::string path = child("time_limit", key);
             if (!v->is_number()) {
                 error(path, "expected a number of seconds, got " + describe(*v));
-                return;
+                ok = false;
+                return 0.0;
             }
             const double seconds = v->get<double>();
             if (!std::isfinite(seconds) || seconds <= 0.0) {
                 error(path, "must be greater than 0 seconds, got " + describe(*v));
-                return;
+                ok = false;
+                return 0.0;
             }
-            out = seconds;
+            return seconds;
         };
-        read("relaxed", limit.relaxed);
-        read("normal", limit.normal);
+        const double normal = read("normal");
+        const double hard = read("hard");
+        if (ok) level.time_limit = TimeLimit{normal, hard};
     }
 
-    void read_totems(const json& root, std::vector<std::string>& totems) {
-        const json* j = field(root, "", "totems_unlocked", true);
+    // An array of ids from `known`, each at most once, kept in file order.
+    template <std::size_t N>
+    void read_id_list(const json& root, const char* key, bool required, const std::string& noun,
+                      const std::array<std::string_view, N>& known, std::vector<std::string>& out) {
+        const json* j = field(root, "", key, required);
         if (!j) return;
         if (!j->is_array()) {
-            error("totems_unlocked", "expected an array of totem ids, got " + describe(*j));
+            error(key, "expected an array of " + noun + " ids, got " + describe(*j));
             return;
         }
         for (std::size_t i = 0; i < j->size(); ++i) {
             const json& v = (*j)[i];
-            const std::string path = element("totems_unlocked", i);
+            const std::string path = element(key, i);
             if (!v.is_string()) {
-                error(path, "expected a totem id string, got " + describe(v));
+                error(path, "expected a " + noun + " id string, got " + describe(v));
                 continue;
             }
             const auto id = v.get<std::string>();
-            if (!contains(kTotemIds, id)) {
-                error(path, "unknown totem \"" + id + "\" (expected one of " + join(kTotemIds) + ")");
+            if (!contains(known, id)) {
+                error(path, "unknown " + noun + " \"" + id + "\" (expected one of " + join(known) + ")");
                 continue;
             }
-            if (std::find(totems.begin(), totems.end(), id) != totems.end()) {
-                error(path, "duplicate totem \"" + id + "\"");
+            if (std::find(out.begin(), out.end(), id) != out.end()) {
+                error(path, "duplicate " + noun + " \"" + id + "\"");
                 continue;
             }
-            totems.push_back(id);
+            out.push_back(id);
         }
     }
 
-    void read_blocked_cells(const json& root, bool board_ok, LevelData& level) {
-        const json* j = field(root, "", "blocked_cells", false);
+    // Chance per spawned piece to be steel.
+    // rule: <tbd>
+    void read_steel_rate(const json& root, LevelData& level) {
+        const json* j = field(root, "", "steel_rate", false);
         if (!j) return;
-        if (!j->is_array()) {
-            error("blocked_cells", "expected an array of [x, y] pairs, got " + describe(*j));
+        if (!j->is_number()) {
+            error("steel_rate", "expected a number from 0 to 1, got " + describe(*j));
             return;
         }
-        std::map<std::pair<int, int>, std::size_t> seen;  // cell -> first index
+        const double rate = j->get<double>();
+        if (!std::isfinite(rate) || rate < 0.0 || rate > 1.0) {
+            error("steel_rate", "must be between 0 and 1, got " + describe(*j));
+            return;
+        }
+        level.steel_rate = rate;
+    }
+
+    // Optional rule-set or theme id; keeps the default when absent.
+    void read_symbol(const json& root, const char* key, std::string& out) {
+        const json* j = field(root, "", key, false);
+        if (!j) return;
+        if (!j->is_string()) {
+            error(key, "expected a string, got " + describe(*j));
+            return;
+        }
+        auto value = j->get<std::string>();
+        if (!valid_symbol(value)) {
+            error(key, "expected a non-empty id of a-z, 0-9 and _, got \"" + value + "\"");
+            return;
+        }
+        out = std::move(value);
+    }
+
+    // An optional array of [x, y] cells, each on the board and at most once.
+    // Returns the valid cells with their first index. width and height are 0
+    // when the board is invalid: then only the sign can be checked.
+    CellSet read_cells(const json& root, const char* key, int width, int height, std::vector<Cell>& out) {
+        CellSet seen;
+        const json* j = field(root, "", key, false);
+        if (!j) return seen;
+        if (!j->is_array()) {
+            error(key, "expected an array of [x, y] pairs, got " + describe(*j));
+            return seen;
+        }
         for (std::size_t i = 0; i < j->size(); ++i) {
             const json& v = (*j)[i];
-            const std::string path = element("blocked_cells", i);
+            const std::string path = element(key, i);
             if (!v.is_array() || v.size() != 2) {
                 error(path, "expected [x, y], got " + (v.is_array() ? "an array of " + std::to_string(v.size()) : describe(v)));
                 continue;
             }
-            // With an invalid board only the sign can be checked (size 0 means unknown).
-            const int width = board_ok ? level.board.width : 0;
-            const int height = board_ok ? level.board.height : 0;
             const std::optional<int> x = coordinate(v[0], element(path, 0), "x", width);
             const std::optional<int> y = coordinate(v[1], element(path, 1), "y", height);
             if (!x || !y) continue;
             const auto [it, inserted] = seen.emplace(std::make_pair(*x, *y), i);
             if (!inserted) {
-                error(path, "duplicate of " + element("blocked_cells", it->second));
+                error(path, "duplicate of " + element(key, it->second));
                 continue;
             }
-            level.blocked_cells.push_back({*x, *y});
+            out.push_back({*x, *y});
         }
+        return seen;
     }
 
     std::optional<int> coordinate(const json& j, const std::string& path, std::string_view axis,
@@ -363,7 +472,8 @@ private:
     std::vector<std::set<std::string>> keys_;
 };
 
-// nlohmann messages start with "[json.exception.parse_error.101] "; drop it.
+// nlohmann messages start with an id such as "[json.exception.parse_error.101] "
+// or "[json.exception.out_of_range.406] "; drop it.
 std::string strip_exception_id(const char* what) {
     std::string message = what;
     if (!message.empty() && message[0] == '[') {
@@ -382,8 +492,8 @@ std::optional<int> kind_index(std::string_view name) {
 }
 
 std::optional<Difficulty> difficulty_from_name(std::string_view name) {
-    if (name == "relaxed") return Difficulty::Relaxed;
     if (name == "normal") return Difficulty::Normal;
+    if (name == "hard") return Difficulty::Hard;
     return std::nullopt;
 }
 
@@ -411,6 +521,9 @@ LevelParseResult LevelData::parse(std::string_view text) noexcept {
     } catch (const json::parse_error& e) {
         result.level.reset();
         result.errors = {{"", "invalid JSON: " + strip_exception_id(e.what())}};
+    } catch (const json::exception& e) {
+        result.level.reset();
+        result.errors = {{"", "could not read level data: " + strip_exception_id(e.what())}};
     } catch (const std::exception& e) {
         result.level.reset();
         result.errors = {{"", std::string("could not read level data: ") + e.what()}};
@@ -427,10 +540,22 @@ LevelData LevelData::load(std::string_view json) {
     return std::move(*result.level);
 }
 
-double LevelData::time_limit_for(Difficulty difficulty) const {
-    return difficulty == Difficulty::Relaxed ? time_limit.relaxed : time_limit.normal;
+LevelGoal LevelData::goal() const { return LevelGoal{gem_goal.has_value(), !quotas.empty()}; }
+
+double LevelData::time_limit_for(Difficulty difficulty, int timer_tier) const {
+    // rule: <tbd>
+    if (timer_tier < kMinTimerTier || timer_tier > kMaxTimerTier)
+        throw std::invalid_argument("timer_tier must be between " + std::to_string(kMinTimerTier) + " and " +
+                                    std::to_string(kMaxTimerTier) + ", got " + std::to_string(timer_tier));
+    if (time_limit) return difficulty == Difficulty::Hard ? time_limit->hard : time_limit->normal;
+    return kBaseTimerSeconds + kTimerTierStepSeconds * timer_tier;
 }
 
-LevelState LevelData::make_state(Difficulty difficulty) const { return LevelState(quotas, time_limit_for(difficulty)); }
+LevelState LevelData::make_state(Difficulty difficulty, int timer_tier) const {
+    const double seconds = time_limit_for(difficulty, timer_tier);
+    // LevelState tracks quotas only; gems arrive in a later core change.
+    if (quotas.empty()) throw std::invalid_argument("gem goals need the gem rules (coming)");
+    return LevelState(quotas, seconds);
+}
 
 }  // namespace montezuma
