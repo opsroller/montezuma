@@ -25,10 +25,16 @@ art (WP-47 to 53) one way to say "this node is desktop only".
 
 1. **One renderer per platform, fixed at start.** Forward+ on desktop,
    Mobile on Android and iOS, Compatibility on the web, set by
-   `rendering_method` and its `.mobile` and `.web` overrides. Godot
+   `rendering_method` and its `.mobile` override (Compatibility is
+   Godot's default for web exports). Godot
    cannot change the rendering method while running, so tiers are grouped
    by renderer: a desktop switches between `desktop-high` and
    `desktop-standard` at runtime; phones and the web have one tier each.
+   A desktop whose GPU cannot run Forward+ and that Godot falls back to
+   Compatibility gets the `web` tier, `lo/` textures included. That is
+   intended, not a misdetection: it is the same renderer and the same
+   capability as the web build, so the web tier's settings are the ones
+   that fit.
 2. **Pick the desktop tier from the adapter.** Discrete GPUs and Apple
    M-series Pro, Max and Ultra chips start on `desktop-high`; integrated,
    software and unknown adapters on `desktop-standard`. A wrong guess

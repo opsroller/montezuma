@@ -24,8 +24,10 @@ tested by `quality_tests`; `quality_tiers.*` applies it). Scene:
 | `web` | Compatibility (`gl_compatibility`) | the game runs on Compatibility (the web export) |
 
 The rendering method is set per platform in `game/project.godot`
-(`rendering/renderer/rendering_method` and its `.mobile` and `.web`
-overrides) and is fixed for the whole run. A tier is available only when
+(`rendering/renderer/rendering_method` and its `.mobile` override; the
+web export uses Compatibility, Godot's `.web` default) and is fixed for
+the whole run. A desktop whose GPU has no Vulkan, D3D12 or Metal and
+falls back to Compatibility runs the `web` tier. A tier is available only when
 its method is the running one, so a desktop offers the two desktop tiers,
 and phones and the web each offer one.
 
