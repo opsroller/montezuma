@@ -76,6 +76,7 @@ enum class Feature {
     AreaLight,
     ParticleTrails,
     FireFlipbook8x8,
+    ReflectionProbes,
     Count
 };
 

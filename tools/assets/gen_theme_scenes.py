@@ -416,12 +416,14 @@ def main():
     if WATER:
         # One box-projected reflection probe per water strip, sized to the
         # strip so it reflects into the water and leaves the board's
-        # materials on the sky. Rendered once at load.
+        # materials on the sky. Rendered once at load; the web tier hides
+        # them (quality:reflection_probes) and reflects the sky alone.
         ci, co, lv = WATER["inner"], WATER["outer"], WATER["level"]
         mid, wd = (ci + co) / 2, co - ci
         for name, x, z, sx, sz in (("WaterEast", mid, 0.0, wd, 2 * co), ("WaterWest", -mid, 0.0, wd, 2 * co),
                                    ("WaterNear", 0.0, mid, 2 * ci, wd), ("WaterFar", 0.0, -mid, 2 * ci, wd)):
-            r.body += ["", f'[node name="Probe{name[5:]}" type="ReflectionProbe" parent="."]',
+            r.body += ["", f'[node name="Probe{name[5:]}" type="ReflectionProbe" parent="."'
+                           ' groups=["quality:reflection_probes"]]',
                        f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, {x:.4f}, {lv + 1.2:.4f}, {z:.4f})",
                        f"size = Vector3({sx + 0.4:.4f}, 3.0, {sz + 0.4:.4f})",
                        f"origin_offset = Vector3(0, -0.9, 0)", "box_projection = true",

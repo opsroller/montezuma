@@ -121,7 +121,9 @@ Choices behind the [reference](../reference/water.md):
   so they sit on the stone and move with it, not with the surface.
 - **One probe per strip.** A box probe over each strip reflects the
   temple and jungle into the water only; one big probe would have changed
-  how the board's gold and gems reflect.
+  how the board's gold and gems reflect. The web tier leaves the probes
+  out: the demo's WebKit run failed with them in the Compatibility
+  renderer, and from the game camera the sky reflection reads the same.
 
 ## Why a theme, not a scene
 

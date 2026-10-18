@@ -49,7 +49,7 @@ near and far strips. Water never lies inside the board rectangle
 |---|---|
 | `game/assets/models/<theme>/backdrop/SM_Backdrop_Water{East,West,Near,Far}.obj` | the surface, one 2 cm slab per strip (the far strip in two pieces either side of the causeway) |
 | `SM_Backdrop_Ground.obj`, `SM_Backdrop_StoneDark.obj`, `SM_Backdrop_Stone.obj` | the ground with the channel cut out; channel floor, walls, apron and causeway; coping stones on both edges |
-| `PF_Environment.tscn` | nodes `WaterEast` … `WaterFar` (`MI_Water`, no shadow casting) and one `ReflectionProbe` per strip, `ProbeEast` … `ProbeFar` |
+| `PF_Environment.tscn` | nodes `WaterEast` … `WaterFar` (`MI_Water`, no shadow casting) and one `ReflectionProbe` per strip, `ProbeEast` … `ProbeFar`, in the group `quality:reflection_probes` |
 | `game/assets/materials/<theme>/MI_Water.tres`, `hi/MI_Water.tres` | base (`SH_WaterSimple`) and desktop (`SH_Water`) material |
 | `game/assets/materials/shaders/SH_Water.gdshader`, `SH_WaterSimple.gdshader`, `SH_Water.gdshaderinc` | the shaders and their shared code |
 | `game/assets/lookdev/LD_<Theme>_Water.tscn`, `LD_<Theme>_Water_Hi.tscn` | look-dev close-up of the east channel, base and desktop materials |
@@ -67,7 +67,7 @@ The tier picks the material through the `hi/` variant
 | Depth colour | absorption over the true path, from the depth texture | same | absorption over the path to the flat floor height | same as mobile |
 | Refraction | screen texture, bent by the ripples, never toward what is in front of the water | same | — (blended over the real floor) | — |
 | Caustics | 2 layers on the floor point from the depth texture | same | 1 layer on the flat floor point | same as mobile |
-| Reflections | in-shader screen-space ray march, falling back to the probe and sky | same | reflection probe and sky | same (Compatibility: at most 2 probes per mesh, so one probe per strip) |
+| Reflections | in-shader screen-space ray march, falling back to the probe and sky | same | reflection probe and sky | sky only: the probes are hidden (feature `reflection_probes`) |
 | Contact line at the stone | yes | yes | — | — |
 
 ## Parameters
@@ -133,4 +133,4 @@ repeatable at a fixed frame rate.
 | Measured | not on a real GPU yet: the [benchmark](benchmark.md) (WP-46) measures it with the rest of the scene, see [Benchmark results](benchmark-results.md); compare a run with the four `Water*` nodes hidden to get the water's share |
 | Estimate | software rendering (lavapipe, llvmpipe) runs the look-dev scene at 1 to 2 fps with or without the water, so it cannot resolve the cost. By count: `SH_WaterSimple` is up to 5 noise evaluations (2 for the ripples, 3 for the caustics), each 4 integer hashes and no trigonometry, and no texture samples; `SH_Water` up to 7 noise evaluations and up to 21 depth and 2 screen samples (23 in all) |
 | Triangles | 12 per strip slab (60 in all); the channel adds about 400 to the backdrop |
-| Reflection probes | 4, rendered once at load. Godot 4.7.2 prints "7 RIDs of type Texture were leaked" at quit whenever a scene has a reflection probe (an engine issue, reproduced in a bare project); it is harmless |
+| Reflection probes | 4 on desktop and mobile, rendered once at load; none on the web tier. Godot 4.7.2 prints "7 RIDs of type Texture were leaked" at quit whenever a scene has a reflection probe (an engine issue, reproduced in a bare project); it is harmless |
