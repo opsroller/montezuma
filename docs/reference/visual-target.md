@@ -127,10 +127,10 @@ A tier is met when all of these pass on its reference hardware:
 
 | Check | How it is measured | Pass |
 |---|---|---|
-| Frame time | Benchmark scene (WP-46): 60 s scripted replay of the busiest board (four-step cascades, two power-ups, all totems firing) with the braziers lit; GPU and CPU frame time from `RenderingServer` per frame, after 10 s warm-up | p95 within the tier budget above |
+| Frame time | [Benchmark scene](benchmark.md) (WP-46): 60 s scripted replay of the busiest board (four-step cascades, two power-ups, all totems firing) with the braziers lit; GPU and CPU frame time from `RenderingServer` per frame, after 10 s warm-up | p95 within the tier budget above |
 | Thermal (mobile) | Benchmark replay looped for 10 minutes | never below 55 fps over any 5 s window |
-| Effects present | Benchmark writes the active feature list for the tier | every ✔ for the tier on, every — off |
-| Readability | Look-dev capture script, rules 2, 4, 5 and 6 above | all pass |
+| Effects present | Benchmark writes the active feature list; `tools/bench/check_features.py` compares it with the tier | every ✔ for the tier on, every — off |
+| Readability | [Readability capture](benchmark.md#readability-checks) (`game/scenes/bench/readability.tscn`, `tools/bench/check_readability.py`), rules 2, 4, 5 and 6 above | all pass |
 | Look | Side-by-side captures against the look-dev reference frames committed with WP-47 to WP-52, judged by the technical-artist and code reviewer | approved in the PR |
 | Fallbacks | Each tier starts on hardware without the higher tier's features without errors or missing materials | clean log |
 | Web size and load | Web export (WP-21) | ≤ 40 MB compressed, first frame ≤ 10 s |

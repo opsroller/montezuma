@@ -72,6 +72,7 @@ endif()
 # so they run with the core tests on every platform and under sanitizers.
 if(MONTEZUMA_BUILD_TESTS)
   add_subdirectory(extension/src/board/tests)
+  add_subdirectory(extension/src/bench/tests)
 endif()
 
 # The website's tests (site/tests), when Python 3.10+ and Node are on the

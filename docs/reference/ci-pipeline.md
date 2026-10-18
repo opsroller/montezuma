@@ -22,7 +22,7 @@ Token permissions: `contents: read`.
 | Job | Runners | What red means |
 |---|---|---|
 | `core` | Ubuntu, macOS; Windows too on pushes to `main` | the core or a Godot-free test fails to build with warnings as errors, or a CTest test fails, including the website's `site_build_tests` (Python) and `site_js_tests` (Node), which CTest adds when the runner has Python 3.10+ and Node |
-| `extension` | Ubuntu; Windows too on pushes to `main` | the GDExtension (with godot-cpp) or a test fails to build, or a CTest test fails (every test, including `ui_model_tests`); on Ubuntu, Godot (the version in `tools/release/godot.env`) logs an error while loading the game headless |
+| `extension` | Ubuntu; Windows too on pushes to `main` | the GDExtension (with godot-cpp) or a test fails to build, or a CTest test fails (every test, including `ui_model_tests`); on Ubuntu, Godot (the version in `tools/release/godot.env`) logs an error while loading the game headless, or the [benchmark](benchmark.md) smoke run (3 s headless) logs an error, drifts from its plan or writes no report |
 | `sanitizers` | Ubuntu | a CTest test fails under ASan or UBSan |
 
 Windows does not run on PRs. Pushes to `main` run the Windows `core` and

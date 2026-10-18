@@ -34,6 +34,7 @@ own folder.
 - [Balance targets](reference/balance.md): what the simulator checks each level against.
 - [Level session](reference/level-session.md): one level by the full rules, its commands, reports and defaults.
 - [Visual target](reference/visual-target.md): the look per quality tier, frame budgets and acceptance tests.
+- [Benchmark and readability capture](reference/benchmark.md): the benchmark replay, its JSON report, feature keys and readability checks.
 
 ## Explanation
 
@@ -52,6 +53,7 @@ own folder.
 - [Check UI text and layout](how-to/check-ui-text-and-layout.md): pseudo-localization, large text, window sizes, controller only.
 - [Build and preview the website](how-to/build-and-preview-the-website.md): build `site/`, preview it with or without the web demo, run its tests.
 - [Add a level](how-to/add-a-level.md): write a campaign level file from the progression tables.
+- [Run the benchmark](how-to/run-the-benchmark.md): measure frame time and check readability on a desktop or a phone.
 
 ## Explanation
 

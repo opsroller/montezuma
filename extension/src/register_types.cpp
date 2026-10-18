@@ -8,6 +8,7 @@
 #include <godot_cpp/godot.hpp>
 
 #include "audio/register_audio.hpp"
+#include "bench/register_bench.hpp"
 #include "board/register_board.hpp"
 #include "match3_board.hpp"
 #include "match3_level.hpp"
@@ -24,6 +25,7 @@ void initialize_montezuma(ModuleInitializationLevel level) {
     montezuma::godot_binding::register_board();
     montezuma::godot_binding::register_audio();
     montezuma::godot_binding::register_ui();
+    montezuma::godot_binding::register_bench();
 }
 
 void uninitialize_montezuma(ModuleInitializationLevel) {}
