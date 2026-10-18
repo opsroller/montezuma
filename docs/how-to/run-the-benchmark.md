@@ -67,7 +67,7 @@ or a cloud machine without a GPU do not count against the
 
    The script exits 1 if any run or check failed.
 
-   On macOS with Metal, `gpu_ms` is all zero (`timing.gpu` false): judge
+   On macOS with Metal, `gpu_ms` is null (`timing.gpu` false): judge
    by `frame_ms`. `render_cpu_ms` there includes the wait for the next
    drawable, so with vsync on `cpu_ms` fills the frame whatever the CPU
    does; read `process_ms` for game logic, and try `--vsync off` to see

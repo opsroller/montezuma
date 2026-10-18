@@ -210,6 +210,22 @@ class CheckRunTest(unittest.TestCase):
         self.assertEqual(code, 1, out)
         self.assertIn("process_ms", out)
 
+    def test_slow_display_fails_with_vsync_on(self):
+        r = copy.deepcopy(GOOD)
+        r["display"] = {"refresh_hz": 50.0, "vsync": "enabled"}
+        code, out = run(r)
+        self.assertEqual(code, 1, out)
+        self.assertIn("display-limited", out)
+        r["display"]["vsync"] = "disabled"
+        code, out = run(r)
+        self.assertEqual(code, 0, out)
+
+    def test_non_numeric_limit_exits_2(self):
+        r = copy.deepcopy(GOOD)
+        r["budget"]["limits"][0]["value_ms"] = None
+        code, out = run(r)
+        self.assertEqual(code, 2, out)
+
     def test_bad_size_argument(self):
         with self.assertRaises(SystemExit):
             run(GOOD, "--size", "big")

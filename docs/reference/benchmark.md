@@ -189,13 +189,14 @@ the run was locked at that size) and the replay. It does not take the
 runner's pass flags on trust: it re-derives the budget from the tier's
 rules and the report's percentiles (an unknown tier, a missing rule, a
 budget looser than the tier's, a tolerance outside 0 to 0.5, fewer than
-30 frames, a headless or software run all fail), and the size from the
+30 frames, a display below 57 Hz with vsync on, a headless or software
+run all fail), and the size from the
 min, max and mismatch counts. It also fails a `process_ms` median above
 the `frame_ms` median (not per-frame data). NOTE lines give the adapter,
 display, any non-default tolerance or budget, missing GPU timing and the
 Metal display wait. It exits 1 when a check fails and 2 when the report
-is unreadable, not schema 2, or carries `gpu_ms` numbers under
-`timing.gpu` false. `--no-budget` prints the budget as SKIP (CI smoke
+is unreadable, not schema 2, has a budget limit that is not numbers, or
+carries `gpu_ms` numbers under `timing.gpu` false. `--no-budget` prints the budget as SKIP (CI smoke
 runs).
 
 ## Features

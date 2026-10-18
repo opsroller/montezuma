@@ -9,7 +9,8 @@ REPORT is the schema-2 JSON game/scenes/bench/bench.tscn writes. The budget
 is frame_ms percentiles against whole 60 Hz periods with a tolerance
 (docs/reference/benchmark.md#budget); this re-checks the runner's verdict
 against the tier's rules and the numbers in the report rather than taking
-its pass flag, and never passes headless or software-rendered frames.
+its pass flag (a display slower than 60 Hz with vsync on included), and
+never passes headless or software-rendered frames.
 --size also requires the run to have been locked at that render size.
 --no-budget reports the budget without judging it (CI smoke runs). Prints
 one line per check, exits 1 when any fails, 2 when the report is
@@ -61,6 +62,10 @@ def load(path):
             isinstance(report.get(k), dict) for k in ("budget", "resolution", "timing", "frame_ms", "device")):
         raise Unreadable(f"{path}: not a schema-2 benchmark report (schema {report.get('schema')!r}); "
                          "rebuild the extension and run again")
+    for l in report["budget"].get("limits", []):
+        if not isinstance(l, dict) or not all(isinstance(l.get(k), (int, float)) and not isinstance(l.get(k), bool)
+                                              for k in ("percentile", "budget_ms", "limit_ms", "value_ms")):
+            raise Unreadable(f"{path}: a budget limit is not numbers: {l!r}")
     timing = report["timing"]
     if not timing.get("gpu") and report.get("gpu_ms") is not None:
         raise Unreadable(f"{path}: gpu_ms holds numbers although timing.gpu is false; "
@@ -102,6 +107,10 @@ def budget_problems(report):
         if value > limit + 1e-9 or l.get("value_ms", value) > limit + 1e-9:
             problems.append(f"frame_ms p{pct:.0f} {value:.2f} ms over {limit:.2f} ms "
                             f"({budget_ms:.2f} ms budget + {tol * 100:.0f}%)")
+    display = report.get("display") or {}
+    hz = display.get("refresh_hz")
+    if display.get("vsync") != "disabled" and isinstance(hz, (int, float)) and 0 < hz < 60.0 * (1 - tol):
+        problems.append(f"display-limited: the display refreshes at {hz:.2f} Hz, below the 60 Hz target")
     if not problems and not budget.get("pass"):
         problems.append(budget.get("reason") or "the runner failed the budget")
     return problems
