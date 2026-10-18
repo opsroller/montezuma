@@ -31,20 +31,25 @@ them.
 
 ## What the simulator measures here
 
-Chains barely move the simulator: on e3-l04 with no upgrades, its ten
-chains lower `greedy`'s win rate on normal from 100 % to 98.5 % and its
-median time left from 149 s to 141 s
-([balance](../reference/balance.md)), because a chain goes as soon as a
-run passes through it. Episode 3's simulated
-difficulty therefore comes from the gem goal and, more weakly, from
+Chains used to barely move the simulator, because a chained piece went
+as soon as a run passed through it: on e3-l04 with no upgrades, its ten
+chains cost `greedy` 1.5 points of win rate and 8 s of median time on
+normal. Since WP-59 a chain holds (`OBS-05`): the first clear that
+reaches it only breaks the chain, and the piece, with any gem on it,
+stays for a second clear. The same ten chains now cost 1 point and 11 s
+on normal and 4 points and 15 s on hard, and every chained level needs
+a few more moves (e3-l04's `greedy` wins take about 5 more), so their
+clocks rose by 10 to 20 s ([balance](../reference/balance.md)). Chains
+are a measured lever now, but a small one next to the gem goal: ten
+chains on a 64-cell board add one extra hit each. Episode 3's simulated
+difficulty still comes mostly from the gem goal and, more weakly, from
 `steel_rate` (raising e3-l08's from 0.05 to 0.06 barely changed its
 results). The climb shows in `greedy` mean moves (82 to 145). Before the levels had
 their own clocks, `random` also fell on hard, from 78 % on e3-l05 to 17 %
 on e3-l07; with human-pace clocks it wins every run on normal
 ([about level clocks](about-level-clocks.md)). `greedy` wins every
 run on every level, so the curve rules hold by the 100 % tie rather than
-by a measured sawtooth; chains are a teaching device more than a
-difficulty lever.
+by a measured sawtooth; chains teach first and tune second.
 
 The finale, e3-l08, has the biggest goal and the most obstacles, yet takes
 fewer simulated moves than e3-l07: it is where the seventh gem on the

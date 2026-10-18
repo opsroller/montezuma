@@ -61,10 +61,15 @@ difficulty, with the upgrades a player would own on reaching it
 - Tuning levers, in this order: the gem goal (in steps of 5, keeping the
   +5 curve within ±10), then `steel_rate`, then chains. Change one at a
   time and record before and after in the PR, and set the base clock
-  last ([Clock](#clock)). Measured chain effect, e3-l04 with no upgrades:
-  on the default 270 s clock: no chains 100 % `greedy` normal, 149 s median, 86.5 % hard; its ten
-  chains 98.5 %, 141 s, 84 %; 32 chains 97.5 %, 129.5 s, 75 %
-  ([why chains are weak](../explanation/about-the-episode-3-levels.md#what-the-simulator-measures-here)).
+  last ([Clock](#clock)). Measured chain effect since chains hold
+  (`OBS-05`, WP-59), e3-l04 with no upgrades on the default 270 s
+  clock, 200 seeds, `greedy`: no chains 100 % normal, 149 s median,
+  123.1 moves, 86.5 % hard, 77.5 s; its ten chains 99 %, 138.2 s, 130.3
+  moves, 82.5 %, 62.5 s; 32 chains (the bottom four rows) 94 %, 114 s,
+  136.4 moves, 65 %, 49.5 s. Before chains held, the ten cost 1.5 points
+  and 8 s on normal and 2.5 points and 8 s on hard, the 32 cost 2.5 and
+  19.5 s, and 11.5 points and 21 s
+  ([what the simulator measures](../explanation/about-the-episode-3-levels.md#what-the-simulator-measures-here)).
 
 ## Clock
 

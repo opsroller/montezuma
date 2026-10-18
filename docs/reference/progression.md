@@ -349,13 +349,13 @@ human time at 3.5 s a move, and the level table adds an Obstacles column.
 
 ### e3-l01: Locked in
 
-- **Idea:** Chains: a chained piece cannot be swapped but still matches when a run forms through it, and the chain goes with it.
+- **Idea:** Chains: a chained piece cannot be swapped; the first run or blast that reaches it breaks the chain and leaves the piece, and the next one clears it.
 - **Feeling:** curiosity.
 - **Duration:** Sim `greedy` 75 to 90 mean moves on normal (65 gems), about 112 to 135 on hard (100 gems); about 262 to 315 s of play at 3.5 s a move.
 - **Target success rate:** Normal: at least 75 % of players win on the first try; hard: at least 60 %. Human rates are provisional until a playtest ([why](../explanation/about-the-episode-3-levels.md#human-time-against-the-clock)). Simulator: the e3 row of [balance](balance.md). It introduces chains after e2-l06, which wins every greedy run, so `greedy` must win every run here too (the 100 % tie); that also makes it at least as easy as e3-l03.
 - **Takeaway:** The player knows a chained piece can't be moved but can be freed by lining up its colour next to it, and that it then plays like any piece.
 - **Role and levers:** introduce; goal size: 65 gems; complexity: 6 chained cells, all on the bottom row.
-- **First contact:** Chains only stop swaps: they cost no time or gems and still match. On the bottom row nothing lies below them, so they stay where the player first sees them, a fixed and readable lock, until a run through them or a blast clears them; the rest of the board plays as in episode 2. tnt tier 2 (a diamond of radius 2) becomes buyable here; it helps but is optional (PROG-04).
+- **First contact:** Chains stop swaps and hold: each takes two hits, the first to break the chain and the second to clear the piece and any gem on it. On the bottom row nothing lies below them, so they stay where the player first sees them, a fixed and readable lock, until runs or blasts break and then clear them; the rest of the board plays as in episode 2. tnt tier 2 (a diamond of radius 2) becomes buyable here; it helps but is optional (PROG-04).
 
 ### e3-l02: Falling locks
 
@@ -489,7 +489,7 @@ after two moves in a row whose swap match is blue (`TOT-02`, `TOT-03`).
 - **Takeaway:** The player knows ward clears only steel, and chains still need a run through them or a blast.
 - **Role and levers:** twist; goal size: 115 gems; complexity: steel_rate 0.02 and 8 chained cells in the four centre columns of the bottom two rows.
 - **First contact:** The first level of the episode with chains. On e4-l01 and e4-l02 the ward cleared every obstacle on the board, because steel was the only one; here the first ward meets chains and leaves them. The chains sit in the centre of the bottom two rows, where the bottom-row links cannot fall and the row above only falls when a link under it clears, so they are still there when steel has gathered and the ward fires. Hint tier 2 and gold tier 3 become buyable here; optional. Steel stays light (0.02) so the chains, not the steel, are what the player watches, and so the twist is no harder than e4-l02.
-- **Clock:** Normal 517 s (147.7 draft mean moves x 3.5), hard 795 s (227.2 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Bottom-row chains barely change the simulated length ([about the episode 3 levels](../explanation/about-the-episode-3-levels.md#what-the-simulator-measures-here)).
+- **Clock:** Normal 517 s (147.7 draft mean moves x 3.5), hard 795 s (227.2 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Since chains hold (WP-59) its eight chains add about 7 simulated moves on normal (147.7 to 155.0 mean), and the `base_clock` rose with them ([about the episode 3 levels](../explanation/about-the-episode-3-levels.md#what-the-simulator-measures-here)).
 
 ### e4-l04: Locked floor
 
@@ -521,7 +521,7 @@ after two moves in a row whose swap match is blue (`TOT-02`, `TOT-03`).
 - **Target success rate:** Normal: at least 68 % of players win on the first try; hard: at least 53 %. Human rates are provisional until a playtest. Simulator: the e4 row of balance.md (`random` informational from e4 on) and the curve rules as `--check` runs them; `greedy` wins 100 % on the draft, within 10 points of its neighbours.
 - **Takeaway:** The player knows a column of chains cannot be swapped, so it splits the board, but its links still match, so runs through them and blasts beside them open the wall.
 - **Role and levers:** twist; goal size: 130 gems; complexity: steel_rate 0.03 and 10 chained cells in two columns, five cells each, on the bottom five rows.
-- **First contact:** Chains are familiar; the new shape is a line of them: chained pieces cannot be swapped, so the column splits the lower board. Chained pieces still match normally (OBS-05), so a run that lines up with a link clears it, and the links above a cleared one drop down the column. Steel stays light so the columns are the point. Timer tier 3 and paint tier 3 become buyable here; optional.
+- **First contact:** Chains are familiar; the new shape is a line of them: chained pieces cannot be swapped, so the column splits the lower board. Chained pieces still match (OBS-05), so a run that lines up with a link breaks it, the next run clears the freed piece, and the links above it drop down the column. Steel stays light so the columns are the point. Timer tier 3 and paint tier 3 become buyable here; optional.
 - **Clock:** Normal 584 s (166.8 draft mean moves x 3.5), hard 880 s (251.3 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Moves per gem barely change from e4-l05 (1.25 to 1.28): the columns shape the play more than the length.
 
 ### e4-l07: Scattered locks

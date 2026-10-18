@@ -174,7 +174,12 @@ State: `frenzy_bar` 0..60, `frenzy_left` seconds.
    power-up.
 5. `OBS-05` A chained piece is placed by the level data
    (`chained_cells`). It cannot be swapped, falls normally and matches
-   normally; when it is cleared the chain goes with it [S1, chosen].
+   normally, but holds: any clear that reaches it (a run, a power-up, a
+   totem) breaks its chain instead and leaves the piece in place. The
+   piece scores nothing then, keeps its gem and power-up (which does not
+   go off), and from then on plays as a plain piece, so the next clear
+   takes it. A run made only of chained pieces clears nothing; their
+   chains break and, now plain, they match in the next step [S1, chosen].
 6. `OBS-06` Shuffles leave steel and chained pieces where they are.
 
 ## Shuffles and hints (`SHUF-*`)
