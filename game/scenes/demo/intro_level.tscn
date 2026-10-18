@@ -1,8 +1,10 @@
 [gd_scene load_steps=2 format=3 uid="uid://bmzdemointro"]
+; SPDX-License-Identifier: GPL-2.0-or-later
 
-[ext_resource type="PackedScene" uid="uid://bmzboardview3d" path="res://scenes/board/board.tscn" id="1_board"]
+[ext_resource type="PackedScene" uid="uid://bmzgamescene" path="res://scenes/game/game.tscn" id="1_game"]
 
 [node name="IntroLevel" type="IntroLevel"]
-board_view_path = NodePath("Board/View")
+game_path = NodePath("Game")
 
-[node name="Board" parent="." instance=ExtResource("1_board")]
+[node name="Game" parent="." instance=ExtResource("1_game")]
+autostart_level = "e1-l01"
