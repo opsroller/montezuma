@@ -104,7 +104,7 @@ reach the board.
 It binds to the first node in group `game_group` (also any that enters
 the tree later; set the group in the scene, since `node_added` fires
 before `_ready`) and connects each of these
-[Game signals](contracts.md#game-signals-owner-graphics-programmer-wp-10wp-26--proposed)
+[Game signals](contracts.md#game-signals-owner-graphics-programmer-wp-10wp-26--implemented)
 that node has. A missing signal is skipped without an error:
 
 | Game signal | HUD shows |

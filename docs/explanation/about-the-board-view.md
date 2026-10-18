@@ -11,7 +11,8 @@ The rules live in `core/` and run without Godot. The board view only
 turns what the rules say happened into motion. It asks for a swap with
 `swap_requested` and is handed the result to `play`; it never calls
 `try_swap` itself. Something else owns the board: `BoardPlaytest` for free
-play now, the game scene (WP-28) for real levels.
+play, the game scene ([About the game scene](about-the-game-scene.md)) for
+real levels.
 
 That split keeps three things true. The rules are tested without a
 renderer. Speeding up, skipping or reducing animation can never change a

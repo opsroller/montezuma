@@ -6,8 +6,8 @@
 Reference for `montezuma::LevelSession`, which plays one level by the full
 `classic` rules: the board, gems, steel and chains, power-ups, totems,
 Score Frenzy, scoring, the goal, the timer and shuffles. It is what the
-balance simulator (WP-22, `tools/sim/`) plays, and what the game layer
-can drive. Rules are in the [rules spec](rules-spec.md),
+balance simulator (WP-22, `tools/sim/`) plays, and what the game scene
+([Match3Game](match3-game.md)) drives. Rules are in the [rules spec](rules-spec.md),
 [power-ups](rules-power-ups.md), [Power Totems](rules-totems.md) and
 [progression](progression.md); code cites them as `// rule: ID`.
 
@@ -46,7 +46,7 @@ movable pieces are reshuffled at no cost); totems at `start_level()`
 |---|---|---|
 | `swap(a, b)` | `optional<MoveReport>` | empty, with nothing changed, for an illegal swap or after the level ended |
 | `tick(dt)` | `optional<TickReport>` | lowers `time_left` and `frenzy_left`; `dt < 0` throws; empty after the level ended. Game time counts in whole microseconds (`dt` rounded to nearest), so the same time gives the same game however it is split into ticks |
-| `shuffle()` | `optional<ShuffleReport>` | manual shuffle, twice per level, free, not a move (`SHUF-01`) |
+| `shuffle()` | `optional<ShuffleReport>` | manual shuffle, twice per level, free, not a move (`SHUF-01`); it restarts the idle time, so the free hint (`SHUF-05`) can show again 8 s later |
 | `buy_hint()` | `optional<Swap>` | one legal move for 300 points, cleared by the next move or shuffle (`SHUF-04`); while a hint is shown it is returned again at no cost |
 
 The session has no pause: the caller does not tick while paused or on a
@@ -60,6 +60,8 @@ swap would make; `runs()` the runs on the board (empty between moves).
 
 The `set_*` functions and `totems_for_setup()` change state with no rule
 checks; they exist for tests and tools that need an exact position.
+`set_steel`, `set_gem` and `set_chain` throw `std::out_of_range` for a
+cell off the board.
 
 ## Order of one move
 
@@ -96,8 +98,8 @@ Frenzy flags), `base_points`, `multiplier`, `points`, `gems_collected`,
 `stuck`.
 
 `TickReport`: `time_left`, `frenzy_left`, `frenzy_ended`, `free_hint`
-(`SHUF-05`, on e1-l01 and e1-l02 after 8 s without a move, once until the
-next move; presentation only), `outcome`, `outcome_changed`.
+(`SHUF-05`, on e1-l01 and e1-l02 after 8 s without a move or manual
+shuffle, once until the next one; presentation only), `outcome`, `outcome_changed`.
 
 `ShuffleReport`: `shuffled`, `redealt`, `shuffle_map`, `stuck`,
 `time_delta_seconds` (-5 for the automatic one).

@@ -690,6 +690,10 @@ std::optional<ShuffleReport> LevelSession::shuffle() {
     if (!sh.stuck) {
         --manual_shuffles_left_;
         hint_.reset();
+        // rule: SHUF-05 a shuffle is player activity: the idle time restarts
+        // and the free hint may show again.
+        idle_us_ = 0;
+        free_hint_shown_ = false;
     }
     return sh;
 }
@@ -710,9 +714,14 @@ std::optional<Swap> LevelSession::buy_hint() {
 // ---- Scenario setup --------------------------------------------------------
 
 void LevelSession::set_piece(Cell c, int kind) { board_.set(c.x, c.y, kind); }
-void LevelSession::set_steel(Cell c, bool on) { marks_.steel[idx(c)] = on; }
-void LevelSession::set_gem(Cell c, bool on) { marks_.gem[idx(c)] = on; }
-void LevelSession::set_chain(Cell c, bool on) { chains_[idx(c)] = on; }
+void LevelSession::set_steel(Cell c, bool on) { marks_.steel[checked_idx(c, "set_steel")] = on; }
+void LevelSession::set_gem(Cell c, bool on) { marks_.gem[checked_idx(c, "set_gem")] = on; }
+void LevelSession::set_chain(Cell c, bool on) { chains_[checked_idx(c, "set_chain")] = on; }
+
+std::size_t LevelSession::checked_idx(Cell c, const char* what) const {
+    if (!board_.in_bounds(c.x, c.y)) throw std::out_of_range(std::string(what) + ": cell off the board");
+    return idx(c);
+}
 void LevelSession::set_power_up(Cell c, std::optional<PowerUp> p) {
     if (p) power_ups_.set(c, *p);
     else power_ups_.erase(c);

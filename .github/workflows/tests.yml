@@ -103,6 +103,11 @@ jobs:
         run: |
           ./godot --headless --path game --quit-after 120 -- --audio-selftest 2>&1 | tee audio.log
           grep -E "GameAudio self-test: [0-9]+ cues, 0 failures" audio.log
+      - name: Game self-test
+        if: runner.os == 'Linux'
+        run: |
+          ./godot --headless --path game --quit-after 120 -- --game-selftest 2>&1 | tee game.log
+          grep -E "Match3Game self-test: [0-9]+ moves, outcome 1, [0-9]+ cues, 0 failures" game.log
 
   sanitizers:
     runs-on: ubuntu-latest
