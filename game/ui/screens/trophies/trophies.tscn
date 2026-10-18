@@ -1,0 +1,59 @@
+[gd_scene format=3]
+; SPDX-License-Identifier: GPL-2.0-or-later
+
+[node name="TrophiesScreen" type="TrophiesScreen"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+screen_id = "trophies"
+trophy_ids = PackedStringArray("t01", "t02", "t03", "t04", "t05", "t06", "t07", "t08", "t09")
+
+[node name="Backdrop" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"ScrimPanel"
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="Center"]
+layout_mode = 2
+
+[node name="Column" type="VBoxContainer" parent="Center/Panel"]
+layout_mode = 2
+
+[node name="Heading" type="Label" parent="Center/Panel/Column"]
+layout_mode = 2
+text = "trophies.title"
+horizontal_alignment = 1
+theme_type_variation = &"HeadingLabel"
+
+[node name="Scroll" type="ScrollContainer" parent="Center/Panel/Column"]
+layout_mode = 2
+custom_minimum_size = Vector2(1080, 460)
+follow_focus = true
+horizontal_scroll_mode = 0
+
+[node name="Grid" type="GridContainer" parent="Center/Panel/Column/Scroll"]
+layout_mode = 2
+unique_name_in_owner = true
+size_flags_horizontal = 3
+columns = 3
+
+[node name="Back" type="NavButton" parent="Center/Panel/Column"]
+layout_mode = 2
+text = "menu.back"
+action = "back"

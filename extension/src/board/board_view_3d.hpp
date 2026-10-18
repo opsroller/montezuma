@@ -14,6 +14,7 @@
 #include "match3_board.hpp"
 #include "animator.hpp"
 #include "board_layout.hpp"
+#include "input.hpp"
 #include "piece_library.hpp"
 
 namespace montezuma::godot_binding {
@@ -29,6 +30,7 @@ public:
     ~BoardView3D() override;
 
     void _unhandled_input(const godot::Ref<godot::InputEvent>& event) override;
+    void _notification(int what);
 
     // Draws `board` as it is now, without animation.
     void show_board(const godot::Ref<Match3Board>& board);
@@ -82,7 +84,9 @@ private:
     void settle();
     void finish_animation();
 
-    void handle_press(godot::Vector2 screen_pos);
+    input::Output press(int pointer, godot::Vector2 screen_pos);
+    void apply_input(const input::Output& out);
+    double swipe_threshold_pixels() const;
     void select(godot::Vector2i cell);
     void clear_selection();
 
@@ -101,6 +105,7 @@ private:
     bool has_selection_ = false;
     godot::Vector2i selected_;
     godot::Vector2i last_request_[2] = {godot::Vector2i(-1, -1), godot::Vector2i(-1, -1)};
+    input::SwapGesture gesture_;
 };
 
 }  // namespace montezuma::godot_binding

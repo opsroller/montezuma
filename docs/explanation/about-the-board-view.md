@@ -41,6 +41,25 @@ length. When the animation ends, or the player skips it, the view checks
 itself against the board and resyncs, so a bug in presentation can never
 turn into a wrong board on screen for more than one move.
 
+## Two ways to swap
+
+The original was played with a mouse: click one piece, click its
+neighbour. Phones expect a swipe. The board takes both on every pointer
+type, with no mode switch, because the two never conflict: a tap that does
+not move is tap-tap, a press that travels is a swipe. The swipe fires the
+moment it crosses the threshold rather than on release, which is what makes
+it feel immediate, and the threshold scales with the cell on screen so it
+feels the same on a phone and a monitor, with a floor in millimetres so a
+shaky thumb on a dense screen still taps.
+
+Presses during an animation are ignored on purpose. The pieces under the
+finger are about to move, so a buffered tap would land on a piece the
+player never aimed at. Releases and cancels are always handled, so nothing
+stays half-pressed after a system gesture or switching apps.
+
+The recogniser is plain C++ fed with positions and cells, so every rule
+above is a unit test, not a manual check.
+
 ## A camera that fits, and nothing more
 
 The original was a flat 2D board. A camera close to top-down (15° of
