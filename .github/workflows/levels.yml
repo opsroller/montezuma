@@ -6,8 +6,9 @@
 # Reference: docs/reference/ci-pipeline.md
 name: levels
 
-# Path-filtered: only level files, the simulator, the core it plays and the
-# build files can change the result. A filtered check cannot be required.
+# Path-filtered: only level files, the simulator, the core it plays, the JSON
+# library the core parses levels with and the build files can change the
+# result. A filtered check cannot be required.
 on:
   push:
     branches: [main]
@@ -15,6 +16,7 @@ on:
       - "game/data/levels/**"
       - "tools/sim/**"
       - "core/**"
+      - "thirdparty/nlohmann/**"
       - "CMakeLists.txt"
       - ".github/workflows/levels.yml"
   pull_request:
@@ -22,6 +24,7 @@ on:
       - "game/data/levels/**"
       - "tools/sim/**"
       - "core/**"
+      - "thirdparty/nlohmann/**"
       - "CMakeLists.txt"
       - ".github/workflows/levels.yml"
 

@@ -78,7 +78,7 @@ level under `game/data/levels/` against the
 
 | Item | Value |
 |---|---|
-| Triggers | `push` to `main` and `pull_request`, only when the change touches `game/data/levels/**`, `tools/sim/**`, `core/**`, `CMakeLists.txt` or `.github/workflows/levels.yml`; a new push cancels the PR's older run |
+| Triggers | `push` to `main` and `pull_request`, only when the change touches `game/data/levels/**`, `tools/sim/**`, `core/**`, `thirdparty/nlohmann/**` (the JSON library the core parses levels with), `CMakeLists.txt` or `.github/workflows/levels.yml`; a new push cancels the PR's older run |
 | Job | `balance`, on `ubuntu-24.04`, 10-minute timeout |
 | Build | Release, `MONTEZUMA_WERROR=ON`, `MONTEZUMA_BUILD_EXTENSION=OFF`, `MONTEZUMA_BUILD_TESTS=OFF`, `MONTEZUMA_BUILD_SIM=ON`; target `montezuma_sim` only |
 | Command | `montezuma_sim game/data/levels --check` (200 seeds, all bots, both difficulties) |
