@@ -1,8 +1,8 @@
 # Build pipeline
 
-Facts about the desktop build pipeline in `.github/workflows/build.yml`.
-Tests run separately in `.github/workflows/tests.yml`; the web demo is
-built by `.github/workflows/web.yml`.
+Facts about the desktop build pipeline in `.github/workflows/build.yml`
+and the web demo build in `.github/workflows/web.yml` ([Web demo](#web-demo)).
+Tests run separately in `.github/workflows/tests.yml`.
 
 ## Triggers
 
@@ -121,6 +121,10 @@ compiler cache is safe for release builds.
 | `game-files.py check <gamedir> <export>` | Exits 1 unless every staged file's bytes are inside the exported game (a file or a `.app` folder) |
 | `notices/` | Verbatim upstream notice texts (Godot 4.7.2 `LICENSE.txt`, `COPYRIGHT.txt`) |
 | `smoke-test.sh <archive>` | Verifies, unpacks and runs a package on its own platform |
+| `web-fetch-emsdk.sh <dir>` | Installs the pinned Emscripten (`EMSDK_VERSION` in `godot.env`) into `<dir>` and prints its `emsdk_env.sh` |
+| `web-export.sh <version> <outdir>` | Exports the `Web` preset, checks the download budget and writes the zip and `.sha256` |
+| `web-smoke.py <archive> [browser...]` | Verifies and serves a web package, starts it the way the site does and checks the hand-off events |
+| `web-requirements.txt` | Hash-pinned Python packages for `web-smoke.py` (Playwright) |
 
 ## Export presets
 
@@ -131,6 +135,37 @@ compiler cache is safe for release builds.
 | `Linux` | Linux | PCK embedded |
 | `Windows` | Windows Desktop | PCK embedded; `application/modify_resources=false` (no rcedit, so no icon or version info in the `.exe` yet) |
 | `macOS` | macOS | Universal; bundle id `io.github.opsroller.montezuma`; built-in ad-hoc signing; no notarization; minimum macOS 10.15 (x86_64) and 11.0 (arm64) |
+| `Web` | Web | Single-threaded (`variant/thread_support=false`), GDExtension on (`variant/extensions_support=true`), desktop texture compression only, no PWA |
+
+## Web demo
+
+`.github/workflows/web.yml` builds the web demo: the intro level as a
+single-threaded Godot web export with the extension compiled to
+WebAssembly. It never deploys; the package is the run's artifact.
+
+| Item | Value |
+|---|---|
+| Triggers | Push to `main`; pull requests touching `web.yml`, `tools/release/`, `CMakeLists.txt`, `core/`, `extension/`, `game/` or `thirdparty/`; manual |
+| Runner | `ubuntu-24.04`, one job `web` |
+| Emscripten | 4.0.20 (`EMSDK_VERSION` in `godot.env`, the version Godot 4.7.2's official web templates are built with), cached under `emsdk-<hash of godot.env>` |
+| Extension build | `emcmake cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON -DMONTEZUMA_BUILD_TESTS=OFF -DMONTEZUMA_WERROR=ON -DGODOTCPP_TARGET=template_release -DGODOTCPP_THREADS=OFF`, through ccache (`EM_COMPILER_WRAPPER=ccache`, key prefix `build-web-extension`) |
+| Library | `game/bin/libmontezuma.web.template_release.wasm32.nothreads.wasm` (`web.release.wasm32` in `game/montezuma.gdextension`) |
+| Template | `web_dlink_nothreads_release.zip` from the pinned templates archive |
+| Renderer | Compatibility (`rendering/renderer/rendering_method.web`), 2× MSAA, 1024 directional shadow map: the `web` tier of the [visual target](visual-target.md) |
+| Main scene | `res://scenes/demo/intro_level.tscn` (`application/run/main_scene.web`); see [IntroLevel](intro-level.md) |
+| Budget | All files gzipped at most 40 MB, checked by `web-export.sh` |
+| Browser check | `web-smoke.py` in headless Chromium 141, Firefox 142 and WebKit 26 (Playwright 1.56.0): `montezuma:ready`, then `montezuma:level-completed` for `e1-l01` with `--complete-level`, and no browser errors |
+
+| Artifact | Contents | Kept |
+|---|---|---|
+| `montezuma-web` | `montezuma-<version>-web.zip` and its `.sha256` | 90 days |
+| `web-export-logs` | Godot's import and export output | 7 days |
+
+The zip holds one folder `montezuma-<version>-web/` with `montezuma.js`,
+`montezuma.wasm`, `montezuma.side.wasm`, `montezuma.pck`, the extension
+library, the audio worklet scripts, `montezuma.html` (Godot's page, for a
+quick preview; the site uses its own), `LICENSE.txt`,
+`THIRD-PARTY-NOTICES.txt` and `SOURCE.txt`.
 
 ## Not yet covered
 
