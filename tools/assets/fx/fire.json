@@ -1,0 +1,58 @@
+{
+  "_comment": "SPDX-License-Identifier: GPL-2.0-or-later. Brazier fire simulation and flipbook settings for tools/assets/fx/gen_fire.py. Grid units are cells; time is in simulation frames at fps. Changing anything here re-runs the simulation in the next build.",
+  "theme": "temple",
+  "seed": 20261018,
+  "grid": [64, 128, 64],
+  "fps": 30,
+  "substeps": 2,
+  "warmup_frames": 60,
+  "frames": 64,
+  "loop_blend_frames": 12,
+  "burner": {
+    "radius": 7.0,
+    "height": 4,
+    "y": 6,
+    "fuel": 1.0,
+    "fuel_noise": 1.0,
+    "noise_cells": 4.0,
+    "inflow_speed": 0.35,
+    "temperature": 0.6
+  },
+  "combustion": {
+    "burn_rate": 0.06,
+    "ignition": 0.35,
+    "heat_release": 2.5,
+    "smoke_yield": 0.3
+  },
+  "gas": {
+    "buoyancy": 0.2,
+    "smoke_weight": 0.0015,
+    "cooling": 0.02,
+    "smoke_dissipation": 0.012,
+    "fuel_dissipation": 0.06,
+    "vorticity": 0.35,
+    "turbulence": 0.15,
+    "velocity_damping": 0.004,
+    "sponge_cells": 10
+  },
+  "render": {
+    "tile": [128, 256],
+    "crop": [14, 10, 50, 82],
+    "absorption": 1.6,
+    "emission_gamma": 1.0,
+    "temperature_range": [0.3, 1.0],
+    "blur": 1.0
+  },
+  "sheets": {
+    "hi": {
+      "grid": 8,
+      "stride": 1,
+      "motion_scale": 0.03
+    },
+    "base": {
+      "grid": 4,
+      "stride": 4,
+      "motion_scale": 0.12
+    }
+  }
+}

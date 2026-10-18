@@ -119,14 +119,12 @@ void test_targets() {
     struct Case {
         int episode, index, greedy;
         double median;
-        int random;
-        bool at_most;
+        int random;  // -1 for no target
         int planner;
         int moves;  // greedy mean moves floor, 0 for none
     };
-    const Case cases[] = {{1, 2, 98, 100, 70, false, 90, 0},  {2, 3, 95, 70, 40, false, 80, 50},
-                          {3, 5, 90, 50, 20, false, 70, 70},  {4, 2, 85, 35, 20, true, 60, 90},
-                          {5, 9, 80, 25, 10, true, 50, 110}};
+    const Case cases[] = {{1, 2, 98, 100, 70, 90, 0},  {2, 3, 95, 70, 40, 80, 50},  {3, 5, 90, 50, 20, 70, 70},
+                          {4, 2, 85, 35, -1, 60, 90}, {5, 9, 80, 25, -1, 50, 110}};
     for (const Case& c : cases) {
         const std::string tag = "e" + std::to_string(c.episode);
         const int seeds = 200;
@@ -146,12 +144,17 @@ void test_targets() {
         } else {
             check(greedy(need, c.median, seeds) == Verdict::Pass, tag + " has no moves floor (1 move a run passes)");
         }
-        const int r = c.random * seeds / 100;
-        check(evaluate(row(c.episode, c.index, Bot::Random, Difficulty::Normal, seeds, r)) == Verdict::Pass,
-              tag + " random at threshold passes");
-        check(evaluate(row(c.episode, c.index, Bot::Random, Difficulty::Normal, seeds, c.at_most ? r + 1 : r - 1)) ==
-                  Verdict::Fail,
-              tag + " random past threshold fails");
+        if (c.random >= 0) {
+            const int r = c.random * seeds / 100;
+            check(evaluate(row(c.episode, c.index, Bot::Random, Difficulty::Normal, seeds, r)) == Verdict::Pass,
+                  tag + " random at threshold passes");
+            check(evaluate(row(c.episode, c.index, Bot::Random, Difficulty::Normal, seeds, r - 1)) == Verdict::Fail,
+                  tag + " random below threshold fails");
+        } else {
+            check(evaluate(row(c.episode, c.index, Bot::Random, Difficulty::Normal, seeds, seeds)) == Verdict::None &&
+                      target_text(row(c.episode, c.index, Bot::Random, Difficulty::Normal, seeds, 0)) == "-",
+                  tag + " random is informational");
+        }
         const int p = c.planner * seeds / 100;
         check(evaluate(row(c.episode, c.index, Bot::Planner, Difficulty::Hard, seeds, p)) == Verdict::Pass,
               tag + " planner hard at threshold");

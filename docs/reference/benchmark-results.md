@@ -58,6 +58,13 @@ Measurement notes:
   `desktop-standard` runs the report's `device.resolution` was 3140×2104,
   5120×2576 or 5120×2880 instead of 1920×1080. Those runs are not in the
   table; only runs whose `device.resolution` matches `--size` count.
+- **These runs used report schema 1.** Schema 2
+  ([Benchmark](benchmark.md#budget)) judges `frame_ms` against whole
+  60 Hz periods with a tolerance (so `desktop-standard` above passes and
+  `desktop-high` fails), locks the render size and fails a run whose
+  render or window size changes, writes `gpu_ms` as null on Metal, and
+  times `process_ms` per frame instead of `Performance.TIME_PROCESS`, a
+  once-a-second maximum that explains the 2215 ms `cpu_ms` p99 above.
 
 ## WP-29 effects
 

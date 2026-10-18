@@ -49,7 +49,8 @@ clocks would be much longer (e3-l08 on hard: 1100 s instead of 800 s).
 That player leans on the time totem and the clock power-up.
 
 A longer clock also helps the `random` bot: with human-pace clocks it
-wins every episode 3 run on normal ([current results](../reference/balance.md#current-results)). Episode 4 and 5 targets
-cap `random` at 20 % and 10 % on normal, so those episodes' difficulty
-has to come from goals and obstacles that a random player cannot clear,
-not from a short clock.
+wins every episode 3 run on normal
+([current results](../reference/balance.md#current-results)). For the
+same reason `random` has no target from episode 4 on: a ceiling on it
+could only be met with clocks too short for people
+([why](about-the-episode-4-levels.md#why-random-has-no-target)).

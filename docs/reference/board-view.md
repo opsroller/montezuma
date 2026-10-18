@@ -32,7 +32,7 @@ Draws a `Match3Board` and plays back results. It never applies a rule.
 | `play_illegal(a: Vector2i, b: Vector2i)` | method | Bounces the two pieces toward each other and back, then emits `animation_finished` |
 | `is_busy()` | method | True while an animation plays; taps are ignored then |
 | `skip_animation()` | method | Jumps to the end of the playing animation and emits `animation_finished` |
-| `animation_speed` | property | Playback speed, 0.1 to 10, default 1. Fast-forward and reduced motion use it; outcomes never change |
+| `animation_speed` | property | Playback speed, 0.1 to 10, default 1. Fast-forward and reduced motion use it; outcomes never change. `Match3Game` sets it from the UI's `reduced_motion` setting, at start and on every change: `feel::kReducedMotionAnimationSpeed` (2) when on, 1 when off |
 | `cell_at_screen(pos: Vector2) -> Vector2i` | method | Cell under a screen position using the active camera; `(-1, -1)` off the board |
 | `get_board_width()`, `get_board_height()` | method | Size of the board last shown |
 | `cell_size` | property | World size of one cell, 0.25 to 4, default 1. Theme art is built for 1 |

@@ -266,12 +266,12 @@ std::optional<double> Row::median_time_left() const {
 std::optional<TargetRow> target_row(int episode, int index) {
     // balance.md Targets.
     static constexpr std::array<TargetRow, 6> kRows{{
-        {"e1-l01", 100, 150.0, 95, false, 99, 0},
-        {"e1", 98, 100.0, 70, false, 90, 0},
-        {"e2", 95, 70.0, 40, false, 80, 50},
-        {"e3", 90, 50.0, 20, false, 70, 70},
-        {"e4", 85, 35.0, 20, true, 60, 90},
-        {"e5", 80, 25.0, 10, true, 50, 110},
+        {"e1-l01", 100, 150.0, 95, 99, 0},
+        {"e1", 98, 100.0, 70, 90, 0},
+        {"e2", 95, 70.0, 40, 80, 50},
+        {"e3", 90, 50.0, 20, 70, 70},
+        {"e4", 85, 35.0, -1, 60, 90},
+        {"e5", 80, 25.0, -1, 50, 110},
     }};
     if (episode == 1) return index == 1 ? kRows[0] : kRows[1];
     if (episode >= 2 && episode <= 5) return kRows[static_cast<std::size_t>(episode)];
@@ -289,8 +289,8 @@ std::string target_text(const Row& row) {
     if (row.bot == Bot::Greedy && row.difficulty == Difficulty::Normal)
         return "win>=" + std::to_string(t->greedy_win_pct) + "% median>=" + fmt1(t->greedy_median) + "s" +
                (t->greedy_min_moves > 0 ? " moves>=" + std::to_string(t->greedy_min_moves) : std::string());
-    if (row.bot == Bot::Random && row.difficulty == Difficulty::Normal)
-        return std::string(t->random_at_most ? "win<=" : "win>=") + std::to_string(t->random_pct) + "%";
+    if (row.bot == Bot::Random && row.difficulty == Difficulty::Normal && t->random_pct >= 0)
+        return "win>=" + std::to_string(t->random_pct) + "%";
     if (row.bot == Bot::Planner && row.difficulty == Difficulty::Hard)
         return "win>=" + std::to_string(t->planner_hard_pct) + "%";
     return "-";
@@ -302,7 +302,6 @@ Verdict evaluate(const Row& row) {
     // Exact: wins x 100 against pct x seeds.
     const long long w = static_cast<long long>(row.wins) * 100;
     const auto at_least = [&](int pct) { return w >= static_cast<long long>(pct) * row.seeds; };
-    const auto at_most = [&](int pct) { return w <= static_cast<long long>(pct) * row.seeds; };
     const auto verdict = [](bool ok) { return ok ? Verdict::Pass : Verdict::Fail; };
     if (row.bot == Bot::Greedy && row.difficulty == Difficulty::Normal) {
         const auto median = row.median_time_left();
@@ -311,7 +310,7 @@ Verdict evaluate(const Row& row) {
         return verdict(at_least(t->greedy_win_pct) && median && *median >= t->greedy_median && enough_moves);
     }
     if (row.bot == Bot::Random && row.difficulty == Difficulty::Normal)
-        return verdict(t->random_at_most ? at_most(t->random_pct) : at_least(t->random_pct));
+        return t->random_pct >= 0 ? verdict(at_least(t->random_pct)) : Verdict::None;
     if (row.bot == Bot::Planner && row.difficulty == Difficulty::Hard) return verdict(at_least(t->planner_hard_pct));
     return Verdict::None;
 }

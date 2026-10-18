@@ -29,6 +29,8 @@ add_library(montezuma_extension SHARED
   src/game/register_game.cpp
   src/render/baked_lighting.cpp
   src/render/lightmap_baker.cpp
+  src/render/flicker.cpp
+  src/render/flicker_light_3d.cpp
   src/render/quality.cpp
   src/render/quality_tiers.cpp
   src/render/register_render.cpp

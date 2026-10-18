@@ -4,9 +4,11 @@
 #include "benchmark_runner.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <exception>
 
 #include <godot_cpp/classes/dir_access.hpp>
+#include <godot_cpp/classes/display_server.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/classes/json.hpp>
@@ -17,6 +19,7 @@
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/time.hpp>
 #include <godot_cpp/classes/viewport.hpp>
+#include <godot_cpp/classes/viewport_texture.hpp>
 #include <godot_cpp/classes/window.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/array.hpp>
@@ -57,6 +60,45 @@ Dictionary to_dictionary(const bench::FrameSummary& s) {
     return d;
 }
 
+Dictionary to_dictionary(const bench::BudgetVerdict& v, const bench::BudgetSpec& spec) {
+    Dictionary d;
+    d["metric"] = "frame_ms";
+    d["target_hz"] = spec.target_hz;
+    d["period_ms"] = v.period_ms;
+    d["tolerance"] = spec.tolerance;
+    Array limits;
+    for (const bench::BudgetLimit& l : v.limits) {
+        Dictionary e;
+        e["percentile"] = l.percentile;
+        e["budget_ms"] = l.budget_ms;
+        e["limit_ms"] = l.limit_ms;
+        e["value_ms"] = l.value_ms;
+        e["pass"] = l.pass;
+        limits.push_back(e);
+    }
+    d["limits"] = limits;
+    d["pass"] = v.pass;
+    d["reason"] = String::utf8(v.reason.c_str());
+    return d;
+}
+
+Array to_array(bench::Size2 s) {
+    Array a;
+    a.push_back(s.w);
+    a.push_back(s.h);
+    return a;
+}
+
+String vsync_name(DisplayServer::VSyncMode m) {
+    switch (m) {
+        case DisplayServer::VSYNC_DISABLED: return "disabled";
+        case DisplayServer::VSYNC_ENABLED: return "enabled";
+        case DisplayServer::VSYNC_ADAPTIVE: return "adaptive";
+        case DisplayServer::VSYNC_MAILBOX: return "mailbox";
+        default: return "other";
+    }
+}
+
 Array to_array(const std::vector<Cell>& cells) {
     Array out;
     for (const Cell c : cells) out.push_back(Vector2i(c.x, c.y));
@@ -87,6 +129,16 @@ void BenchmarkRunner::read_command_line() {
         if (a.begins_with("--bench-tier=")) tier_ = value;
         if (a.begins_with("--bench-budget=")) budget_ms_ = value.to_float();
         if (a.begins_with("--bench-seed=")) seed_ = value.to_int();
+        if (a.begins_with("--bench-tolerance=")) {
+            tolerance_arg_invalid_ = !value.is_valid_float();
+            tolerance_ = value.to_float();
+        }
+        if (a.begins_with("--bench-size=")) {
+            const auto size = bench::parse_size(value.utf8().get_data());
+            size_arg_invalid_ = !size;
+            render_size_ = size ? Vector2i(size->w, size->h) : Vector2i();
+        }
+        if (a == "--bench-vsync=off") disable_vsync_ = true;
         if (a == "--bench-stay") quit_when_done_ = false;
     }
 }
@@ -98,8 +150,17 @@ void BenchmarkRunner::_ready() {
         const QualityTiers* tiers = QualityTiers::get_singleton();
         tier_ = tiers ? tiers->get_tier() : String("unset");
     }
-    // Visual target: p95 within 16.6 ms, 33.3 ms on the web tier.
-    if (budget_ms_ <= 0.0) budget_ms_ = tier_ == "web" ? 33.3 : 16.6;
+    // Visual target: p95 within one 60 Hz period, two on the web tier;
+    // budget_ms is that p95 budget before the tolerance.
+    const bench::BudgetSpec spec = bench::budget_for_tier(tier_.utf8().get_data(), tolerance_, budget_ms_);
+    tolerance_ = spec.tolerance;
+    budget_ms_ = spec.rules.empty() ? 0.0 : spec.rules.front().budget_ms;
+    if (size_arg_invalid_ || tolerance_arg_invalid_) {
+        ERR_PRINT("BenchmarkRunner: --bench-size must look like 1920x1080 and --bench-tolerance be a number.");
+        if (quit_when_done_) get_tree()->quit(1);
+        return;
+    }
+    lock_render_size();
     BoardView3D* v = view();
     ERR_FAIL_NULL_MSG(v, "BenchmarkRunner: board_view_path does not point at a BoardView3D.");
     try {
@@ -112,10 +173,14 @@ void BenchmarkRunner::_ready() {
     ERR_FAIL_COND_MSG(replay_.actions.empty(), "BenchmarkRunner: the replay has no beats.");
 
     const std::size_t frames = static_cast<std::size_t>(std::max(1.0, measure_seconds_)) * kReservedFramesPerSecond;
-    for (auto* samples : {&cpu_ms_, &gpu_ms_, &frame_ms_, &draw_calls_, &primitives_}) samples->reserve(frames);
+    for (auto* samples : {&process_ms_, &render_cpu_ms_, &cpu_ms_, &gpu_ms_, &frame_ms_, &draw_calls_, &primitives_}) samples->reserve(frames);
 
     RenderingServer::get_singleton()->viewport_set_measure_render_time(get_viewport()->get_viewport_rid(), true);
     bench::hide_ui_overlays(get_tree()->get_root());
+    // Last in the process pass, so process_ms covers every other node's
+    // _process this frame (TIME_PROCESS is a once-a-second maximum).
+    set_process_priority(1 << 30);
+    get_tree()->connect("process_frame", callable_mp(this, &BenchmarkRunner::on_process_frame));
     board_.instantiate();
     restart_replay();
     start_usec_ = Time::get_singleton()->get_ticks_usec();
@@ -126,7 +191,36 @@ void BenchmarkRunner::_ready() {
     set_process(true);
 }
 
+// The run measures one render size: the root viewport renders at the
+// requested size (content scale mode viewport) whatever the OS does to the
+// window, and the window may not be resized. sample_frame() checks it held.
+void BenchmarkRunner::lock_render_size() {
+    Window* root = get_tree()->get_root();
+    DisplayServer* ds = DisplayServer::get_singleton();
+    if (disable_vsync_) ds->window_set_vsync_mode(DisplayServer::VSYNC_DISABLED);
+    const bool requested = render_size_.x > 0 && render_size_.y > 0;
+    sizes_ = bench::SizeTracker(requested ? std::optional(bench::Size2{render_size_.x, render_size_.y}) : std::nullopt);
+    // The window is followed too: the lock keeps the render size, but a
+    // resized window still changes the scale and present cost.
+    window_sizes_ = bench::SizeTracker(std::nullopt);
+    if (!requested) return;
+    root->set_flag(Window::FLAG_RESIZE_DISABLED, true);
+    root->set_size(render_size_);
+    root->set_content_scale_size(render_size_);
+    root->set_content_scale_aspect(Window::CONTENT_SCALE_ASPECT_IGNORE);
+    root->set_content_scale_mode(Window::CONTENT_SCALE_MODE_VIEWPORT);
+}
+
+Vector2i BenchmarkRunner::current_render_size() const {
+    const Ref<ViewportTexture> texture = get_viewport()->get_texture();
+    return texture.is_valid() ? Vector2i(texture->get_size()) : Vector2i();
+}
+
+void BenchmarkRunner::on_process_frame() { process_start_usec_ = Time::get_singleton()->get_ticks_usec(); }
+
 void BenchmarkRunner::_exit_tree() {
+    const Callable stamp = callable_mp(this, &BenchmarkRunner::on_process_frame);
+    if (get_tree()->is_connected("process_frame", stamp)) get_tree()->disconnect("process_frame", stamp);
     if (Viewport* vp = get_viewport()) {
         RenderingServer::get_singleton()->viewport_set_measure_render_time(vp->get_viewport_rid(), false);
     }
@@ -175,10 +269,14 @@ void BenchmarkRunner::sample_frame() {
     RenderingServer* rs = RenderingServer::get_singleton();
     Performance* perf = Performance::get_singleton();
     const RID vp = get_viewport()->get_viewport_rid();
-    // Each value is the previous frame's, the newest the engine has.
-    const double process_ms = perf->get_monitor(Performance::TIME_PROCESS) * 1000.0;
+    // The render values are the previous frame's, the newest the engine has.
     const double render_cpu_ms = rs->get_frame_setup_time_cpu() + rs->viewport_get_measured_render_time_cpu(vp);
-    cpu_ms_.push_back(process_ms + render_cpu_ms);
+    render_cpu_ms_.push_back(render_cpu_ms);
+    cpu_ms_.push_back(render_cpu_ms);  // process_ms is added when the frame's process pass ends
+    const Vector2i size = current_render_size();
+    sizes_.add({size.x, size.y});
+    const Vector2i window = DisplayServer::get_singleton()->window_get_size();
+    window_sizes_.add({window.x, window.y});
     gpu_ms_.push_back(rs->viewport_get_measured_render_time_gpu(vp));
     draw_calls_.push_back(perf->get_monitor(Performance::RENDER_TOTAL_DRAW_CALLS_IN_FRAME));
     primitives_.push_back(perf->get_monitor(Performance::RENDER_TOTAL_PRIMITIVES_IN_FRAME));
@@ -191,14 +289,22 @@ void BenchmarkRunner::_process(double) {
     const double frame_ms = seconds_between(last_frame_usec_, now) * 1000.0;
     last_frame_usec_ = now;
 
+    bool measured = false;
     if (phase_ == Phase::Warmup && seconds_between(start_usec_, now) >= warmup_seconds_) {
         phase_ = Phase::Measure;
         measure_start_usec_ = now;
         features_ = bench::active_features(get_viewport());
+        DisplayServer* ds = DisplayServer::get_singleton();
+        // -1 when unknown (headless); some virtual displays report NaN.
+        display_hz_ = ds->screen_get_refresh_rate(ds->window_get_current_screen());
+        if (!std::isfinite(display_hz_) || display_hz_ <= 0.0) display_hz_ = -1.0;
+        vsync_ = vsync_name(ds->window_get_vsync_mode());
     } else if (phase_ == Phase::Measure) {
         frame_ms_.push_back(frame_ms);
         sample_frame();
+        measured = true;
         if (seconds_between(measure_start_usec_, now) >= measure_seconds_) {
+            push_process_sample();
             finish();
             return;
         }
@@ -206,13 +312,26 @@ void BenchmarkRunner::_process(double) {
 
     BoardView3D* v = view();
     if (v && !v->is_busy() && now >= hold_until_usec_) play_next_beat();
+    if (measured) push_process_sample();
+}
+
+// This frame's process pass so far: every node's _process from
+// SceneTree.process_frame to here, the replay's own beat included.
+void BenchmarkRunner::push_process_sample() {
+    const uint64_t now = Time::get_singleton()->get_ticks_usec();
+    const double ms = process_start_usec_ > 0 && process_start_usec_ <= now
+                          ? seconds_between(process_start_usec_, now) * 1000.0
+                          : 0.0;
+    process_ms_.push_back(ms);
+    if (!cpu_ms_.empty()) cpu_ms_.back() += ms;
 }
 
 void BenchmarkRunner::finish() {
     phase_ = Phase::Done;
     set_process(false);
     const uint64_t now = Time::get_singleton()->get_ticks_usec();
-    const bool gpu_timing = std::any_of(gpu_ms_.begin(), gpu_ms_.end(), [](double v) { return v > 0.0; });
+    const std::vector<double> gpu_samples = bench::positive_only(gpu_ms_);
+    const bool gpu_timing = !gpu_samples.empty();
 
     Dictionary replay;
     replay["scenario"] = "busiest-board";
@@ -232,17 +351,66 @@ void BenchmarkRunner::finish() {
     render["primitives_max"] = prims.max;
     render["video_mem_max_mb"] = video_mem_max_ / (1024.0 * 1024.0);
 
+    // Frames not paced by the display cannot be display-limited.
+    const bench::BudgetSpec spec = bench::budget_for_tier(tier_.utf8().get_data(), tolerance_, budget_ms_);
+    const double limit_ms = bench::p95_limit_ms(spec);
+    const bench::FrameSummary frames = bench::summarize(frame_ms_, limit_ms);
+    const Dictionary device = bench::device_info(get_viewport());
+    String unmeasured;
+    if (bool(device["headless"])) unmeasured = "headless, nothing rendered";
+    else if (bool(device["software"])) unmeasured = "software renderer (" + String(device["adapter"]) + ")";
+    const bench::BudgetVerdict verdict = bench::judge_budget(frames, spec, vsync_ == "disabled" ? -1.0 : display_hz_,
+                                                             unmeasured.utf8().get_data());
+
+    Dictionary resolution;
+    resolution["requested"] = sizes_.requested ? Variant(to_array(*sizes_.requested)) : Variant();
+    resolution["locked"] = sizes_.requested.has_value();
+    resolution["render"] = to_array(sizes_.first);
+    resolution["min"] = to_array(sizes_.min);
+    resolution["max"] = to_array(sizes_.max);
+    resolution["mismatched_frames"] = static_cast<int64_t>(sizes_.mismatched);
+    Dictionary window;
+    window["first"] = to_array(window_sizes_.first);
+    window["min"] = to_array(window_sizes_.min);
+    window["max"] = to_array(window_sizes_.max);
+    window["changed_frames"] = static_cast<int64_t>(window_sizes_.mismatched);
+    resolution["window"] = window;
+    const bool size_held = sizes_.pass() && window_sizes_.pass();
+    resolution["pass"] = size_held;
+
+    Dictionary display;
+    display["refresh_hz"] = display_hz_;
+    display["vsync"] = vsync_;
+
+    const String driver = RenderingServer::get_singleton()->get_current_rendering_driver_name();
+    Dictionary timing;
+    timing["gpu"] = gpu_timing;
+    timing["gpu_note"] = gpu_timing ? String()
+                         : bool(device["headless"])
+                             ? String("headless: no GPU work, so no GPU timestamps; gpu_ms is null")
+                             : "no GPU timestamps from the " + driver + " driver; gpu_ms is null";
+    timing["gpu_frames"] = static_cast<int64_t>(gpu_samples.size());
+    // Godot's Metal driver waits for the next drawable inside the measured
+    // render CPU time, so with vsync on it fills up to the display period.
+    timing["render_cpu_includes_display_wait"] = driver == "metal";
+
     report_ = Dictionary();
-    report_["schema"] = 1;
+    report_["schema"] = 2;
     report_["tier"] = tier_;
     report_["budget_ms"] = budget_ms_;
+    report_["budget"] = to_dictionary(verdict, spec);
+    report_["resolution"] = resolution;
+    report_["display"] = display;
+    report_["timing"] = timing;
     report_["warmup_seconds"] = warmup_seconds_;
     report_["measure_seconds"] = seconds_between(measure_start_usec_, now);
-    report_["device"] = bench::device_info(get_viewport());
+    report_["device"] = device;
     report_["gpu_timing"] = gpu_timing;
-    report_["cpu_ms"] = to_dictionary(bench::summarize(cpu_ms_, budget_ms_));
-    report_["gpu_ms"] = to_dictionary(bench::summarize(gpu_ms_, budget_ms_));
-    report_["frame_ms"] = to_dictionary(bench::summarize(frame_ms_, budget_ms_));
+    report_["process_ms"] = to_dictionary(bench::summarize(process_ms_, limit_ms));
+    report_["render_cpu_ms"] = to_dictionary(bench::summarize(render_cpu_ms_, limit_ms));
+    report_["cpu_ms"] = to_dictionary(bench::summarize(cpu_ms_, limit_ms));
+    report_["gpu_ms"] = gpu_timing ? Variant(to_dictionary(bench::summarize(gpu_samples, limit_ms))) : Variant();
+    report_["frame_ms"] = to_dictionary(frames);
     report_["render"] = render;
     report_["replay"] = replay;
     report_["features"] = features_;
@@ -260,13 +428,20 @@ void BenchmarkRunner::finish() {
     // The report on one line too, for runs where the file is hard to reach
     // (a phone under remote debug shows the output in the editor).
     UtilityFunctions::print("BENCH_JSON ", JSON::stringify(report_, "", false));
-    const Dictionary cpu = report_["cpu_ms"];
-    const Dictionary gpu = report_["gpu_ms"];
-    UtilityFunctions::print("Benchmark: wrote ", ProjectSettings::get_singleton()->globalize_path(output_path_),
-                            " (cpu p95 ", cpu["p95"], " ms, gpu p95 ", gpu_timing ? Variant(gpu["p95"]) : Variant("n/a"),
-                            gpu_timing ? " ms" : "", ", ", cpu["frames"], " frames)");
+    const Dictionary gpu = gpu_timing ? Dictionary(report_["gpu_ms"]) : Dictionary();
+    UtilityFunctions::print("Benchmark: wrote ", ProjectSettings::get_singleton()->globalize_path(output_path_), " (frame p95 ",
+                            frames.p95, " ms, budget ", verdict.pass ? String("pass") : String::utf8(verdict.reason.c_str()),
+                            "; gpu p95 ", gpu_timing ? Variant(gpu["p95"]) : Variant("n/a"), gpu_timing ? " ms" : "", ", ",
+                            static_cast<int64_t>(frames.frames), " frames)");
+    if (!size_held) {
+        ERR_PRINT(vformat("BenchmarkRunner: the render size missed the request in %d of %d frames, the window changed "
+                          "size in %d; results are not comparable.",
+                          static_cast<int64_t>(sizes_.mismatched), static_cast<int64_t>(sizes_.frames),
+                          static_cast<int64_t>(window_sizes_.mismatched)));
+    }
     emit_signal("finished", output_path_);
-    if (quit_when_done_) get_tree()->quit(diverged_ ? 1 : 0);
+    // A run that drifted or lost its render size measured something else.
+    if (quit_when_done_) get_tree()->quit(diverged_ || !size_held ? 1 : 0);
 }
 
 void BenchmarkRunner::_bind_methods() {
@@ -284,6 +459,12 @@ void BenchmarkRunner::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_tier"), &BenchmarkRunner::get_tier);
     ClassDB::bind_method(D_METHOD("set_budget_ms", "ms"), &BenchmarkRunner::set_budget_ms);
     ClassDB::bind_method(D_METHOD("get_budget_ms"), &BenchmarkRunner::get_budget_ms);
+    ClassDB::bind_method(D_METHOD("set_tolerance", "fraction"), &BenchmarkRunner::set_tolerance);
+    ClassDB::bind_method(D_METHOD("get_tolerance"), &BenchmarkRunner::get_tolerance);
+    ClassDB::bind_method(D_METHOD("set_render_size", "size"), &BenchmarkRunner::set_render_size);
+    ClassDB::bind_method(D_METHOD("get_render_size"), &BenchmarkRunner::get_render_size);
+    ClassDB::bind_method(D_METHOD("set_disable_vsync", "disable"), &BenchmarkRunner::set_disable_vsync);
+    ClassDB::bind_method(D_METHOD("get_disable_vsync"), &BenchmarkRunner::get_disable_vsync);
     ClassDB::bind_method(D_METHOD("set_quit_when_done", "quit"), &BenchmarkRunner::set_quit_when_done);
     ClassDB::bind_method(D_METHOD("get_quit_when_done"), &BenchmarkRunner::get_quit_when_done);
     ClassDB::bind_method(D_METHOD("get_report"), &BenchmarkRunner::get_report);
@@ -295,6 +476,10 @@ void BenchmarkRunner::_bind_methods() {
     ADD_PROPERTY(PropertyInfo(Variant::STRING, "output_path"), "set_output_path", "get_output_path");
     ADD_PROPERTY(PropertyInfo(Variant::STRING, "tier"), "set_tier", "get_tier");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "budget_ms"), "set_budget_ms", "get_budget_ms");
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "tolerance", PROPERTY_HINT_RANGE, "0,0.5,0.01"), "set_tolerance",
+                 "get_tolerance");
+    ADD_PROPERTY(PropertyInfo(Variant::VECTOR2I, "render_size"), "set_render_size", "get_render_size");
+    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "disable_vsync"), "set_disable_vsync", "get_disable_vsync");
     ADD_PROPERTY(PropertyInfo(Variant::BOOL, "quit_when_done"), "set_quit_when_done", "get_quit_when_done");
     ADD_SIGNAL(MethodInfo("bench_event", PropertyInfo(Variant::STRING, "label"), PropertyInfo(Variant::ARRAY, "cells")));
     ADD_SIGNAL(MethodInfo("finished", PropertyInfo(Variant::STRING, "path")));

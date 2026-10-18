@@ -133,7 +133,8 @@ jobs:
             grep -E "QualityTiers self-test: [0-9]+ checks, 0 failures" "quality-$method.log"
           done
       # The benchmark replay runs headless for a few seconds: it must plan,
-      # replay without drifting from the plan and write its report. Frame
+      # replay without drifting from the plan, hold its locked render size
+      # and write its report. Frame
       # times are meaningless here (no GPU); docs/how-to/run-the-benchmark.md.
       # --quit-after stops a runner that failed to start instead of hanging.
       - name: Benchmark smoke run
@@ -141,8 +142,9 @@ jobs:
         shell: bash
         run: |
           ./godot --headless --path game --quit-after 3600 res://scenes/bench/bench.tscn -- \
-            --bench-seconds=3 --bench-warmup=1 --bench-out="$RUNNER_TEMP/bench.json" 2>&1 | tee bench.log
+            --bench-seconds=3 --bench-warmup=1 --bench-size=640x360 --bench-out="$RUNNER_TEMP/bench.json" 2>&1 | tee bench.log
           if grep -E "ERROR|SCRIPT ERROR" bench.log; then exit 1; fi
+          python3 tools/bench/check_run.py "$RUNNER_TEMP/bench.json" --size 640x360 --no-budget
           python3 -c 'import json, sys; r = json.load(open(sys.argv[1])); assert r["cpu_ms"]["frames"] > 0 and r["replay"]["beats"] > 0 and not r["replay"]["diverged"] and r["features"], r' "$RUNNER_TEMP/bench.json"
 
   sanitizers:

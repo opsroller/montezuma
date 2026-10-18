@@ -49,8 +49,9 @@ level file (its errors go to stderr and nothing runs).
 One row per level, bot and difficulty: seeds, wins, win rate, median time
 left over the wins (`-` when none won), mean moves over all runs, runs
 that ended on a stuck board, the target and `PASS` or `FAIL`. Only
-`greedy`/normal, `random`/normal and `planner`/hard have targets. From
-episode 2 on, the `greedy`/normal target also names the moves floor
+`greedy`/normal, `random`/normal (episodes 1 to 3) and `planner`/hard
+have targets. From episode 2 on, the `greedy`/normal target also names
+the moves floor
 (for example `win>=95% median>=70.0s moves>=50`): a level whose mean
 `moves` is under it fails as too easy, even when it wins every run in
 time. Lengthen it with the tuning levers below, the gem goal first. Below
