@@ -31,14 +31,17 @@ them.
 
 ## What the simulator measures here
 
-Chains barely move the simulator: a probe of e3-l04 with ten chained cells
-and with none gave the same `greedy` win rate and move count, because a
-chain goes as soon as a run passes through it. Episode 3's simulated
+Chains barely move the simulator: on e3-l04 with no upgrades, its ten
+chains lower `greedy`'s win rate on normal from 100 % to 98.5 % and its
+median time left from 149 s to 141 s
+([balance](../reference/balance.md)), because a chain goes as soon as a
+run passes through it. Episode 3's simulated
 difficulty therefore comes from the gem goal and, more weakly, from
 `steel_rate` (raising e3-l08's from 0.05 to 0.06 barely changed its
-results). The climb shows in `greedy` mean moves (82 to 145) and on
-hard, where `random` falls from 78 % on e3-l05 to 17 % on e3-l07; on
-normal the rates drop only on the last two levels. `greedy` wins every
+results). The climb shows in `greedy` mean moves (82 to 145). Before the levels had
+their own clocks, `random` also fell on hard, from 78 % on e3-l05 to 17 %
+on e3-l07; with human-pace clocks it wins every run on both difficulties
+([about level clocks](about-level-clocks.md)). `greedy` wins every
 run on every level, so the curve rules hold by the 100 % tie rather than
 by a measured sawtooth; chains are a teaching device more than a
 difficulty lever.
@@ -58,8 +61,8 @@ at 3.5 s a move. At that pace every episode 3 level outlasts the old
 take, at 3.5 s a move plus 15 %, without the timer upgrade. Episode 3's
 clocks run from 340 s (e3-l01 normal) to 900 s (e3-l07 hard) and follow
 the moves: they rise with the gem goal and dip on the finale, which takes
-fewer moves for the reason above. A bought timer tier adds its 30 s on
-top, so it stays worth buying.
+fewer moves for the reason above. Each timer tier adds 30 s on top, so
+upgrades stay worth buying.
 
 The rule assumes a player who owns the gem and item upgrades on offer.
 One who skips them makes more moves and leans on the time totem (+60 s,

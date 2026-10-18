@@ -43,7 +43,7 @@ level each becomes available:
 
 | Item | Base | Tier 1 | Tier 2 | Tier 3 | Tier 4 | Source |
 |---|---|---|---|---|---|---|
-| Timer, added to the level's base clock (`GOAL-03`) | +0 s | +30 s (e1-l02) | +60 s (e3-l04) | +90 s (e4-l06) | +120 s (e5-l08) | [S1]; amounts chosen. The base clock is 270 s unless the level sets `base_clock` ([clock rule](balance.md#clock)) |
+| Timer, added to the level's base clock (`GOAL-03`) | +0 s | +30 s (e1-l02) | +60 s (e3-l04) | +90 s (e4-l06) | +120 s (e5-l08) | [S1]; amounts chosen; base clock per level, [clock rule](balance.md#clock) |
 | Gems on board | 5 | 6 (e2-l05) | 7 (e3-l08) | 8 (e5-l02) | — | [S1] |
 | Score Frenzy | — | 15 s (e1-l04, free) | 20 s (e3-l03) | 25 s (e4-l05) | 30 s (e5-l07) | [S1] |
 
@@ -122,8 +122,8 @@ listed under [S1].
 | e5-l11 | 40 | 200 | 300 | | |
 | e5-l12 | 41 | 200 | 300 | finale | |
 
-Every level: 8 × 8 board, 7 kinds, its base clock plus the player's timer tier, every item
-unlocked so far. Steel rate and chains per level are set in WP-23 to
+Every level: 8 × 8 board, 7 kinds, its base clock plus the player's
+timer tier, every item unlocked so far. Steel rate and chains per level are set in WP-23 to
 WP-27 against the simulator targets in
 [balance](balance.md); guidance: chains 2 to 10 cells,
 `steel_rate` 0.02 to 0.06.
@@ -246,7 +246,8 @@ the player's timer tier and 5 gems on the board.
 | e1-l04 | [`l04.json`](../../game/data/levels/e1/l04.json) | 25 / 40 | `fire` | `tnt`, `color_clear`, `lightning` | 20090404 |
 | e1-l05 | [`l05.json`](../../game/data/levels/e1/l05.json) | 30 / 45 | `fire`, `time` | `tnt`, `color_clear`, `lightning` | 20090405 |
 
-No episode 1 level has chains or steel. e1-l05 sets `base_clock` 270/300 from the [clock rule](balance.md#clock).
+No episode 1 level has chains or steel. e1-l05 sets `base_clock` 270/300
+from the [clock rule](balance.md#clock).
 
 ## Episode 2 levels
 

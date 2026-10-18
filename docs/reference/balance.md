@@ -17,7 +17,7 @@ Rules are in the [rules spec](rules-spec.md); levels in
 | `greedy` | the swap that clears the most pieces in step 0, gems counted double |
 | `planner` | `greedy`, but prefers a swap that charges an owned totem to 2, and the swap that makes a run of 4 or more |
 
-Bots move every 1.5 s of game time (a relaxed human pace) and fire power-ups
+Bots move every 1.5 s of game time and fire power-ups
 and totems as the rules do. Each level runs 200 seeds per bot and
 difficulty, with the upgrades a player would own on reaching it
 (every tier bought as soon as it is available, stars permitting).
@@ -56,42 +56,39 @@ difficulty, with the upgrades a player would own on reaching it
 - Tuning levers, in this order: the gem goal (in steps of 5, keeping the
   +5 curve within ±10), then `steel_rate`, then chains. Change one at a
   time and record before and after in the PR, and set the base clock
-  last (below). Chains are a weak lever: the simulator applies their rule
-  (a chained piece cannot be swapped; a run through it frees it), but a
-  run soon passes through each one. On e3-l04 with no upgrades, its ten
-  chains moved `greedy` from 100 % to 98.5 % and its median from 149 s
-  to 141 s on normal, and from 86.5 % to 84 % on hard; even 32 chains
-  gave only 97.5 % and 129.5 s.
+  last ([Clock](#clock)). Measured chain effect, e3-l04 with no upgrades:
+  no chains 100 % `greedy` normal, 149 s median, 86.5 % hard; its ten
+  chains 98.5 %, 141 s, 84 %; 32 chains 97.5 %, 129.5 s, 75 %
+  ([why chains are weak](../explanation/about-the-episode-3-levels.md#what-the-simulator-measures-here)).
 
 ## Clock
 
-A level's clock must cover a human's pace, not just the bots'. Bots move
-every 1.5 s; a human takes about 3.5 s a move. For each difficulty:
+For each level and difficulty:
 
 ```
 required clock = ceil(greedy mean moves × 3.5 s × 1.15 / 10) × 10
 ```
 
-with a 15 % margin, rounded up to whole 10 s. The simulator plays its own
-`greedy` runs for this rule (200 seeds by default, both difficulties),
-whatever `--bots`, `--difficulty` and `--upgrades` say: with the `auto`
-upgrades except the timer, which stays at tier 0, because the rule judges
-the base clock of a player who bought no timer upgrade. The mean is over
-the winning runs: a losing run lasts as long as the clock, so counting it
-would make the requirement grow with the clock and never settle. A
-difficulty that `greedy` never wins fails the rule outright.
+- `greedy mean moves`: the mean moves of `greedy`'s winning runs, from
+  runs the simulator plays for this rule alone (`--seeds` runs, 200 by
+  default, both difficulties) with the `auto` upgrades except the timer,
+  which stays at tier 0. `--bots`, `--difficulty` and `--upgrades` do not
+  change them.
+- 3.5 s: a human's time a move. 1.15: a 15 % margin. The result rounds
+  up to whole 10 s.
+- The base clock at timer tier 0 must reach the required clock; a
+  difficulty `greedy` never wins fails. `--check` fails either case (the
+  `clock` lines).
+- A level sets `base_clock` when either difficulty needs more than 270 s,
+  with both values: each is the larger of 270 s and that difficulty's
+  required clock. Otherwise it leaves `base_clock` out (270 s).
+- After setting `base_clock`, run `--check` again and repeat until the
+  values stop changing.
+- Timer upgrades add 30 s a tier on top (`GOAL-03`).
 
-Each level's `base_clock` is the larger of 270 s and the required clock;
-a level whose requirement fits in 270 s leaves `base_clock` out. Timer
-upgrades add 30 s a tier on top (`GOAL-03`), so they always buy time. A
-longer clock can turn a narrow loss into a long win, so a level's clock
-is set again until it stops changing (one more pass at most so far).
-`--check` fails a level and difficulty whose base clock is below the
-required clock (the `clock` lines).
-
-For a player who also skips the gem and item upgrades the requirement is
-higher: with no upgrades at all, e2-l06 needs 380/570 s instead of
-310/470 s and e3-l08 730/1100 s instead of 540/800 s.
+With no upgrades at all the requirement is higher: e2-l06 380/570 s
+instead of 310/470 s, e3-l08 730/1100 s instead of 540/800 s. Why the rule
+is built this way is in [about level clocks](../explanation/about-level-clocks.md).
 
 ## Current results
 
