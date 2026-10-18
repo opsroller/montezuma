@@ -107,7 +107,8 @@ after each move until its time runs out; another one restarts it.
 
 ## Defaults until other packages land
 
-- Upgrades: every tier 0 until player progress (WP-08).
+- Upgrades: every tier 0 until player progress (WP-08), so a level
+  starts from its base clock (`GOAL-03`).
 - Seed: the level's `seed`, so a level deals the same board each time.
 
 ## Self-test
@@ -116,7 +117,10 @@ after each move until its time runs out; another one restarts it.
 godot --headless --path game --quit-after 120 -- --game-selftest
 ```
 
-Plays `e1-l01` on normal by always taking the first legal move, through
+First starts `e1-l05` on hard and checks that the session and the
+`level_started` dictionary's `time_limit.hard` both start from the
+level's own base clock (300 s, above the 270 s default) plus the timer
+tier bonus (`GOAL-03`). Then plays `e1-l01` on normal by always taking the first legal move, through
 `request_swap`, `shuffle` and the view, checks that the mirrored board
 matches the session after every move, that every HUD signal fired, that
 `level_finished` fired once with a win, and that every cue it would play

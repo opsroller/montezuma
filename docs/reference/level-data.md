@@ -145,7 +145,7 @@ Header: `core/include/montezuma/level_data.hpp`, namespace `montezuma`.
 | `LevelData::load(std::string_view json)` | `LevelData` | `std::invalid_argument` whose message is `Invalid level data:` followed by one error per line |
 | `LevelData::goal()` | `LevelGoal`: `gems` and `quotas`, true for each goal kind the level has | Never |
 | `LevelData::base_clock_for(Difficulty)` | The difficulty's base clock in seconds: `base_clock` when present, otherwise 270 | Never |
-| `LevelData::time_limit_for(Difficulty, int timer_tier = 0)` | Seconds the level starts with: `base_clock_for()` plus 30 s per timer tier | `std::invalid_argument` when `timer_tier` is outside 0 to 4 |
+| `LevelData::time_limit_for(Difficulty, int timer_tier = 0)` | Seconds the level starts with: `base_clock_for()` plus 30 s per timer tier | `std::invalid_argument` when `timer_tier` is outside 0 to 4, or when a `base_clock` set in code is 0, below 0 or not a number |
 | `LevelData::make_state(Difficulty, int timer_tier = 0)` | `LevelState` with the level's quotas and `time_limit_for()`'s time | `std::invalid_argument` for a bad `timer_tier`, or `gem goals need the gem rules (coming)` for a level with `gem_goal` and no `quotas`, until `LevelState` tracks gems |
 | `difficulty_from_name(std::string_view)` | `Difficulty` for `"normal"` or `"hard"`, otherwise empty | Never |
 | `LevelParseResult::error_text()` | All errors, one `path: message` per line | |
