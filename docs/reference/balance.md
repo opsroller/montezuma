@@ -25,7 +25,7 @@ difficulty, with the upgrades a player would own on reaching it
 
 | Levels | `greedy` win rate, normal | `greedy` median time left | `greedy` mean moves, normal | `random` win rate, normal | `planner` win rate, hard |
 |---|---|---|---|---|---|
-| e1-l01 | 100 % | ≥ 150 s | 18.1 | no floor | ≥ 95 % | ≥ 99 % |
+| e1-l01 | 100 % | ≥ 150 s | no floor | ≥ 95 % | ≥ 99 % |
 | rest of e1 | ≥ 98 % | ≥ 100 s | no floor | ≥ 70 % | ≥ 90 % |
 | e2 | ≥ 95 % | ≥ 70 s | ≥ 50 | ≥ 40 % | ≥ 80 % |
 | e3 | ≥ 90 % | ≥ 50 s | ≥ 70 | ≥ 20 % | ≥ 70 % |
