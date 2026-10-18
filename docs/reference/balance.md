@@ -148,7 +148,7 @@ Both curve rules and every clock line pass for episodes 1 to 5. Each
 level's base clock is the larger of 270 s and its [clock rule](#clock)
 value. Medians are time left on the base clock plus the `auto` timer
 tier (+30 s from e1-l02, +60 s from e3-l04, +90 s from e4-l06, +120 s from e5-l08; the [time
-totem](rules-totems.md#numbers) gains a second use from e4-l08). Every
+totem](rules-totems.md#numbers) gains a second use from e4-l08 and +240 s per use (tier 4) from e5-l05). Every
 episode 2 level clears the moves floor of 50 (59 to 77) and every
 episode 3 level the floor of 70 (82 to 145), at the gem goals in
 [progression](progression.md); every level wins every `greedy` run, so

@@ -28,7 +28,7 @@ or rests on earlier lessons. Its difficulty has to come from two places:
   alone set how hard a level is.
 - **The obstacles.** Steel and chains stay inside the guidance range
   (`steel_rate` 0.02 to 0.06, 2 to 10 chains) but reach both maximums together
-  on the spike (e5-l08) and the finale (e5-l12); the two tests stay under
+  on the spike (e5-l08) and the finale (e5-l12); the tests e5-l04 and e5-l10 stay under
   the steel maximum (e5-l04 with steel 0.05 and 8 chains, e5-l10 with
   steel 0.05 and the chain maximum of 10). The chains take shapes the campaign has not
   used: a diagonal stair (e5-l02), a whole top row that falls through
