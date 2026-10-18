@@ -41,6 +41,9 @@ void BoardView3D::_ready() {
     if (Engine::get_singleton()->is_editor_hint()) return;
     board_.instantiate();
     board_->setup(board_width_, board_height_, kKinds, seed_);
+    // setup() keeps the default board on bad input; draw whatever it holds.
+    board_width_ = board_->get_width();
+    board_height_ = board_->get_height();
     build_meshes();
     build_slab();
     pieces_.assign(board_width_ * board_height_, nullptr);

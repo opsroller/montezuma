@@ -6,14 +6,17 @@
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/array.hpp>
 
+#include <utility>
+
 using namespace godot;
 
 namespace montezuma::godot_binding {
 
 void Match3Board::setup(int width, int height, int kinds, int64_t seed) {
-    ERR_FAIL_COND_MSG(width < 3 || height < 3, "Board must be at least 3x3.");
-    ERR_FAIL_COND_MSG(kinds < 3, "Board needs at least 3 artifact kinds.");
-    board_ = Board(width, height, kinds, static_cast<std::uint64_t>(seed));
+    // godot-cpp builds without exceptions, so use the non-throwing factory.
+    auto board = Board::try_create(width, height, kinds, static_cast<std::uint64_t>(seed));
+    ERR_FAIL_COND_MSG(!board, "Invalid board: needs at least 3x3 cells and 3 kinds, and must be playable.");
+    board_ = std::move(*board);
 }
 
 int Match3Board::get_cell(int x, int y) const {
