@@ -232,5 +232,17 @@
       3,
       4
     ]
+  },
+  "surface_tokens": {
+    "sandstone-light": "MI_StoneTileLight",
+    "sandstone-dark": "MI_StoneTileDark",
+    "frame-stone": "MI_StoneFrame",
+    "shadow-stone": "MI_StoneDark",
+    "gold": "MI_Gold",
+    "jungle": "MI_Foliage"
+  },
+  "extra_tokens": {
+    "torch": "#ff9a3c",
+    "glow": "#ffd36b"
   }
 }

@@ -37,9 +37,7 @@ With a Blender install instead of `bpy`, run the mesh step as
    ```
 
    Check it in greyscale too: every kind must still be told apart.
-4. If you changed piece colours, update `design/tokens/temple-board.json`
-   to match (the validator checks).
-5. Commit the parameter file and every regenerated file together.
+4. Commit the parameter file and every regenerated file together.
 
 ## Add a new theme
 

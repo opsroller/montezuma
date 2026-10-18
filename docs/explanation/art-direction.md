@@ -73,7 +73,8 @@ under a piece.
 | Glow | `#ffd36b` | selection |
 
 Piece colours are in [`design/tokens/temple-board.json`](../../design/tokens/temple-board.json)
-so the HUD's quota icons match the board.
+so the HUD's quota icons match the board. That file is generated from the
+theme parameters, so the 3D pieces and the 2D swatches have one source.
 
 ## Light
 

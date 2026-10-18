@@ -71,7 +71,7 @@ byte-identical files.
 |---|---|---|
 | `python3 tools/assets/gen_theme_meshes.py [params]` | `SM_*.obj`, prints triangle counts, fails over budget | Blender 4.2+ as `bpy` (`pip install bpy`) or `blender -b --factory-startup -P <script> -- [params]` |
 | `python3 tools/assets/gen_theme_textures.py [params]` | `T_*.png` (tiling) | numpy, Pillow |
-| `python3 tools/assets/gen_theme_scenes.py [params]` | `MI_*.tres`, `PF_*.tscn`, `LD_*.tscn`, the theme's manifest entry | standard library |
+| `python3 tools/assets/gen_theme_scenes.py [params]` | `MI_*.tres`, `PF_*.tscn`, `LD_*.tscn`, the theme's manifest entry, `design/tokens/<theme>-board.json` | standard library |
 | `python3 tools/assets/validate_assets.py` | nothing; exits 1 on errors | Pillow |
 
 `params` defaults to `tools/assets/themes/temple.json`.
@@ -89,6 +89,7 @@ byte-identical files.
 | `materials.<MI_name>` | StandardMaterial3D: `albedo`, `metallic`, `roughness`, `specular`, `emission` + `emission_energy`, `rim` + `rim_tint`, `clearcoat`, `backlight`, `double_sided`, `albedo_texture` / `normal_texture` / `roughness_texture` with `triplanar_scale`, `normal_scale`, `world_triplanar`. Or ShaderMaterial: `shader` + `params` |
 | `environment` | sky colours, `ambient_energy`, `exposure`, `fog`, `fog_density`, `saturation`, `sun` (`transform` as written in a `.tscn`, basis rows first; `color`, `energy`), `torch` (`color`, `energy`, `range`) |
 | `lookdev` | game camera `camera_transform` and `fov`, `highlight_cell` |
+| `surface_tokens`, `extra_tokens` | palette entries exported to `design/tokens/<theme>-board.json`: token name to material (its `albedo`) or to a hex value |
 
 ## Shaders
 
@@ -138,4 +139,4 @@ is not measured yet; that is WP-41.
 - `.gdshader`, `.obj`, `.tscn`, `.tres` carry the SPDX line.
 - PNGs are power-of-two, ≤ 1024 px; `_N` maps are RGB.
 - `PROVENANCE.md` has a record for each theme.
-- `design/tokens/temple-board.json` piece colours match the theme parameters.
+- `design/tokens/temple-board.json` piece colours match the theme parameters (catches a hand edit of the generated file).
