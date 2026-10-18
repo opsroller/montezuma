@@ -33,12 +33,13 @@ ctest --test-dir build-asan --output-on-failure
 ## Build the extension and load the game
 
 Needs the godot-cpp submodule and Godot 4.4.1. The extension is built
-from the root project, never from `extension/` on its own; the library
-lands in `game/bin/`.
+from the root project, never from `extension/` on its own, and in its own
+build folder: CMake caches options, so reusing the core-only `build/`
+would keep the extension off. The library lands in `game/bin/`.
 
 ```sh
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_TESTS=OFF
-cmake --build build -j
+cmake -S . -B build-ext -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON -DMONTEZUMA_BUILD_TESTS=OFF
+cmake --build build-ext -j
 godot --headless --path game --import
 godot --headless --path game --quit-after 120    # errors show here
 ```

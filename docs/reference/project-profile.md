@@ -26,6 +26,7 @@ to do the job; this file says with what, and where.
 | Engine | Godot 4.4.1 (version pinned in CI) |
 | Game code | C++20 only. Engine-independent rules library in `core/` (`core/include/montezuma/`, `core/src/`, `core/tests/`, namespace `montezuma`); Godot classes via GDExtension in `extension/src/` (namespace `montezuma::godot_binding`, Godot class names without prefix, e.g. `Match3Board`, `BoardView3D`) |
 | Engine bindings | godot-cpp as a git submodule in `thirdparty/godot-cpp` |
+| Errors | Exceptions ON for every target (`GODOTCPP_DISABLE_EXCEPTIONS=OFF`); core reports errors by exception, binding uses noexcept `Board::try_create` and `MoveResult::stuck` |
 | Godot project | `game/`: `project.godot`, `scenes/`, `assets/`, `ui/`, `data/`; built extension libraries land in `game/bin/` (not committed) |
 | Build | CMake (core, extension, tools), Godot export presets for packaging |
 | Tests | Core unit tests via CTest in `core/tests/`; extension load check headless in Godot. CI (`.github/workflows/tests.yml`) runs Linux, Windows and macOS with warnings as errors, plus an ASan/UBSan job |
