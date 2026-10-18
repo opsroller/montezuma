@@ -163,7 +163,7 @@ the parameter file's `lighting` section:
 
 | Node | Type | Tiers | Parameters (`lighting.*`) | Temple |
 |---|---|---|---|---|
-| `WorldEnvironment` | sky, AgX tonemapper, SSAO, SSIL, glow, height fog | all (switches per [Quality tiers](quality-tiers.md)) | `sky_nits`, `agx_white`, `agx_contrast`, `fog` (`color`, `height`, `height_density`, `sky_affect`) | 15,000 nits; white 16, contrast 1.25; fog below y = −0.6 |
+| `WorldEnvironment` | sky, AgX tonemapper, SSAO, SSIL, glow, optional height fog | all (switches per [Quality tiers](quality-tiers.md)) | `sky_nits`, `agx_white`, `agx_contrast`, optional `fog` (`color`, `height`, `height_density`, `sky_affect`) | 15,000 nits; white 16, contrast 1.25; no fog (backdrop haze is WP-51's `FogVolume`s) |
 | `camera` (`CameraAttributesPractical`) | exposure, on the environment, `LightmapGI` and `VoxelGI` | auto exposure on desktop only | `exposure` (`sensitivity`, `multiplier`, `auto_scale`, `auto_speed`, `auto_min_sensitivity`, `auto_max_sensitivity`) | ISO 440 (auto 300 to 640) |
 | `Sun` | `DirectionalLight3D`, shadows | all | `sun` (`lux`, `kelvin`, `color`, `angular_distance`) | 11,000 lux, 4500 K, 0.6° |
 | `Torch1`…`Torch4` | `OmniLight3D` on the braziers, dual paraboloid shadows (seam flat above the board), group `quality_shadow_light` | all; shadows on the nearest 8 or 2 | `torch` (`lumens`, `kelvin`, `color`, `size`, `range`, `height`) | 60,000 lm, 1900 K, range 4.5 m |

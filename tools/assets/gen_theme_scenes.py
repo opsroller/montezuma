@@ -220,7 +220,7 @@ def main():
     r = mesh_scene("Environment", [(n, f"{models}/backdrop/SM_Backdrop_{n}.obj", m) for n, m in backdrop_parts], theme)
     env = p["environment"]
     light = p["lighting"]
-    exposure, fog = light["exposure"], light["fog"]
+    exposure, fog = light["exposure"], light.get("fog")
     sky = [
         "[sub_resource type=\"ProceduralSkyMaterial\" id=\"sky_mat\"]",
         f"sky_top_color = {color(env['sky_top'])}",
@@ -261,14 +261,18 @@ def main():
         "glow_intensity = 0.6",
         "glow_bloom = 0.05",
         "glow_hdr_threshold = 1.1",
-        # Height fog only: it starts below the platform, so the board above
-        # it stays clear (readability rule 2) while the jungle below hazes.
-        "fog_enabled = true",
-        f"fog_light_color = {color(fog['color'])}",
-        "fog_density = 0.0",
-        f"fog_height = {fog['height']}",
-        f"fog_height_density = {fog['height_density']}",
-        f"fog_sky_affect = {fog['sky_affect']}",
+        # Optional height fog. The temple has none: in the game's board view
+        # on Forward+ even height fog that starts below the platform left a
+        # haze over the board (readability rule 2), so atmosphere is
+        # FogVolumes kept off the board (WP-51).
+        *([
+            "fog_enabled = true",
+            f"fog_light_color = {color(fog['color'])}",
+            "fog_density = 0.0",
+            f"fog_height = {fog['height']}",
+            f"fog_height_density = {fog['height_density']}",
+            f"fog_sky_affect = {fog['sky_affect']}",
+        ] if fog else []),
         "adjustment_enabled = true",
         f"adjustment_saturation = {env['saturation']}",
         "",

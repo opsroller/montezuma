@@ -79,9 +79,14 @@ benchmark on the reference Mac mini M4 replaces them.
    flat at flame height, above the pieces.
 6. **One `AreaLight3D` sky fill on `desktop-high`** (`quality:area_light`,
    not baked), for the soft top light a single sun cannot give.
-7. **Height fog, not depth fog.** The fog lives below the platform
-   (`fog_height` −0.6 m), so the board reads at zero fog on every tier and
-   aspect ratio (readability rule 2) while the backdrop sinks into haze.
+7. **No environment-wide fog.** Depth fog failed rules 2 and 4. Height fog
+   that starts below the platform (`fog_height` −0.6 m) passed on web, but
+   in the board view on Forward+ it still left a haze over the board (rule
+   2: mean change 11 against a limit of 1 on `desktop-high`). So the
+   temple's environment has no fog, and haze in the backdrop comes from
+   WP-51's `FogVolume`s, which are kept off the board. A theme can still
+   set `lighting.fog` for height fog if its readability capture passes on
+   every tier.
 8. **`desktop-high` renders 3D at most 720 lines high.** Above a 720-line
    output the temporal upscaler (MetalFX on Metal, FSR 2.2 elsewhere)
    takes over at 720 / output height, never below 0.5: 0.67 at 1080p, 0.5
@@ -128,7 +133,6 @@ Budget: 16.6 ms p95 (web: 33.3 ms), planned to at most about 85%.
 | Brazier shadows (dual paraboloid) | 4 × 0.3 = 1.2 (8 lights: 2.4) | 2 × 0.4 = 0.8 | — | — |
 | Brazier lights (shaded in the same pass) | 0.2 | 0.3 | 0.3 | 0.6 |
 | Area light | 0.3 | — | — | — |
-| Height fog | < 0.1 | < 0.1 | < 0.1 | < 0.1 |
 | Upscaler / TAA | 1.0 | 1.2 | — | — |
 | **Lighting total** | **about 5.8 ms** | **about 5.6 ms** | **about 1.5 ms** | **about 1.5 ms** |
 
@@ -185,7 +189,8 @@ volume is 64 cells.
 | Shadowmask (static sun shadow in the lightmap) | Blurry board shadows at 5 texels a cell, and the pieces would still need real-time shadows |
 | Baking at export time in CI from the game, not the editor | `LightmapGI.bake` is editor-only in Godot 4.7; the extension's editor plugin drives the editor's own button instead |
 | Committing the bake | Generated binary; built and cached like the textures (no LFS) |
-| Depth fog tuned lighter | Fails rule 2 at some aspect ratios however light; height fog never covers the board |
+| Depth fog tuned lighter | Fails rule 2 at some aspect ratios however light |
+| Height fog below the platform | Passed on web, but left a haze over the board on Forward+ (rule 2 failed on `desktop-high`) |
 
 ## Constraints for art
 
@@ -202,7 +207,7 @@ volume is 64 cells.
   flat above the pieces (`Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, …)`).
 - Every emissive material gets a `lo/` copy at 1 nit (the scene generator
   writes it); emission is authored in nits for the other tiers.
-- Fog stays below the board (`fog_height` under the platform).
+- No environment fog over the board; backdrop haze is `FogVolume`s outside it (WP-51).
 
 ## Open questions
 
