@@ -4,6 +4,7 @@
 #pragma once
 
 #include <godot_cpp/classes/ref_counted.hpp>
+#include <godot_cpp/variant/array.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/packed_int32_array.hpp>
 #include <godot_cpp/variant/vector2i.hpp>
@@ -26,9 +27,14 @@ public:
     godot::PackedInt32Array get_cells() const;
     bool is_legal_swap(godot::Vector2i a, godot::Vector2i b);
     bool has_legal_move();
-    // Empty Dictionary for an illegal swap; otherwise
-    // { steps: Array[Dictionary kind->count], matched_kind, shuffled, stuck, score }.
+    // Empty Dictionary for an illegal swap; otherwise the MoveResult as
+    // { steps, matched_kind, shuffled, stuck, score, swap, cascades,
+    //   shuffle_map, redealt } (see docs/reference/move-result.md).
     godot::Dictionary try_swap(godot::Vector2i a, godot::Vector2i b);
+    // Clears an Array of Vector2i (totem and power-up effects) and resolves
+    // cascades. Same Dictionary as try_swap without `swap`; empty when no
+    // listed cell holds a piece.
+    godot::Dictionary clear_cells(const godot::Array& cells);
 
 protected:
     static void _bind_methods();

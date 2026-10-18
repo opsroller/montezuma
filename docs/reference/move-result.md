@@ -108,7 +108,15 @@ change any board: a seed plays out exactly as it did before.
 
 ## For the Godot binding
 
-`Match3Board::try_swap` returns the fields as a `Dictionary` with the same
-keys and `Vector2i` cells. Today (opsroller/montezuma#3) it exposes `steps`,
-`matched_kind`, `shuffled`, `stuck` and `score`; the cell-level fields are
-added in the binding by its owner.
+`Match3Board.try_swap(a, b)` and `Match3Board.clear_cells(cells)` return
+the MoveResult as a `Dictionary`, or an empty one when the swap is illegal
+or no listed cell holds a piece. Cells are `Vector2i`; arrays are plain
+`Array`.
+
+| Key | Value |
+|---|---|
+| `steps` | `[{kind: count}]`, one per cascade step |
+| `matched_kind`, `shuffled`, `stuck`, `score`, `redealt` | as above |
+| `swap` | `[a, b]`; absent for `clear_cells` |
+| `cascades` | `[{cleared: [cell], falls: [{from, to, kind}], spawns: [{to, kind, drop}], runs: [{cells: [cell], kind}]}]` |
+| `shuffle_map` | `[[from, to]]` |
