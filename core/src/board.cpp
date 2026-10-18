@@ -140,35 +140,35 @@ std::vector<Run> Board::find_runs() const {
     return runs;
 }
 
-std::optional<MoveResult> Board::try_swap(Cell a, Cell b) {
+std::optional<MoveResult> Board::try_swap(Cell a, Cell b, const StepHooks* hooks) {
     if (!is_legal_swap(a, b)) return std::nullopt;
     swap_cells(a, b);
     MoveResult result;
     result.swap = std::array<Cell, 2>{a, b};
     result.matched_kind = dominant_kind(find_matches());
-    resolve_and_settle(result);
+    resolve_and_settle(result, hooks);
     return result;
 }
 
-std::optional<MoveResult> Board::clear_cells(const std::vector<Cell>& cells) {
+std::optional<MoveResult> Board::clear_cells(const std::vector<Cell>& cells, const StepHooks* hooks) {
     std::set<int> targets;
     for (Cell c : cells)
         if (in_bounds(c.x, c.y) && at(c.x, c.y) != kEmpty) targets.insert(index(c.x, c.y));
     if (targets.empty()) return std::nullopt;
     MoveResult result;
-    clear_step(targets, CascadeStep{}, result);
-    resolve_and_settle(result);
+    clear_step(std::move(targets), CascadeStep{}, result, hooks);
+    resolve_and_settle(result, hooks);
     return result;
 }
 
-void Board::resolve_and_settle(MoveResult& result) {
+void Board::resolve_and_settle(MoveResult& result, const StepHooks* hooks) {
     for (auto runs = find_runs(); !runs.empty(); runs = find_runs()) {
         std::set<int> matched;
         for (const Run& run : runs)
             for (Cell c : run.cells) matched.insert(index(c.x, c.y));
         CascadeStep step;
         step.runs = std::move(runs);
-        clear_step(matched, std::move(step), result);
+        clear_step(std::move(matched), std::move(step), result, hooks);
     }
     if (!has_legal_move()) {
         result.shuffled = shuffle_tracked(result.shuffle_map, result.redealt);
@@ -176,7 +176,15 @@ void Board::resolve_and_settle(MoveResult& result) {
     }
 }
 
-void Board::clear_step(const std::set<int>& matched, CascadeStep step, MoveResult& result) {
+void Board::clear_step(std::set<int> matched, CascadeStep step, MoveResult& result, const StepHooks* hooks) {
+    if (hooks && hooks->extend_clear) {
+        std::vector<Cell> so_far;
+        so_far.reserve(matched.size());
+        for (int idx : matched) so_far.push_back(cell_of(idx));
+        const int index_of_step = static_cast<int>(result.cascades.size());
+        for (Cell c : hooks->extend_clear(*this, so_far, index_of_step))
+            if (in_bounds(c.x, c.y) && at(c.x, c.y) != kEmpty) matched.insert(index(c.x, c.y));
+    }
     std::map<int, int> counts;
     // std::set iterates indices in ascending order, which is row-major.
     for (int idx : matched) {
@@ -187,6 +195,8 @@ void Board::clear_step(const std::set<int>& matched, CascadeStep step, MoveResul
     collapse_and_refill(step);
     result.steps.push_back(std::move(counts));
     result.cascades.push_back(std::move(step));
+    if (hooks && hooks->after_refill)
+        hooks->after_refill(*this, result.cascades.back(), static_cast<int>(result.cascades.size()) - 1);
 }
 
 int Board::dominant_kind(const std::set<int>& matched) const {
