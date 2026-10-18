@@ -25,9 +25,9 @@ to do the job; this file says with what, and where.
 
 | Area | Choice |
 |---|---|
-| Engine | Godot 4.4.1 (version pinned in CI) |
+| Engine | Godot 4.7.2 (version pinned in `tools/release/godot.env`) |
 | Game code | C++20 only. Engine-independent rules library in `core/` (`core/include/montezuma/`, `core/src/`, `core/tests/`, namespace `montezuma`); Godot classes via GDExtension in `extension/src/` (namespace `montezuma::godot_binding`, Godot class names without prefix, e.g. `Match3Board`, `BoardView3D`) |
-| Engine bindings | godot-cpp as a git submodule in `thirdparty/godot-cpp` |
+| Engine bindings | godot-cpp 10.0 as a git submodule in `thirdparty/godot-cpp`, built for the Godot 4.7 API (`GODOTCPP_API_VERSION` in `extension/CMakeLists.txt`); the game's `.gdextension` needs Godot 4.7 or later |
 | Errors | Exceptions ON for every target (`GODOTCPP_DISABLE_EXCEPTIONS=OFF`); core reports errors by exception, binding uses noexcept `Board::try_create` and `MoveResult::stuck` |
 | Godot project | `game/`: `project.godot`, `scenes/`, `assets/`, `ui/`, `data/`; built extension libraries land in `game/bin/` (not committed) |
 | Build | CMake (core, extension, tools), Godot export presets for packaging |
@@ -35,7 +35,7 @@ to do the job; this file says with what, and where.
 | Not allowed | GDScript, JavaScript or TypeScript for game logic. Scenes (`.tscn`) and resources are data and are fine |
 | Offline tools | Blender (headless, Python; the `bpy` module from pip works the same) for models; Python + numpy + ffmpeg for audio. Tools live in `tools/` and never ship |
 | Renderers | Mobile (Android, iOS), Forward+ (desktop), Compatibility (web demo) |
-| Web demo | Same C++ code compiled to WebAssembly with Emscripten; Godot 4.4 single-threaded web export with GDExtension support, so no special server headers are needed. The game emits `level_completed` when the intro level is won and forwards it to the page through `JavaScriptBridge` as a `montezuma:level-completed` DOM event; the page shows the download popup. The page is the only JavaScript |
+| Web demo | Same C++ code compiled to WebAssembly with Emscripten; Godot 4.7 single-threaded web export with GDExtension support, so no special server headers are needed. The game emits `level_completed` when the intro level is won and forwards it to the page through `JavaScriptBridge` as a `montezuma:level-completed` DOM event; the page shows the download popup. The page is the only JavaScript |
 | Website | Static HTML/CSS in `site/`, minimal JavaScript for platform detection and the demo hand-off. The native-code rule covers the game, not the site |
 
 If the code and this file disagree, the code wins and this file is
