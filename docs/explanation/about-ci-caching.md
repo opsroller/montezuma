@@ -41,3 +41,10 @@ added.
 GitHub scopes caches by branch: a PR can read caches from `main` but
 cannot write caches that `main` reads, so a PR cannot poison the default
 branch's builds.
+
+The desktop `build` workflow uses the same compiler caches for the
+libraries it ships. That is allowed because the cache is content-addressed:
+a hit returns the object the same compiler would produce from the same
+preprocessed source and flags, so a warm build and a cold build give the
+same library. A build folder cache would not meet that bar, which is why
+release jobs never restore one.

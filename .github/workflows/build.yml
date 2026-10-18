@@ -37,12 +37,18 @@ jobs:
         include:
           - platform: linux
             os: ubuntu-22.04
+            cache: ccache
+            generator: Ninja
             cmake_args: ""
           - platform: windows
             os: windows-2022
+            cache: sccache
+            generator: Ninja
             cmake_args: ""
           - platform: macos
             os: macos-14
+            cache: ccache
+            generator: Unix Makefiles
             cmake_args: '"-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
@@ -51,14 +57,33 @@ jobs:
         with:
           submodules: recursive
           persist-credentials: false
+      # Compiler cache for godot-cpp, the bulk of the build. ccache and
+      # sccache are content-addressed (preprocessed source, compiler, flags),
+      # and PR branches cannot write the caches main reads, so the released
+      # library is the same as a cold build. See docs/explanation/about-ci-caching.md.
+      - name: Compiler cache
+        uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
+        with:
+          variant: ${{ matrix.cache }}
+          key: build-extension-${{ matrix.platform }}
+          max-size: 500M
+      # Ninja or Makefiles so every compile goes through the launcher; the
+      # Visual Studio generator would bypass it.
+      - name: Set up MSVC
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
       - name: Configure
         shell: bash
         run: >
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake -S . -B build -G "${{ matrix.generator }}" -DCMAKE_BUILD_TYPE=Release
           -DMONTEZUMA_BUILD_EXTENSION=ON -DMONTEZUMA_BUILD_TESTS=OFF -DMONTEZUMA_WERROR=ON
+          -DCMAKE_C_COMPILER_LAUNCHER=${{ matrix.cache }} -DCMAKE_CXX_COMPILER_LAUNCHER=${{ matrix.cache }}
           -DGODOTCPP_TARGET=template_release ${{ matrix.cmake_args }}
       - name: Build
-        run: cmake --build build --config Release -j4
+        run: cmake --build build -j4
+      - name: Compiler cache stats
+        shell: bash
+        run: ${{ matrix.cache }} --show-stats
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: extension-${{ matrix.platform }}
