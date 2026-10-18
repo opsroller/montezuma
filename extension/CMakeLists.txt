@@ -29,6 +29,11 @@ add_library(montezuma_extension SHARED
   src/render/quality.cpp
   src/render/quality_tiers.cpp
   src/render/register_render.cpp
+  src/bench/benchmark_runner.cpp
+  src/bench/readability_capture.cpp
+  src/bench/register_bench.cpp
+  src/bench/render_probe.cpp
+  src/bench/replay.cpp
 )
 target_include_directories(montezuma_extension PRIVATE src)
 target_link_libraries(montezuma_extension PRIVATE montezuma_core godot-cpp)
