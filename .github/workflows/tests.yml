@@ -27,7 +27,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        # Windows is off the PR path for speed; the build workflow still
+        # builds and runs it on every push to main.
+        os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     steps:
@@ -48,8 +50,6 @@ jobs:
         include:
           - os: ubuntu-latest
             cache: ccache
-          - os: windows-latest
-            cache: sccache
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:

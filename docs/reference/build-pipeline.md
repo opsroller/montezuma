@@ -9,8 +9,12 @@ built by `.github/workflows/web.yml`.
 | Event | Runs |
 |---|---|
 | Push to `main` | Every time |
-| Pull request | When it changes `build.yml`, `tools/release/`, `CMakeLists.txt`, `core/`, `extension/`, `game/` or `thirdparty/` (docs-only PRs skip it) |
+| Pull request | Linux and macOS only, when it changes `build.yml`, `tools/release/`, `CMakeLists.txt`, `core/`, `extension/`, `game/` or `thirdparty/` (docs-only PRs skip it) |
 | Manual (`workflow_dispatch`) | On demand, from the Actions tab |
+
+Windows (`extension (windows)`, the Windows export and `smoke (windows)`)
+runs only on pushes to `main` and manual runs, to keep PR feedback fast.
+A Windows-only break shows up on `main` after merge; the next PR fixes it.
 
 The workflow token is read-only (`contents: read`). No job uses secrets.
 
