@@ -27,7 +27,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        # Windows is off the PR path for speed; pushes to main still run it.
+        os: ${{ fromJSON(github.event_name == 'pull_request' && '["ubuntu-latest","macos-latest"]' || '["ubuntu-latest","windows-latest","macos-latest"]') }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     steps:
@@ -45,11 +46,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-latest
-            cache: ccache
-          - os: windows-latest
-            cache: sccache
+        # Windows only on pushes to main, as for core.
+        os: ${{ fromJSON(github.event_name == 'pull_request' && '["ubuntu-latest"]' || '["ubuntu-latest","windows-latest"]') }}
+    env:
+      CACHE: ${{ fromJSON('{"ubuntu-latest":"ccache","windows-latest":"sccache"}')[matrix.os] }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
@@ -63,7 +63,7 @@ jobs:
       - name: Compiler cache
         uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
         with:
-          variant: ${{ matrix.cache }}
+          variant: ${{ env.CACHE }}
           key: tests-extension-${{ matrix.os }}
           max-size: 500M
       # Ninja compiles file by file, which is what the compiler cache needs;
@@ -75,7 +75,7 @@ jobs:
         shell: bash
         run: |
           cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_WERROR=ON \
-            -DCMAKE_C_COMPILER_LAUNCHER=${{ matrix.cache }} -DCMAKE_CXX_COMPILER_LAUNCHER=${{ matrix.cache }}
+            -DCMAKE_C_COMPILER_LAUNCHER="$CACHE" -DCMAKE_CXX_COMPILER_LAUNCHER="$CACHE"
           cmake --build build
       # Every CTest test, including the ones that need the extension build
       # (ui_model_tests).
@@ -84,7 +84,7 @@ jobs:
       - name: Compiler cache stats
         shell: bash
         run: |
-          if [ "${{ matrix.cache }}" = ccache ]; then ccache --show-stats; else sccache --show-stats; fi
+          "$CACHE" --show-stats
       - name: Download Godot
         if: runner.os == 'Linux'
         env:
