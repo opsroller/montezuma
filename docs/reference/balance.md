@@ -25,7 +25,7 @@ difficulty, with the upgrades a player would own on reaching it
 
 | Levels | `greedy` win rate, normal | `greedy` median time left | `greedy` mean moves, normal | `random` win rate, normal | `planner` win rate, hard |
 |---|---|---|---|---|---|
-| e1-l01 | 100 % | ≥ 150 s | no floor | ≥ 95 % | ≥ 99 % |
+| e1-l01 | 100 % | ≥ 150 s | 18.1 | no floor | ≥ 95 % | ≥ 99 % |
 | rest of e1 | ≥ 98 % | ≥ 100 s | no floor | ≥ 70 % | ≥ 90 % |
 | e2 | ≥ 95 % | ≥ 70 s | ≥ 50 | ≥ 40 % | ≥ 80 % |
 | e3 | ≥ 90 % | ≥ 50 s | ≥ 70 | ≥ 20 % | ≥ 70 % |
@@ -59,13 +59,22 @@ difficulty, with the upgrades a player would own on reaching it
 `montezuma_sim game/data/levels --check`, 200 seeds, `auto` upgrades.
 Win rates in %, median time left in seconds.
 
-| Level | `greedy` normal | `greedy` median | `random` normal | `planner` hard | Result |
-|---|---|---|---|---|---|
-| e1-l01 | 100 | 246.0 | 100 | 100 | pass |
-| e1-l02 | 100 | 264.0 | 100 | 100 | pass |
-| e1-l03 | 100 | 255.0 | 100 | 100 | pass |
-| e1-l04 | 100 | 241.0 | 100 | 100 | pass |
-| e1-l05 | 100 | 246.2 | 100 | 100 | pass |
+| Level | `greedy` normal | `greedy` median | `greedy` moves | `random` normal | `planner` hard | Result |
+|---|---|---|---|---|---|---|
+| e1-l01 | 100 | 246.0 | 18.1 | 100 | 100 | pass |
+| e1-l02 | 100 | 264.0 | 26.6 | 100 | 100 | pass |
+| e1-l03 | 100 | 255.0 | 32.8 | 100 | 100 | pass |
+| e1-l04 | 100 | 241.0 | 41.9 | 100 | 100 | pass |
+| e1-l05 | 100 | 246.2 | 49.0 | 100 | 100 | pass |
+| e2-l01 | 100 | 256.5 | 59.3 | 100 | 100 | pass |
+| e2-l02 | 100 | 247.5 | 68.1 | 100 | 100 | pass |
+| e2-l03 | 100 | 237.5 | 77.0 | 99 | 100 | pass |
+| e2-l04 | 100 | 239.2 | 73.9 | 99.5 | 100 | pass |
+| e2-l05 | 100 | 242.8 | 69.9 | 100 | 100 | pass |
+| e2-l06 | 100 | 235.5 | 76.6 | 100 | 100 | pass |
 
-Both curve rules pass for episode 1. Each level meets its row with no
-obstacles and no time override, so no lever was used.
+Both curve rules pass for episodes 1 and 2. Each level meets its row with
+no obstacles and no time override, so no lever was used. Every episode 2
+level clears the moves floor of 50 (59 to 77) at the gem goals in
+[progression](progression.md); every level wins every `greedy` run, so
+the curve rule holds by the 100 % tie.
