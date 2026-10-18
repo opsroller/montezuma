@@ -64,13 +64,21 @@ Godot's Movie Maker renders frames to PNG files. On a machine without a
 screen, run it under a virtual X display with the OpenGL driver (needs
 `xvfb-run`):
 
+Since Godot 4.7, Movie Maker ignores `--resolution`, so set the window
+size with a local `game/override.cfg` (ignored by git), then delete it:
+
 ```sh
+printf '[display]\nwindow/size/window_width_override=540\nwindow/size/window_height_override=1170\n' > game/override.cfg
 xvfb-run -a -s "-screen 0 1600x1600x24" godot --path game --rendering-driver opengl3 \
-  --resolution 540x1170 --write-movie /tmp/shots/frame.png --fixed-fps 30 --quit-after 20
+  --write-movie /tmp/shots/frame.png --fixed-fps 30 --quit-after 20
+rm game/override.cfg
 ```
 
-Each frame lands as `/tmp/shots/frameNNNNNNNN.png`. Change `--resolution`
-to check a phone (`540x1170`) and a desktop (`1280x720`) framing.
+Each frame lands as `/tmp/shots/frameNNNNNNNN.png`. Change the two sizes
+to check a phone (`540x1170`) and a desktop (`960x540` or `1280x720`)
+framing. The menu overlay (the `UiRoot` autoload) draws over the board;
+`docs/images/board-view-desktop.png` was captured from a scratch copy of
+`game/` with that autoload line removed from `project.godot`.
 
 ## Export a build
 

@@ -5,6 +5,8 @@ build/
 game/bin/*
 !game/bin/.gitkeep
 game/.godot/
+# Local project-setting overrides (screenshot sizes); never committed.
+game/override.cfg
 site/_site/
 __pycache__/
 .venv/
