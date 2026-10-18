@@ -27,7 +27,7 @@ namespace montezuma::godot_binding {
 
 namespace {
 
-// Kind order matches docs/reference/rules-spec.md: red, orange, yellow, green, blue, purple, white.
+// Kind order matches docs/rules-spec.md: red, orange, yellow, green, blue, purple, white.
 const Color kKindColors[] = {
     Color(0.80f, 0.15f, 0.12f), Color(0.92f, 0.50f, 0.10f), Color(0.95f, 0.80f, 0.20f), Color(0.20f, 0.65f, 0.25f),
     Color(0.15f, 0.40f, 0.85f), Color(0.55f, 0.25f, 0.70f), Color(0.92f, 0.90f, 0.85f),
