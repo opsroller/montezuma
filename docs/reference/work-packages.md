@@ -62,7 +62,7 @@ row in the PR that finishes the package.
 | 23 | Episode 1 levels (includes the intro levels) | game-designer | `game/data/levels/e1/` | 03, 05, 22 | all load and hit sim targets | done (#37) |
 | 24 | Episode 2 levels | game-designer | `game/data/levels/e2/` | 23, 56 | all load and hit sim targets, moves floor included | done (#45) |
 | 25 | Episode 3 levels | game-designer | `game/data/levels/e3/` | 24 | all load and hit sim targets, moves floor included | done (#49) |
-| 26 | Episode 4 levels | game-designer | `game/data/levels/e4/` | 25 | all load and hit sim targets, moves floor and clocks included | done |
+| 26 | Episode 4 levels | game-designer | `game/data/levels/e4/` | 25 | all load and hit sim targets, moves floor and clocks included | done (#59) |
 | 27 | Episode 5 levels | game-designer | `game/data/levels/e5/` | 26 | same | todo |
 | 28 | Game scene integration | graphics-programmer | `extension/src/game/`, `game/scenes/game/` | 05, 13, 16, 18 | a level plays start to finish with HUD, audio and results | done |
 | 29 | Totem and bonus visuals | graphics-programmer | `extension/src/board/effects/`, `game/scenes/board/effects/` | 06, 07, 11, 13 | every effect animates | done |
