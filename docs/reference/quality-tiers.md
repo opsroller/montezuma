@@ -133,6 +133,7 @@ target names.
 | `area_light` | nodes in `quality:area_light` | ✔ | — | — | — |
 | `particle_trails` | nodes in `quality:particle_trails`; on a `GPUParticles3D` in that group it also sets `trail_enabled` and, where trails are on, makes `metadata/trail_mesh` its first draw pass. Author trails off and the trail mesh in that metadata: the Compatibility renderer warns about any particle system with trails or a trail mesh, hidden or not | ✔ | ✔ | ✔ | — |
 | `fire_flipbook_8x8` | nodes in `quality:fire_flipbook_8x8` (4×4 in the fallback group) | ✔ | ✔ | — | — |
+| `light_shaft_cards` | nodes in `quality:light_shaft_cards`: the tier can afford the light-shaft cards' draw call. The cards' parent sits in `quality_fallback:volumetric_fog`, so they show only on `mobile`. Off on `web` while its draw calls are over budget | ✔ | ✔ | ✔ | — |
 
 ## Node groups
 
@@ -142,6 +143,7 @@ target names.
 | `quality_fallback:<feature id>` | any node with `visible` | shown only where the tier lacks it (light-shaft cards, cube-map gems, 4×4 flipbooks) |
 | `quality_shadow_light` | `Light3D` | the nearest N to the active camera keep the shadow the scene gave them, the rest lose it |
 | `quality_fog_light` | `Light3D` | keeps its authored volumetric fog energy only with `fog_fire_light` |
+| (metadata) `fog_material_path` | `FogVolume` | its material is loaded from this path only with `volumetric_fog`, and cleared without it: Compatibility prints an error for any fog shader it loads |
 
 A group naming an unknown feature id logs a warning and is ignored.
 

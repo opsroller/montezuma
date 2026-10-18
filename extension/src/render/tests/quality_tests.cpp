@@ -106,6 +106,7 @@ void test_profiles_match_visual_target() {
     }
     check(mobile.has(Feature::Decals) && !web.has(Feature::Decals), "decals down to mobile, not web");
     check(mobile.has(Feature::ParticleTrails) && !web.has(Feature::ParticleTrails), "trails down to mobile");
+    check(mobile.has(Feature::LightShaftCards) && !web.has(Feature::LightShaftCards), "shaft cards down to mobile");
 
     check(high.sun_shadow_size == 4096 && standard.sun_shadow_size == 2048 && mobile.sun_shadow_size == 2048 &&
               web.sun_shadow_size == 1024,

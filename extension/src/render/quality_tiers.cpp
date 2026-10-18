@@ -19,6 +19,7 @@
 #include <godot_cpp/classes/directional_light3d.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/environment.hpp>
+#include <godot_cpp/classes/fog_volume.hpp>
 #include <godot_cpp/classes/geometry_instance3d.hpp>
 #include <godot_cpp/classes/gpu_particles3d.hpp>
 #include <godot_cpp/classes/light3d.hpp>
@@ -376,6 +377,23 @@ void QualityTiers::apply_node(Node* node) {
         particles->set_trail_enabled(trails);
     }
 
+    // Fog volumes name their material in metadata/fog_material_path and get it
+    // only where the tier has volumetric fog: Compatibility cannot compile a
+    // fog shader and prints an error as soon as one loads.
+    if (auto* fog = Object::cast_to<FogVolume>(node); fog && fog->has_meta("fog_material_path")) {
+        if (!p.has(q::Feature::VolumetricFog)) {
+            fog->set_material(Ref<Material>());
+        } else if (fog->get_material().is_null()) {
+            const String path = fog->get_meta("fog_material_path");
+            const Ref<Material> material = ResourceLoader::get_singleton()->load(path);
+            if (material.is_valid()) {
+                fog->set_material(material);
+            } else {
+                UtilityFunctions::push_warning("QualityTiers: fog material ", path, " does not load");
+            }
+        }
+    }
+
     const TypedArray<StringName> groups = node->get_groups();
     for (int64_t i = 0; i < groups.size(); ++i) {
         const String group = groups[i];
@@ -640,6 +658,9 @@ void QualityTiers::run_self_test() {
     auto* cards = memnew(Node3D);
     cards->add_to_group("quality_fallback:volumetric_fog");
     scratch->add_child(cards);
+    auto* fog = memnew(FogVolume);
+    fog->set_meta("fog_material_path", "res://assets/materials/temple/MI_AtmosphereFog.tres");
+    scratch->add_child(fog);
     auto* trails = memnew(GPUParticles3D);
     trails->set_emitting(false);
     trails->add_to_group("quality:particle_trails");
@@ -725,6 +746,7 @@ void QualityTiers::run_self_test() {
         check(attrs->is_dof_blur_far_enabled() == p.has(q::Feature::DepthOfField), id, "depth of field");
         check(voxel->is_visible() == p.has(q::Feature::VoxelGi), id, "quality:voxel_gi node");
         check(cards->is_visible() == !p.has(q::Feature::VolumetricFog), id, "fog fallback node");
+        check(fog->get_material().is_valid() == p.has(q::Feature::VolumetricFog), id, "fog volume material");
         check(trails->is_trail_enabled() == p.has(q::Feature::ParticleTrails), id, "particle trails");
         if (p.has(q::Feature::ParticleTrails))
             check(trails->get_draw_pass_mesh(0) == trail_mesh, id, "particle trail mesh not attached");

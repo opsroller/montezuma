@@ -15,6 +15,7 @@ parameters and writes, as Godot text resources:
 """
 
 import json
+import math
 import random
 import sys
 from pathlib import Path
@@ -89,10 +90,17 @@ def shader_material(spec, theme, hi):
                    f"frequency = {n['frequency']}", "",
                    f'[sub_resource type="NoiseTexture2D" id="{key}"]', f"width = {n['size']}", f"height = {n['size']}",
                    "seamless = true", f'noise = SubResource("{key}_noise")', ""]
+    # 3D noise (the atmosphere fog's density), also built at load time.
+    for key, n in spec.get("noise_textures_3d", {}).items():
+        r.body += [f'[sub_resource type="FastNoiseLite" id="{key}_noise"]', f"seed = {n['seed']}",
+                   f"frequency = {n['frequency']}", "fractal_octaves = 4", "",
+                   f'[sub_resource type="NoiseTexture3D" id="{key}"]', f"width = {n['size']}", f"height = {n['size']}",
+                   f"depth = {n['size']}", "seamless = true", "normalize = true",
+                   f'noise = SubResource("{key}_noise")', ""]
     r.body += ["[resource]", f"shader = {shader}"]
     if "render_priority" in spec:
         r.body.append(f"render_priority = {spec['render_priority']}")
-    for key in spec.get("noise_textures", {}):
+    for key in [*spec.get("noise_textures", {}), *spec.get("noise_textures_3d", {})]:
         r.body.append(f'shader_parameter/{key} = SubResource("{key}")')
     # Build-output textures (fire flipbooks) by path under textures/<theme>/;
     # the desktop variant of a material takes the file's hi/ variant.
@@ -112,6 +120,8 @@ def shader_material(spec, theme, hi):
         r.body.append(f"shader_parameter/specular = {specular_from_ior(spec['ior'])}")
     for key, value in spec.get("params", {}).items():
         v = color(value) if isinstance(value, str) else value
+        if isinstance(value, list):
+            v = f"Vector{len(value)}({', '.join(map(str, value))})"
         if key == "emission_energy":  # SH_Gem's EMISSION, scaled like StandardMaterial emission
             v = round(value * EMISSION_NITS["scale"], 3)
         r.body.append(f"shader_parameter/{key} = {v}")
@@ -308,6 +318,137 @@ def brazier_fire(p, theme):
     return r.text("[gd_scene load_steps={steps} format=3]")
 
 
+# The game camera (BoardCamera3D: 15 degrees from straight down, toward the
+# player) at the nearest and farthest distances it fits the board from, from
+# a wide desktop window to a tall phone, plus the look-dev camera's.
+CAMERA_DISTANCES = (11.0, 13.0, 36.0)
+CAMERA_TILT = math.radians(15.0)
+
+
+def inside_platform(point, p):
+    """True inside the stepped stone platform under the board, where nothing
+    shows; its shape is gen_theme_meshes.py's backdrop_parts (tiers 0.5 m high,
+    1.2 m wider per side each, the first top 0.42 m below the board)."""
+    x, y, z = point
+    half = p["board"]["width"] * p["cell_size"] / 2 + p["board"]["frame_width"] + 0.6
+    for i in range(p["backdrop"]["tiers"]):
+        if y <= -0.42 - 0.5 * i and max(abs(x), abs(z)) <= half + 1.2 * i:
+            return True
+    return False
+
+
+def over_board(point, half, top=0.12):
+    """True when a point would draw over the board rectangle (|x|, |z| <= half
+    at the tile tops) from any camera in CAMERA_DISTANCES."""
+    x, y, z = point
+    for d in CAMERA_DISTANCES:
+        cy, cz = d * math.cos(CAMERA_TILT), d * math.sin(CAMERA_TILT)
+        if y >= cy:
+            continue
+        t = (cy - top) / (cy - y)
+        if abs(x * t) <= half and abs(cz + (z - cz) * t) <= half:
+            return True
+    return False
+
+
+def sun_toward(transform_text):
+    """Unit vector from the ground toward the sun: the light shines along -Z of its
+    basis, written row by row in a .tscn Transform3D."""
+    m = [float(v) for v in transform_text.removeprefix("Transform3D(").removesuffix(")").split(",")]
+    return m[2], m[5], m[8]
+
+
+def atmosphere(r, p, models):
+    """Volumetric fog volume, dust and light-shaft cards for the theme's environment scene.
+
+    Fog and dust need volumetric fog (desktop tiers); the cards stand in for
+    both where it is missing, and only where the tier also affords their draw
+    call (light_shaft_cards). Nothing may draw over the board: the fog shader
+    has zero density over it, and dust and card positions are checked against
+    every game camera here.
+    """
+    theme = p["theme"]
+    a = p["lighting"]["atmosphere"]
+    vol, dust, shafts = a["volumes"], a["dust"], a["shafts"]
+    half = p["board"]["width"] * p["cell_size"] / 2 + p["board"]["frame_width"]
+    keep_out = half + a["board_clearance"]
+    top = p["materials"]["MI_AtmosphereFog"]["params"]["height_top"]
+    # By path, not as a resource: QualityTiers loads it only on tiers with volumetric
+    # fog, since Compatibility errors on any fog shader it is handed.
+    fog_mat = f'"res://assets/materials/{theme}/MI_AtmosphereFog.tres"'
+    dust_mat = r.ext_id("Material", f"res://assets/materials/{theme}/MI_Dust.tres")
+    shaft_mat = r.ext_id("Material", f"res://assets/materials/{theme}/MI_LightShaft.tres")
+    size = 2 * vol["outer"]
+    subs = ['[sub_resource type="ParticleProcessMaterial" id="dust_process"]', "emission_shape = 6",
+            f"emission_ring_axis = {vec3(0, 1, 0)}", f"emission_ring_height = {dust['top'] - dust['bottom']}",
+            f"emission_ring_radius = {dust['outer_radius']}", f"emission_ring_inner_radius = {dust['inner_radius']}",
+            "direction = Vector3(1, 0.2, 0)", "spread = 180.0",
+            f"initial_velocity_min = {dust['speed'][0]}", f"initial_velocity_max = {dust['speed'][1]}",
+            f"gravity = {vec3(0, 0, 0)}", "scale_min = 0.5", "scale_max = 1.2",
+            'color_ramp = SubResource("dust_fade_tex")', "turbulence_enabled = true",
+            f"turbulence_noise_strength = {dust['turbulence']}", "turbulence_noise_scale = 6.0",
+            "turbulence_influence_min = 0.01", "turbulence_influence_max = 0.03", "",
+            '[sub_resource type="QuadMesh" id="dust_quad"]', f"size = Vector2({dust['size']}, {dust['size']})", "",
+            '[sub_resource type="QuadMesh" id="shaft_quad"]', ""]
+    subs = fade_ramp("dust_fade", [(0.0, "Color(1, 1, 1, 0)"), (0.2, "Color(1, 1, 1, 1)"),
+                                   (0.8, "Color(1, 1, 1, 1)"), (1.0, "Color(1, 1, 1, 0)")]) + subs
+
+    # Shaft cards: quads along the sun direction standing on the ground in a
+    # ring around the temple, each kept entirely off the board from every camera.
+    ux, uy, uz = sun_toward(p["environment"]["sun"]["transform"])
+    hx, hz = uz, -ux  # horizontal, across the beam
+    hl = math.hypot(hx, hz)
+    hx, hz = hx / hl, hz / hl
+    rng = random.Random(p["seed"] + 51)
+    buffer, attempts = [], 0
+    while len(buffer) < 12 * shafts["count"]:
+        attempts += 1
+        if attempts > 2000:
+            raise SystemExit(f"{theme}: could not place {shafts['count']} light-shaft cards off the board")
+        ang, rad = rng.uniform(0, 2 * math.pi), rng.uniform(shafts["inner_radius"], shafts["outer_radius"])
+        length, width = rng.uniform(*shafts["length"]), rng.uniform(*shafts["width"])
+        gx, gz = rad * math.cos(ang), rad * math.sin(ang)
+        # QuadMesh spans -0.5..0.5 in X and Y; Y runs toward the sun from the ground.
+        cx, cy, cz = gx + ux * length / 2, shafts["ground"] + uy * length / 2, gz + uz * length / 2
+        corners = [(cx + sx * hx * width / 2 + sy * ux * length / 2, cy + sy * uy * length / 2,
+                    cz + sx * hz * width / 2 + sy * uz * length / 2) for sx in (-1, 1) for sy in (-1, 1)]
+        if any(over_board(c, keep_out) and not inside_platform(c, p) for c in corners):
+            continue
+        # Basis columns X (across, width), Y (toward the sun, length), Z (normal),
+        # stored row by row with the origin, as MultiMesh expects.
+        nx, ny, nz = -hz * uy, hz * ux - hx * uz, hx * uy  # X cross Y, unit length
+        cols = [(hx * width, 0.0, hz * width), (ux * length, uy * length, uz * length), (nx, ny, nz)]
+        for row, origin in zip(range(3), (cx, cy, cz)):
+            buffer += [round(cols[0][row], 5), round(cols[1][row], 5), round(cols[2][row], 5), round(origin, 4)]
+    subs += ['[sub_resource type="MultiMesh" id="shafts"]', "transform_format = 1",
+             f"instance_count = {shafts['count']}", 'mesh = SubResource("shaft_quad")',
+             f"buffer = PackedFloat32Array({', '.join(map(str, buffer))})", ""]
+
+    for y in (dust["top"], dust["bottom"]):
+        for ang in range(0, 360, 5):
+            c = (dust["inner_radius"] * math.cos(math.radians(ang)), y, dust["inner_radius"] * math.sin(math.radians(ang)))
+            if over_board(c, keep_out) and not inside_platform(c, p):
+                raise SystemExit(f"{theme}: dust ring inner radius {dust['inner_radius']} reaches over the board")
+
+    body = ["", '[node name="AtmosphereFog" type="FogVolume" parent="." groups=["quality:volumetric_fog"]]',
+            f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, {round((vol['bottom'] + top) / 2, 3)}, 0)",
+            f"size = {vec3(size, round(top - vol['bottom'], 3), size)}", "shape = 3", f"metadata/fog_material_path = {fog_mat}",
+            "", '[node name="Dust" type="GPUParticles3D" parent="." groups=["quality:volumetric_fog"]]',
+            f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, {round((dust['bottom'] + dust['top']) / 2, 3)}, 0)",
+            "cast_shadow = 0", f"amount = {dust['amount']}", f"lifetime = {dust['lifetime']}",
+            f"preprocess = {dust['lifetime']}",
+            f"visibility_aabb = AABB({-dust['outer_radius'] - 1}, -3, {-dust['outer_radius'] - 1}, "
+            f"{2 * dust['outer_radius'] + 2}, 6, {2 * dust['outer_radius'] + 2})",
+            'process_material = SubResource("dust_process")', 'draw_pass_1 = SubResource("dust_quad")',
+            f"material_override = {dust_mat}",
+            # Shown only where the tier has no volumetric fog (parent) and can
+            # afford the cards' draw call (child).
+            "", '[node name="LightShaftCards" type="Node3D" parent="." groups=["quality_fallback:volumetric_fog"]]',
+            "", '[node name="Cards" type="MultiMeshInstance3D" parent="LightShaftCards" groups=["quality:light_shaft_cards"]]',
+            "cast_shadow = 0", "gi_mode = 0", 'multimesh = SubResource("shafts")', f"material_override = {shaft_mat}"]
+    return subs, body
+
+
 def write(path, text):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text)
@@ -319,6 +460,12 @@ def main():
     theme = p["theme"]
     TEXTURE_SETS.update(p["textures"]["sets"])
     EMISSION_NITS["scale"] = 3072007.0 / p["lighting"]["exposure"]["sensitivity"]
+    if "atmosphere" in p["lighting"]:
+        # The fog's clear square follows the board, so it is derived, not authored.
+        board_half = p["board"]["width"] * p["cell_size"] / 2 + p["board"]["frame_width"]
+        fog_params = p["materials"]["MI_AtmosphereFog"]["params"]
+        fog_params["clear_half"] = round(board_half + p["lighting"]["atmosphere"]["volumes"]["clearance"], 3)
+        fog_params["sun_direction"] = [round(v, 5) for v in sun_toward(p["environment"]["sun"]["transform"])]
     assets = ROOT / "game/assets"
     models = f"res://assets/models/{theme}"
     entry = {}
@@ -349,6 +496,7 @@ def main():
     env = p["environment"]
     light = p["lighting"]
     exposure, fog = light["exposure"], light.get("fog")
+    fog3 = light.get("atmosphere", {}).get("fog")
     sky = [
         "[sub_resource type=\"ProceduralSkyMaterial\" id=\"sky_mat\"]",
         f"sky_top_color = {color(env['sky_top'])}",
@@ -401,11 +549,26 @@ def main():
             f"fog_height_density = {fog['height_density']}",
             f"fog_sky_affect = {fog['sky_affect']}",
         ] if fog else []),
+        # Volumetric fog with no density of its own: only the theme's FogVolume
+        # adds any, outside the board (WP-51). The tier turns it off where it
+        # has none; the froxel grid size is the tier's.
+        *([
+            "volumetric_fog_enabled = true",
+            "volumetric_fog_density = 0.0",
+            f"volumetric_fog_anisotropy = {fog3['anisotropy']}",
+            f"volumetric_fog_length = {fog3['length']}",
+            f"volumetric_fog_detail_spread = {fog3['detail_spread']}",
+            f"volumetric_fog_gi_inject = {fog3['gi_inject']}",
+            f"volumetric_fog_ambient_inject = {fog3['ambient_inject']}",
+            "volumetric_fog_sky_affect = 0.0",
+            f"volumetric_fog_temporal_reprojection_amount = {fog3['temporal_amount']}",
+        ] if fog3 else []),
         "adjustment_enabled = true",
         f"adjustment_saturation = {env['saturation']}",
         "",
     ]
-    r.body = sky + r.body
+    atmo_subs, atmo_body = atmosphere(r, p, models) if fog3 else ([], [])
+    r.body = sky + atmo_subs + r.body
     sun = light["sun"]
     r.body += ["", '[node name="WorldEnvironment" type="WorldEnvironment" parent="."]', 'environment = SubResource("env")',
                'camera_attributes = SubResource("camera")',
@@ -447,6 +610,7 @@ def main():
                # lux values would otherwise overflow the lightmap's range.
                'camera_attributes = SubResource("camera")',
                f'metadata/light_data_path = "{models}/backdrop/PF_Environment.lmbake"']
+    r.body += atmo_body
     write(assets / f"models/{theme}/backdrop/PF_Environment.tscn", r.text("[gd_scene load_steps={steps} format=3]"))
     entry["environment"] = f"{models}/backdrop/PF_Environment.tscn"
 

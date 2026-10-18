@@ -99,7 +99,7 @@ cell · — absent
 
 | Feature | `desktop-high` | `desktop-standard` | `mobile` | `web` |
 |---|---|---|---|---|
-| Volumetric fog with sun shafts and dust (`FogVolume`s outside the board) | ✔ | ◐ low resolution, no fire contribution | ◐ light-shaft cards | ◐ light-shaft cards |
+| Volumetric fog with sun shafts and dust (`FogVolume`s outside the board) | ✔ | ◐ low resolution, no fire contribution | ◐ light-shaft cards | ◐ light-shaft cards (off until the web draw calls are under budget) |
 | Depth and height fog | ◐ only where the readability capture passes on every tier; the temple has none (see [About lighting](../explanation/about-lighting.md)) | ◐ same | ◐ same | ◐ same |
 | Glow (bloom), before tonemapping | ✔ | ✔ | ✔ | ✔ |
 | Colour grade (LUT) | ✔ | ✔ | ✔ | ✔ |
