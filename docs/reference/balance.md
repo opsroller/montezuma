@@ -147,22 +147,23 @@ Win rates in %, median time left and base clocks in seconds.
 Both curve rules and every clock line pass for episodes 1 to 5. Each
 level's base clock is the larger of 270 s and its [clock rule](#clock)
 value. Medians are time left on the base clock plus the `auto` timer
-tier (+30 s from e1-l02, +60 s from e3-l04, +90 s from e4-l06, +120 s from e5-l08; the [time
-totem](rules-totems.md#numbers) gains a second use from e4-l08 and +240 s per use (tier 4) from e5-l05). Every
+tier (+30 s from e1-l02, +60 s from e3-l04, +90 s from e4-l06, +120 s
+from e5-l08; the [time totem](rules-totems.md#numbers) gains a second
+use from e4-l08 and +240 s per use (tier 4) from e5-l05). Every
 episode 2 level clears the moves floor of 50 (59 to 77) and every
 episode 3 level the floor of 70 (82 to 145), at the gem goals in
 [progression](progression.md); every level wins every `greedy` run, so
 the curve rule holds by the 100 % tie. Every episode 4 level clears the
 moves floor of 90 (137 to 176) and wins every `greedy` run; `random` is
-informational there and wins every run on the human-pace clocks. Why
-episodes 3 and 4 are built and measured this way is in [about the
-episode 3 levels](../explanation/about-the-episode-3-levels.md) and
-[about the episode 4
-levels](../explanation/about-the-episode-4-levels.md). Every episode 5
-level clears the moves floor of 110 (154 to 189) and wins every
-`greedy` run; its base clocks run 630 to 770 s on normal and 950 to
-1180 s on hard ([about the episode 5
-levels](../explanation/about-the-episode-5-levels.md)).
+informational there and wins every run on the human-pace clocks. Every
+episode 5 level clears the moves floor of 110 (154 to 189) and wins
+every `greedy` run; its base clocks run 630 to 770 s on normal and 950
+to 1180 s on hard. Why episodes 3, 4 and 5 are built and measured this
+way is in [about the episode 3
+levels](../explanation/about-the-episode-3-levels.md), [about the
+episode 4 levels](../explanation/about-the-episode-4-levels.md) and
+[about the episode 5
+levels](../explanation/about-the-episode-5-levels.md).
 
 `greedy` on normal and `planner` on hard win every run on every level,
 so the curve rules pass only by the 100 % tie: the win-rate curve is
