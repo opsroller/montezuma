@@ -18,10 +18,12 @@ own folder.
 - [Audio](reference/audio.md): sound formats, levels and the files behind each cue.
 - [Power Totems](reference/totems.md): totem ids, charging, effects and tuning.
 - [Power-ups](reference/bonuses.md): on-board power-up ids, tiers, placement, triggering and effects.
+- [UI](reference/ui.md): UI classes, screens, actions, settings, theme tokens and strings.
 - [MoveResult events](reference/move-result.md): cascade steps, falls, spawns and how to replay a move.
 - [Match3Level](reference/match3-level.md): the level timer, score, quotas and outcome in Godot.
 - [Level data](reference/level-data.md): the level file format, defaults, limits and errors.
 - [Board view](reference/board-view.md): the 3D board's classes, scenes, camera fit and feel constants.
+- [CI pipeline](reference/ci-pipeline.md): the tests workflow's triggers, jobs and caches.
 - [Rules spec](reference/rules-spec.md): how the game plays, with
   [Power Totems](reference/rules-totems.md), [power-ups](reference/rules-power-ups.md),
   [bonus games](reference/rules-bonus-games.md) and [sources](reference/rules-sources.md).
@@ -38,10 +40,14 @@ own folder.
 - [Build and test](how-to/build-and-test.md): build the core and extension, run tests, load the game, capture screenshots.
 - [Regenerate or add sounds](how-to/regenerate-or-add-sounds.md): rebuild the generated audio, add a cue.
 - [Play a sound from code](how-to/play-a-sound-from-code.md): call a cue from C++ or a scene, start and stop music.
+- [Add a UI screen](how-to/add-a-ui-screen.md): a new menu screen or modal, opened from a button.
+- [Check UI text and layout](how-to/check-ui-text-and-layout.md): pseudo-localization, large text, window sizes, controller only.
 
 ## Explanation
 
+- [UI architecture](explanation/ui-architecture.md): why a C++ screen stack, an overlay and a tokens-built theme.
 - [About the board view](explanation/about-the-board-view.md): why the view never applies rules, and how the camera frames the board.
+- [About CI caching](explanation/about-ci-caching.md): why CI uses a compiler cache and what it leaves uncached.
 - [Sound direction](explanation/sound-direction.md): why the game sounds the way it does.
 
 Tutorials, more how-to guides and explanations are added by the work

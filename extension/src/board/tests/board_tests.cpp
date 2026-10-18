@@ -11,6 +11,7 @@
 #include "animator.hpp"
 #include "board_layout.hpp"
 #include "feel.hpp"
+#include "input.hpp"
 
 using namespace montezuma::godot_binding;
 
@@ -249,6 +250,86 @@ void test_timing_scales_without_changing_order() {
     check(a == b, "speed never changes the outcome");
 }
 
+// ---- Input gestures ----
+
+using input::Action;
+
+input::SwapGesture gesture() {
+    input::SwapGesture g;
+    g.reset(8, 8);
+    g.set_swipe_threshold(20.0);
+    return g;
+}
+
+bool is(const input::Output& o, Action a, input::Cell ca = {}, input::Cell cb = {}) {
+    return o.action == a && o.a == ca && o.b == cb;
+}
+
+void test_tap_tap_swaps_neighbours() {
+    auto g = gesture();
+    check(is(g.press(-1, {0, 0}, {3, 3}), Action::Select, {3, 3}), "first tap selects");
+    check(is(g.release(-1), Action::None), "lifting keeps the selection");
+    check(is(g.press(-1, {50, 0}, {4, 3}), Action::Swap, {3, 3}, {4, 3}), "tapping a neighbour swaps");
+    check(!g.selected().valid(), "swap clears the selection");
+    check(is(g.release(-1), Action::None), "the swap's release does nothing");
+}
+
+void test_tap_selected_again_deselects() {
+    auto g = gesture();
+    g.press(-1, {0, 0}, {2, 2});
+    g.release(-1);
+    check(is(g.press(-1, {0, 0}, {2, 2}), Action::None), "second press on the selection waits");
+    check(is(g.release(-1), Action::Deselect), "and deselects on release");
+}
+
+void test_tap_far_piece_moves_selection() {
+    auto g = gesture();
+    g.press(-1, {0, 0}, {0, 0});
+    g.release(-1);
+    check(is(g.press(-1, {0, 0}, {5, 5}), Action::Select, {5, 5}), "a far piece takes the selection");
+    g.release(-1);
+    check(is(g.press(-1, {0, 0}, {}), Action::Deselect), "tapping off the board deselects");
+    check(is(g.press(-1, {0, 0}, {}), Action::None), "off the board with nothing selected does nothing");
+}
+
+void test_swipe_in_each_direction() {
+    struct Case {
+        double dx, dy;
+        input::Cell to;
+    };
+    for (const Case c : {Case{30, 4, {4, 3}}, Case{-30, -4, {2, 3}}, Case{3, 30, {3, 4}}, Case{-3, -30, {3, 2}}}) {
+        auto g = gesture();
+        g.press(0, {100, 100}, {3, 3});
+        check(is(g.move(0, {100 + c.dx * 0.5, 100 + c.dy * 0.5}), Action::None), "short drag is not a swipe");
+        check(is(g.move(0, {100 + c.dx, 100 + c.dy}), Action::Swap, {3, 3}, c.to), "swipe swaps toward the drag");
+        check(is(g.move(0, {100 + c.dx * 2, 100 + c.dy * 2}), Action::None), "one swipe swaps once");
+        check(is(g.release(0), Action::None), "release after a swipe does nothing");
+    }
+}
+
+void test_swipe_off_the_edge_and_from_selection() {
+    auto g = gesture();
+    g.press(0, {0, 0}, {0, 0});
+    check(is(g.move(0, {-40, 0}), Action::Deselect), "swipe off the board only deselects");
+    // A swipe that starts on the selected piece still swipes.
+    g.press(0, {0, 0}, {6, 6});
+    g.release(0);
+    g.press(0, {0, 0}, {6, 6});
+    check(is(g.move(0, {0, 25}), Action::Swap, {6, 6}, {6, 7}), "swipe from the selected piece");
+}
+
+void test_pointer_rules() {
+    auto g = gesture();
+    g.press(1, {0, 0}, {3, 3});
+    check(is(g.press(2, {0, 0}, {4, 3}), Action::None), "a second finger is ignored");
+    check(is(g.move(2, {50, 0}), Action::None), "the second finger cannot swipe");
+    check(is(g.release(2), Action::None), "nor release the first");
+    g.cancel();
+    check(!g.pressing() && g.selected() == input::Cell{3, 3}, "cancel ends the press, keeps the selection");
+    check(is(g.move(1, {50, 0}), Action::None), "no swipe after cancel");
+    check(is(g.press(1, {0, 0}, {3, 4}), Action::Swap, {3, 3}, {3, 4}), "tap-tap still works after cancel");
+}
+
 }  // namespace
 
 int main() {
@@ -264,6 +345,12 @@ int main() {
     test_walk_moves_falls_at_once();
     test_shuffle_and_redeal();
     test_timing_scales_without_changing_order();
+    test_tap_tap_swaps_neighbours();
+    test_tap_selected_again_deselects();
+    test_tap_far_piece_moves_selection();
+    test_swipe_in_each_direction();
+    test_swipe_off_the_edge_and_from_selection();
+    test_pointer_rules();
     std::printf("%d checks, %d failures\n", checks, failures);
     return failures == 0 ? 0 : 1;
 }

@@ -37,3 +37,6 @@ set_target_properties(montezuma_extension PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY "$<1:${MONTEZUMA_BIN_DIR}>"
   PDB_OUTPUT_DIRECTORY "$<1:${MONTEZUMA_BIN_DIR}>"
 )
+
+# In-game UI (owner: ui-developer).
+add_subdirectory(src/ui)
