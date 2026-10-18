@@ -1,0 +1,119 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+# Water
+
+*Reference. The temple's water channel: where it is, the two water
+shaders and their parameters, what each quality tier shows, and what it
+costs. Why it is built this way: [Art direction, Water](../explanation/art-direction.md#water).
+The look it must meet: [Visual target](visual-target.md#fire-water-and-particles).
+Owner: technical-artist (WP-50).*
+
+![The east channel on desktop (Forward+)](../images/lookdev/temple-water-desktop.jpg)
+
+## Where it is
+
+A moat round the temple's lowest tier, cut into the jungle floor, with a
+stone causeway under the far stair. All numbers come from the theme's
+`water` block (below) and are computed in `water_channel()` in both
+`tools/assets/gen_theme_meshes.py` and `tools/assets/gen_theme_scenes.py`.
+
+| Temple value | Metres |
+|---|---|
+| Inner edge (half-width of the ring) | 8.45 (0.9 outside the lowest tier, which ends at 7.55) |
+| Outer edge | 10.45 |
+| Ground (rim) height, Godot Y | −1.92 |
+| Water surface | −2.02 |
+| Channel floor | −2.52 |
+| Board rectangle | ±4.55, so the water is at least 3.9 m outside it |
+
+From the game camera at 16:9 the east and west strips show at the left
+and right edges, about a tenth of the frame; taller screens also show the
+near and far strips. Water never lies inside the board rectangle
+(readability rule 2 in the visual target).
+
+| File | What |
+|---|---|
+| `game/assets/models/<theme>/backdrop/SM_Backdrop_Water{East,West,Near,Far}.obj` | the surface, one 2 cm slab per strip (the far strip in two pieces either side of the causeway) |
+| `SM_Backdrop_Ground.obj`, `SM_Backdrop_StoneDark.obj`, `SM_Backdrop_Stone.obj` | the ground with the channel cut out; channel floor, walls, apron and causeway; coping stones on both edges |
+| `PF_Environment.tscn` | nodes `WaterEast` … `WaterFar` (`MI_Water`, no shadow casting) and one `ReflectionProbe` per strip, `ProbeEast` … `ProbeFar` |
+| `game/assets/materials/<theme>/MI_Water.tres`, `hi/MI_Water.tres` | base (`SH_WaterSimple`) and desktop (`SH_Water`) material |
+| `game/assets/materials/shaders/SH_Water.gdshader`, `SH_WaterSimple.gdshader`, `SH_Water.gdshaderinc` | the shaders and their shared code |
+| `game/assets/lookdev/LD_<Theme>_Water.tscn`, `LD_<Theme>_Water_Hi.tscn` | look-dev close-up of the east channel, base and desktop materials |
+
+## Tiers
+
+The tier picks the material through the `hi/` variant
+([Quality tiers](quality-tiers.md#material-variants)); the feature id is
+`water_refraction`.
+
+| | `desktop-high` | `desktop-standard` | `mobile` | `web` |
+|---|---|---|---|---|
+| Material | `hi/MI_Water` (`SH_Water`) | `hi/MI_Water` at 0.77 render scale | `MI_Water` (`SH_WaterSimple`) | `MI_Water` |
+| Ripple normals | 2 swells + 3 noise octaves | same | 2 swells + 2 octaves | same as mobile |
+| Depth colour | absorption over the true path, from the depth texture | same | absorption over the path to the flat floor height | same as mobile |
+| Refraction | screen texture, bent by the ripples, never toward what is in front of the water | same | — (blended over the real floor) | — |
+| Caustics | 2 layers on the floor point from the depth texture | same | 1 layer on the flat floor point | same as mobile |
+| Reflections | in-shader screen-space ray march, falling back to the probe and sky | same | reflection probe and sky | same (Compatibility: at most 2 probes per mesh, so one probe per strip) |
+| Contact line at the stone | yes | yes | — | — |
+
+## Parameters
+
+Theme key `materials.MI_Water`; `params` for the base, `hi.params` for the
+desktop variant. The generator adds `floor_height` to materials marked
+`"water": true`.
+
+| Parameter | Shaders | Range | Temple | Meaning |
+|---|---|---|---|---|
+| `water_color` | both | colour | `#1d4a40` | colour deep water scatters back, lit by the scene |
+| `absorption` | both | 0 to 4 per metre, per channel | (1.6, 0.55, 0.45) | light lost per metre, red, green, blue; red goes first, so depth turns the water green-teal |
+| `wave_scale` | both | 0.2 to 4 | 1.0 | ripple size; larger is broader |
+| `wave_strength` | both | 0 to 1 | 0.35 | ripple slope |
+| `flow_speed` | both | 0 to 0.5 m/s | 0.05 | drift of the ripples |
+| `roughness` | both | 0 to 0.3 | 0.04 | surface roughness of the reflections |
+| `caustic_strength` | both | 0 to 4 | 1.4 | brightness of the caustic lines on the floor |
+| `caustic_scale` | both | 0.2 to 4 | 1.3 | caustic pattern size |
+| `refraction_strength` | `SH_Water` | 0 to 0.15 | 0.04 | screen-space bend per metre of water |
+| `ssr_max_distance` | `SH_Water` | 1 to 30 m | 10 | how far a reflection ray travels |
+| `ssr_steps` | `SH_Water` | 8 to 48 | 20 | reflection march steps; the main cost knob |
+| `edge_softness` | `SH_Water` | 0 to 0.3 m | 0.08 | width of the soft line where the water meets stone |
+| `floor_height` | `SH_WaterSimple` | metres, Godot Y | −2.52 (generated) | the flat channel floor the path length and caustics use |
+| `floor_albedo` | `SH_WaterSimple` | 0 to 1 | 0.3 | how much caustic light the floor sends back |
+
+The theme's `water` block:
+
+| Key | Temple | Meaning |
+|---|---|---|
+| `inset` | 0.9 | gap from the lowest tier to the inner edge, metres |
+| `width` | 2.0 | channel width |
+| `depth` | 0.6 | rim to floor |
+| `level` | 0.1 | rim to water surface |
+| `coping_width`, `coping_height` | 0.22, 0.06 | the stones along both edges |
+| `causeway_width` | 3.0 | the stone crossing under the far stair |
+
+A theme without a `water` block gets the old unbroken ground and no water
+nodes.
+
+## Shaders
+
+| Shader | Render mode | Samplers | Cost per pixel |
+|---|---|---|---|
+| `SH_Water` | transparent pass (reads the screen texture), opaque result (no `ALPHA`), depth write, Burley diffuse, GGX | `hint_screen_texture` (linear mipmap, clamp) and `hint_depth_texture` (nearest, clamp), as `SH_Gem` | 2 depth + 2 screen samples, up to `ssr_steps` + 3 depth samples and 1 screen sample for the reflection, 3 noise octaves, 2 caustic layers |
+| `SH_WaterSimple` | blended (`ALPHA` from the absorption, at least the Fresnel), Burley diffuse, GGX | none | 2 noise octaves, 1 caustic layer, no texture samples |
+| `SH_Water.gdshaderinc` | — | none | gradient noise with analytic derivatives (integer hash), ripple slope, caustics, Beer-Lambert transmittance, Schlick Fresnel |
+
+No static switches: two compiled user variants. Neither shader samples a
+material texture, so the water adds no anisotropic or repeating sampler
+and stays inside the 16 Metal sampler slots
+([Board themes](board-themes.md#quality-tier-variants)). `SH_Water` runs on
+Forward+ (Vulkan, D3D12, Metal); `SH_WaterSimple` on Mobile and
+Compatibility (and Forward+). Both use `TIME`, so Movie Maker captures are
+repeatable at a fixed frame rate.
+
+## Cost
+
+| Measure | Value |
+|---|---|
+| Budget | `SH_WaterSimple` ≤ 0.3 ms at 1280×720 on an Intel UHD 620 class GPU; `SH_Water` ≤ 0.5 ms at 1440p on the benchmark Mac (M4) |
+| Measured | not on a real GPU yet: the [benchmark](benchmark.md) (WP-46) measures it with the rest of the scene, see [Benchmark results](benchmark-results.md) |
+| Estimate | look-dev frame time with and without the water nodes on lavapipe and llvmpipe (software), in the WP-50 pull request |
+| Triangles | 12 per strip slab (60 in all); the channel adds about 400 to the backdrop |
+| Reflection probes | 4, rendered once at load |

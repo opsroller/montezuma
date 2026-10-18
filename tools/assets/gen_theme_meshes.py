@@ -354,11 +354,19 @@ def backdrop_parts(p, rng):
                 transform(sub, dx=cx + 0.1 * math.cos(a), dy=cy + 0.1 * math.sin(a))
                 merge_into(flame, sub)
 
-    # Jungle floor and ferns around the temple.
+    # Jungle floor and ferns around the temple, with the water channel (a
+    # moat round the lowest tier) cut into it when the theme has one.
     gs = p["backdrop"]["ground_size"]
-    sub = bmesh.new()
-    box(sub, 0, 0, ground_z - 0.2, gs, gs, 0.2)
-    merge_into(ground, sub)
+    water = {}
+    keep_clear = half + 4.2
+    if "water" in p:
+        w = water_channel(p)
+        keep_clear = max(keep_clear, w["outer"] + 1.2)
+        water = channel_parts(w, ground, stone, stone_dark, gs, ground_z)
+    else:
+        sub = bmesh.new()
+        box(sub, 0, 0, ground_z - 0.2, gs, gs, 0.2)
+        merge_into(ground, sub)
 
     clumps = p["backdrop"]["foliage_clumps"]
     placed = 0
@@ -366,7 +374,7 @@ def backdrop_parts(p, rng):
     while placed < clumps and attempts < clumps * 20:
         attempts += 1
         x, y = rng.uniform(-gs / 3, gs / 3), rng.uniform(-gs / 3, gs / 3)
-        if max(abs(x), abs(y)) < half + 4.2:
+        if max(abs(x), abs(y)) < keep_clear:
             continue
         if abs(x) < 2.2 and y > 0:
             continue  # keep the stair approach clear
@@ -375,7 +383,7 @@ def backdrop_parts(p, rng):
             boulder(rocks, rng, x + rng.uniform(-1, 1), y + rng.uniform(-1, 1), ground_z, rng.uniform(0.3, 0.7))
         placed += 1
 
-    return {
+    parts = {
         "Stone": (stone, "MI_StoneFrame", 0.0),
         "StoneDark": (stone_dark, "MI_StoneDark", 0.0),
         "Bronze": (bronze, "MI_Bronze", 40.0),
@@ -384,6 +392,81 @@ def backdrop_parts(p, rng):
         "Foliage": (foliage, "MI_Foliage", 80.0),
         "Rocks": (rocks, "MI_StoneDark", 0.0),
     }
+    for name, bm in water.items():
+        parts[name] = (bm, "MI_Water", 0.0)
+    return parts
+
+
+def water_channel(p):
+    """Where the moat lies, in metres: inner and outer edge (half-widths of the
+    square ring), ground, water and floor heights. gen_theme_scenes.py places
+    the reflection probes and the water's floor height from the same numbers."""
+    w = p["water"]
+    cs = p["cell_size"]
+    half = p["board"]["width"] * cs / 2 + p["board"]["frame_width"]
+    tiers = p["backdrop"]["tiers"]
+    base_half = (2 * half + 1.2 + 2.4 * (tiers - 1)) / 2
+    ground_z = -0.42 - 0.5 * tiers
+    inner = base_half + w["inset"]
+    return {"inner": inner, "outer": inner + w["width"], "ground": ground_z, "level": ground_z - w["level"],
+            "floor": ground_z - w["depth"], "coping": w["coping_width"], "coping_height": w["coping_height"],
+            "causeway": w["causeway_width"]}
+
+
+def channel_parts(w, ground, stone, stone_dark, gs, ground_z):
+    """Ground ring, channel floor, walls, coping and causeway into the given
+    meshes; returns the water surface as four strips (one reflection probe
+    each), keyed by part name."""
+    ci, co, fl = w["inner"], w["outer"], w["floor"]
+    wall = 0.3
+    cw = w["causeway"]
+
+    def add(target, cx, cy, z0, sx, sy, sz, bevel=0.0):
+        sub = bmesh.new()
+        box(sub, cx, cy, z0, sx, sy, sz)
+        if bevel:
+            bevel_all(sub, bevel)
+        merge_into(target, sub)
+
+    # Jungle floor outside the outer wall: two long bands and two short ones.
+    go = co + wall
+    band = gs / 2 - go
+    for s in (-1, 1):
+        add(ground, 0, s * (go + band / 2), ground_z - 0.2, gs, band, 0.2)
+        add(ground, s * (go + band / 2), 0, ground_z - 0.2, band, 2 * go, 0.2)
+    # Paved apron and inner wall: one block from the channel floor up.
+    add(stone_dark, 0, 0, fl - 0.2, 2 * ci, 2 * ci, ground_z - fl + 0.2)
+    # Outer wall and the channel floor.
+    for s in (-1, 1):
+        add(stone_dark, 0, s * (co + wall / 2), fl - 0.2, 2 * go, wall, ground_z - fl + 0.2)
+        add(stone_dark, s * (co + wall / 2), 0, fl - 0.2, wall, 2 * co, ground_z - fl + 0.2)
+        add(stone_dark, s * (ci + co) / 2, 0, fl - 0.2, co - ci, 2 * co, 0.2)
+        add(stone_dark, 0, s * (ci + co) / 2, fl - 0.2, 2 * ci, co - ci, 0.2)
+    # Causeway under the far stair (Blender +Y is away from the player).
+    add(stone_dark, 0, (ci + co) / 2, fl, cw, co - ci, ground_z - fl)
+    # Coping stones along both edges.
+    cp, ch = w["coping"], w["coping_height"]
+    for edge in (ci - cp / 2, co + cp / 2):
+        for s in (-1, 1):
+            add(stone, s * edge, 0, ground_z, cp, 2 * edge + cp, ch, 0.02)
+            add(stone, 0, s * edge, ground_z, 2 * edge - cp, cp, ch, 0.02)
+
+    # The water: thin slabs (closed, so their top faces up) just under the rim.
+    lv = w["level"]
+    strips = {}
+    for name, cx, cy, sx, sy in (("WaterEast", (ci + co) / 2, 0, co - ci, 2 * co),
+                                 ("WaterWest", -(ci + co) / 2, 0, co - ci, 2 * co),
+                                 ("WaterNear", 0, -(ci + co) / 2, 2 * ci, co - ci)):
+        strips[name] = bmesh.new()
+        box(strips[name], cx, cy, lv - 0.02, sx, sy, 0.02)
+    far = bmesh.new()
+    side = ci - cw / 2
+    for s in (-1, 1):
+        sub = bmesh.new()
+        box(sub, s * (cw / 2 + side / 2), (ci + co) / 2, lv - 0.02, side, co - ci, 0.02)
+        merge_into(far, sub)
+    strips["WaterFar"] = far
+    return strips
 
 
 def fern(bm, rng, x, y, z, scale):

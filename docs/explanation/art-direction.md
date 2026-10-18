@@ -87,6 +87,42 @@ bloom slightly. The same scene runs on all three renderers the profile
 names (Forward+, Mobile, Compatibility for the web demo); Compatibility
 looks a little flatter and brighter, which we accept.
 
+## Water
+
+The temple stands in a stone-lined moat. Still water is the cheapest way
+to say "real place" in a top-down view: it carries the sky and the stone
+above it, shows a floor under it, and moves when nothing else does. It
+sits round the lowest tier because that is where the game camera looks
+past the platform (left and right on a wide screen, top and bottom on a
+tall one), and it never comes near the board, so it adds place without
+taking the eye.
+
+It stays a backdrop. The water is darker than the tiles, green-teal from
+real absorption (red light dies first, so the floor fades as the channel
+deepens), and slow: a drift of a few centimetres a second and small
+swells. Nothing in it is emissive or fast enough to pull attention while
+a cascade plays.
+
+Choices behind the [reference](../reference/water.md):
+
+- **Ripples are computed, not textured.** Gradient noise with its exact
+  slope, plus two long swells, gives normals without a texture, so the
+  water adds no sampler (the Metal limit that bit the stone shaders) and
+  no generated texture to the build, and it never shows a tile repeat.
+- **Desktop reads the scene, phones and web do not.** On desktop the
+  shader refracts the screen and measures the true depth from the depth
+  buffer; that forces Godot's transparent pass, where its own screen-space
+  reflections do not run, so the shader marches its own reflection rays
+  and falls back to the reflection probe and sky. Mobile and web blend a
+  cheaper surface over the real floor and take the path length from the
+  known floor height, which is exact for a flat channel.
+- **Caustics belong to the floor point.** Both shaders find the floor
+  point the eye sees through the water and draw the caustic lines there,
+  so they sit on the stone and move with it, not with the surface.
+- **One probe per strip.** A box probe over each strip reflects the
+  temple and jungle into the water only; one big probe would have changed
+  how the board's gold and gems reflect.
+
 ## Why a theme, not a scene
 
 Montezuma's will host mini games with other looks. The board view asks the

@@ -54,6 +54,41 @@ class Resource:
 # The theme's "textures.sets", set by main(). Texture files are build outputs
 # (gen_theme_textures.py), so paths follow the parameters, not the disk.
 TEXTURE_SETS = {}
+# The theme's water channel in Godot units (water_channel()), or empty.
+WATER = {}
+WATER_STRIPS = ("WaterEast", "WaterWest", "WaterNear", "WaterFar")
+
+
+def water_channel(p):
+    """The moat round the lowest tier: the same numbers as water_channel() in
+    gen_theme_meshes.py (keep the two in step). Heights are Godot Y."""
+    w = p["water"]
+    half = p["board"]["width"] * p["cell_size"] / 2 + p["board"]["frame_width"]
+    tiers = p["backdrop"]["tiers"]
+    base_half = (2 * half + 1.2 + 2.4 * (tiers - 1)) / 2
+    ground = -0.42 - 0.5 * tiers
+    inner = base_half + w["inset"]
+    return {"inner": inner, "outer": inner + w["width"], "ground": ground, "level": ground - w["level"],
+            "floor": ground - w["depth"]}
+
+
+def look_at(eye, target):
+    """Transform3D text for a camera at eye looking at target, Y up."""
+    def sub(a, b):
+        return [a[i] - b[i] for i in range(3)]
+
+    def norm(a):
+        n = sum(x * x for x in a) ** 0.5
+        return [x / n for x in a]
+
+    def cross(a, b):
+        return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
+
+    z = norm(sub(eye, target))
+    x = norm(cross([0.0, 1.0, 0.0], z))
+    y = cross(z, x)
+    rows = [x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2]]
+    return "Transform3D({})".format(", ".join(f"{v:.6f}" for v in rows + list(eye)))
 
 
 def texture_path(theme, tex_set, suffix, hi):
@@ -84,8 +119,18 @@ def shader_material(spec, theme, hi):
         r.body.append(f"shader_parameter/normal_scale = {spec.get('normal_scale', 1.0)}")
     if "ior" in spec and spec["shader"].endswith("SH_TriplanarPBR.gdshader"):
         r.body.append(f"shader_parameter/specular = {specular_from_ior(spec['ior'])}")
-    for key, value in spec.get("params", {}).items():
-        v = color(value) if isinstance(value, str) else value
+    params = dict(spec.get("params", {}))
+    if spec.get("water") and WATER:
+        params["floor_height"] = round(WATER["floor"], 4)
+    for key, value in params.items():
+        if isinstance(value, str):
+            v = color(value)
+        elif isinstance(value, list):
+            v = "Vector3({})".format(", ".join(str(x) for x in value))
+        elif isinstance(value, bool):
+            v = "true" if value else "false"
+        else:
+            v = value
         r.body.append(f"shader_parameter/{key} = {v}")
     return r.text('[gd_resource type="ShaderMaterial" load_steps={steps} format=3]')
 
@@ -168,6 +213,8 @@ def main():
     p = json.loads(params_path.read_text())
     theme = p["theme"]
     TEXTURE_SETS.update(p["textures"]["sets"])
+    if "water" in p:
+        WATER.update(water_channel(p))
     assets = ROOT / "game/assets"
     models = f"res://assets/models/{theme}"
     entry = {}
@@ -192,7 +239,15 @@ def main():
 
     backdrop_parts = [("Stone", "MI_StoneFrame"), ("StoneDark", "MI_StoneDark"), ("Bronze", "MI_Bronze"),
                       ("Flame", "MI_Flame"), ("Ground", "MI_Ground"), ("Foliage", "MI_Foliage"), ("Rocks", "MI_StoneDark")]
+    if WATER:
+        backdrop_parts += [(n, "MI_Water") for n in WATER_STRIPS]
     r = mesh_scene("Environment", [(n, f"{models}/backdrop/SM_Backdrop_{n}.obj", m) for n, m in backdrop_parts], theme)
+    if WATER:
+        # Water casts no shadow (its slabs would darken the floor under it)
+        # and stays out of baked GI and the lightmap: it moves.
+        for i, line in enumerate(r.body):
+            if any(line == f'[node name="{n}" type="MeshInstance3D" parent="."]' for n in WATER_STRIPS):
+                r.body[i + 1:i + 1] = ["cast_shadow = 0", "gi_mode = 0"]
     env = p["environment"]
     sky = [
         "[sub_resource type=\"ProceduralSkyMaterial\" id=\"sky_mat\"]",
@@ -238,6 +293,19 @@ def main():
                    f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, {sx * half}, 0.85, {sz * half})",
                    f"light_color = {color(torch['color'])}", f"light_energy = {torch['energy']}",
                    f"omni_range = {torch['range']}", "omni_attenuation = 1.4"]
+    if WATER:
+        # One box-projected reflection probe per water strip, sized to the
+        # strip so it reflects into the water and leaves the board's
+        # materials on the sky. Rendered once at load.
+        ci, co, lv = WATER["inner"], WATER["outer"], WATER["level"]
+        mid, wd = (ci + co) / 2, co - ci
+        for name, x, z, sx, sz in (("WaterEast", mid, 0.0, wd, 2 * co), ("WaterWest", -mid, 0.0, wd, 2 * co),
+                                   ("WaterNear", 0.0, mid, 2 * ci, wd), ("WaterFar", 0.0, -mid, 2 * ci, wd)):
+            r.body += ["", f'[node name="Probe{name[5:]}" type="ReflectionProbe" parent="."]',
+                       f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, {x:.4f}, {lv + 1.2:.4f}, {z:.4f})",
+                       f"size = Vector3({sx + 0.4:.4f}, 3.0, {sz + 0.4:.4f})",
+                       f"origin_offset = Vector3(0, -0.9, 0)", "box_projection = true",
+                       "ambient_mode = 0", "cull_mask = 1048575"]
     write(assets / f"models/{theme}/backdrop/PF_Environment.tscn", r.text("[gd_scene load_steps={steps} format=3]"))
     entry["environment"] = f"{models}/backdrop/PF_Environment.tscn"
 
@@ -317,6 +385,23 @@ def main():
             hi_overrides(r, tiered + [(f"K{k}", "Mesh", kind_material[k]) for k in range(kinds)])
         write(assets / f"lookdev/LD_{theme.capitalize()}_LineUp{suffix}.tscn",
               r.text("[gd_scene load_steps={steps} format=3]"))
+
+        if WATER:
+            # Look-dev water close-up: the east channel against the temple
+            # wall, for refraction, caustics, reflections and the stone edge.
+            r = Resource()
+            mid = (WATER["inner"] + WATER["outer"]) / 2
+            eye = [mid + 4.6, WATER["ground"] + 2.6, 3.2]
+            target = [mid - 0.6, WATER["level"], -0.6]
+            r.body = [f'[node name="Water_{theme}" type="Node3D"]', "",
+                      f'[node name="Environment" parent="." instance={r.ext_id("PackedScene", entry["environment"])}]', "",
+                      f'[node name="Board" parent="." instance={r.ext_id("PackedScene", entry["board"])}]', "",
+                      '[node name="Camera" type="Camera3D" parent="."]', f"transform = {look_at(eye, target)}",
+                      "fov = 55.0"]
+            if suffix:
+                hi_overrides(r, tiered)
+            write(assets / f"lookdev/LD_{theme.capitalize()}_Water{suffix}.tscn",
+                  r.text("[gd_scene load_steps={steps} format=3]"))
 
     # Piece and board colours for 2D use (HUD quota swatches), derived from the same parameters.
     names = ["red", "orange", "yellow", "green", "blue", "purple", "white"]
