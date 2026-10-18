@@ -19,17 +19,38 @@ download popup.
 
 ## Preview with the real web demo
 
-Export the game for the web (see [How to export the web demo](export-a-web-build.md)), then point the build at
-the export folder, the one containing `montezuma.js`:
+Get a web package, from CI or built yourself (see
+[How to export the web demo](export-a-web-build.md)), check it and unzip
+it:
 
 ```sh
-python3 site/build.py --demo-dir path/to/web-export
+sha256sum -c montezuma-*-web.zip.sha256
+unzip montezuma-*-web.zip -d web-export
+```
+
+Point the build at the unzipped folder, the one containing
+`montezuma.js`:
+
+```sh
+python3 site/build.py --demo-dir web-export/montezuma-*-web
 python3 -m http.server 8000 --directory site/_site
 ```
 
 The build copies the export into `site/_site/play/` and the page loads it
-when the visitor clicks "Play the intro level". Open the page over
+when the visitor clicks "Play the intro level (N MB)". Open the page over
 `http://`, not `file://`; browsers won't load WebAssembly from a file.
+If the build stops with "the web export is missing …", the folder is not
+a complete `web` package: get a fresh one rather than copying files in.
+
+## Update the embedded web build
+
+The site takes whatever package it is given, so a new game build needs
+no site change. Repeat the steps above with the newer
+`montezuma-<version>-web.zip`, click "Play the intro level" and wait for
+"Intro level running". If the game starts without its board, or the
+browser console shows `Can't open dynamic library`, the package and the
+loader disagree on the extension's file name: compare it with the
+[demo hand-off contract](../reference/website.md#demo-hand-off-contract).
 
 ## Run the tests
 

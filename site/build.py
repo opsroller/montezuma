@@ -14,6 +14,7 @@ Usage: python3 site/build.py [--out DIR] [--base-url URL] [--demo-dir DIR]
 from __future__ import annotations
 
 import argparse
+import gzip
 import html
 import json
 import re
@@ -28,6 +29,11 @@ DEFAULT_BASE_URL = "https://opsroller.github.io/montezuma/"
 PLATFORM_KEYS = ("windows", "macos", "linux", "android", "ios")
 STORE_NAMES = {"app-store": "the App Store", "google-play": "Google Play"}
 DEMO_ENTRY = "montezuma.js"
+# The game's extension, which the page preloads into Godot's file system.
+DEMO_EXTENSION = "libmontezuma.web.template_release.wasm32.nothreads.wasm"
+# What the page fetches after the click (contract: Web demo hand-off).
+DEMO_FETCHED = (DEMO_ENTRY, "montezuma.wasm", "montezuma.side.wasm",
+                "montezuma.pck", DEMO_EXTENSION)
 PAGES = ("index.html", "credits/index.html", "license/index.html")
 # Written into every build; only a folder carrying it is ever deleted.
 MARKER = ".montezuma-site-build"
@@ -280,6 +286,11 @@ def fill(template: str, values: dict[str, str], name: str) -> str:
     return re.sub(r"\{\{(\w+)\}\}", replace, template)
 
 
+def demo_download_size(demo_dir: Path) -> int:
+    """Bytes the visitor downloads after the click, compressed as the host serves them."""
+    return sum(len(gzip.compress((demo_dir / f).read_bytes(), 6)) for f in DEMO_FETCHED)
+
+
 def build(out: Path, base_url: str, demo_dir: Path | None,
           releases: Path = SITE / "data" / "releases.json",
           credits: Path = REPO / "CREDITS.md",
@@ -296,10 +307,15 @@ def build(out: Path, base_url: str, demo_dir: Path | None,
         raise BuildError(str(error)) from error
 
     demo_mode = "stub"
+    play_label = "Try the demo preview"
     if demo_dir is not None:
         if not (demo_dir / DEMO_ENTRY).is_file():
             raise BuildError(f"{demo_dir}: no {DEMO_ENTRY}; is this the web export?")
+        missing = [f for f in DEMO_FETCHED if not (demo_dir / f).is_file()]
+        if missing:
+            raise BuildError(f"{demo_dir}: the web export is missing {', '.join(missing)}")
         demo_mode = "godot"
+        play_label = f"Play the intro level ({format_size(demo_download_size(demo_dir))})"
 
     if out.exists():
         if not (out / MARKER).is_file() and any(out.iterdir()):
@@ -315,7 +331,7 @@ def build(out: Path, base_url: str, demo_dir: Path | None,
     values = {
         "index.html": {
             "demo_mode": demo_mode,
-            "play_label": "Play the intro level" if demo_mode == "godot" else "Try the demo preview",
+            "play_label": play_label,
             "release_line": render_release_line(data),
             "platform_list_h3": render_platforms(data, 3),
             "platform_list_h4": render_platforms(data, 4),

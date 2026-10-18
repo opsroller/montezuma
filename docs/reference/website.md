@@ -41,7 +41,7 @@ Download, Credits, License and Source code.
 |---|---|---|
 | `--out DIR` | `site/_site` | Output folder; replaced on every build. An existing non-empty folder is deleted only if it holds the `.montezuma-site-build` marker an earlier build wrote |
 | `--base-url URL` | `https://opsroller.github.io/montezuma/` | Canonical URLs and sitemap |
-| `--demo-dir DIR` | none | Godot web export folder containing `montezuma.js`. Copied to `play/`; the page runs the real demo. Without it the page runs the stub demo |
+| `--demo-dir DIR` | none | Unzipped `montezuma-<version>-web` folder from the `web` workflow. It must hold `montezuma.js`, `montezuma.wasm`, `montezuma.side.wasm`, `montezuma.pck` and `libmontezuma.web.template_release.wasm32.nothreads.wasm`, or the build fails naming what is missing. Copied to `play/`; the page runs the real demo and the play button reads "Play the intro level (N MB)", N being those five files gzipped, about what a compressing host sends. Without it the page runs the stub demo |
 
 The build fails, naming the file and field, when release data is invalid,
 a credits link is not `https://` or `#…`, or a template placeholder has no
@@ -138,7 +138,7 @@ message pointing to the downloads when either is missing.
 | Event | `detail` | When | Page does |
 |---|---|---|---|
 | `montezuma:level-completed` | `{ v: 1, level: "<level id>", score: <int> }` | Once, when the intro level is won | Opens the download popup with "You beat the intro level!" |
-| `montezuma:ready` (optional) | `{ v: 1, version: "<game version>" }` | First frame shown | Nothing yet |
+| `montezuma:ready` (optional) | `{ v: 1, version: "<game version>" }` | First frame shown | Status line changes from "Starting the intro level…" to "Intro level running…" |
 
 **Events, page to game.** None.
 

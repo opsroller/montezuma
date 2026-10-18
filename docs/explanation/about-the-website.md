@@ -22,6 +22,8 @@ The web demo is tens of megabytes. Loading it with the page would make the
 first visit slow on phones and metered connections and would hurt the
 page's loading metrics. The page reserves the demo's space, shows a play
 button, and downloads the build only when asked, with a progress bar.
+The button names the download size, worked out from the package at build
+time, so a visitor on a phone plan knows the cost before choosing.
 
 ## Why the demo runs in the page, not an iframe
 
@@ -54,4 +56,6 @@ screen and the release always agree.
 
 The website was built before the web demo existed. The stub fires the
 same event the game will, so the page, the popup and their tests are
-finished and only the build needs swapping in when it lands.
+finished and only the build needs swapping in when it lands. It still
+runs whenever the site is built without a web package, which keeps site
+work and its tests independent of the game's slow WebAssembly build.

@@ -8,6 +8,10 @@
 import { detectPlatform } from "./platform.js";
 
 const LEVEL_COMPLETED = "montezuma:level-completed";
+const READY = "montezuma:ready";
+// The game's extension: preloaded into Godot's file system under this bare
+// name, where the game opens it (contract: Web demo hand-off).
+const EXTENSION = "libmontezuma.web.template_release.wasm32.nothreads.wasm";
 
 const dialog = document.getElementById("download-dialog");
 const stage = document.getElementById("stage");
@@ -51,6 +55,10 @@ function openDownloads(won) {
 }
 
 window.addEventListener(LEVEL_COMPLETED, () => openDownloads(true));
+// First frame on screen: the game is playable now, not just loaded.
+window.addEventListener(READY, () => {
+  say("Intro level running. Match three or more to clear the board.");
+});
 
 document.querySelectorAll("[data-open-downloads]").forEach((el) => {
   el.addEventListener("click", (event) => {
@@ -110,7 +118,7 @@ async function startGodot() {
   progress.removeAttribute("value");
   say("Loading the intro level…");
   try {
-    await loadScript("play/montezuma.js");
+    if (typeof Engine === "undefined") await loadScript("play/montezuma.js");
     /* global Engine */
     if (!Engine.isWebGLAvailable(2)) {
       fail("Your browser can't run the demo (no WebGL 2). The downloads below work on every platform.");
@@ -133,10 +141,11 @@ async function startGodot() {
         }
       },
     });
+    await engine.preloadFile(`play/${EXTENSION}`, EXTENSION);
     await engine.startGame();
     progress.hidden = true;
     leaveButton.hidden = false;
-    say("Intro level running. Match three or more to clear the board.");
+    say("Starting the intro level…");
     canvas.focus();
   } catch (error) {
     console.error(error);

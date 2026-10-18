@@ -128,14 +128,31 @@ class BuildTest(unittest.TestCase):
         self.run_build()
         self.assertFalse((out / "stale.txt").exists())
 
-    def test_demo_dir_switches_to_godot_and_is_copied(self):
+    def make_export(self) -> Path:
         demo = self.tmp / "export"
         demo.mkdir()
-        (demo / "montezuma.js").write_text("")
-        (demo / "montezuma.wasm").write_bytes(b"\0asm")
-        out = self.run_build(demo_dir=demo)
-        self.assertIn('data-demo="godot"', (out / "index.html").read_text())
+        for name in build.DEMO_FETCHED:
+            (demo / name).write_bytes(b"\0asm")
+        return demo
+
+    def test_demo_dir_switches_to_godot_and_is_copied(self):
+        out = self.run_build(demo_dir=self.make_export())
+        page = (out / "index.html").read_text()
+        self.assertIn('data-demo="godot"', page)
         self.assertTrue((out / "play/montezuma.wasm").is_file())
+        self.assertTrue((out / "play" / build.DEMO_EXTENSION).is_file())
+
+    def test_play_button_shows_download_size(self):
+        demo = self.make_export()
+        size = build.format_size(build.demo_download_size(demo))
+        page = (self.run_build(demo_dir=demo) / "index.html").read_text()
+        self.assertIn(f"Play the intro level ({size})", page)
+
+    def test_demo_dir_without_extension_fails(self):
+        demo = self.make_export()
+        (demo / build.DEMO_EXTENSION).unlink()
+        with self.assertRaisesRegex(build.BuildError, build.DEMO_EXTENSION):
+            self.run_build(demo_dir=demo)
 
     def test_demo_dir_without_export_fails(self):
         with self.assertRaises(build.BuildError):
