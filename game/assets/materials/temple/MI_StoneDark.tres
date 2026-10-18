@@ -17,4 +17,3 @@ normal_texture = ExtResource("3")
 uv1_scale = Vector3(0.9, 0.9, 0.9)
 uv1_triplanar = true
 uv1_triplanar_sharpness = 4.0
-texture_filter = 5
