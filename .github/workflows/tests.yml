@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
 name: tests
 
 on:
@@ -7,15 +8,16 @@ on:
 
 jobs:
   core:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - name: Download Godot
-        run: |
-          curl -sSL -o godot.zip https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_linux.x86_64.zip
-          unzip -q godot.zip
-          mv Godot_v4.4.1-stable_linux.x86_64 godot
-      - name: Import project
-        run: ./godot --headless --path . --import || true
-      - name: Run core tests
-        run: ./godot --headless --path . --script res://tests/run_tests.gd
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release
+      - name: Test
+        run: ctest --test-dir build -C Release --output-on-failure

@@ -82,6 +82,7 @@ be upgraded between levels.
 
 ## Implementation notes
 
-Board logic lives in `core/` as plain GDScript with no scene or rendering
-dependencies, so it can run headless in tests. The 3D layer watches the board
-and animates its changes.
+The rules live in `core/` as plain C++20 with no engine dependency, so they
+compile natively on every target and are tested on their own. Godot links
+them in through GDExtension, and the 3D layer watches the board and animates
+its changes.
