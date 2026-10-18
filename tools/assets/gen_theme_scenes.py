@@ -61,7 +61,8 @@ WATER_STRIPS = ("WaterEast", "WaterWest", "WaterNear", "WaterFar")
 
 def water_channel(p):
     """The moat round the lowest tier: the same numbers as water_channel() in
-    gen_theme_meshes.py (keep the two in step). Heights are Godot Y."""
+    gen_theme_meshes.py (tests/test_water_channel.py checks they agree).
+    Heights are Godot Y."""
     w = p["water"]
     half = p["board"]["width"] * p["cell_size"] / 2 + p["board"]["frame_width"]
     tiers = p["backdrop"]["tiers"]
