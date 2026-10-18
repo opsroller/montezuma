@@ -38,10 +38,20 @@ struct Spawn {
     int drop = 1;  // rows above the top edge it starts: row -drop
 };
 
+// A piece that turns into another kind where it stands (the paint totem).
+struct Repaint {
+    Cell cell;
+    int kind = -1;
+};
+
 struct Step {
     std::vector<Cell> cleared;
     std::vector<Fall> falls;
     std::vector<Spawn> spawns;
+    // Seconds of lead-in before the clear, for an effect that starts the
+    // step (a totem firing). Repaints happen during the lead.
+    double lead = 0.0;
+    std::vector<Repaint> repaints;
 };
 
 // What the view needs from a MoveResult, in the contract's order.
@@ -74,7 +84,7 @@ struct Timing {
 // One phase of the plan. Items in a phase play together; phases follow each
 // other in time. `step` is the cascade step a Clear/Fall phase belongs to.
 struct Phase {
-    enum class Kind { Swap, Clear, Fall, Shuffle, Redeal };
+    enum class Kind { Swap, Effect, Clear, Fall, Shuffle, Redeal };
     Kind kind = Kind::Swap;
     int step = -1;
     double start = 0.0;
@@ -84,6 +94,7 @@ struct Phase {
     std::vector<double> move_seconds;           // Fall: per move (gravity)
     std::vector<Spawn> spawns;                  // Fall: new pieces
     std::vector<double> spawn_seconds;          // Fall: per spawn
+    std::vector<Repaint> repaints;              // Effect: pieces that change kind
 };
 
 struct Plan {
@@ -106,6 +117,16 @@ inline Plan build_plan(const Events& ev, const Timing& t = {}) {
     for (std::size_t i = 0; i < ev.steps.size(); ++i) {
         const Step& s = ev.steps[i];
         if (i > 0) now += t.cascade_gap;
+        if (s.lead > 0.0 || !s.repaints.empty()) {
+            Phase effect;
+            effect.kind = Phase::Kind::Effect;
+            effect.step = static_cast<int>(i);
+            effect.start = now;
+            effect.duration = std::max(s.lead, 0.0);
+            effect.repaints = s.repaints;
+            now += effect.duration;
+            plan.phases.push_back(std::move(effect));
+        }
         Phase clear;
         clear.kind = Phase::Kind::Clear;
         clear.step = static_cast<int>(i);
@@ -161,11 +182,21 @@ inline Plan build_plan(const Events& ev, const Timing& t = {}) {
 //   on_clear(phase, slot, cell)               slot leaves the board (return nothing)
 //   make_spawn(phase, index, spawn) -> Slot   a new slot for a spawn
 //   on_redeal(phase)                          the caller rebuilds the grid itself
+// Optional hooks, called only when the caller has them:
+//   make_repaint(phase, slot, repaint) -> Slot  the slot that replaces `slot`
+//   before_phase(phase, grid)                  before the phase changes the grid
+//   after_phase(phase, grid)                   once the phase has changed it
 template <class Slot, class Hooks>
 void walk(const Plan& plan, std::vector<Slot>& grid, int width, Hooks& hooks) {
     auto at = [&](Cell c) -> Slot& { return grid[static_cast<std::size_t>(c.y * width + c.x)]; };
     for (const Phase& p : plan.phases) {
+        if constexpr (requires { hooks.before_phase(p, grid); }) hooks.before_phase(p, grid);
         switch (p.kind) {
+            case Phase::Kind::Effect:
+                if constexpr (requires(Slot& s, const Repaint& rp) { s = hooks.make_repaint(p, s, rp); }) {
+                    for (const Repaint& rp : p.repaints) at(rp.cell) = hooks.make_repaint(p, at(rp.cell), rp);
+                }
+                break;
             case Phase::Kind::Clear:
                 for (const Cell& c : p.cells) {
                     hooks.on_clear(p, at(c), c);
@@ -191,6 +222,7 @@ void walk(const Plan& plan, std::vector<Slot>& grid, int width, Hooks& hooks) {
                 break;
             }
         }
+        if constexpr (requires { hooks.after_phase(p, grid); }) hooks.after_phase(p, grid);
     }
 }
 

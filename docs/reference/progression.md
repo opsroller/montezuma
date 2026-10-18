@@ -247,3 +247,87 @@ the player's timer tier and 5 gems on the board.
 | e1-l05 | [`l05.json`](../../game/data/levels/e1/l05.json) | 30 / 45 | `fire`, `time` | `tnt`, `color_clear`, `lightning` | 20090405 |
 
 No episode 1 level has chains, steel or a time override.
+
+## Episode 2 levels
+
+Briefs for episode 2 (WP-24). Each level introduces one item, in the
+original's unlock order, and keeps the one before it unlocked for a
+second look; difficulty rises only with the +5 gem goal, so the episode
+stays nearly flat and greedy wins every run on each level (two 100 %
+levels count as easier under [balance](balance.md)'s curve rule).
+Simulator targets are the e2 row there, including the moves floor of 50.
+Power-ups come only from runs of 4 or more, drawn among the unlocked
+ones; a level file cannot place a piece, so a new power-up's first
+contact rests on those draws.
+
+### e2-l01: Gold rush
+
+- **Idea:** The gold totem: two yellow moves in a row add 1500 points; the clock power-up (from a run of 4+) adds 15 s.
+- **Feeling:** relief: an easy episode opener that pays out.
+- **Duration:** 175 to 225 s median (sim greedy about 50 to 65 moves at 3.5 s a move).
+- **Target success rate:** Normal: at least 90 % of players win on the first try; hard: at least 75 %. Simulator: the e2 row of [balance](balance.md), with `greedy` expected to win every run. Its `greedy` win rate is at least e2-l03's (the opener is a rest).
+- **Takeaway:** The player knows yellow feeds a points totem and that a clock on the board adds time.
+- **Role and levers:** rest; goal size: 35 gems.
+- **First contact:** Gold only adds points and the clock only adds time, so neither can hurt. Power-ups come from runs of 4 or more, which a player makes every few moves, and each draw is 1 in 4 among the unlocked ones, so a player usually meets the clock more than once in a level of 50+ moves.
+
+### e2-l02: Times five
+
+- **Idea:** The multiplier power-up: the move it goes off in scores x5.
+- **Feeling:** greed: one big-number moment.
+- **Duration:** 200 to 250 s median (sim greedy about 55 to 70 moves).
+- **Target success rate:** Normal: at least 85 % first try; hard: at least 70 %. Simulator: the e2 row of [balance](balance.md), with `greedy` expected to win every run.
+- **Takeaway:** The player knows a multiplier makes the move it goes off in score five times as much.
+- **Role and levers:** introduce; goal size: 40 gems.
+- **First contact:** Points never cost time, so a wasted multiplier costs nothing. Power-ups come from runs of 4 or more, which a player makes every few moves, and each draw is 1 in 5 among the unlocked ones, so a player usually meets the multiplier more than once in a level of 50+ moves. The clock from e2-l01 stays unlocked for a second look.
+
+### e2-l03: Offerings
+
+- **Idea:** The gift totem: two purple moves in a row place one power-up on the board.
+- **Feeling:** a small gift: a tool appears out of nowhere.
+- **Duration:** 220 to 270 s median (sim greedy about 65 to 80 moves).
+- **Target success rate:** Normal: at least 85 % first try; hard: at least 70 %. Simulator: the e2 row of [balance](balance.md), with `greedy` expected to win every run.
+- **Takeaway:** The player knows purple feeds a totem that puts a power-up on the board.
+- **Role and levers:** introduce; goal size: 45 gems; complexity: four totems.
+- **First contact:** A gift only adds a helpful piece; the gift totem charges like every totem the player has fired since e1-l03. The multiplier from e2-l02 stays unlocked and can be the gift.
+
+### e2-l04: Harvest
+
+- **Idea:** The harvest totem: two green moves in a row collect every gem on the board at once.
+- **Feeling:** a windfall: the gem counter jumps.
+- **Duration:** 210 to 260 s median (sim greedy about 60 to 75 moves).
+- **Target success rate:** Normal: at least 85 % first try; hard: at least 70 %. Simulator: the e2 row of [balance](balance.md), with `greedy` expected to win every run.
+- **Takeaway:** The player knows green collects every gem in view at once, about 5 toward the goal.
+- **Role and levers:** introduce; goal size: 50 gems; complexity: five totems.
+- **First contact:** Harvest only helps the goal, and the board always holds 5 gems, so it pays the same whenever it fires. The gift totem from e2-l03 stays for a second look.
+
+### e2-l05: Fresh paint
+
+- **Idea:** The paint totem: two white moves in a row repaint 4 random pieces to one kind; the gems-on-board upgrade (6) becomes available as a passive extra.
+- **Feeling:** curiosity: a few pieces change colour, sometimes into a match.
+- **Duration:** 200 to 250 s median (sim greedy about 55 to 70 moves).
+- **Target success rate:** Normal: at least 85 % first try; hard: at least 70 %. Simulator: the e2 row of [balance](balance.md), with `greedy` expected to win every run.
+- **Takeaway:** The player knows white repaints a few pieces into one colour, and that one more gem on the board can be bought.
+- **Role and levers:** introduce; goal size: 55 gems; complexity: six totems.
+- **First contact:** Paint never removes progress, and any run it happens to make resolves for free. The harvest totem from e2-l04 stays for a second look.
+
+### e2-l06: The adviser
+
+- **Idea:** The hint power-up (shows every legal swap for 20 s), in the episode finale that uses every episode 2 item.
+- **Feeling:** confidence: the whole kit at once, with help when stuck.
+- **Duration:** 220 to 270 s median (sim greedy about 65 to 80 moves).
+- **Target success rate:** Normal: at least 85 % first try; hard: at least 70 %. Simulator: the e2 row of [balance](balance.md), with `greedy` expected to win every run.
+- **Takeaway:** The player knows hint shows every move for a while, and has used every totem and power-up of the first two episodes.
+- **Role and levers:** introduce; goal size: 60 gems; complexity: every e1-e2 item at once.
+- **First contact:** Hint is help, not a threat. Power-ups come from runs of 4 or more, which a player makes every few moves, and each draw is 1 in 6 among the unlocked ones, so a player usually meets the hint more than once in a level of 50+ moves. The paint totem from e2-l05 stays for a second look. Not a difficulty spike: episode 3's chains are the next test.
+
+| Level | File | Gems normal / hard | Totems | Power-ups | Seed |
+|---|---|---|---|---|---|
+| e2-l01 | [`l01.json`](../../game/data/levels/e2/l01.json) | 35 / 55 | `fire`, `time`, `gold` | `tnt`, `color_clear`, `lightning`, `clock` | 20090501 |
+| e2-l02 | [`l02.json`](../../game/data/levels/e2/l02.json) | 40 / 60 | `fire`, `time`, `gold` | `tnt`, `color_clear`, `lightning`, `clock`, `multiplier` | 20090502 |
+| e2-l03 | [`l03.json`](../../game/data/levels/e2/l03.json) | 45 / 70 | `fire`, `time`, `gold`, `gift` | `tnt`, `color_clear`, `lightning`, `clock`, `multiplier` | 20090503 |
+| e2-l04 | [`l04.json`](../../game/data/levels/e2/l04.json) | 50 / 75 | `fire`, `time`, `gold`, `gift`, `harvest` | `tnt`, `color_clear`, `lightning`, `clock`, `multiplier` | 20090504 |
+| e2-l05 | [`l05.json`](../../game/data/levels/e2/l05.json) | 55 / 85 | `fire`, `time`, `gold`, `gift`, `harvest`, `paint` | `tnt`, `color_clear`, `lightning`, `clock`, `multiplier` | 20090505 |
+| e2-l06 | [`l06.json`](../../game/data/levels/e2/l06.json) | 60 / 90 | `fire`, `time`, `gold`, `gift`, `harvest`, `paint` | `tnt`, `color_clear`, `lightning`, `clock`, `multiplier`, `hint` | 20090506 |
+
+No episode 2 level has chains, steel or a time override: chains arrive
+in e3-l01 and steel in e3-l06.

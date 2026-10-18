@@ -79,6 +79,10 @@ public:
     godot::String get_autostart_difficulty() const { return autostart_difficulty_; }
     void set_warning_seconds(double v) { warning_seconds_ = v; }
     double get_warning_seconds() const { return warning_seconds_; }
+    // Look-dev: after autostart, stage and play every totem and power-up in
+    // turn (game/scenes/board/effects/effects_showcase.tscn).
+    void set_effects_showcase(bool v) { effects_showcase_ = v; }
+    bool get_effects_showcase() const { return effects_showcase_; }
 
 protected:
     static void _bind_methods();
@@ -122,6 +126,13 @@ private:
         emit_signal(signal, args...);
     }
     void run_self_test();
+    void show_hint(const Swap& hint);
+    // Effects stages: 0..6 fire each totem, 7..12 set off each power-up.
+    // Each sets the session up for its effect and plays one legal move.
+    // False when the stage found no move to play.
+    bool run_effect_stage(int stage);
+    void advance_showcase();
+    void next_showcase_stage();
     godot::Dictionary level_dictionary() const;
 
     std::unique_ptr<LevelSession> session_;
@@ -142,6 +153,12 @@ private:
     godot::String autostart_level_;
     godot::String autostart_difficulty_ = "normal";
     double warning_seconds_ = 10.0;
+    // PWR-11: seconds the hint power-up still shows every legal swap.
+    double hint_left_ = 0.0;
+    std::optional<Swap> pending_hint_;  // a free hint waiting for the view
+    bool effects_showcase_ = false;
+    bool showcase_running_ = false;
+    int showcase_stage_ = 0;
 
     // Self-test (`-- --game-selftest`): cues are recorded, not played.
     bool self_test_ = false;
