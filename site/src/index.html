@@ -1,0 +1,85 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- Copyright (C) 2026 Charles (opsroller) and Montezuma contributors -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Montezuma's: play the intro level in your browser</title>
+  <meta name="description" content="Montezuma's is a free, open-source 3D match-3 game. Play the intro level right here, then get it for Windows, macOS, Linux, Android or iOS.">
+  <link rel="canonical" href="{{base_url}}">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Montezuma's">
+  <meta property="og:description" content="A free, open-source 3D match-3 game. Play the intro level in your browser.">
+  <meta property="og:url" content="{{base_url}}">
+  <link rel="stylesheet" href="assets/tokens.css">
+  <link rel="stylesheet" href="assets/site.css">
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <p class="wordmark"><a href="./">Montezuma's</a></p>
+    <nav aria-label="Site">
+      <ul>
+        <li><a href="#download">Download</a></li>
+        <li><a href="credits/">Credits</a></li>
+        <li><a href="{{source_url}}">Source code</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section id="play" class="play" data-demo="{{demo_mode}}" aria-labelledby="play-title">
+      <h1 id="play-title">Montezuma's</h1>
+      <p class="lede">A free, open-source 3D match-3 game. Beat the intro level to get the full game.</p>
+
+      <div class="stage" id="stage">
+        <noscript>
+          <p>The playable demo needs JavaScript. You can still <a href="#download">download the game</a> for every platform.</p>
+        </noscript>
+        <div class="poster">
+          <button type="button" class="button primary" id="play-button">{{play_label}}</button>
+        </div>
+      </div>
+
+      <div class="demo-controls">
+        <progress id="demo-progress" hidden aria-label="Loading the demo"></progress>
+        <p id="demo-status" class="status" role="status" aria-live="polite"></p>
+        <button type="button" class="button" id="leave-button" hidden>Leave game</button>
+        <a id="skip-link" href="#download" data-open-downloads>Skip the level and get the game</a>
+      </div>
+
+      <template id="stub-template">
+        <div class="stub">
+          <p><strong>Demo preview.</strong> The playable intro level appears here once the web build is ready.</p>
+          <button type="button" class="button primary" data-stub-win>Finish the preview level</button>
+        </div>
+      </template>
+    </section>
+
+    <section id="download" class="download" aria-labelledby="download-title">
+      <h2 id="download-title">Get Montezuma's</h2>
+      {{release_line}}
+      {{platform_list_h3}}
+      <p class="help">Montezuma's is free software under the GNU General Public License, version 2 or later. <a href="license/">License and source code</a>.</p>
+    </section>
+  </main>
+
+  <dialog id="download-dialog" aria-labelledby="dialog-title">
+    <form method="dialog" class="dialog-close">
+      <button type="submit" class="button icon" data-close aria-label="Close">×</button>
+    </form>
+    <h2 id="dialog-title">
+      <span data-won>You beat the intro level!</span>
+      <span data-skipped hidden>Get Montezuma's</span>
+    </h2>
+    <p>Keep playing with the full game. It's free.</p>
+    <p class="primary-slot" data-primary></p>
+    <h3>All platforms</h3>
+    {{platform_list_h4}}
+  </dialog>
+
+  {{footer}}
+</body>
+</html>

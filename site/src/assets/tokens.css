@@ -1,0 +1,39 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+/* Copyright (C) 2026 Charles (opsroller) and Montezuma contributors */
+
+/* Design tokens. Placeholders until the visual identity (WP-04) exports
+   the real ones from design/; keep names stable so the swap is one file.
+   Text pairs below meet WCAG 2.2 AA contrast (4.5:1 or better). */
+:root {
+  --color-bg: #fbf7ef;
+  --color-surface: #ffffff;
+  --color-text: #1f1a14;
+  --color-muted: #574c3f;
+  --color-accent: #8a3b12;
+  --color-accent-text: #ffffff;
+  --color-border: #8c7e6c;
+  --color-focus: #1b5fae;
+  --color-stage: #2a2219;
+  --color-stage-text: #f6efe2;
+
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: Georgia, "Times New Roman", serif;
+
+  --radius: 0.5rem;
+  --space: 1rem;
+  --measure: 70ch;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #17130f;
+    --color-surface: #221c16;
+    --color-text: #f3ece0;
+    --color-muted: #c9bba8;
+    --color-accent: #e59a5c;
+    --color-accent-text: #17130f;
+    --color-border: #8c7e6c;
+    --color-focus: #8cc2ff;
+    --color-stage: #0d0b09;
+  }
+}
