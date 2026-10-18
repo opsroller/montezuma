@@ -44,6 +44,20 @@ godot --headless --path game --import
 godot --headless --path game --quit-after 120    # errors show here
 ```
 
+## Capture screenshots without a display
+
+Godot's Movie Maker renders frames to PNG files. On a machine without a
+screen, run it under a virtual X display with the OpenGL driver (needs
+`xvfb-run`):
+
+```sh
+xvfb-run -a -s "-screen 0 1600x1600x24" godot --path game --rendering-driver opengl3 \
+  --resolution 540x1170 --write-movie /tmp/shots/frame.png --fixed-fps 30 --quit-after 20
+```
+
+Each frame lands as `/tmp/shots/frameNNNNNNNN.png`. Change `--resolution`
+to check a phone (`540x1170`) and a desktop (`1280x720`) framing.
+
 ## Export a build
 
 Needs the Godot 4.4.1 export templates and a preset in

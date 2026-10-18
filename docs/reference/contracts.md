@@ -99,6 +99,9 @@ level_finished(outcome: int, score: int)                # LevelState.Outcome
 `BoardView3D` API: `show_board(board: Match3Board)`, `play(result: Dictionary)`
 (emits `animation_finished` when done), `play_illegal(a, b)`, signals `swap_requested(a: Vector2i,
 b: Vector2i)` and `animation_finished`.
+**Implemented** in WP-12 (`extension/src/board/`), plus `is_busy()`,
+`cell_at_screen(pos)` and a `layout_changed` signal; see
+[Board view](board-view.md).
 
 ## Asset manifest (owner: technical-artist, WP-07/08) — proposed
 
