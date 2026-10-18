@@ -56,7 +56,7 @@ Each role loads `engineering-practices` plus its own plugin from
 |---|---|---|
 | `game-designer` | `docs/reference/rules-*.md`, `docs/reference/progression.md`, `docs/explanation/about-the-rules.md`, `docs/explanation/about-rule-sets-and-themes.md`, `docs/reference/balance.md`, `game/data/levels/` | Level files are JSON in the LevelData contract. Sim targets in `docs/reference/balance.md` |
 | `gameplay-programmer` | `core/`, `extension/src/match3_board.*`, `tools/sim/` | Namespace `montezuma`; bindings in `montezuma::godot_binding` |
-| `graphics-programmer` | `extension/src/board/`, `extension/src/game/`, `extension/src/bench/`, `game/scenes/`, `tools/bench/` | Feel constants in `extension/src/board/feel.hpp` |
+| `graphics-programmer` | `extension/src/board/`, `extension/src/game/`, `extension/src/render/`, `extension/src/bench/`, `game/scenes/`, `tools/bench/` | Feel constants in `extension/src/board/feel.hpp` |
 | `technical-artist` | `game/assets/models/`, `game/assets/materials/`, `game/assets/textures/`, `game/assets/lookdev/`, `game/assets/manifest.json`, `tools/assets/` | Budgets below; themes, naming and validator in `docs/reference/board-themes.md`; look in `docs/explanation/art-direction.md` |
 | `sound-designer` | `game/assets/audio/`, `extension/src/audio/`, `tools/audio/` | Cue list in contracts |
 | `ui-developer` | `game/ui/`, `extension/src/ui/` | Credits screen reads `CREDITS.md`; implements the graphic designer's specs |

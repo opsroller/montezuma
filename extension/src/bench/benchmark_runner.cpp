@@ -25,6 +25,7 @@
 
 #include "board/board_view_3d.hpp"
 #include "frame_stats.hpp"
+#include "render/quality_tiers.hpp"
 #include "render_probe.hpp"
 
 using namespace godot;
@@ -93,6 +94,12 @@ void BenchmarkRunner::read_command_line() {
 void BenchmarkRunner::_ready() {
     if (Engine::get_singleton()->is_editor_hint()) return;
     read_command_line();
+    if (tier_.is_empty()) {
+        const QualityTiers* tiers = QualityTiers::get_singleton();
+        tier_ = tiers ? tiers->get_tier() : String("unset");
+    }
+    // Visual target: p95 within 16.6 ms, 33.3 ms on the web tier.
+    if (budget_ms_ <= 0.0) budget_ms_ = tier_ == "web" ? 33.3 : 16.6;
     BoardView3D* v = view();
     ERR_FAIL_NULL_MSG(v, "BenchmarkRunner: board_view_path does not point at a BoardView3D.");
     try {
@@ -239,6 +246,7 @@ void BenchmarkRunner::finish() {
     report_["render"] = render;
     report_["replay"] = replay;
     report_["features"] = features_;
+    if (const QualityTiers* tiers = QualityTiers::get_singleton()) report_["quality_features"] = tiers->get_active_features();
 
     const String dir = output_path_.get_base_dir();
     if (!dir.is_empty()) DirAccess::make_dir_recursive_absolute(ProjectSettings::get_singleton()->globalize_path(dir));

@@ -87,8 +87,8 @@ command line:
 | `warmup_seconds` | `--bench-warmup=S` | 10 |
 | `measure_seconds` | `--bench-seconds=S` | 60 |
 | `output_path` | `--bench-out=PATH` | `user://bench/benchmark.json` |
-| `tier` | `--bench-tier=NAME` | `unset` (until WP-45 picks tiers at start) |
-| `budget_ms` | `--bench-budget=MS` | 16.6 (use 33.3 for `web` p95) |
+| `tier` | `--bench-tier=NAME` | empty: the tier [`QualityTiers`](quality-tiers.md) has in effect. A label only; to run another tier, pass `--quality=NAME` (QualityTiers' own argument) |
+| `budget_ms` | `--bench-budget=MS` | 0: the tier's p95 budget, 33.3 for `web`, else 16.6 |
 | `quit_when_done` | `--bench-stay` sets it false | true |
 
 The runner quits with status 1 when the replay diverged, else 0.
@@ -106,7 +106,7 @@ reach):
 | Field | Meaning |
 |---|---|
 | `schema` | 1 |
-| `tier`, `budget_ms` | as set |
+| `tier`, `budget_ms` | as resolved above |
 | `warmup_seconds`, `measure_seconds` | as run |
 | `device` | `os`, `model`, `godot`, `rendering_method` (`forward_plus`, `mobile`, `gl_compatibility`), `rendering_driver`, `adapter`, `vendor`, `api_version`, `resolution` [w, h] |
 | `gpu_timing` | false when every GPU sample was 0 (headless, or a driver without timer queries); then `gpu_ms` means nothing |
@@ -114,6 +114,7 @@ reach):
 | `render` | `draw_calls_p95`, `draw_calls_max`, `primitives_p95`, `primitives_max`, `video_mem_max_mb` |
 | `replay` | `scenario` (`busiest-board`), `seed`, `beats`, `loops`, `deep_cascades` (beats of 4+ steps played), `max_cascade_steps`, `diverged` |
 | `features` | the feature list below, read when the capture starts |
+| `quality_features` | `QualityTiers.get_active_features()`: the feature ids the active tier switches on ([Quality tiers](quality-tiers.md#feature-ids)) |
 
 ## Features
 

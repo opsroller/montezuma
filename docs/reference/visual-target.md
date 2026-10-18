@@ -39,7 +39,9 @@ told apart at a glance.
 
 A higher-end desktop runs `desktop-high` at 4K (3840×2160) with FSR 2.2
 Quality; that is a setting, not a separate tier. The tier is chosen at
-start from the renderer and GPU and can be changed in the settings menu.
+start from the renderer and GPU and can be changed in the settings menu;
+how, and the exact settings each tier applies, are in
+[Quality tiers](quality-tiers.md).
 
 ## Features per tier
 
@@ -166,9 +168,10 @@ variants, and each export carries only its own:
 | Fire flipbooks | 8×8 sheets | 4×4 sheets | 4×4 sheets |
 | Bake outputs | lightmaps at desktop texel density | lightmaps at mobile density | lightmaps at mobile density |
 
-- **Selection at run time.** The quality tier system (WP-45) resolves a
-  manifest name to the variant for the active tier and falls back to the
-  base variant when a tier variant is missing.
+- **Selection at run time.** The quality tier system (WP-45) resolves an
+  asset path to the variant for the active tier
+  (`QualityTiers::resolve_variant`) and falls back to the base variant
+  when a tier variant is missing.
 - **Stripping at export.** The Android, iOS and web export presets
   exclude the desktop-only folders and LOD files with export
   `exclude_filter`s, so the desktop sets never reach a phone or the web

@@ -110,7 +110,7 @@ level by the full rules. Commands: `swap(a, b)` -> `optional<MoveReport>`,
 Reports list every step in display order. Fields and defaults:
 [level-session.md](level-session.md).
 
-## Game signals (owner: graphics-programmer, WP-10/WP-26) — proposed
+## Game signals (owner: graphics-programmer, WP-10/WP-26) — implemented
 
 `Match3Game` (C++ node in `extension/src/game/`, placed in `game/scenes/game/game.tscn`)
 owns the board and level state and emits, for the HUD and audio:
@@ -139,6 +139,13 @@ hint_cost_changed(cost: int, affordable: bool)
 Commands the HUD calls on `Match3Game` (no arguments): `shuffle()` and
 `buy_hint()`. The HUD finds the node through group `match3_game`, which
 must be set in the scene (`node_added` fires before `_ready`).
+
+**Implemented** in WP-28 (`extension/src/game/match3_game.*`), plus
+`hint_shown(a: Vector2i, b: Vector2i)` for the view to highlight a bought
+or free hint. `level_started` passes the LevelData as a `Dictionary`.
+`streak_changed` and `bonus_changed` are not emitted: the rules have no
+streak apart from totem charges and no held power-ups. Signal timing and
+cues: [Match3Game](match3-game.md).
 
 `BoardView3D` API: `show_board(board: Match3Board)`, `play(result: Dictionary)`
 (emits `animation_finished` when done), `play_illegal(a, b)`, signals `swap_requested(a: Vector2i,
@@ -213,6 +220,19 @@ These replace the placeholders `row_clear`, `random_blast`, `color_bomb`
 `totem_fire_<id>`, `bonus_use_<id>` use these ids.
 
 The LevelData fields above were agreed with the LevelData owner and land with WP-05 (#7).
+
+## Quality tiers (owner: graphics-programmer, WP-45) — implemented
+
+`/root/QualityTiers` (C++: `QualityTiers::get_singleton()`). Settings
+screen (ui-developer): the key `quality_tier`, values `auto` plus
+`get_available_tiers()`, read with `get_choice()`, written with
+`set_choice(value)`, which saves and applies at once; hide it when only
+one tier is available. Content (technical-artist): node groups
+`quality:<feature id>`, `quality_fallback:<feature id>`,
+`quality_shadow_light`, `quality_fog_light`; texture variants through
+`resolve_variant(path)`. Benchmark (WP-46): `-- --quality=<tier>` and
+`get_active_features()`. Ids, groups and settings:
+[quality-tiers.md](quality-tiers.md).
 
 ## UI requests (owner: ui-developer, WP-19) — proposed
 

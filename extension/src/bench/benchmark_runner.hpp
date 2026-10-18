@@ -70,8 +70,10 @@ private:
     double warmup_seconds_ = 10.0;
     double measure_seconds_ = 60.0;
     godot::String output_path_ = "user://bench/benchmark.json";
-    godot::String tier_ = "unset";
-    double budget_ms_ = 16.6;
+    // Empty: the tier QualityTiers has in effect.
+    godot::String tier_;
+    // 0: the tier's p95 budget from the visual target.
+    double budget_ms_ = 0.0;
     bool quit_when_done_ = true;
 
     godot::Ref<Match3Board> board_;

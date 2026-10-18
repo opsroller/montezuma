@@ -36,6 +36,12 @@ public:
     // listed cell holds a piece.
     godot::Dictionary clear_cells(const godot::Array& cells);
 
+    // C++ only. The game scene (Match3Game) mirrors its level session's
+    // board here so the board view draws it.
+    void set_core_board(const Board& board) { board_ = board; }
+    // C++ only. The Dictionary try_swap returns, for any core MoveResult.
+    static godot::Dictionary to_dictionary(const MoveResult& result);
+
 protected:
     static void _bind_methods();
 

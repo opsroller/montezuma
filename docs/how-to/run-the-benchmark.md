@@ -48,7 +48,7 @@ or a cloud machine without a GPU do not count against the
 To run the benchmark alone, without the script:
 
 ```sh
-godot --path game res://scenes/bench/bench.tscn -- --bench-tier=desktop-high --bench-out=/tmp/bench.json
+godot --path game res://scenes/bench/bench.tscn -- --quality=desktop-high --bench-out=/tmp/bench.json
 ```
 
 ## On an Android or iOS phone
@@ -56,8 +56,9 @@ godot --path game res://scenes/bench/bench.tscn -- --bench-tier=desktop-high --b
 Phones take no command-line arguments, so the benchmark scene becomes the
 main scene of a local debug export. Do not commit these changes.
 
-1. In `game/scenes/bench/bench.tscn`, set the `BenchmarkRunner`'s `tier` to
-   `mobile` (and change `measure_seconds` if needed). In `game/project.godot`,
+1. In `game/scenes/bench/bench.tscn`, change the `BenchmarkRunner`'s
+   `measure_seconds` if needed (phones run the `mobile` tier on their own).
+   In `game/project.godot`,
    set `run/main_scene="res://scenes/bench/bench.tscn"` under
    `[application]`.
 2. Build the extension for the phone and export a debug build. The

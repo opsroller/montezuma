@@ -8,8 +8,9 @@
 #
 # Usage: tools/bench/run_bench.sh [options]
 #   --godot PATH      Godot 4.7.2 editor binary (default: godot on PATH)
-#   --tier NAME       desktop-high, desktop-standard, mobile or web; checks the
-#                     feature list against it (default: unset, no check)
+#   --tier NAME       desktop-high, desktop-standard, mobile or web: runs with
+#                     that quality tier (--quality) and checks the feature
+#                     list against it (default: the tier QualityTiers picks)
 #   --driver NAME     --rendering-driver for Godot, e.g. vulkan, metal, d3d12,
 #                     opengl3 (default: the project's)
 #   --size WxH        window size for the benchmark (default 1920x1080)
@@ -22,7 +23,7 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-godot=godot tier=unset driver="" size=1920x1080 seconds=60 warmup=10 out=bench-out readability=0 xvfb=0
+godot=godot tier="" driver="" size=1920x1080 seconds=60 warmup=10 out=bench-out readability=0 xvfb=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --godot) godot="$2"; shift 2 ;;
@@ -59,17 +60,20 @@ run_godot() {
   "${cmd[@]}"
 }
 
+quality=()
+[[ -n "$tier" ]] && quality=("--quality=$tier")
+
 status=0
 window "$size"
 run_godot res://scenes/bench/bench.tscn -- "--bench-seconds=$seconds" "--bench-warmup=$warmup" \
-  "--bench-tier=$tier" "--bench-out=$out/benchmark.json" || status=1
-if [[ "$tier" != unset && -f "$out/benchmark.json" ]]; then
+  "--bench-out=$out/benchmark.json" "${quality[@]}" || status=1
+if [[ -f "$out/benchmark.json" ]]; then
   python3 "$root/tools/bench/check_features.py" "$out/benchmark.json" | tee "$out/features.txt" || status=1
 fi
 
 if [[ "$readability" == 1 ]]; then
   window 540x1170
-  run_godot res://scenes/bench/readability.tscn -- "--capture-out=$out/readability" || status=1
+  run_godot res://scenes/bench/readability.tscn -- "--capture-out=$out/readability" "${quality[@]}" || status=1
   python3 "$root/tools/bench/check_readability.py" "$out/readability" --json "$out/readability.json" \
     | tee "$out/readability.txt" || status=1
 fi
