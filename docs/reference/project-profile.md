@@ -127,8 +127,11 @@ credits screen and the website both read from it.
 
 ## Budgets
 
-These are the mobile floor. Per-tier budgets, frame times and the look
-each tier must show are in [Visual target](visual-target.md).
+These are the caps for everything the mobile and web builds ship.
+Desktop builds also carry larger texture and LOD variants (up to 2048²,
+8k-triangle pieces) that the mobile and web exports strip; per-tier
+budgets, frame times and the look each tier must show are in
+[Visual target](visual-target.md#how-each-tier-gets-its-assets).
 
 - 60 fps on mid-range Android and older iPhones.
 - Pieces under 2k triangles, board under 20k; textures 1024² max.

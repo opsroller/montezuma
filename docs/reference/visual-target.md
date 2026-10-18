@@ -98,7 +98,7 @@ cell · — absent
 | Colour grade (LUT) | ✔ | ✔ | ✔ | ✔ |
 | Depth of field on the backdrop only | ✔ | ✔ | — | — |
 | Anti-aliasing | ✔ TAA or FSR 2.2 / MetalFX temporal | ✔ FSR 2.2 / MetalFX temporal | ✔ SMAA or 2× MSAA | ✔ 2× MSAA |
-| HDR output | ✔ where the display supports it | ✔ | ✔ | — |
+| HDR output | ✔ where the display supports it | ✔ where supported | ✔ where supported (iOS; not Android) | — |
 | Motion blur, film grain, chromatic aberration, vignette over the board | — never | — | — | — |
 
 ## Readability rules (every tier)
@@ -137,8 +137,11 @@ A tier is met when all of these pass on its reference hardware:
 
 ## Content budgets per tier
 
-The technical-artist owns these and revises them from benchmark numbers
-([art budgets](project-profile.md#budgets) are the mobile floor).
+The technical-artist owns these and revises them from benchmark numbers.
+The project profile's [budgets](project-profile.md#budgets) (pieces 2k
+triangles, textures 1024² max) are the `mobile` and `web` caps and still
+bind every asset those builds ship; the larger desktop numbers apply only
+to the desktop-only asset variants described below.
 
 | Budget | `desktop-high` | `desktop-standard` | `mobile` | `web` |
 |---|---|---|---|---|
@@ -149,3 +152,28 @@ The technical-artist owns these and revises them from benchmark numbers
 | Texture memory | 1.5 GB | 768 MB | 256 MB | 128 MB |
 | Visible GPU particles | 50k | 20k | 5k | 2k |
 | Shadow-casting omni/spot lights | 8 | 2 | 0 | 0 |
+
+## How each tier gets its assets
+
+One scene and one set of logical asset names (the manifest) serve every
+tier, but not one set of files. Assets that differ by tier come in
+variants, and each export carries only its own:
+
+| What | Desktop (`desktop-high`, `desktop-standard`) | `mobile` | `web` |
+|---|---|---|---|
+| Textures | `game/assets/textures/<theme>/hi/` 2048² sets, plus the base sets | base 1024² sets only | base sets, or `lo/` 512² sets where the size budget needs them |
+| Meshes | LOD0 (desktop budget) to LODn | LOD1 and lower only | LOD1 and lower only |
+| Fire flipbooks | 8×8 sheets | 4×4 sheets | 4×4 sheets |
+| Bake outputs | lightmaps at desktop texel density | lightmaps at mobile density | lightmaps at mobile density |
+
+- **Selection at run time.** The quality tier system (WP-45) resolves a
+  manifest name to the variant for the active tier and falls back to the
+  base variant when a tier variant is missing.
+- **Stripping at export.** The Android, iOS and web export presets
+  exclude the desktop-only folders and LOD files with export
+  `exclude_filter`s, so the desktop sets never reach a phone or the web
+  build. The desktop presets keep everything.
+- **Checked, not trusted.** The asset validator checks that every desktop
+  variant has a base variant, and the release checks that the mobile
+  install stays under 150 MB and the web demo under 40 MB compressed.
+

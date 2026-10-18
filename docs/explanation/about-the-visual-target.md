@@ -42,10 +42,13 @@ eye must still find a match in a fraction of a second.
    lighting from `LightmapGI`, which is a GPU path tracer: the light on the
    temple is ray traced, just ahead of time.
 3. **Scale by tier, never by camera.** Four tiers (desktop high, desktop
-   standard, mobile, web) share one scene and one set of assets. Higher
-   tiers add effects; lower tiers swap them for named substitutes (baked
-   light for real-time GI, light-shaft cards for volumetric fog). Each tier
-   has a frame budget and a feature list that a benchmark checks.
+   standard, mobile, web) share one scene and one set of logical asset
+   names. Higher tiers add effects; lower tiers swap them for named
+   substitutes (baked light for real-time GI, light-shaft cards for
+   volumetric fog). Desktop gets larger texture and LOD variants that the
+   phone and web exports leave out, so mobile and web keep the project's
+   existing size limits. Each tier has a frame budget and a feature list
+   that a benchmark checks.
 4. **Readability rules are acceptance criteria.** Atmosphere stays off the
    board, transient effects clear within their animation step, and effects
    may not reduce piece-to-tile contrast. Realism that hides a match is a
@@ -108,3 +111,27 @@ plainly where Godot stands in October 2026:
   it looks noticeably simpler than desktop. That is accepted: it is a
   playable taste that hands off to the full download.
 - Store screenshots and trailers are captured on `desktop-high`.
+
+## Sources
+
+Checked October 2026. WP-44 re-checks these against the version it
+installs; WP-54 starts from the ray-tracing ones.
+
+- Renderer feature matrix (Forward+, Mobile, Compatibility, including
+  `LightmapGI` rendering under Compatibility, SSR, SSIL, SDFGI, volumetric
+  fog, TAA, FSR 2.2, HDR output): [Overview of renderers, Godot 4.7 docs](https://docs.godotengine.org/en/4.7/tutorials/rendering/renderers.html)
+- `RenderingDevice` ray tracing (`SUPPORTS_RAYTRACING_PIPELINE`,
+  `SUPPORTS_RAY_QUERY`: "only supported when using Vulkan … not supported
+  on macOS and iOS"): [RenderingDevice class reference, 4.7](https://github.com/godotengine/godot/blob/4.7-stable/doc/classes/RenderingDevice.xml)
+  and [godot#99119, Vulkan raytracing plumbing](https://github.com/godotengine/godot/pull/99119)
+- 4.7 stable date, ray tracing as API only, `AreaLight3D`, HDR output
+  platforms: [Godot 4.7 overview (Ziva)](https://ziva.sh/blogs/godot-4-7),
+  [AreaLight3D class reference, 4.7](https://github.com/godotengine/godot/blob/4.7-stable/doc/classes/AreaLight3D.xml),
+  [Phoronix on 4.7 beta](https://www.phoronix.com/news/Godot-4.7-Beta)
+- Hi-Z SSR rewrite, octahedral reflection probes, glow before tonemapping,
+  AgX HDR: [Godot 4.6 release page](https://godotengine.org/releases/4.6/),
+  [CG Channel on Godot 4.6](https://www.cgchannel.com/2026/01/discover-5-key-features-for-cg-artists-in-godot-4-6/)
+- MetalFX spatial and temporal upscaling modes: [Viewport class reference, 4.7](https://github.com/godotengine/godot/blob/4.7-stable/doc/classes/Viewport.xml)
+- Auto exposure Forward+ only: [CameraAttributes class reference, 4.7](https://github.com/godotengine/godot/blob/4.7-stable/doc/classes/CameraAttributes.xml)
+- NVIDIA RTX fork of Godot, GDC 2026: [GameFromScratch](https://gamefromscratch.com/nvidia-release-rtx-powered-godot-fork/)
+
