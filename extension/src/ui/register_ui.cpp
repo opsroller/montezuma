@@ -5,6 +5,7 @@
 
 #include <godot_cpp/core/class_db.hpp>
 
+#include "hud/hud.hpp"
 #include "nav_button.hpp"
 #include "screen.hpp"
 #include "screen_stack.hpp"
@@ -31,6 +32,7 @@ void register_ui() {
     GDREGISTER_CLASS(ResultsScreen);
     GDREGISTER_CLASS(TrophiesScreen);
     GDREGISTER_CLASS(IntroScreen);
+    GDREGISTER_CLASS(Hud);
 }
 
 }  // namespace montezuma::godot_binding

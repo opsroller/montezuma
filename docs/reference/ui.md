@@ -14,10 +14,12 @@ way: [UI architecture](../explanation/ui-architecture.md).
 UiRoot (UiRoot)
 └─ Scaled (Control)                 scaled from the 1280×720 reference size
    └─ SafeArea (MarginContainer)    inset by the phone's safe area
+      ├─ Hud (Hud)                  game/ui/hud/hud.tscn; shown during a level
       └─ ScreenStack (ScreenStack)  the open screens, bottom to top
 ```
 
 While the stack is empty the game underneath has the screen and the input.
+The HUD sits below the stack, so pause and results draw over it.
 
 ## Classes (GDExtension, `montezuma::godot_binding`)
 
@@ -28,13 +30,14 @@ While the stack is empty the game underneath has the screen and the input.
 | `Screen` | `Control` | Root of every screen scene |
 | `NavButton` | `Button` | A button whose action is data set in the scene |
 | `UiTheme` | `RefCounted` | Builds the Godot `Theme` from a tokens file |
+| `Hud` | `Control` | The in-level HUD, a read-only view of the game signals |
 | `SettingsScreen`, `CreditsScreen`, `EpisodeMapScreen`, `ResultsScreen`, `TrophiesScreen`, `IntroScreen` | `Screen` | Screens that bind data |
 
 ### UiRoot
 
 | Member | Kind | Notes |
 |---|---|---|
-| `play_requested(level_id: String, difficulty: String)` | signal | Menus closed; the game scene should load the level. `difficulty` is `relaxed` or `normal` (LevelData `time_limit` keys) |
+| `play_requested(level_id: String, difficulty: String)` | signal | Menus closed; the game scene should load the level. `difficulty` is `normal` or `hard` (LevelData `gem_goal` and `time_limit` keys) |
 | `level_quit_requested()` | signal | The player left the level from the pause menu |
 | `settings_changed(key: String)` | signal | After a setting is applied |
 | `show_results(outcome: int, score: int, level_id := "")` | method | Opens results. `outcome` is `LevelState::Outcome` (1 won, 2 lost); empty `level_id` means the level last played |
@@ -91,6 +94,48 @@ it exists.
 | `quit` | — | UiRoot | Quit the app (button hidden on web and mobile) |
 | `url` | `https://` URL | UiRoot | Open in the browser |
 
+### Hud
+
+`game/ui/hud/hud.tscn`, instanced in `ui_root.tscn`. Hidden until
+`level_started`; hidden again on `level_finished` (which opens results)
+and on `quit_level`. It ignores the mouse except on its buttons, so taps
+reach the board.
+
+It binds to the first node in group `game_group` (also any that enters
+the tree later; set the group in the scene, since `node_added` fires
+before `_ready`) and connects each of these
+[Game signals](contracts.md#game-signals-owner-graphics-programmer-wp-10wp-26--proposed)
+that node has. A missing signal is skipped without an error:
+
+| Game signal | HUD shows |
+|---|---|
+| `level_started(level, difficulty)` | Resets; reads `time_limit[difficulty]`, `gem_goal[difficulty]`, `quotas`, `totems_unlocked` from the LevelData |
+| `time_changed(seconds_left)` | `%Clock` (m:ss) and `%TimeBar`; `DangerLabel` at or under `warning_seconds` |
+| `score_changed(score)` | `%Score` |
+| `gems_changed(collected, goal)` | `%Gems`; hidden while the goal is 0 |
+| `quota_changed(kind, remaining)` | One row per kind in `%Quotas`: colour swatch, kind name, count or `hud.quota.done`; `%QuotaPanel` only on levels with quotas |
+| `totem_changed(id, charge, uses_left)`, `totem_charge_changed(id, charge)` | A meter per totem in `%Totems`, in `totem_ids` order, with `hud.totem.ready` or `hud.totem.uses` in words |
+| `frenzy_changed(bar, seconds_left)` | `%FrenzyBar` and `%Frenzy` (`hud.frenzy.on` while on) |
+| `shuffles_changed(left)` | `%Shuffle` text; disabled at 0 |
+| `hint_cost_changed(cost, affordable)` | `%Hint` text; disabled when not affordable |
+| `level_finished(outcome, score)` | Hides; calls `UiRoot.show_results` |
+
+Commands back to the game: `%Shuffle` calls `shuffle()`, `%Hint` calls
+`buy_hint()` on the bound node, if it has them. `%Pause` is a NavButton
+with action `pause`.
+
+| Property | Default | Notes |
+|---|---|---|
+| `game_group` | `match3_game` | Group of the node to bind to |
+| `warning_seconds` | 10 | Low-time threshold for the clock |
+| `kind_names` | `red` … `white` | Index order of piece kinds (contracts) |
+| `totem_ids` | `fire`, `time`, `gold`, `harvest`, `ward`, `gift`, `paint` | Meter order |
+
+Quota swatches use token `color.kind.<name>`, with placeholder colours
+until the tokens define them. The display state lives in the Godot-free
+`ui::HudModel` (`extension/src/ui/model/hud_model.*`), covered by
+`ui_model_tests`.
+
 ## Screens
 
 | Id | Scene (`game/ui/screens/`) | Class | Params | Opened from | Back |
@@ -142,7 +187,7 @@ settings screen saves on close.
 | `locale` | String | `""` (system) | `TranslationServer` |
 | `text_scale` | float 1..2 | 1.0 | all font sizes (headings ×½ rate, titles ×¼) |
 | `reduced_motion` | bool | false | screen transitions off |
-| `difficulty` | `relaxed` / `normal` | `relaxed` | passed with `play_requested` |
+| `difficulty` | `normal` / `hard` | `normal` | passed with `play_requested` |
 
 ## Theme tokens
 
@@ -194,7 +239,11 @@ Translator context:
 | `results.score` | `{score}` is the final score, a whole number |
 | `trophy.tNN.name/desc` | Placeholders until the trophies package defines them |
 | `settings.reduced_motion` | Turns off transitions and other non-essential motion |
-| `settings.difficulty.relaxed/normal` | Match the level files' `relaxed` / `normal` time limits |
+| `hud.score`, `hud.gems` | `{score}`; `{collected}` of `{goal}` gems |
+| `hud.totem.uses` | `{uses}` is how many more times the totem can fire |
+| `hud.frenzy.on` | Score Frenzy is active; `{seconds}` whole seconds left |
+| `hud.shuffle`, `hud.hint` | Button labels; `{left}` shuffles left, `{cost}` points per hint |
+| `settings.difficulty.normal/hard` | Match the level files' `normal` / `hard` keys (`DIFF-*`) |
 | `credits.fallback` | Shown when the full credits file is not packaged; names stay untranslated |
 
 Known gap: Godot 4.4 CSV has no plural forms and no locale number

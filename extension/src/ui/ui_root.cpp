@@ -241,9 +241,12 @@ void UiRoot::on_stack_action(const String& action, const String& target, const D
         start_level(target);
     } else if (action == "restart") {
         start_level(current_level_);
+    } else if (action == "pause") {
+        open_pause();
     } else if (action == "resume") {
         if (stack && stack->top_id() == "pause") stack->back();
     } else if (action == "quit_level") {
+        if (auto* hud = Object::cast_to<CanvasItem>(get_node_or_null(NodePath("Scaled/SafeArea/Hud")))) hud->hide();
         emit_signal("level_quit_requested");
         if (stack) stack->reset_to(target.is_empty() ? String("episode_map") : target, params);
     } else if (action == "quit") {
