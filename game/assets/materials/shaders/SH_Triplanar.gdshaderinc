@@ -7,6 +7,16 @@
 // tri_normal; the fragment stage builds a TriUV, samples with tri_sample and
 // turns the normal map into a view-space normal with tri_normal_view.
 //
+// Samplers: declare the textures tri_sample and tri_normal_object read with
+// filter_linear_mipmap_anisotropic and repeat_disable. Godot's Metal backend
+// on GPUs without argument buffers (Apple5 family and older) gives every
+// sampler a fixed slot and the fragment stage has slots 0-15 only; the
+// anisotropic repeat sampler sits at slot 17 and fails to compile there,
+// the anisotropic clamp sampler sits at slot 11. So the texture is clamped
+// and tri_tex wraps the coordinates itself, taking the gradients from the
+// unwrapped coordinates so the mip level and anisotropy stay right across
+// the tile seam.
+//
 // Projection layout (u right, v down, image up = -v):
 //   X faces: u along -Z * sign(n.x), up = +Y
 //   Y faces: u along +X, up = -Z (the board's tile tops)
@@ -37,8 +47,13 @@ TriUV tri_uv(float scale, float sharpness) {
 	return t;
 }
 
+// One repeating fetch through a clamped, anisotropic sampler (see above).
+vec4 tri_tex(sampler2D s, vec2 uv) {
+	return textureGrad(s, fract(uv), dFdx(uv), dFdy(uv));
+}
+
 vec4 tri_sample(sampler2D s, TriUV t) {
-	return texture(s, t.x) * t.w.x + texture(s, t.y) * t.w.y + texture(s, t.z) * t.w.z;
+	return tri_tex(s, t.x) * t.w.x + tri_tex(s, t.y) * t.w.y + tri_tex(s, t.z) * t.w.z;
 }
 
 // Tangent-space normal from an RG normal map (Godot may store only RG).
@@ -51,9 +66,9 @@ vec3 tri_unpack(vec4 c, float scale) {
 vec3 tri_normal_object(sampler2D s, TriUV t, float scale) {
 	float sx = t.n.x < 0.0 ? -1.0 : 1.0;
 	float sz = t.n.z < 0.0 ? -1.0 : 1.0;
-	vec3 a = tri_unpack(texture(s, t.x), scale);
-	vec3 b = tri_unpack(texture(s, t.y), scale);
-	vec3 c = tri_unpack(texture(s, t.z), scale);
+	vec3 a = tri_unpack(tri_tex(s, t.x), scale);
+	vec3 b = tri_unpack(tri_tex(s, t.y), scale);
+	vec3 c = tri_unpack(tri_tex(s, t.z), scale);
 	vec3 nx = a.x * vec3(0.0, 0.0, -sx) + a.y * vec3(0.0, 1.0, 0.0) + a.z * t.n;
 	vec3 ny = b.x * vec3(1.0, 0.0, 0.0) + b.y * vec3(0.0, 0.0, -1.0) + b.z * t.n;
 	vec3 nz = c.x * vec3(sz, 0.0, 0.0) + c.y * vec3(0.0, 1.0, 0.0) + c.z * t.n;
