@@ -1,8 +1,0 @@
-{
-  "name": "audio-designer",
-  "version": "0.1.0",
-  "description": "Original sound effects, music and ambience for Montezuma 3D, and the cue player.",
-  "author": { "name": "opsroller" },
-  "repository": "https://github.com/opsroller/montezuma",
-  "license": "MIT"
-}

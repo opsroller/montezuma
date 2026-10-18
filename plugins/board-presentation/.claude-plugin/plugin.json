@@ -1,8 +1,0 @@
-{
-  "name": "board-presentation",
-  "version": "0.1.0",
-  "description": "The Montezuma 3D board scene: camera, input, animation and game feel.",
-  "author": { "name": "opsroller" },
-  "repository": "https://github.com/opsroller/montezuma",
-  "license": "MIT"
-}

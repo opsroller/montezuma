@@ -1,8 +1,0 @@
-{
-  "name": "release-engineer",
-  "version": "0.1.0",
-  "description": "CI, export presets and platform builds for Montezuma 3D.",
-  "author": { "name": "opsroller" },
-  "repository": "https://github.com/opsroller/montezuma",
-  "license": "MIT"
-}

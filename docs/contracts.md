@@ -8,31 +8,47 @@ one, message the owner (coordinate skill), and the owner lands it as a
 
 Status: **proposed** until the package that implements it merges.
 
-## MoveResult events (owner: gameplay-engineer, WP-01) — proposed
+## MoveResult events (owner: gameplay-programmer, WP-01) — proposed
 
-`Board.try_swap(a, b)` keeps returning `MoveResult` (null when illegal).
-WP-01 adds cell-level events so the board view can animate without
-knowing rules. Existing fields (`steps`, `matched_kind`, `shuffled`,
-`score()`, `cleared_by_kind()`) stay.
+The C++ core (`core/`, namespace `mz`) returns a result for each legal
+swap; an illegal swap returns `std::nullopt`. Cell-level events let the
+board view animate without knowing rules.
 
-```gdscript
-var swap: Array[Vector2i]            # [a, b]
-var cascades: Array[CascadeStep]     # same length and order as steps
+```cpp
+namespace mz {
+struct Cell { int x, y; };                 // x left to right, y top to bottom, from 0
+struct Fall  { Cell from, to; int kind; };
+struct Spawn { Cell to; int kind; int drop; };   // drop = rows above the board it starts
+struct Run   { std::vector<Cell> cells; int kind; };
 
-class CascadeStep:
-    var cleared: Array[Vector2i]     # cells emptied this step
-    var falls: Array[Dictionary]     # {from: Vector2i, to: Vector2i, kind: int}
-    var spawns: Array[Dictionary]    # {to: Vector2i, kind: int, drop: int}  drop = rows above the board it starts
-    var runs: Array[Dictionary]      # {cells: Array[Vector2i], kind: int}  for bonus pickups and effects
+struct CascadeStep {
+    std::vector<Cell>  cleared;
+    std::vector<Fall>  falls;
+    std::vector<Spawn> spawns;
+    std::vector<Run>   runs;               // for bonus pickups and effects
+};
 
-var shuffle_map: Array[Dictionary]   # {from: Vector2i, to: Vector2i} when shuffled
+struct MoveResult {
+    std::array<Cell, 2>      swap;
+    std::vector<CascadeStep> cascades;     // step 0 is the swap's own match
+    int  matched_kind = -1;                // drives Power Totem streaks
+    bool shuffled = false;
+    std::vector<std::pair<Cell, Cell>> shuffle_map;
+    int  score() const;                    // 10 x pieces x (step + 1)
+    std::map<int, int> cleared_by_kind() const;
+};
+
+std::optional<MoveResult> Board::try_swap(Cell a, Cell b);
+}
 ```
 
-Coordinates: `x` left to right, `y` top to bottom, both from 0.
+`MzBoard` (GDExtension) exposes the same as a `Dictionary` with keys
+matching the field names and `Vector2i` cells.
 
-## LevelData (owner: gameplay-engineer, WP-02; content: level-designer) — proposed
+## LevelData (owner: gameplay-programmer, WP-02; content: game-designer) — proposed
 
-JSON at `data/levels/e<episode>/l<NN>.json`, loaded by `LevelData.load(path)`.
+JSON at `data/levels/e<episode>/l<NN>.json`, parsed by `mz::LevelData::parse(std::string_view)`;
+the engine reads the file and passes the text in.
 
 | Field | Type | Notes |
 |---|---|---|
@@ -48,10 +64,10 @@ JSON at `data/levels/e<episode>/l<NN>.json`, loaded by `LevelData.load(path)`.
 Kind names, in index order: `red`, `orange`, `yellow`, `green`, `blue`,
 `purple`, `white`.
 
-## Game signals (owner: board-presentation, WP-09/WP-29) — proposed
+## Game signals (owner: graphics-programmer, WP-10/WP-26) — proposed
 
-The game scene (`scenes/game/game.tscn`) owns the `Board` and `LevelState`
-and emits, for the HUD and audio:
+`MzGame` (C++ node in `extension/src/game/`, placed in `scenes/game/game.tscn`)
+owns the board and level state and emits, for the HUD and audio:
 
 ```
 level_started(level: LevelData, difficulty: String)
@@ -64,11 +80,11 @@ bonus_changed(bonus_id: String, count: int)
 level_finished(outcome: int, score: int)                # LevelState.Outcome
 ```
 
-`BoardView` API: `show_board(board: Board)`, `play(result: MoveResult) -> void`
-(awaitable), `play_illegal(a, b)`, signals `swap_requested(a: Vector2i,
+`MzBoardView` API: `show_board(board: MzBoard)`, `play(result: Dictionary)`
+(emits `animation_finished` when done), `play_illegal(a, b)`, signals `swap_requested(a: Vector2i,
 b: Vector2i)` and `animation_finished`.
 
-## Asset manifest (owner: asset-artist, WP-06/07) — proposed
+## Asset manifest (owner: technical-artist, WP-07/08) — proposed
 
 `assets/manifest.json` maps logical names to resource paths. The board view
 falls back to a placeholder primitive when a name is missing.
@@ -76,9 +92,9 @@ falls back to a placeholder primitive when a name is missing.
 `artifact_0` … `artifact_6` (by kind index), `temple_board`, `temple_env`,
 `cell_highlight`, `fx_match`, `fx_cascade`, `totem_<id>`, `bonus_<id>`.
 
-## Audio cues (owner: audio-designer, WP-14) — proposed
+## Audio cues (owner: sound-designer, WP-14) — proposed
 
-Played by name with `Audio.play(name)`; a missing cue warns and is silent.
+Played by name with `MzAudio::play(name)`; a missing cue warns and is silent.
 
 `swap`, `swap_illegal`, `match`, `cascade_1` … `cascade_8`, `piece_land`,
 `bonus_earned`, `bonus_use_<id>`, `totem_charge`, `totem_fire_<id>`,
@@ -86,7 +102,7 @@ Played by name with `Audio.play(name)`; a missing cue warns and is silent.
 `ui_back`, `trophy`, `music_menu`, `music_play_<episode>`,
 `ambience_jungle`.
 
-## Totem and bonus ids (owner: level-designer, WP-03) — proposed
+## Totem and bonus ids (owner: game-designer, WP-03) — proposed
 
 Totems: `row_clear`, `random_blast`, `time`, `lightning`, `color_bomb`,
 `multiplier`. Bonuses: `hammer`, `lightning`, `extra_time`, `shuffle`,

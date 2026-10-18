@@ -1,8 +1,0 @@
-{
-  "name": "gameplay-engineer",
-  "version": "0.1.0",
-  "description": "Pure GDScript game logic in core/ for Montezuma 3D, with headless tests.",
-  "author": { "name": "opsroller" },
-  "repository": "https://github.com/opsroller/montezuma",
-  "license": "MIT"
-}
