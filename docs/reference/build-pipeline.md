@@ -147,14 +147,14 @@ WebAssembly. It never deploys; the package is the run's artifact.
 |---|---|
 | Triggers | Push to `main`; pull requests touching `web.yml`, `tools/release/`, `CMakeLists.txt`, `core/`, `extension/`, `game/` or `thirdparty/`; manual |
 | Runner | `ubuntu-24.04`, one job `web` |
-| Emscripten | 4.0.11 (`EMSDK_VERSION` in `godot.env`, the version Godot 4.7.2's web templates are built with), cached under `emsdk-<hash of godot.env>` |
+| Emscripten | 4.0.20 (`EMSDK_VERSION` in `godot.env`, the version Godot 4.7.2's official web templates are built with), cached under `emsdk-<hash of godot.env>` |
 | Extension build | `emcmake cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON -DMONTEZUMA_BUILD_TESTS=OFF -DMONTEZUMA_WERROR=ON -DGODOTCPP_TARGET=template_release -DGODOTCPP_THREADS=OFF`, through ccache (`EM_COMPILER_WRAPPER=ccache`, key prefix `build-web-extension`) |
 | Library | `game/bin/libmontezuma.web.template_release.wasm32.nothreads.wasm` (`web.release.wasm32` in `game/montezuma.gdextension`) |
 | Template | `web_dlink_nothreads_release.zip` from the pinned templates archive |
 | Renderer | Compatibility (`rendering/renderer/rendering_method.web`), 2× MSAA, 1024 directional shadow map: the `web` tier of the [visual target](visual-target.md) |
 | Main scene | `res://scenes/demo/intro_level.tscn` (`application/run/main_scene.web`); see [IntroLevel](intro-level.md) |
 | Budget | All files gzipped at most 40 MB, checked by `web-export.sh` |
-| Browser check | `web-smoke.py` in headless Chromium (Playwright 1.56.0): `montezuma:ready`, then `montezuma:level-completed` for `e1-l01` with `--complete-level`, and no browser errors |
+| Browser check | `web-smoke.py` in headless Chromium 141, Firefox 142 and WebKit 26 (Playwright 1.56.0): `montezuma:ready`, then `montezuma:level-completed` for `e1-l01` with `--complete-level`, and no browser errors |
 
 | Artifact | Contents | Kept |
 |---|---|---|

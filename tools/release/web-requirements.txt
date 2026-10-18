@@ -4,7 +4,7 @@
 # Python packages for tools/release/web-smoke.py, pinned with hashes for
 # CPython 3.12 on Linux x86_64 (the CI runner). Install with
 #   python3 -m pip install --require-hashes -r tools/release/web-requirements.txt
-# Playwright 1.56.0 drives Chromium 141. Elsewhere, pip install
+# Playwright 1.56.0 drives Chromium 141, Firefox 142 and WebKit 26. Elsewhere, pip install
 # playwright==1.56.0 without hashes.
 playwright==1.56.0 \
     --hash=sha256:404be089b49d94bc4c1fe0dfb07664bda5ffe87789034a03bffb884489bdfb5c

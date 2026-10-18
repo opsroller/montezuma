@@ -68,17 +68,20 @@ The intro level does not need threads.
 **The extension is a side module.** On the web, Godot loads a GDExtension
 as a WebAssembly side module that links against the engine's main module
 at start. That only works when both come from the same Emscripten
-version, so the pin is the version Godot's own release used for its
-templates, not the newest Emscripten. When the Godot pin moves, the
-Emscripten pin moves with it.
+version, so the pin is the version Godot's official templates were built
+with, not the newest Emscripten. That version is in Godot's
+build-containers repository, not in the engine's own CI file, which
+names an older one; the templates print the real one when they start.
+When the Godot pin moves, the Emscripten pin moves with it.
 
 **Tested in a real browser.** Running the export headless in Godot would
 not exercise what can break on the web: loading the side module,
 WebGL 2 and the events the page waits for. The smoke test serves the
 package the way the site does, starts it through Godot's `Engine` API
-with the site's settings, and checks both hand-off events arrive. It
-uses headless Chromium; Firefox and Safari are checked by hand until
-their headless WebGL runs reliably in CI.
+with the site's settings, and checks both hand-off events arrive. It runs
+in headless Chromium, Firefox and WebKit (Safari's engine) through
+Playwright, which covers the three browser engines the demo targets;
+real Safari on macOS and phones is not covered.
 
 **Built, not deployed.** Nothing goes public until the game is polished,
 so the workflow only produces the package. The website deploy picks it up

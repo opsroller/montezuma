@@ -3,8 +3,8 @@
 #
 # Web demo build: compiles the GDExtension to WebAssembly with the pinned
 # Emscripten, exports the single-threaded web build of the intro level with
-# the pinned Godot, and runs it in headless Chromium the way the site loads
-# it. The package is the run's artifact; nothing is deployed.
+# the pinned Godot, and runs it in headless Chromium, Firefox and WebKit the
+# way the site loads it. The package is the run's artifact; nothing is deployed.
 # Reference: docs/reference/build-pipeline.md
 name: web
 
