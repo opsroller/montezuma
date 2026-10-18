@@ -3,6 +3,7 @@
 
 // Core rules tests. No framework dependency; run via ctest.
 #include <cstdio>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -121,9 +122,50 @@ void test_seed_is_deterministic() {
     check(Board(8, 8, 7, 42).cells() != Board(8, 8, 7, 43).cells(), "different seed, different board");
 }
 
+template <typename E, typename F>
+bool throws(F&& f) {
+    try {
+        f();
+    } catch (const E&) {
+        return true;
+    } catch (...) {
+        return false;
+    }
+    return false;
+}
+
+void test_invalid_boards_are_rejected() {
+    check(throws<std::invalid_argument>([] { Board(2, 2, 7, 1); }), "2x2 board rejected");
+    check(throws<std::invalid_argument>([] { Board(8, 2, 7, 1); }), "8x2 board rejected");
+    check(throws<std::invalid_argument>([] { Board(8, 8, 0, 1); }), "zero kinds rejected");
+    check(throws<std::invalid_argument>([] { Board(8, 8, 2, 1); }), "two kinds rejected");
+    check(throws<std::runtime_error>([] { Board(3, 3, 1000, 1); }), "unplayable board gives up instead of hanging");
+    check(!Board::try_create(2, 2, 7, 1).has_value(), "try_create returns empty for bad sizes");
+    check(!Board::try_create(3, 3, 1000, 1).has_value(), "try_create returns empty for unplayable boards");
+    check(Board::try_create(8, 8, 7, 1).has_value(), "try_create builds a normal board");
+}
+
+void test_small_boards_stay_playable() {
+    for (int s = 0; s < 50; ++s) {
+        Board b(3, 3, 3, s);
+        check(b.find_matches().empty() && b.has_legal_move(), "3x3 board seed " + std::to_string(s) + " is playable");
+        b.shuffle();
+        check(b.find_matches().empty() && b.has_legal_move(), "3x3 board seed " + std::to_string(s) + " stays playable after shuffle");
+    }
+}
+
+void test_invalid_levels_are_rejected() {
+    check(throws<std::invalid_argument>([] { LevelState({}, 60.0); }), "empty quotas rejected");
+    check(throws<std::invalid_argument>([] { LevelState({{0, 0}}, 60.0); }), "zero quota rejected");
+    check(throws<std::invalid_argument>([] { LevelState({{0, 5}}, 0.0); }), "zero time limit rejected");
+}
+
 }  // namespace
 
 int main() {
+    test_invalid_boards_are_rejected();
+    test_small_boards_stay_playable();
+    test_invalid_levels_are_rejected();
     test_fresh_board_has_no_matches_and_a_move();
     test_illegal_swaps_are_rejected();
     test_legal_swap_clears_and_refills();

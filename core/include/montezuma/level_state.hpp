@@ -14,6 +14,7 @@ class LevelState {
 public:
     enum class Outcome { Playing, Won, Lost };
 
+    // Throws std::invalid_argument for empty or non-positive quotas or time.
     LevelState(std::map<int, int> quotas, double time_limit);
 
     void apply_move(const MoveResult& result);
