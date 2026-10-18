@@ -147,3 +147,9 @@ episodes 3 and 4 are built and measured this way is in [about the
 episode 3 levels](../explanation/about-the-episode-3-levels.md) and
 [about the episode 4
 levels](../explanation/about-the-episode-4-levels.md).
+
+`greedy` on normal and `planner` on hard win every run on every level,
+so the curve rules pass only by the 100 % tie: the win-rate curve is
+unverified, and the human targets in [progression](progression.md) carry
+it until a playtest. The moves floor and the clocks are still measured.
+There are no episode 5 levels yet.
