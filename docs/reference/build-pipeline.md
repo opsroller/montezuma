@@ -14,7 +14,9 @@ Tests run separately in `.github/workflows/tests.yml`.
 
 Windows (`extension (windows)`, the Windows export and `smoke (windows)`)
 runs only on pushes to `main` and manual runs, to keep PR feedback fast.
-A Windows-only break shows up on `main` after merge; the next PR fixes it.
+PRs that change the build system also build and test on Windows in the
+[`windows` workflow](ci-pipeline.md#windows-workflow); any other
+Windows-only break shows up on `main` after merge, and the next PR fixes it.
 
 The workflow token is read-only (`contents: read`). No job uses secrets.
 

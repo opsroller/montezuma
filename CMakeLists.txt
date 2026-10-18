@@ -19,6 +19,19 @@ option(MONTEZUMA_BUILD_EXTENSION "Build the Godot GDExtension (needs thirdparty/
 option(MONTEZUMA_WERROR "Treat compiler warnings as errors" OFF)
 option(MONTEZUMA_BUILD_SIM "Build the balance simulator (tools/sim)" ON)
 
+# godot-cpp picks the MSVC C runtime (static by default) by caching
+# CMAKE_MSVC_RUNTIME_LIBRARY when extension/ adds it, which is after
+# montezuma_core exists, and a DLL whose objects disagree fails to link
+# (LNK2038). Cache the same choice here, before any target, so every target
+# uses it; godot-cpp keeps a cached value.
+if(MONTEZUMA_BUILD_EXTENSION AND MSVC)
+  option(GODOTCPP_USE_STATIC_CPP "Link MinGW/MSVC C++ runtime libraries statically" ON)
+  option(GODOTCPP_DEBUG_CRT "Compile with MSVC's debug CRT (/MDd)" OFF)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY
+    "MultiThreaded$<IF:$<BOOL:${GODOTCPP_DEBUG_CRT}>,DebugDLL,$<$<NOT:$<BOOL:${GODOTCPP_USE_STATIC_CPP}>>:DLL>>"
+    CACHE STRING "Select the MSVC runtime library for use by compilers targeting the MSVC ABI.")
+endif()
+
 # Engine-independent game rules. The Godot GDExtension links against this.
 # Sources are picked up automatically so parallel work packages can add
 # files without editing this list.

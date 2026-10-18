@@ -1,0 +1,13 @@
+{
+  "id": "e3-l05",
+  "episode": 3,
+  "index": 5,
+  "rules": "classic",
+  "theme": "temple",
+  "board": { "width": 8, "height": 8, "kinds": 7 },
+  "gem_goal": { "normal": 85, "hard": 130 },
+  "totems_unlocked": ["fire", "time", "gold", "gift", "harvest", "paint"],
+  "powerups_unlocked": ["tnt", "color_clear", "lightning", "clock", "multiplier", "hint"],
+  "chained_cells": [[2, 7], [5, 7]],
+  "seed": 20090605
+}
