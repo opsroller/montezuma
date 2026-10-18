@@ -61,6 +61,13 @@ godot --headless --path game --quit-after 120 -- --game-selftest
 
 It ends with `Match3Game self-test: <n> moves, outcome 1, <n> cues, 0 failures`.
 
+Quit from inside a level, with music playing, as CI does; nothing may
+print an error or a leak at exit:
+
+```sh
+godot --headless --path game --quit-after 600 -- --start-level=e1-l01 --quit-after-frames=60
+```
+
 ## Check the assets
 
 Needs Python 3, numpy and Pillow. This is the `assets` CI job. The board

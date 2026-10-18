@@ -144,6 +144,7 @@ calls `GameAudio::get_singleton()->play("match")`; scenes and UI call
 | `set_volume(bus, linear)`, `get_volume(bus)` | Player volume per bus, 0 to 1. The settings screen calls these and saves the values; never set those bus volumes on `AudioServer` directly, because ducking rewrites them |
 | `set_muted(bus, muted)`, `is_muted(bus)` | Mute per bus |
 | `get_active_voice_count()` | Voices playing now |
+| `quit(exit_code = 0)` | Stops every sound and quits the game once Godot has freed them (see [Quitting](#quitting)). Use it instead of `SceneTree.quit()` |
 
 Properties: `cue_table_path` (default `res://assets/audio/cues.json`),
 `music_fade` (default 1.5 s).
@@ -221,6 +222,26 @@ on the animation frame they belong to.
 `godot --headless --path game --quit-after 120 -- --audio-selftest`
 plays every cue once, checks the voice limit and a missing cue, and
 prints `GameAudio self-test: <n> cues, 0 failures`. CI runs it in the
-Linux extension job and fails on any other line. Stop playback
-before quitting in any headless test that plays sound; Godot reports
-playbacks still running at exit as leaked resources.
+Linux extension job and fails on any other line.
+
+### Quitting
+
+Godot 4.7 frees a stopped sound only after two more audio mix steps and
+one more frame. Quitting while a sound plays (Godot's `--quit-after`,
+`SceneTree.quit()`, or the window closing with no handler) tears the
+tree down before that, so the sound's stream outlives the engine and
+Godot prints `ERROR: <n> resources still in use at exit` and a leaked
+ObjectDB warning. Every level plays music and ambience, so any quit from
+a level hits this.
+
+`GameAudio` therefore owns quitting:
+
+- `quit(exit_code)` stops every voice and loop at once, ignores later
+  `play()` calls, and quits once the audio server has dropped every
+  stopped playback, or after 500 ms.
+- It turns off `SceneTree.auto_accept_quit`, so closing the window calls
+  `quit(0)`.
+- The UI's `quit` action calls it.
+- The `--quit-after-frames=<n>` user argument calls it after `<n>`
+  frames. CI's in-level run and screenshot captures use it; keep Godot's
+  `--quit-after` only as a larger safety net against a hang.

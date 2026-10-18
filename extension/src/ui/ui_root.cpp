@@ -264,7 +264,13 @@ void UiRoot::on_stack_action(const String& action, const String& target, const D
         emit_signal("level_quit_requested");
         if (stack) stack->reset_to(target.is_empty() ? String("episode_map") : target, params);
     } else if (action == "quit") {
-        get_tree()->quit();
+        // Through GameAudio, which stops every sound before the game exits.
+        Node* audio = get_tree()->get_root()->get_node_or_null(NodePath("GameAudio"));
+        if (audio && audio->has_method("quit")) {
+            audio->call("quit", 0);
+        } else {
+            get_tree()->quit();
+        }
     } else if (action == "url") {
         if (target.begins_with("https://")) OS::get_singleton()->shell_open(target);
     } else {
