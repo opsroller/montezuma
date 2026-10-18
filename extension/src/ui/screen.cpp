@@ -19,7 +19,7 @@ namespace {
 const char* const kSavedFocusMode = "_ui_saved_focus_mode";
 
 Control* first_focusable(Node* node) {
-    for (int64_t i = 0; i < node->get_child_count(); ++i) {
+    for (int32_t i = 0; i < node->get_child_count(); ++i) {
         Node* child = node->get_child(i);
         auto* c = Object::cast_to<Control>(child);
         if (c && !c->is_visible_in_tree()) continue;
@@ -30,7 +30,7 @@ Control* first_focusable(Node* node) {
 }
 
 void set_inert_recursive(Node* node, bool inert) {
-    for (int64_t i = 0; i < node->get_child_count(); ++i) {
+    for (int32_t i = 0; i < node->get_child_count(); ++i) {
         Node* child = node->get_child(i);
         if (auto* c = Object::cast_to<Control>(child)) {
             if (inert && !c->has_meta(kSavedFocusMode)) {

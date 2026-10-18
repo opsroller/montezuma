@@ -33,7 +33,7 @@ void TrophiesScreen::on_open(const Dictionary& params) {
 void TrophiesScreen::rebuild() {
     auto* grid = Object::cast_to<Container>(get_node_or_null(NodePath("%Grid")));
     if (!grid) return;
-    for (int64_t i = grid->get_child_count() - 1; i >= 0; --i) {
+    for (int32_t i = grid->get_child_count() - 1; i >= 0; --i) {
         Node* child = grid->get_child(i);
         grid->remove_child(child);
         child->queue_free();

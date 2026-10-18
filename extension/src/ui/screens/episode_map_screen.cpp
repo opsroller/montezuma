@@ -50,7 +50,7 @@ void EpisodeMapScreen::_notification(int what) {
 
 void EpisodeMapScreen::focus_default() {
     if (auto* grid = Object::cast_to<Container>(get_node_or_null(NodePath("%Levels")))) {
-        for (int64_t i = 0; i < grid->get_child_count(); ++i) {
+        for (int32_t i = 0; i < grid->get_child_count(); ++i) {
             auto* button = Object::cast_to<BaseButton>(grid->get_child(i));
             if (button && !button->is_queued_for_deletion() && !button->is_disabled()) {
                 button->grab_focus();
@@ -75,7 +75,7 @@ void EpisodeMapScreen::show_episode(int episode) {
 
     auto* grid = Object::cast_to<Container>(get_node_or_null(NodePath("%Levels")));
     if (!grid) return;
-    for (int64_t i = grid->get_child_count() - 1; i >= 0; --i) {
+    for (int32_t i = grid->get_child_count() - 1; i >= 0; --i) {
         Node* child = grid->get_child(i);
         grid->remove_child(child);
         child->queue_free();
