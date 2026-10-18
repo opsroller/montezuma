@@ -104,8 +104,7 @@ struct TargetRow {
     std::string_view name;
     int greedy_win_pct;       // >=
     double greedy_median;     // >= seconds
-    int random_pct;           // >= or <=
-    bool random_at_most;
+    int random_pct;           // >=; -1 for no target (informational from e4)
     int planner_hard_pct;     // >=
     int greedy_min_moves;     // >= mean moves a run, greedy/normal; 0 for none
 };

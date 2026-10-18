@@ -188,7 +188,7 @@ settings screen saves on close.
 | `fullscreen` | bool | false | window mode (desktop only) |
 | `locale` | String | `""` (system) | `TranslationServer` |
 | `text_scale` | float 1..2 | 1.0 | all font sizes (headings ×½ rate, titles ×¼) |
-| `reduced_motion` | bool | false | screen transitions off |
+| `reduced_motion` | bool | false | screen transitions off; board animations at `feel::kReducedMotionAnimationSpeed` (2×) through `BoardView3D.animation_speed` |
 | `difficulty` | `normal` / `hard` | `normal` | passed with `play_requested` |
 
 The settings screen's **Graphics quality** row is not a `UiRoot` setting:
