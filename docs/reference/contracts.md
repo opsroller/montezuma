@@ -31,7 +31,7 @@ uses are unchanged.
 namespace montezuma {
 struct Cell  { int x, y; };                      // x left to right, y top to bottom, from 0
 struct Fall  { Cell from, to; int kind; };       // to.x == from.x, to.y > from.y
-struct Spawn { Cell to; int kind; int drop; };   // starts at y = to.y - drop, drop >= 1
+struct Spawn { Cell to; int kind; int drop; };   // starts at y = -drop, drop >= 1
 struct Run   { std::vector<Cell> cells; int kind; bool horizontal() const; };
 
 struct CascadeStep {
@@ -70,8 +70,9 @@ Differences from the proposal, and why:
 - `steps` and `stuck` stay for the binding and `LevelState`.
 
 `Match3Board` (GDExtension) exposes the same as a `Dictionary` with keys
-matching the field names and `Vector2i` cells; until the binding adds the
-cell-level keys it returns `{ steps, matched_kind, shuffled, stuck, score }`.
+matching the field names, `Vector2i` cells and plain `Array`s, from
+`try_swap(a, b)` and from `clear_cells(cells)` (no `swap` key). The key table
+is in [move-result.md](move-result.md#for-the-godot-binding).
 
 ## LevelData (owner: gameplay-programmer, WP-02; content: game-designer) — proposed
 
@@ -111,6 +112,9 @@ level_finished(outcome: int, score: int)                # LevelState.Outcome
 `BoardView3D` API: `show_board(board: Match3Board)`, `play(result: Dictionary)`
 (emits `animation_finished` when done), `play_illegal(a, b)`, signals `swap_requested(a: Vector2i,
 b: Vector2i)` and `animation_finished`.
+**Implemented** in WP-12 (`extension/src/board/`), plus `is_busy()`,
+`cell_at_screen(pos)` and a `layout_changed` signal; see
+[Board view](board-view.md).
 
 ## Asset manifest (owner: technical-artist, WP-07/08) — proposed
 
