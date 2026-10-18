@@ -19,7 +19,7 @@ download popup.
 
 ## Preview with the real web demo
 
-Export the game for the web (see the WP-21 build), then point the build at
+Export the game for the web (see [How to export the web demo](export-a-web-build.md)), then point the build at
 the export folder, the one containing `montezuma.js`:
 
 ```sh

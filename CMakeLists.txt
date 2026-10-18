@@ -76,6 +76,7 @@ endif()
 if(MONTEZUMA_BUILD_TESTS)
   add_subdirectory(extension/src/board/tests)
   add_subdirectory(extension/src/render/tests)
+  add_subdirectory(extension/src/demo/tests)
 endif()
 
 # The website's tests (site/tests), when Python 3.10+ and Node are on the
