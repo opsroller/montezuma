@@ -56,8 +56,22 @@ void UiRoot::_ready() {
         return;
     }
     ensure_actions();
-    if (OS::get_singleton()->get_cmdline_user_args().has("--pseudolocalize"))
-        TranslationServer::get_singleton()->set_pseudolocalization_enabled(true);
+    const PackedStringArray user_args = OS::get_singleton()->get_cmdline_user_args();
+    if (user_args.has("--pseudolocalize")) TranslationServer::get_singleton()->set_pseudolocalization_enabled(true);
+    // Screenshots and layout checks: open on another screen (none if empty), or straight into a level.
+    for (int64_t i = 0; i < user_args.size(); ++i) {
+        const String& arg = user_args[i];
+        if (arg.begins_with("--start-screen=")) {
+            const String id = arg.trim_prefix("--start-screen=");
+            if (id.is_empty())
+                get_stack()->clear();
+            else
+                get_stack()->reset_to(id, {});
+        } else if (arg.begins_with("--start-level=")) {
+            // Deferred: the game scene connects to play_requested after the autoloads are ready.
+            callable_mp(this, &UiRoot::start_level).call_deferred(arg.trim_prefix("--start-level="));
+        }
+    }
     tokens_ = UiTheme::load_tokens(tokens_path_);
     load_settings();
     apply_settings({});

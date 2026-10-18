@@ -260,3 +260,5 @@ Pass after `--`: `godot --path game -- --pseudolocalize`.
 |---|---|
 | `--pseudolocalize` | Godot pseudo-localization: accents, brackets, padding |
 | `--unlock-all` | Every level open on the map (until WP-08) |
+| `--start-screen=<id>` | Opens on screen `<id>` instead of the title; empty (`--start-screen=`) opens none |
+| `--start-level=<id>` | Skips the menus and plays level `<id>`, as if picked on the map. CI screenshots use `e1-l01` |
