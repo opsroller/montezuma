@@ -19,6 +19,7 @@ add_library(montezuma_extension SHARED
   src/board/board_camera_3d.cpp
   src/board/board_playtest.cpp
   src/board/piece_library.cpp
+  src/board/effects/board_effects.cpp
   src/board/register_board.cpp
   src/audio/game_audio.cpp
   src/audio/register_audio.cpp

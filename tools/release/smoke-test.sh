@@ -4,13 +4,20 @@
 #
 # Checks a packaged desktop build: verifies its checksum, unpacks it, runs
 # the game headless for 120 frames and fails on any engine error (for
-# example the GDExtension library missing or not loading).
+# example the GDExtension library missing or not loading). Given a
+# <screens-dir>, it then renders the title screen and the board with
+# Godot's Movie Maker at the project's window size (1280x720) and saves
+# them there as title.png and board.png.
 #
-# Usage: tools/release/smoke-test.sh <archive>   (the .sha256 file sits beside it)
+# Usage: tools/release/smoke-test.sh <archive> [<screens-dir>]
+#   (the .sha256 file sits beside the archive)
 # Runs on the archive's own platform: Linux, Windows (Git Bash) or macOS.
+# Screenshots need a display: on Linux run the script under xvfb-run.
 set -euo pipefail
 
-archive="$(cd "$(dirname "${1:?usage: smoke-test.sh <archive>}")" && pwd)/$(basename "$1")"
+archive="$(cd "$(dirname "${1:?usage: smoke-test.sh <archive> [<screens-dir>]}")" && pwd)/$(basename "$1")"
+screens=""
+if [[ -n "${2:-}" ]]; then mkdir -p "$2" && screens="$(cd "$2" && pwd)"; fi
 cd "$(dirname "$archive")"
 if command -v sha256sum >/dev/null; then
   sha256sum -c "$(basename "$archive").sha256"
@@ -50,3 +57,44 @@ if grep -E "ERROR|SCRIPT ERROR|Can't open dynamic library" "$log"; then
   exit 1
 fi
 echo "smoke test passed: $name"
+[[ -n "$screens" ]] || exit 0
+
+winpath() { if command -v cygpath >/dev/null; then cygpath -w "$1"; else echo "$1"; fi; }
+# Renderers that work on GPU-less CI runners, tried in order: Mesa under
+# Xvfb on Linux, ANGLE over Direct3D 11 (WARP) on Windows. On macOS
+# virtual machines Metal has crashed (Godot 4.4: no argument encoders on
+# the paravirtual GPU) and Vulkan runs out of device memory, so a Metal
+# failure falls back to OpenGL, which there is Apple's software renderer
+# (several seconds a frame): keep the frame counts low.
+case "$name" in
+  *-linux-*)   drivers=(opengl3) ;;
+  *-windows-*) drivers=(opengl3_angle) ;;
+  *)           drivers=(metal opengl3) ;;
+esac
+
+capture() {  # capture <shot> <frames> [<game user arg>...]: keeps the last frame
+  local shot="$1" frames="$2" dir="$work/movie-$1" slog="$work/$1.log" driver
+  shift 2
+  for driver in "${drivers[@]}"; do
+    rm -rf "$dir" && mkdir -p "$dir"
+    if "$game" --rendering-driver "$driver" --fixed-fps 30 --quit-after "$frames" \
+      --write-movie "$(winpath "$dir/frame.png")" --log-file "$(winpath "$slog")" -- "$@"; then
+      local last
+      last="$(find "$dir" -name 'frame*.png' | sort | tail -n 1)"
+      if [[ -s "$last" ]]; then
+        cp "$last" "$screens/$shot.png"
+        echo "captured $shot.png with $driver from $(basename "$last")"
+        return
+      fi
+    fi
+    cat "$slog" 2>/dev/null
+    echo "no frames rendered for $shot with $driver" >&2
+  done
+  exit 1
+}
+
+# 15 frames (0.5 s) let the title fade in; 30 frames (1 s) let the board
+# settle. --start-level plays the first level, so the board shows with the
+# in-level HUD over it.
+capture title 15
+capture board 30 --start-level=e1-l01

@@ -42,9 +42,11 @@ queue to keep in step with the board. The step reports line up one to one
 with those steps (a core test checks it), so the sound for each step is
 played on the frame the view shows it.
 
-Effects the view cannot show yet, such as a paint totem's repaint or a
-gem placed by harvest, still change the board; the view snaps to the
-final state at the end of the move. WP-29 adds their animations.
+Each step also carries what it set off (power-ups, markers, a totem
+firing, a paint repaint), so the view animates those on the same
+timeline; a totem that clears nothing gets an empty step of its own, and
+its cue plays there. See
+[About the board view](about-the-board-view.md#effects-ride-on-events-markers-ride-on-pieces).
 
 ## Why the result waits for the animation
 

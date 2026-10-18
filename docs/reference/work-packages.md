@@ -56,11 +56,12 @@ row in the PR that finishes the package.
 | WP | Package | Role | Owns | Depends on | Done when | Status |
 |---|---|---|---|---|---|---|
 | 22 | Balance simulator | gameplay-programmer | `tools/sim/` | 05, 06, 07 | C++ CLI reports win rate and time left per level and difficulty | review |
-| 56 | Simulator moves floor | gameplay-programmer | `tools/sim/` | 22 | `--check` fails a level from e2 on whose `greedy`/normal mean moves are under its [balance](balance.md) floor (50, 70, 90, 110); episode 1 has none. Gates 24-27 | review |
+| 56 | Simulator moves floor | gameplay-programmer | `tools/sim/` | 22 | `--check` fails a level from e2 on whose `greedy`/normal mean moves are under its [balance](balance.md) floor (50, 70, 90, 110); episode 1 has none. Gates 24-27 | done (#42) |
 | 23 | Episode 1 levels (includes the intro levels) | game-designer | `game/data/levels/e1/` | 03, 05, 22 | all load and hit sim targets | done (#37) |
-| 24-27 | Episodes 2, 3, 4, 5 (one package each) | game-designer | `game/data/levels/e<N>/` | 23, 56 | same | todo |
+| 24 | Episode 2 levels | game-designer | `game/data/levels/e2/` | 23, 56 | all load and hit sim targets, moves floor included | done (#45) |
+| 25-27 | Episodes 3, 4, 5 (one package each) | game-designer | `game/data/levels/e<N>/` | 24 | same | todo |
 | 28 | Game scene integration | graphics-programmer | `extension/src/game/`, `game/scenes/game/` | 05, 13, 16, 18 | a level plays start to finish with HUD, audio and results | done |
-| 29 | Totem and bonus visuals | graphics-programmer | `extension/src/board/effects/`, `game/scenes/board/effects/` | 06, 07, 11, 13 | every effect animates | todo |
+| 29 | Totem and bonus visuals | graphics-programmer | `extension/src/board/effects/`, `game/scenes/board/effects/` | 06, 07, 11, 13 | every effect animates | done |
 | 30-33 | Bonus games: 30 `bg_accuracy`, 31 `bg_memory`, 32 `bg_reaction`, 33 `bg_attention` (one package each; rules in `docs/reference/rules-bonus-games.md`) | gameplay-programmer + graphics-programmer | `core/**/minigames/<id>.*`, `extension/src/minigames/<id>/`, `game/scenes/minigames/<id>/` | 03, 28 | playable and tested per the rules | todo |
 | 34 | Intro-level mode | gameplay-programmer (port thread) | `extension/src/demo/`, `game/scenes/demo/` | 23, 28 | web build plays the intro level only and emits `level_completed` when it is won, forwarded to the page as a `montezuma:level-completed` DOM event through `JavaScriptBridge`; no-op off web | todo (WP-21 added `IntroLevel`, the page events and the web main scene. Rebuild `IntroLevel` as a thin wrapper over `Match3Game` (WP-28) with `autostart_level = "e1-l01"`, sending `level_finished(WON)` to `montezuma:level-completed`; no rules of its own) |
 | 35 | Website: demo page, download popup, credits | frontend-web-developer | `site/` | 04, 21 | site opens on the playable intro level; on `montezuma:level-completed` (or a skip link) a popup offers the visitor's platform download or store badge, all platforms listed; credits page from `CREDITS.md`; deploys on merge | active (until WP-34 the intro level cannot be won in play, so the popup opens only from the skip link) |

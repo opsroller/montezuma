@@ -98,8 +98,16 @@ rm game/override.cfg
 Each frame lands as `/tmp/shots/frameNNNNNNNN.png`. Change the two sizes
 to check a phone (`540x1170`) and a desktop (`960x540` or `1280x720`)
 framing. The menu overlay (the `UiRoot` autoload) draws over the board;
-`docs/images/board-view-desktop.png` was captured from a scratch copy of
-`game/` with that autoload line removed from `project.godot`.
+add `-- --start-level=e1-l01` to go straight into a level, or
+`-- --start-screen=settings` to open on another screen.
+
+To screenshot a packaged build the way CI does (title screen and the
+first level at 1280×720, saved as `title.png` and `board.png`):
+
+```sh
+xvfb-run -a -s "-screen 0 1280x720x24" \
+  tools/release/smoke-test.sh dist/linux/montezuma-<version>-linux-x86_64.tar.gz /tmp/screens
+```
 
 ## Export a build
 

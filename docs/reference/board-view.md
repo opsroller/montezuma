@@ -22,7 +22,13 @@ Draws a `Match3Board` and plays back results. It never applies a rule.
 | Member | Kind | Meaning |
 |---|---|---|
 | `show_board(board: Match3Board)` | method | Draws the board as it is now, no animation. Call again after the board is re-dealt |
-| `play(result: Dictionary)` | method | Plays a `Match3Board.try_swap` result step by step (see [Move animation](#move-animation)), then emits `animation_finished` |
+| `play(result: Dictionary)` | method | Plays a `Match3Board.try_swap` result step by step (see [Move animation](#move-animation)), with any [effects](#effects) it carries, then emits `animation_finished` |
+| `show_marks(marks: PackedInt32Array)` | method | Markers on every cell, row-major (see [Markers](#markers)); drawn now, or when the playing animation ends |
+| `get_marks() -> PackedInt32Array` | method | The markers the pieces show now |
+| `show_hints(pairs: Array, seconds: float = 0)` | method | A pulsing ring under both cells of each `[a, b]` swap, until the next move, or for `seconds` when above 0 |
+| `clear_hints()`, `has_hints()` | method | Removes the hint rings; whether any show |
+| `play_effect(label: String, cells: Array)` | method | Plays one effect outside a move: `label` is `totem:<id>` or `powerup:<id>`; a label without a colon, such as `swap`, plays nothing. For the benchmark's `bench_event` (WP-46) and look-dev |
+| `get_effects_played() -> Dictionary` | method | Effect beats scheduled since the board was built, by name (`totem_<id>`, `power_up_<id>`, `gem_collect`, `steel_break`, `chain_break`, `mark_placed`), and `overrun_seconds`: the most any move's effects ran past its plan (0 when rule 3 holds); for tests |
 | `play_illegal(a: Vector2i, b: Vector2i)` | method | Bounces the two pieces toward each other and back, then emits `animation_finished` |
 | `is_busy()` | method | True while an animation plays; taps are ignored then |
 | `skip_animation()` | method | Jumps to the end of the playing animation and emits `animation_finished` |
@@ -74,6 +80,9 @@ empty. Names, scale and files: [Board themes](board-themes.md).
 | `environment` | Sky, every light and the backdrop, added once and kept across redeals | Plain sky, warm key light with shadows, cool fill light |
 | `cell_highlight` | Marker shown at the selected cell, keeping the scene's own height | None; the lifted, enlarged piece alone shows the selection |
 | `fx_match` | One-shot `CPUParticles3D` started at each cleared cell when its clear begins; frees itself on `finished` | None |
+| `bonus_<power-up id>` | Badge on a piece carrying that power-up | Placeholder badge (below) |
+| `marker_gem`, `marker_steel`, `marker_chain` | Gem, steel and chain on a piece | Placeholder markers (below) |
+| `fx_totem_<totem id>`, `fx_power_up_<power-up id>`, `fx_gem_collect`, `fx_steel_break`, `fx_chain_break`, `fx_power_up_placed`, `fx_hint` | That effect: a `Node3D` scene placed at the cell (a totem: the board centre), freed when its beat ends, or when its particles finish | Placeholder effect (see [Effects](#effects)) |
 
 A missing manifest, theme, name or a path that does not load gives a
 warning and the fallback. The themed board is built for the theme's board
@@ -101,8 +110,9 @@ Placeholders differ by outline as well as colour, seen from above:
 | `game/scenes/main.tscn` | `Main` | `game.tscn` instance |
 
 Children the view adds, back to front: `Environment` (sky, lights,
-backdrop), `Slab` (the board), `CellHighlight`, `Pieces`, `Effects`
-(match bursts). Lights come from the theme's environment; the fallback is
+backdrop), `Slab` (the board), `CellHighlight`, `Pieces` (each piece
+carries its markers as a `Marks` child), `Effects` (match bursts, totem
+and power-up effects), `Hints`. Lights come from the theme's environment; the fallback is
 one warm key light about 65° up with soft shadows (opacity 0.6) and one
 cool fill light at 0.35 energy, no shadow.
 
@@ -147,6 +157,14 @@ is never cropped.
 | `kShuffleSeconds` | 0.35 s | Shuffle glide |
 | `kRedealOutSeconds` | 0.18 s | Old deal shrinking away |
 | `kRedealInSeconds` | 0.22 s | New deal growing in |
+| `kTotemLeadSeconds` | 0.32 s | A firing totem's lead-in before its clear (fireballs fall, paint morphs) |
+| `kFireballDropCells` | 5 cells | Height fireballs fall from |
+| `kPowerUpBurstSeconds` | 0.28 s | A power-up's blast, beams or flash |
+| `kLabelSeconds`, `kLabelRiseCells` | 0.5 s, 0.9 cell | Floating text (`+60 s`, `×2`, `+1500`) |
+| `kGemFlySeconds`, `kGemFlyCells` | 0.3 s, 1.5 cells | A collected gem flying away |
+| `kBreakSeconds` | 0.25 s | Steel shattering, a chain falling away |
+| `kMarkPopSeconds`, `kMarkGoneSeconds` | 0.18 s, 0.12 s | A marker growing in, shrinking away |
+| `kHintPulseSeconds` | 0.6 s | One pulse of a hint ring |
 | `kSelectedScale` | 1.18 | Size of the selected piece |
 | `kSelectedLiftCells` | 0.12 cell | Lift of the selected piece |
 | `kSwipeCellFraction` | 0.3 | Swipe threshold as a share of one cell on screen |
@@ -166,6 +184,7 @@ phases (`extension/src/board/animator.hpp`), played on one tween:
 | Swap | 0 | `kSwapSeconds` | The two pieces trade cells |
 | Clear (per step) | when the previous phase lands, plus `kCascadeGapSeconds` after step 0 | `kClearPopSeconds + kClearShrinkSeconds` | Cleared pieces pop to `kClearPopScale`, then shrink away |
 | Fall (per step) | when its clear ends | the longest fall in the step | Pieces fall under gravity (`kFallGravityCells`, at least `kFallMinSeconds`); new pieces start `drop` rows above the board, grow from `kSpawnStartScale` and fall in |
+| Effect (per step with a `lead`) | before the step's clear | its `lead` | A totem's lead-in; `repaints` morph here: the old piece shrinks, the new kind grows in |
 | Shuffle | after the last step | `kShuffleSeconds` | Pieces glide to their shuffled cells (`shuffle_map`) |
 | Redeal | after the last step | `kRedealOutSeconds + kRedealInSeconds` | Old pieces shrink away, the new deal grows in |
 
@@ -185,6 +204,92 @@ without `cascades` (older binding) falls back to the swap followed by one
 settle beat.
 
 ![Frames 0.1 s apart: swap, pop, empty cells, fall and refill](../images/board-cascade-frames.png)
+
+## Effects
+
+Totem and power-up visuals (WP-29). Code:
+`extension/src/board/effects/` (`effect_plan.hpp` is Godot-free and
+tested in `effects_tests`; `board_effects.*` builds the nodes). Like the
+move animation, effects only show what the result says happened.
+
+![Look-dev frames: time, harvest and ward totems, gems and chains on pieces](../images/board-effects-frames.png)
+
+### Result keys
+
+All optional; a result without them plays as before.
+
+| Key | Where | Value |
+|---|---|---|
+| `lead` | a cascade | seconds of lead-in before its clear (a totem's first step) |
+| `repaints` | a cascade | `[{cell, kind}]`: pieces that turn into `kind` during the lead (paint) |
+| `fx` | a cascade | what the step set off, below |
+| `marks` | the result | `PackedInt32Array`, every cell's markers after the move; the view ends on it |
+
+`fx` keys, each an `Array` of cells unless noted:
+
+| Key | Meaning |
+|---|---|
+| `power_ups` | `[{cell, id, cells, time, multiplier, hint}]`: power-ups going off as the step clears, with the cells each clears |
+| `power_ups_placed` | `[{cell, id}]`: badges placed after the step's refill |
+| `gems_collected`, `steel_removed`, `chains_broken` | markers lost as the step clears |
+| `gems_placed` | gems placed after the refill |
+| `steel_spawned` | new pieces that arrive as steel |
+| `totem` | `{id, targets, repaints, time, points, gems_harvested, gems_placed, chains_removed, power_ups_placed}`: the totem firing at this step's start |
+
+A totem that clears nothing (time, gold, gift, harvest, a paint that
+made no run) has an empty step of its own, so its effect has a place on
+the timeline.
+
+### Markers
+
+`marks` packs one cell in an int: bit 0 gem, bit 1 steel, bit 2 chain,
+bits 4 to 7 the power-up index + 1 (0: none; index in contract order
+`tnt`, `color_clear`, `lightning`, `clock`, `multiplier`, `hint`).
+Markers are children of their piece, so they fall, shuffle and leave with
+it. Changes apply at the step's clear (removals, a totem's placements) or
+after its refill (earned badges and gems); steel arrives with its new
+piece. After the animation, a debug build warns if the walked markers
+differ from `marks`, and the view resyncs either way.
+
+| Marker | Placeholder | Where on the cell |
+|---|---|---|
+| Power-up badge | dark disc with a rim in the badge colour and a symbol: `tnt` red barrel, `color_clear` violet asterisk, `lightning` pale zigzag, `clock` cyan dial, `multiplier` gold X, `hint` green triangle | far right corner, above the piece |
+| Gem | bright cyan octahedron | far left corner, above the piece |
+| Steel | metal frame around the cell | cell edge |
+| Chain | two iron bars crossed over the piece | over the piece |
+
+### Beats
+
+| Beat | Starts | Shows |
+|---|---|---|
+| `fire` totem | step start | fireballs fall onto each target during the lead, embers and a flash as the clear starts |
+| `time` totem | step start | `+N s` rises from the board centre; an orange ring |
+| `gold` totem | step start | `+N` rises; gold coins burst over the board |
+| `harvest`, `ward` totems | step start | a green or blue ring across the board; flashes on the cells they touch (the gems, chains and steel play their own beats) |
+| `gift` totem | step start | a purple ring; sparkles where badges appear |
+| `paint` totem | step start | a white flash on each repainted piece as it morphs |
+| `tnt` | its step's clear | a ring out to the blast's edge, flashes, embers |
+| `lightning` | its step's clear | beams along each line it clears, flashes |
+| `color_clear` | its step's clear | a ring and a flash on every cell of the colour |
+| `clock`, `multiplier` | its step's clear | `+N s` or `×N` rises from the cell |
+| `hint` | its step's clear | a ring; the hint rings follow (shown by [Match3Game](match3-game.md)) |
+| Gem collected | the step's clear | the gem flies up and away |
+| Steel broken, chain broken | the step's clear | grey shards; the bars fall away |
+| Badge or gem placed | its change | sparkles; the marker grows in |
+
+Every transient beat ends by the end of the step it belongs to
+([readability rule 3](visual-target.md#readability-rules-every-tier));
+the planner clamps it, and the view cuts particle lifetimes to that
+window rather than letting a burst outlive it, so `animation_finished`
+comes at the plan's end. A marker growing in is not transient: its
+sparkle plays on its own tween and never holds the move. Effects
+never move the camera. Additive effects are translucent so the piece
+under them still reads. `animation_speed` scales them; `skip_animation`
+frees them at once and leaves only the end state. On the `mobile` and
+`web` [quality tiers](quality-tiers.md) bursts carry half the particles;
+no effect uses trails. The placeholders are cheap meshes, `Label3D` and
+small `CPUParticles3D` bursts that run on every renderer; WP-53 replaces
+them with realistic GPU-particle scenes through the `fx_*` names.
 
 ## Input
 
