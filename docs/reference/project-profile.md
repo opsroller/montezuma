@@ -127,6 +127,9 @@ credits screen and the website both read from it.
 
 ## Budgets
 
+These are the mobile floor. Per-tier budgets, frame times and the look
+each tier must show are in [Visual target](visual-target.md).
+
 - 60 fps on mid-range Android and older iPhones.
 - Pieces under 2k triangles, board under 20k; textures 1024² max.
 - Install size target under 150 MB on mobile; web demo under 40 MB

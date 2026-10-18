@@ -68,6 +68,29 @@ row in the PR that finishes the package.
 | 38 | App icons and store art | graphic-designer | `design/icons/`, `design/store/` | 04, 28 | icons at every size, store graphics and captioned screenshots per store spec | todo |
 | 39 | License notices and credits | devops-engineer | `CREDITS.md` structure, `tools/release/notices*` | 20 | every dependency's notice ships in-app and in releases; GPL source link per release | todo |
 
+## Wave V: high-end visual target
+
+Brings the look up to [Visual target](visual-target.md) (why:
+[About the visual target](../explanation/about-the-visual-target.md)).
+44 goes first; 45 and 46 next; 47 to 53 and 55 then run in parallel. Each
+look package commits its look-dev reference frames and passes the
+target's acceptance tests for every tier it touches.
+
+| WP | Package | Role | Owns | Depends on | Done when | Status |
+|---|---|---|---|---|---|---|
+| 44 | Engine upgrade to Godot 4.7 | devops-engineer + graphics-programmer | Godot pin in `.github/workflows/`, `tools/release/godot.env`, `thirdparty/godot-cpp` bump, version lines in docs | 20 | CI, desktop builds and the web export run on 4.7-stable; godot-cpp matches; no new warnings | todo |
+| 45 | Quality tiers | graphics-programmer | `extension/src/render/quality.*`, tier render settings in `game/project.godot` | 44 | `desktop-high`, `desktop-standard`, `mobile`, `web` picked at start from renderer and GPU, switchable at runtime, each turning on exactly its features from the target; settings key for the UI | todo |
+| 46 | Benchmark scene and frame-time capture | graphics-programmer + technical-artist | `game/scenes/bench/`, `extension/src/bench/`, `tools/bench/` | 44, 13 | scripted 60 s busiest-board replay writes p50/p95 CPU and GPU frame time and the active feature list as JSON; readability capture script checks rules 2, 4, 5 and 6; how-to for running it on a device | todo |
+| 47 | Lighting and global illumination | technical-artist + graphics-programmer | `game/assets/models/<theme>/backdrop/` lighting nodes, `game/assets/lookdev/`, bake outputs, `tools/assets/` bake step | 45, 46 | physical light units and AgX; baked `LightmapGI` with probes on every tier; VoxelGI or SDFGI (chosen by measurement) plus SSIL on desktop; soft sun and fire shadows per tier; reference frames committed | todo |
+| 48 | PBR material and texture upgrade | technical-artist | `game/assets/materials/`, `game/assets/textures/`, `tools/assets/gen_theme_textures.py` | 44 | stone, gold, gem, jade and moonstone as PBR sets (base colour, normal, ORM, height) at the target's sizes; parallax stone, SSS jade and moonstone, refractive gems with fallbacks; validator checks colour space and value ranges | todo |
+| 49 | Fire VFX | technical-artist | `game/assets/models/<theme>/fx/fire/`, `game/assets/textures/<theme>/fx/`, `tools/assets/fx/` (Blender fluid sims) | 45, 47 | brazier flame from our own Blender fluid simulation as motion-vector flipbooks on GPU particles, smoke, embers with turbulence and trails, flickering shadowed lights, heat haze and fog contribution on desktop; mobile and web substitutes per the target | todo |
+| 50 | Water | technical-artist | `game/assets/models/<theme>/backdrop/water*`, `game/assets/materials/shaders/SH_Water*` | 45, 47 | water channels or pool beside the platform with normals, depth colour, refraction, caustics and SSR on desktop, probe reflections on mobile and web; never inside the board rectangle | todo |
+| 51 | Volumetrics and atmosphere | technical-artist | `FogVolume`s and dust in `game/assets/models/<theme>/backdrop/`, light-shaft cards | 47 | sun shafts and dust through volumetric fog on desktop, card substitutes on mobile and web, zero density over the board | todo |
+| 52 | Post-processing and colour grade | technical-artist + graphic-designer | theme `WorldEnvironment` and `CameraAttributes`, `game/assets/textures/<theme>/grade/`, grade notes in `design/` | 47 | glow, LUT grade, backdrop-only depth of field and per-tier anti-aliasing and upscaling set per the target; grade checked against the palette and readability rules | todo |
+| 53 | Realistic match, power-up and totem effects | technical-artist | `game/assets/models/<theme>/fx/`, effect scenes for `fx_*` manifest names | 45, 29 | every board effect rebuilt on GPU particles (sparks, stone dust, shards, light) with mobile and web variants, inside rule 3 of the target | todo |
+| 54 | Hardware ray-tracing spike (optional) | graphics-programmer | `extension/src/render/rt/` (behind a build option) | 44, 46 | ray-traced reflections or shadows on gems and gold via the 4.7 `RenderingDevice` ray-tracing API as a compositor effect on Vulkan desktop; benchmark numbers and a written keep-or-drop decision; never required by any tier | todo |
+| 55 | High-detail asset pass | technical-artist | `game/assets/models/<theme>/`, `tools/assets/gen_theme_meshes.py` | 48 | pieces, board, frame and backdrop rebuilt to the desktop budgets with LOD chains down to the mobile budgets; silhouettes and sizes unchanged; validator checks every LOD | todo |
+
 ## Wave 3: ship
 
 | WP | Package | Role | Owns | Depends on | Done when | Status |

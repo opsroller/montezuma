@@ -32,6 +32,7 @@ own folder.
   [bonus games](reference/rules-bonus-games.md) and [sources](reference/rules-sources.md).
 - [Progression](reference/progression.md): episodes, levels, unlocks, upgrades, trophies, intro level.
 - [Balance targets](reference/balance.md): what the simulator checks each level against.
+- [Visual target](reference/visual-target.md): the look per quality tier, frame budgets and acceptance tests.
 
 ## Explanation
 
@@ -54,6 +55,7 @@ own folder.
 - [UI architecture](explanation/ui-architecture.md): why a C++ screen stack, an overlay and a tokens-built theme.
 - [About the board view](explanation/about-the-board-view.md): why the view never applies rules, and how the camera frames the board.
 - [Art direction](explanation/art-direction.md): why the board looks the way it does, and the rules new art follows.
+- [About the visual target](explanation/about-the-visual-target.md): why a realistic high-end look, and what Godot can and cannot do with ray tracing.
 - [About CI caching](explanation/about-ci-caching.md): why CI uses a compiler cache and what it leaves uncached.
 - [About the build pipeline](explanation/about-the-build-pipeline.md): why builds compile natively and export once.
 - [Sound direction](explanation/sound-direction.md): why the game sounds the way it does.
