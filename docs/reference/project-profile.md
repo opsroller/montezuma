@@ -29,7 +29,7 @@ to do the job; this file says with what, and where.
 | Errors | Exceptions ON for every target (`GODOTCPP_DISABLE_EXCEPTIONS=OFF`); core reports errors by exception, binding uses noexcept `Board::try_create` and `MoveResult::stuck` |
 | Godot project | `game/`: `project.godot`, `scenes/`, `assets/`, `ui/`, `data/`; built extension libraries land in `game/bin/` (not committed) |
 | Build | CMake (core, extension, tools), Godot export presets for packaging |
-| Tests | Core unit tests via CTest in `core/tests/`; extension load check headless in Godot. CI (`.github/workflows/tests.yml`) runs Linux, Windows and macOS with warnings as errors, plus an ASan/UBSan job |
+| Tests | Core unit tests via CTest in `core/tests/`: one CTest test per `core/tests/*.cpp`, each a standalone program with its own `main` and named `test_*.cpp`; shared test helpers go in headers. New `core/src/*.cpp` files are picked up automatically. extension load check headless in Godot. CI (`.github/workflows/tests.yml`) runs Linux, Windows and macOS with warnings as errors, plus an ASan/UBSan job |
 | Not allowed | GDScript, JavaScript or TypeScript for game logic. Scenes (`.tscn`) and resources are data and are fine |
 | Offline tools | Blender (headless, Python) for models; Python + numpy + ffmpeg for audio. Tools live in `tools/` and never ship |
 | Renderers | Mobile (Android, iOS), Forward+ (desktop), Compatibility (web demo) |
@@ -64,14 +64,10 @@ Each role loads `engineering-practices` plus its own plugin from
 | `project-manager` | `docs/reference/work-packages.md` status, plan changes | Coordinator: staffs packages, holds the owner's standing rules |
 | `code-reviewer` | — (reviews every PR) | Uses the review notes below |
 
-Until opsroller/montezuma#3 (GDExtension scaffold) merges, the port
-thread ("Plan the faithful port") owns `extension/`, `game/` and
-`thirdparty/`; other roles build against the contracts and wait for it
-before touching those folders.
-
 Shared, append-only for everyone: `game/assets/PROVENANCE.md`, `CREDITS.md`,
 `CHANGELOG.md` (generated). `extension/src/register_types.cpp`: each role
-adds one `register_<area>()` call, nothing else.
+adds one `register_<area>()` call, nothing else. `game/project.godot`: each
+role adds only its own autoload, input-action or setting entries.
 
 ## Conventional Commit scopes
 
