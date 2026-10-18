@@ -22,3 +22,7 @@ pointing/emulate_touch_from_mouse=false
 
 renderer/rendering_method.mobile="mobile"
 textures/vram_compression/import_etc2_astc=true
+
+[autoload]
+
+GameAudio="*res://scenes/audio/game_audio.tscn"

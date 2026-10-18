@@ -6,8 +6,10 @@ to do the job; this file says with what, and where.
 ## Product
 
 - A modern 3D remake of the gameplay of *The Treasures of Montezuma*
-  (Alawar, 2009). It plays like the original and looks new. Rules are in
-  `docs/rules-spec.md`.
+  (developed by Visual Shape, published by Alawar Entertainment; PC 2006,
+  iOS 2009; sources in `docs/reference/rules-sources.md`). It plays like
+  the original and looks new. Rules are in
+  `docs/reference/rules-spec.md`.
 - Targets: Windows, macOS, Linux, Android, iOS, plus a web demo. The
   website's entry is a playable intro level (the game's opening levels,
   compiled to WebAssembly); finishing it opens the download and store
@@ -29,7 +31,7 @@ to do the job; this file says with what, and where.
 | Errors | Exceptions ON for every target (`GODOTCPP_DISABLE_EXCEPTIONS=OFF`); core reports errors by exception, binding uses noexcept `Board::try_create` and `MoveResult::stuck` |
 | Godot project | `game/`: `project.godot`, `scenes/`, `assets/`, `ui/`, `data/`; built extension libraries land in `game/bin/` (not committed) |
 | Build | CMake (core, extension, tools), Godot export presets for packaging |
-| Tests | Core unit tests via CTest in `core/tests/`: one CTest test per `core/tests/*.cpp`, each a standalone program with its own `main` and named `test_*.cpp`; shared test helpers go in headers. New `core/src/*.cpp` files are picked up automatically. extension load check headless in Godot. CI (`.github/workflows/tests.yml`) runs Linux, Windows and macOS with warnings as errors, plus an ASan/UBSan job |
+| Tests | Core unit tests via CTest in `core/tests/`: one CTest test per `core/tests/*.cpp`, each a standalone program with its own `main` and named `test_*.cpp`; shared test helpers go in headers. New `core/src/*.cpp` files are picked up automatically. extension load check headless in Godot. CI (`.github/workflows/tests.yml`) runs Linux, Windows and macOS with warnings as errors, plus an ASan/UBSan job; see [CI pipeline](ci-pipeline.md) |
 | Not allowed | GDScript, JavaScript or TypeScript for game logic. Scenes (`.tscn`) and resources are data and are fine |
 | Offline tools | Blender (headless, Python) for models; Python + numpy + ffmpeg for audio. Tools live in `tools/` and never ship |
 | Renderers | Mobile (Android, iOS), Forward+ (desktop), Compatibility (web demo) |
@@ -52,7 +54,7 @@ Each role loads `engineering-practices` plus its own plugin from
 
 | Role plugin | Owns in this repo | Notes |
 |---|---|---|
-| `game-designer` | `docs/rules-spec.md`, `docs/design/`, `game/data/levels/` | Level files are JSON in the LevelData contract. Sim targets in `docs/design/balance.md` |
+| `game-designer` | `docs/reference/rules-*.md`, `docs/reference/progression.md`, `docs/explanation/about-the-rules.md`, `docs/explanation/about-rule-sets-and-themes.md`, `docs/reference/balance.md`, `game/data/levels/` | Level files are JSON in the LevelData contract. Sim targets in `docs/reference/balance.md` |
 | `gameplay-programmer` | `core/`, `extension/src/match3_board.*`, `tools/sim/` | Namespace `montezuma`; bindings in `montezuma::godot_binding` |
 | `graphics-programmer` | `extension/src/board/`, `extension/src/game/`, `game/scenes/` | Feel constants in `extension/src/board/feel.hpp` |
 | `technical-artist` | `game/assets/models/`, `game/assets/materials/`, `game/assets/textures/`, `game/assets/manifest.json`, `tools/assets/` | Budgets below |
@@ -114,8 +116,7 @@ Third-party inputs under the compatible licenses listed under Provenance
 are allowed.
 
 Every PR that changes behaviour updates the matching doc kind in the same
-PR. `docs/README.md` maps the docs. `docs/rules-spec.md` moves to
-`docs/reference/` in its owner's next PR.
+PR. `docs/README.md` maps the docs.
 
 ## Credits
 

@@ -9,7 +9,7 @@ platform export.
 This is an independent fan project. It has no connection to Alawar
 Entertainment. Nothing in it comes from the original game: no code, art,
 audio or text. The gameplay rules are written up in
-[docs/rules-spec.md](docs/rules-spec.md) and reimplemented from scratch.
+[docs/reference/rules-spec.md](docs/reference/rules-spec.md) and reimplemented from scratch.
 
 The name is deliberately broad. Later, the game can host mini-games that put
 different graphics and rule variants on the same core.
