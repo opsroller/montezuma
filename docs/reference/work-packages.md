@@ -48,7 +48,7 @@ row in the PR that finishes the package.
 | 17 | Music and ambience | sound-designer | `game/assets/audio/music/`, `tools/audio/music*` | — | menu theme, 5 episode loops, jungle ambience | done |
 | 18 | UI theme and HUD | ui-developer | `game/ui/theme/`, `game/ui/hud/`, `extension/src/ui/hud*` | 02, 04 | gem counter, timer, score, 7 totem meters and Frenzy bar bound to game signals; quota counters only on levels with quotas | active (theme on placeholder tokens until 04) |
 | 19 | Screens and navigation | ui-developer | `game/ui/screens/`, `game/ui/widgets/`, `game/ui/strings.csv`, `extension/src/ui/screens*` | 02, 04 | title, episode map, intro, pause, results, trophies, settings, credits | review (#19) |
-| 20 | Desktop builds in CI | devops-engineer | `game/export_presets.cfg`, `.github/workflows/build.yml` | 02 | Windows, macOS, Linux builds as CI artifacts on `main` | todo |
+| 20 | Desktop builds in CI | devops-engineer | `game/export_presets.cfg`, `.github/workflows/build.yml`, `tools/release/` | 02 | Windows, macOS, Linux builds as CI artifacts on `main` | done (#16) |
 | 21 | Web demo build | gameplay-programmer (port thread) | `.github/workflows/web.yml`, `tools/release/web*` | 02 | extension compiled with Emscripten; single-threaded web export of the intro level runs in Chrome, Firefox and Safari | todo |
 
 ## Wave 2: content, integration, distribution
