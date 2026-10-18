@@ -74,10 +74,15 @@ main {
   display: grid;
   place-items: center;
 }
+/* Phones held upright: a square stage gives the board room to touch. */
+@media (orientation: portrait) and (max-width: 40rem) {
+  .stage { aspect-ratio: 1 / 1; }
+}
 .stage > * { grid-area: 1 / 1; }
 .stage noscript p { padding: var(--space); text-align: center; }
 .stage noscript a { color: inherit; }
-.stage canvas { width: 100%; height: 100%; display: block; }
+/* Out of flow, so the pixel size set in main.js never changes the layout. */
+.stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 /* The accent and focus colours are too dark against the stage in light
    mode; use the stage's text colour for edges there (3:1 or better). */
 .stage :focus-visible { outline-color: var(--color-stage-text); }

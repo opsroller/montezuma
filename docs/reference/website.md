@@ -132,6 +132,17 @@ needs an `id`; Godot selects it with `#<id>`. Amended in WP-21
 It checks `WebAssembly` and `Engine.isWebGLAvailable(2)` first and shows a
 message pointing to the downloads when either is missing.
 
+**Stage and canvas.** The stage is 16:9, or square on screens up to
+40rem wide held upright, and keeps its size before and after the demo
+loads. The canvas (`#game-canvas`) fills it; the page sets its pixel size
+to its CSS size times `devicePixelRatio`, capped at 2, and again on every
+resize. Focus moves to the canvas when the game starts.
+
+**Keyboard.** The game takes every key, Tab included. Shift+Escape moves
+focus from the canvas to the "Leave game" button; Escape alone is the
+game's pause. The canvas's accessible name and the status line both say
+so.
+
 **Events, game to page.** Dispatched on `window` as `CustomEvent`s (from
 `JavaScriptBridge`). Unknown events and extra fields are ignored.
 

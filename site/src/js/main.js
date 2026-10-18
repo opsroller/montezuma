@@ -55,9 +55,12 @@ function openDownloads(won) {
 }
 
 window.addEventListener(LEVEL_COMPLETED, () => openDownloads(true));
-// First frame on screen: the game is playable now, not just loaded.
+// First frame on screen: the game is playable now, not just loaded. It can
+// arrive before startGame() resolves.
+let ready = false;
 window.addEventListener(READY, () => {
-  say("Intro level running. Match three or more to clear the board.");
+  ready = true;
+  say("Intro level running. Match three or more to clear the board. Shift+Escape leaves the game.");
 });
 
 document.querySelectorAll("[data-open-downloads]").forEach((el) => {
@@ -99,6 +102,29 @@ function startStub() {
   say("Demo preview loaded.");
 }
 
+// Keep the canvas's pixel size equal to its CSS size times the screen's
+// pixel ratio (capped at 2 to spare phones); canvasResizePolicy 0 leaves
+// sizing to the page, and Godot renders at whatever size the canvas has.
+function fitCanvas(canvas) {
+  const fit = () => {
+    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.max(1, Math.round(canvas.clientWidth * ratio));
+    canvas.height = Math.max(1, Math.round(canvas.clientHeight * ratio));
+  };
+  fit();
+  if (typeof ResizeObserver === "function") new ResizeObserver(fit).observe(canvas);
+}
+
+// The game takes every key, Tab included, so Shift+Escape hands the
+// keyboard back to the page (WCAG 2.1.2). Escape alone is the game's pause.
+window.addEventListener("keydown", (event) => {
+  const canvas = document.getElementById("game-canvas");
+  if (event.key !== "Escape" || !event.shiftKey || document.activeElement !== canvas) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  leaveButton.focus();
+}, true);
+
 function loadScript(src) {
   return new Promise((resolve, reject) => {
     const script = document.createElement("script");
@@ -127,8 +153,9 @@ async function startGodot() {
     const canvas = document.createElement("canvas");
     canvas.id = "game-canvas";
     canvas.tabIndex = 0;
-    canvas.setAttribute("aria-label", "Montezuma's intro level");
+    canvas.setAttribute("aria-label", "Montezuma's intro level. Press Shift+Escape to leave the game.");
     stage.replaceChildren(canvas);
+    fitCanvas(canvas);
     const engine = new Engine({
       executable: "play/montezuma",
       canvas,
@@ -145,7 +172,7 @@ async function startGodot() {
     await engine.startGame();
     progress.hidden = true;
     leaveButton.hidden = false;
-    say("Starting the intro level…");
+    if (!ready) say("Starting the intro level…");
     canvas.focus();
   } catch (error) {
     console.error(error);
