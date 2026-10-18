@@ -622,7 +622,8 @@ void QualityTiers::run_self_test() {
     auto* trails = memnew(GPUParticles3D);
     trails->set_emitting(false);
     trails->add_to_group("quality:particle_trails");
-    const Ref<TubeTrailMesh> trail_mesh = memnew(TubeTrailMesh);
+    Ref<TubeTrailMesh> trail_mesh;
+    trail_mesh.instantiate();
     trails->set_meta("trail_mesh", trail_mesh);
     scratch->add_child(trails);
     std::vector<Light3D*> lights;
