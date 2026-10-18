@@ -91,7 +91,7 @@ it exists.
 | `restart` | — | UiRoot | `play` the current level again |
 | `resume` | — | UiRoot | Close pause |
 | `quit_level` | screen id (default `episode_map`) | UiRoot | Emit `level_quit_requested`, reset to the screen |
-| `quit` | — | UiRoot | Quit the app (button hidden on web and mobile) |
+| `quit` | — | UiRoot | Quit the app through `GameAudio.quit()`, which stops every sound first (button hidden on web and mobile) |
 | `url` | `https://` URL | UiRoot | Open in the browser |
 
 ### Hud
@@ -267,3 +267,4 @@ Pass after `--`: `godot --path game -- --pseudolocalize`.
 | `--unlock-all` | Every level open on the map (until WP-08) |
 | `--start-screen=<id>` | Opens on screen `<id>` instead of the title; empty (`--start-screen=`) opens none |
 | `--start-level=<id>` | Skips the menus and plays level `<id>`, as if picked on the map. CI screenshots use `e1-l01` |
+| `--quit-after-frames=<n>` | Quits after `<n>` frames through `GameAudio.quit()` (see [Audio](audio.md#quitting)). Use it instead of Godot's `--quit-after` in any run that plays sound and must end without errors |

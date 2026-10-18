@@ -23,4 +23,3 @@ rim_tint = 0.6
 uv1_scale = Vector3(1.5, 1.5, 1.5)
 uv1_triplanar = true
 uv1_triplanar_sharpness = 4.0
-texture_filter = 5
