@@ -35,7 +35,7 @@ row in the PR that finishes the package.
 |---|---|---|---|---|---|---|
 | 05 | Level data parser | gameplay-programmer | `core/src/level_data.*`, `core/include/montezuma/level_data.hpp`, `core/tests/test_level_data.cpp` | 01 | parses and validates the LevelData contract with clear errors | todo |
 | 06 | Power Totems | gameplay-programmer | `core/**/totems.*`, `core/tests/test_totems.cpp` | 01, 03 | each totem charges from streaks and returns a tested effect result | todo |
-| 07 | Bonuses | gameplay-programmer | `core/**/bonuses.*`, `core/tests/test_bonuses.cpp` | 01, 03 | earned, stored, used and upgraded per spec, tested | review |
+| 07 | Bonuses | gameplay-programmer | `core/**/bonuses.*`, `core/tests/test_bonuses.cpp` | 01, 03 | power-ups placed from runs of 4 and 5+, carried with their pieces, set off in the step that clears them, with each tier's effect per spec, tested | review |
 | 08 | Progress, save and trophies | gameplay-programmer | `core/**/progress.*`, `core/**/trophies.*`, tests | 05 | unlocks, best scores and 9 trophies serialise; tested | todo |
 | 09 | Artifact piece models | technical-artist | `game/assets/models/artifacts/`, `tools/assets/artifacts*` | 04 | 7 pieces, distinct colour and silhouette, in the manifest, under budget | active (placeholder style until 04) |
 | 10 | Temple board and environment | technical-artist | `game/assets/models/temple/`, `tools/assets/temple*` | 04 | board and backdrop in the manifest, fits 8×8 | active (placeholder style until 04) |

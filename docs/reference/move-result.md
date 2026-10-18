@@ -21,6 +21,9 @@ fall toward higher `y`. Kinds are artifact indices `0 .. kinds-1`;
 | `Board::try_swap(Cell a, Cell b)` | the player's swap and everything it set off | the swap is illegal (not adjacent, out of bounds, or makes no run); the board is unchanged |
 | `Board::clear_cells(const std::vector<Cell>&)` | an effect (totem, bonus) clearing those cells and everything it set off | no in-bounds, non-empty cell is left after dropping duplicates and out-of-bounds cells; the board is unchanged |
 
+Both take an optional last argument, `const StepHooks* hooks` (default
+`nullptr`); see [Step hooks](#step-hooks).
+
 Neither throws for game reasons. Both resolve the same way: clear, collapse,
 refill, repeat while runs remain, then shuffle if no legal move is left.
 
@@ -69,7 +72,8 @@ empty at once, `falls` move down at once, `spawns` drop in.
 - **Runs.** Each straight line of 3 or more of one kind. A cell shared by
   two runs (L, T and plus shapes) appears in both runs but once in
   `cleared`. A 4-run or 5-run is one run of that length. For a match step,
-  `cleared` is exactly the union of the runs. For step 0 of `clear_cells`,
+  `cleared` is exactly the union of the runs, plus any cells an
+  `extend_clear` hook added. For step 0 of `clear_cells`,
   `runs` is empty and `cleared` is the effect's cells.
 - **Falls.** `from.x == to.x` and `to.y > from.y`, always. No two falls
   share a `from` or a `to`. Apply them simultaneously: every `to` is empty
@@ -80,6 +84,30 @@ empty at once, `falls` move down at once, `spawns` drop in.
   pieces enter as a solid stack (the lowest starts one row above the board,
   the highest `n` rows above). Spawns fill exactly the cells still empty
   after the falls.
+
+## Step hooks
+
+Rules layered on the board, such as power-ups ([bonuses.md](bonuses.md)),
+act inside a step through `StepHooks`. The board calls them and never
+interprets them.
+
+```cpp
+struct StepHooks {
+    std::function<std::vector<Cell>(const Board&, const std::vector<Cell>& cleared, int step)> extend_clear;
+    std::function<void(const Board&, const CascadeStep& step, int index)> after_refill;
+};
+```
+
+| Hook | Called | Effect |
+|---|---|---|
+| `extend_clear` | once per step, before its cells empty, with the pieces still on the board; `cleared` is the step's cells so far (row-major), `step` its index in `cascades` | the returned cells are cleared in the same step: added to `cleared` and counted in `steps`. Out-of-bounds, empty and duplicate cells are ignored. `runs` stays as found, so for a match step `cleared` is then a superset of the runs' union |
+| `after_refill` | once per step, after its falls and spawns | none on the board; the hook sees the step as recorded |
+
+Either may be empty. For an illegal swap, or a `clear_cells` call with no
+valid cell, no hook is called. Hooks draw nothing from the board's random
+generator, so a move with hooks that add no cells gives the same
+`MoveResult` and board as one without. Exceptions thrown by a hook
+propagate.
 
 ## Replaying a result
 
