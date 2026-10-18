@@ -54,3 +54,9 @@ if(MONTEZUMA_BUILD_EXTENSION)
   endif()
   add_subdirectory(extension)
 endif()
+
+# Godot-free parts of the board view (layout, camera fit): no godot-cpp needed,
+# so they run with the core tests on every platform and under sanitizers.
+if(MONTEZUMA_BUILD_TESTS)
+  add_subdirectory(extension/src/board/tests)
+endif()

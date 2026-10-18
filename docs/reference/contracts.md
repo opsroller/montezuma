@@ -6,7 +6,8 @@ lands. Each section has an owner (see `docs/reference/work-packages.md`); to cha
 one, message the owner (coordinate skill), and the owner lands it as a
 `feat(contracts):` commit.
 
-Status: **proposed** until the package that implements it merges.
+Status: **proposed** until the package that implements it merges;
+**agreed** when both sides have confirmed it before that.
 
 Each contract gives the C++ shape (namespace `montezuma`) and, where Godot
 sees it, the surface the binding exposes (`Dictionary`, `Array`,
@@ -110,6 +111,9 @@ level_finished(outcome: int, score: int)                # LevelState.Outcome
 `BoardView3D` API: `show_board(board: Match3Board)`, `play(result: Dictionary)`
 (emits `animation_finished` when done), `play_illegal(a, b)`, signals `swap_requested(a: Vector2i,
 b: Vector2i)` and `animation_finished`.
+**Implemented** in WP-12 (`extension/src/board/`), plus `is_busy()`,
+`cell_at_screen(pos)` and a `layout_changed` signal; see
+[Board view](board-view.md).
 
 ## Asset manifest (owner: technical-artist, WP-07/08) — proposed
 
@@ -156,3 +160,34 @@ ui_cancel and `ui_pause` (P, controller Start) open the pause menu. UI
 sounds are played with `GameAudio.play("ui_click")` and `"ui_back"` when
 the autoload exists. Volumes go to audio buses `Music` and `SFX`.
 
+## Web demo hand-off (owner: gameplay-programmer, WP-21/WP-34; consumer: frontend-web-developer, WP-35) — agreed
+
+Agreed by both sides on 2026-10-18. The site's side is described in
+`docs/reference/website.md`.
+
+**Files.** The Godot 4.4.1 single-threaded web export, named `montezuma`
+(`montezuma.js`, `montezuma.wasm`, `montezuma.pck`, plus any helper files
+the export emits). The site does not use the export's own HTML page.
+
+**Loading.** On the visitor's click, the page loads `play/montezuma.js`
+and starts it with Godot's `Engine` API:
+
+```js
+new Engine({
+  executable: "play/montezuma",
+  canvas,                      // created by the page inside #stage
+  canvasResizePolicy: 0,       // the page sizes the canvas
+  ensureCrossOriginIsolationHeaders: false,
+  onProgress(current, total) { /* updates the <progress> bar */ },
+}).startGame();
+```
+
+**Events, game to page.** Dispatched on `window` as `CustomEvent`s (from
+`JavaScriptBridge`). Unknown events and extra fields are ignored.
+
+| Event | `detail` | When |
+|---|---|---|
+| `montezuma:level-completed` | `{ v: 1, level: "<level id>", score: <int> }` | Once, when the intro level is won |
+| `montezuma:ready` (optional) | `{ v: 1, version: "<game version>" }` | First frame shown |
+
+**Events, page to game.** None.
