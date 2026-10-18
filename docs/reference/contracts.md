@@ -138,13 +138,29 @@ b: Vector2i)` and `animation_finished`.
 `cell_at_screen(pos)` and a `layout_changed` signal; see
 [Board view](board-view.md).
 
-## Asset manifest (owner: technical-artist, WP-07/08) — proposed
+## Asset manifest (owner: technical-artist, WP-09-11) — proposed
 
-`game/assets/manifest.json` maps logical names to resource paths. The board view
-falls back to a placeholder primitive when a name is missing.
+`game/assets/manifest.json` maps logical names to scenes, per theme, so
+mini games can swap the whole look without code changes:
 
-`artifact_0` … `artifact_6` (by kind index), `temple_board`, `temple_env`,
-`cell_highlight`, `fx_match`, `fx_cascade`, `totem_<id>`, `bonus_<id>`.
+```json
+{
+  "default_theme": "temple",
+  "themes": { "temple": { "artifact_0": "res://assets/models/temple/artifacts/PF_Artifact_Ruby.tscn" } }
+}
+```
+
+Each value is a `res://` path to a `PackedScene`. `BoardView3D` takes a
+`theme` property (empty means `default_theme`), reads the manifest once and
+falls back to a placeholder primitive for any name the theme lacks.
+
+Names, theme-neutral: `artifact_0` … `artifact_6` (by kind index; origin at
+the cell centre on the board plane), `board` (replaces the slab; tile tops
+at y = 0), `environment` (backdrop plus its own `WorldEnvironment`, sun and
+lights, so the scene supplies none), `cell_highlight` (shown at the
+selected cell), `fx_match` (one-shot `CPUParticles3D` at each cleared cell,
+freed after `lifetime`), `fx_cascade`, `totem_<id>`, `bonus_<id>`.
+Scale, folders and rules: [Board themes](board-themes.md).
 
 ## Audio cues (owner: sound-designer, WP-15 to 17) — proposed
 

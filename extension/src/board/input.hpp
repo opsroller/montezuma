@@ -52,6 +52,7 @@ public:
         height_ = height;
         selected_ = {};
         active_ = false;
+        spent_ = false;
     }
     // Screen distance a drag must cover to count as a swipe.
     void set_swipe_threshold(double pixels) { threshold_ = pixels; }
@@ -71,7 +72,8 @@ public:
         if (selected_.valid() && adjacent(selected_, cell)) {
             const Cell from = selected_;
             selected_ = {};
-            return {Action::Swap, from, cell};  // the press is spent; no drag follows
+            hold_spent(pointer);
+            return {Action::Swap, from, cell};
         }
         active_ = true;
         pointer_ = pointer;
@@ -85,11 +87,11 @@ public:
 
     // The pointer moved while down.
     Output move(int pointer, Point pos) {
-        if (!active_ || pointer != pointer_) return {};
+        if (!active_ || spent_ || pointer != pointer_) return {};
         const double dx = pos.x - origin_.x;
         const double dy = pos.y - origin_.y;
         if (std::hypot(dx, dy) < threshold_) return {};
-        active_ = false;
+        spent_ = true;
         Cell to = pressed_;
         // Screen y grows downward, like board rows.
         if (std::abs(dx) >= std::abs(dy)) {
@@ -106,6 +108,10 @@ public:
     Output release(int pointer) {
         if (!active_ || pointer != pointer_) return {};
         active_ = false;
+        if (spent_) {
+            spent_ = false;
+            return {};
+        }
         if (was_selected_) {
             selected_ = {};
             return {Action::Deselect, {}, {}};
@@ -114,14 +120,26 @@ public:
     }
 
     // The system took the pointer away; forget the press, keep the selection.
-    void cancel() { active_ = false; }
+    void cancel() {
+        active_ = false;
+        spent_ = false;
+    }
 
 private:
+    // A press that already swapped (or left the board) keeps the pointer
+    // until it lifts, so a duplicate press for the same tap does nothing.
+    void hold_spent(int pointer) {
+        active_ = true;
+        spent_ = true;
+        pointer_ = pointer;
+    }
+
     int width_ = 8;
     int height_ = 8;
     double threshold_ = 24.0;
     Cell selected_;
     bool active_ = false;
+    bool spent_ = false;
     int pointer_ = 0;
     Point origin_;
     Cell pressed_;
