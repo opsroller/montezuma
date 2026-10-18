@@ -101,6 +101,12 @@ let retryReloads = false;
 // somewhere Godot does not report (it leaves startGame() pending).
 const STALL_MS = 60_000;
 let lastProgress = 0;
+// Godot's loader reports its own files; the side module is fetched by the
+// page (see fetchSideModule), so the bar adds the two.
+const SIDE_MODULE = "play/montezuma.side.wasm";
+const loaded = { godot: 0, side: 0 };
+// Set before a retry's reload so the new page starts the demo by itself.
+const RETRY_KEY = "montezuma-demo-retry";
 
 function say(text) {
   status.textContent = text;
@@ -131,6 +137,7 @@ function unsupported(missing) {
     openDownloads(false);
   });
   status.replaceChildren(`Your browser can't run the demo (no ${missing}). `, link, ".");
+  link.focus();
 }
 
 function startStub() {
@@ -179,6 +186,27 @@ function loadScript(src) {
   });
 }
 
+function showProgress() {
+  lastProgress = Date.now();
+  progress.value = loaded.godot + loaded.side;
+}
+
+// Godot's runtime fetches the side module itself, outside its loader's
+// progress reports. Fetching it first, counting the bytes, makes it part of
+// the bar, catches a failed fetch at once, and leaves it in the HTTP cache
+// for the runtime's own request.
+async function fetchSideModule() {
+  const response = await fetch(SIDE_MODULE);
+  if (!response.ok || !response.body) throw new Error(`${SIDE_MODULE}: HTTP ${response.status}`);
+  const reader = response.body.getReader();
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) return;
+    loaded.side += value.byteLength;
+    showProgress();
+  }
+}
+
 // Resolves with the game's start, or rejects once loading has made no
 // progress for STALL_MS.
 function watch(start) {
@@ -199,8 +227,11 @@ async function startGodot() {
     unsupported("WebAssembly");
     return;
   }
+  const sizes = JSON.parse(section.dataset.fileSizes || "{}"); // written by site/build.py
+  const total = Object.values(sizes).reduce((sum, size) => sum + size, 0);
   progress.hidden = false;
   progress.removeAttribute("value");
+  if (total > 0) progress.max = total;
   say("Loading the intro level…");
   try {
     if (typeof Engine === "undefined") await loadScript("play/montezuma.js");
@@ -224,37 +255,62 @@ async function startGodot() {
       canvas,
       canvasResizePolicy: 0, // the page sizes the canvas (see site.css)
       ensureCrossOriginIsolationHeaders: false, // single-threaded export
-      fileSizes: JSON.parse(section.dataset.fileSizes || "{}"), // written by site/build.py
-      onProgress(current, total) {
-        lastProgress = Date.now();
-        if (total > 0) {
-          progress.max = total;
-          progress.value = current;
-        }
+      focusCanvas: false, // main.js decides (below)
+      fileSizes: sizes,
+      onProgress(current) {
+        loaded.godot = current;
+        if (total > 0) showProgress();
+        else lastProgress = Date.now();
       },
     });
-    const start = engine.preloadFile(`play/${EXTENSION}`, EXTENSION).then(() => engine.startGame());
+    // The runtime starts only once the side module is in the cache.
+    const start = Promise.all([
+      fetchSideModule(),
+      engine.preloadFile(`play/${EXTENSION}`, EXTENSION),
+    ]).then(() => engine.startGame());
     await watch(start);
     progress.hidden = true;
     if (!ready) say("Starting the intro level…");
-    canvas.focus();
+    // Into the game, unless the visitor moved focus elsewhere while it loaded.
+    const active = document.activeElement;
+    if (!active || active === document.body || active === canvas || active === status) canvas.focus();
   } catch (error) {
     console.error(error);
     fail("The demo didn't load. Check your connection and try again, or download the game below.");
   }
 }
 
-playButton.addEventListener("click", () => {
-  if (retryReloads) {
-    location.reload();
-    return;
-  }
+function play() {
   playButton.hidden = true;
+  // Keep focus in the demo area while the button is gone.
+  status.focus();
   if (section.dataset.demo === "godot") startGodot();
   else startStub();
+}
+
+playButton.addEventListener("click", () => {
+  if (!retryReloads) {
+    play();
+    return;
+  }
+  try {
+    sessionStorage.setItem(RETRY_KEY, "1");
+  } catch {
+    // Storage blocked: the reloaded page waits for a click instead.
+  }
+  location.reload();
 });
 
 leaveButton.addEventListener("click", () => {
   document.getElementById("skip-link").focus();
-  say("The keyboard is back on the page. Tab back to the game to keep playing.");
+  say("The keyboard is back on the page. Press Shift+Tab twice to return to the game.");
 });
+
+try {
+  if (sessionStorage.getItem(RETRY_KEY)) {
+    sessionStorage.removeItem(RETRY_KEY);
+    play();
+  }
+} catch {
+  // Storage blocked: nothing to resume.
+}

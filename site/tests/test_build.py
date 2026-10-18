@@ -148,7 +148,8 @@ class BuildTest(unittest.TestCase):
         out = self.run_build(demo_dir=demo)
         page = (out / "index.html").read_text()
         self.assertIn('data-file-sizes="{&quot;play/libmontezuma.web.template_release.wasm32.nothreads.wasm&quot;: 4, '
-                      '&quot;play/montezuma.pck&quot;: 4, &quot;play/montezuma.wasm&quot;: 4}"', page)
+                      '&quot;play/montezuma.pck&quot;: 4, &quot;play/montezuma.side.wasm&quot;: 4, '
+                      '&quot;play/montezuma.wasm&quot;: 4}"', page)
         self.assertFalse((out / "play/montezuma.html").exists())
 
     def test_stub_has_no_file_sizes(self):

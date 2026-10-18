@@ -41,7 +41,7 @@ Download, Credits, License and Source code.
 |---|---|---|
 | `--out DIR` | `site/_site` | Output folder; replaced on every build. An existing non-empty folder is deleted only if it holds the `.montezuma-site-build` marker an earlier build wrote |
 | `--base-url URL` | `https://opsroller.github.io/montezuma/` | Canonical URLs and sitemap |
-| `--demo-dir DIR` | none | Unzipped `montezuma-<version>-web` folder from the `web` workflow. It must hold `montezuma.js`, `montezuma.wasm`, `montezuma.side.wasm`, `montezuma.pck` and `libmontezuma.web.template_release.wasm32.nothreads.wasm`, or the build fails naming what is missing. Copied to `play/` without the export's own `montezuma.html`; the page runs the real demo, gets the byte sizes of `montezuma.wasm`, `montezuma.pck` and the extension in `#play[data-file-sizes]` (Godot's loader needs them to fill the progress bar) and the play button reads "Play the intro level (N MB)", N being those five files gzipped, about what a compressing host sends. Without it the page runs the stub demo |
+| `--demo-dir DIR` | none | Unzipped `montezuma-<version>-web` folder from the `web` workflow. It must hold `montezuma.js`, `montezuma.wasm`, `montezuma.side.wasm`, `montezuma.pck` and `libmontezuma.web.template_release.wasm32.nothreads.wasm`, or the build fails naming what is missing. Copied to `play/` without the export's own `montezuma.html`; the page runs the real demo, gets the byte sizes of `montezuma.wasm`, `montezuma.side.wasm`, `montezuma.pck` and the extension in `#play[data-file-sizes]` (Godot's loader needs them to report progress; the bar's total is their sum) and the play button reads "Play the intro level (N MB)", N being those five files gzipped, about what a compressing host sends. Without it the page runs the stub demo |
 
 The build fails, naming the file and field, when release data is invalid,
 a credits link is not `https://` or `#…`, or a template placeholder has no
@@ -133,17 +133,30 @@ It checks `WebAssembly` and `Engine.isWebGLAvailable(2)` first. When
 either is missing the status line says which and links to the downloads,
 and no retry is offered.
 
+**Side module.** Godot's runtime fetches `montezuma.side.wasm` (about
+half the download) itself, outside its loader's progress reports. The
+page fetches it first, counting its bytes into the progress bar, and
+calls `startGame()` once it and the extension are in; the runtime's own
+request is then served from the HTTP cache. A browser whose cache can't
+hold a 44 MB entry (Chromium's in-memory cache in private windows, for
+one) downloads it twice.
+
 **Load failures.** A failed fetch, or loading that makes no progress for
-60 seconds (Godot leaves `startGame()` pending when its `.wasm` fails),
-puts the poster back in the stage with a "Try again" button and focuses
-it. Once Godot's engine has been created, "Try again" reloads the page,
-because Godot keeps a failed start in its module state.
+60 seconds (Godot leaves `startGame()` pending when `montezuma.wasm`
+fails), puts the poster back in the stage with a "Try again" button and
+focuses it. Once Godot's engine has been created, "Try again" reloads the
+page, because Godot keeps a failed start in its module state; a
+`sessionStorage` flag (`montezuma-demo-retry`) makes the reloaded page
+start the demo without another click.
 
 **Stage and canvas.** The stage is 16:9, or square on screens up to
 40rem wide held upright, and keeps its size before and after the demo
 loads. The canvas (`#game-canvas`) fills it; the page sets its pixel size
 to its CSS size times `devicePixelRatio`, capped at 2, and again on every
-resize. Focus moves to the canvas when the game starts.
+resize. While loading, focus rests on the status line (`tabindex="-1"`);
+when the game starts it moves to the canvas, unless the visitor has moved
+it somewhere else meanwhile. The canvas's focus ring is drawn on the stage
+in `--color-focus`, outside the game picture.
 
 **Keyboard.** The game takes every key, Tab included. Shift+Escape moves
 focus from the canvas to the "Back to the page" button, which is shown

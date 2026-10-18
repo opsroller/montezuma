@@ -319,9 +319,10 @@ def build(out: Path, base_url: str, demo_dir: Path | None,
         demo_mode = "godot"
         play_label = f"Play the intro level ({format_size(demo_download_size(demo_dir))})"
         # Godot's loader needs the sizes up front to report progress; it
-        # looks them up by the URL it fetches.
+        # looks them up by the URL it fetches. main.js sums them all for the
+        # progress bar, the side module (which it fetches itself) included.
         file_sizes = {f"play/{f}": (demo_dir / f).stat().st_size
-                      for f in ("montezuma.wasm", "montezuma.pck", DEMO_EXTENSION)}
+                      for f in ("montezuma.wasm", "montezuma.side.wasm", "montezuma.pck", DEMO_EXTENSION)}
 
     if out.exists():
         if not (out / MARKER).is_file() and any(out.iterdir()):
