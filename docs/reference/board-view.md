@@ -159,6 +159,12 @@ phases (`extension/src/board/animator.hpp`), played on one tween:
 A fall of `n` rows takes `sqrt(2n / g)` seconds: one row about 0.13 s, the
 full 8-row board about 0.37 s.
 
+`show_board`, or a `cell_size` change, during an animation stops every
+tween first, the new deal's grow included, and frees pieces on their way
+out. A test drives the real rules for hundreds of moves, shuffles and
+`clear_cells` effects included, and checks the walk always ends on the
+board.
+
 When the animation ends or is skipped, the view releases cleared pieces
 to the pool and checks every cell against the board; in debug builds a
 mismatch logs a warning, and the view resyncs either way. A result
@@ -185,6 +191,8 @@ and touch events from `_unhandled_input` and marks them handled.
 | Rule | Value |
 |---|---|
 | Pointers | Mouse is pointer -1; touches use their finger index. Only the first pointer down counts until it lifts |
+| Touch as mouse | Mouse events Godot emulates from touch (`device == DEVICE_ID_EMULATION`) are ignored, so a tap acts once. `emulate_mouse_from_touch` stays on for Controls |
+| One action per press | A press that swaps (by tap or swipe) holds its pointer until it lifts; nothing else happens in that press |
 | Swipe threshold | `max(kSwipeCellFraction` × one cell on screen, `kSwipeMinMillimetres` at the screen's DPI)`: 0.3 cell, at least 2.5 mm |
 | Direction | Screen right is +x, screen down is +y (rows), which the fixed camera guarantees |
 | During an animation | New presses are ignored; releases and cancels still end a press |
