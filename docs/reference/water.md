@@ -3,8 +3,11 @@
 
 *Reference. The temple's water channel: where it is, the two water
 shaders and their parameters, what each quality tier shows, and what it
-costs. Why it is built this way: [Art direction, Water](../explanation/art-direction.md#water).
+costs. For technical artists tuning the water and graphics programmers
+checking its cost. Why it is built this way: [Art direction, Water](../explanation/art-direction.md#water).
 The look it must meet: [Visual target](visual-target.md#fire-water-and-particles).
+Changing a theme's water: [Make a board theme](../how-to/make-a-board-theme.md);
+how the tier picks the material: [Make content depend on the quality tier](../how-to/make-content-depend-on-the-quality-tier.md).
 Owner: technical-artist (WP-50).*
 
 ![The east channel on desktop (Forward+)](../images/lookdev/temple-water-desktop.jpg)
@@ -108,7 +111,7 @@ nodes.
 
 | Shader | Render mode | Samplers | Cost per pixel |
 |---|---|---|---|
-| `SH_Water` | transparent pass (reads the screen texture), opaque result (no `ALPHA`), depth write, Burley diffuse, GGX | `hint_screen_texture` (linear, no mipmaps, clamp) and `hint_depth_texture` (nearest, clamp) | 2 depth and 1 screen sample, then up to `ssr_steps` + 3 depth and 1 screen sample for the reflection (23 at the default 16); 3 noise octaves, and 2 caustic layers (4 noise evaluations) only where the caustics can show |
+| `SH_Water` | transparent pass (reads the screen texture), opaque result (no `ALPHA`), depth write, Burley diffuse, GGX | `hint_screen_texture` (linear, no mipmaps, clamp) and `hint_depth_texture` (nearest, clamp) | 2 depth and 1 screen sample, then up to `ssr_steps` + 3 depth and 1 screen sample for the reflection (at the default 16 steps: 21 depth and 2 screen, 23 samples in all); 3 noise octaves, and 2 caustic layers (4 noise evaluations) only where the caustics can show |
 | `SH_WaterSimple` | blended (`ALPHA` from the absorption, at least the Fresnel), Burley diffuse, GGX | none | 2 noise octaves, 1 caustic layer (3 noise evaluations) where it can show, no texture samples, no trigonometry in the noise |
 | `SH_Water.gdshaderinc` | — | none | gradient noise with analytic derivatives (integer hash, gradients from hashed bytes, no trigonometry), ripple slope, caustics, Beer-Lambert transmittance, Schlick Fresnel |
 
@@ -128,6 +131,6 @@ repeatable at a fixed frame rate.
 |---|---|
 | Budget | `SH_WaterSimple` ≤ 0.3 ms at 1280×720 on an Intel UHD 620 class GPU; `SH_Water` ≤ 0.5 ms at 1440p on the benchmark Mac (M4) |
 | Measured | not on a real GPU yet: the [benchmark](benchmark.md) (WP-46) measures it with the rest of the scene, see [Benchmark results](benchmark-results.md); compare a run with the four `Water*` nodes hidden to get the water's share |
-| Estimate | software rendering (lavapipe, llvmpipe) runs the look-dev scene at 1 to 2 fps with or without the water, so it cannot resolve the cost. By count: `SH_WaterSimple` is up to 5 noise evaluations (2 for the ripples, 3 for the caustics), each 4 integer hashes and no trigonometry, and no texture samples; `SH_Water` up to 7 noise evaluations and up to 23 depth and 2 screen samples |
+| Estimate | software rendering (lavapipe, llvmpipe) runs the look-dev scene at 1 to 2 fps with or without the water, so it cannot resolve the cost. By count: `SH_WaterSimple` is up to 5 noise evaluations (2 for the ripples, 3 for the caustics), each 4 integer hashes and no trigonometry, and no texture samples; `SH_Water` up to 7 noise evaluations and up to 21 depth and 2 screen samples (23 in all) |
 | Triangles | 12 per strip slab (60 in all); the channel adds about 400 to the backdrop |
 | Reflection probes | 4, rendered once at load. Godot 4.7.2 prints "7 RIDs of type Texture were leaked" at quit whenever a scene has a reflection probe (an engine issue, reproduced in a bare project); it is harmless |

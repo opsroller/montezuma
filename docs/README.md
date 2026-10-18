@@ -38,6 +38,7 @@ own folder.
 - [Match3Game](reference/match3-game.md): the game scene's controller, its signals, cues and self-test.
 - [Visual target](reference/visual-target.md): the look per quality tier, frame budgets and acceptance tests.
 - [Quality tiers](reference/quality-tiers.md): the `QualityTiers` autoload, settings key, feature ids, node groups and render settings per tier.
+- [Water](reference/water.md): the temple water channel, its two shaders, parameters, tiers and cost.
 - [Benchmark and readability capture](reference/benchmark.md): the benchmark replay, its JSON report, feature keys and readability checks.
 - [Benchmark results](reference/benchmark-results.md): measured frame times, feature rows and readability per machine and tier.
 

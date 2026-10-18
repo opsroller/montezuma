@@ -149,7 +149,7 @@ the project in Godot from a fresh checkout.
 | `SH_TriplanarPBR` | desktop stone (`hi/MI_Stone*`) | opaque, Burley diffuse, GGX; object-space triplanar PBR set; parallax occlusion on upward faces (`height_depth` metres, 8 to 24 layers by view angle) | 9 texture samples, plus up to 25 height samples on upward faces |
 | `SH_Gem` | desktop ruby and amethyst (`hi/MI_Ruby`, `hi/MI_Amethyst`) | transparent pass (reads the screen texture), depth write; refraction with `ior` and `dispersion`, absorption by the body colour over `thickness` | 9 texture samples, 3 screen and 3 depth samples |
 | `SH_Triplanar.gdshaderinc` | included by the two above | object-space triplanar sampling, normal-map blending, Y-face parallax | none of its own |
-| `SH_Water` | desktop water (`hi/MI_Water`) | transparent pass, opaque result; refraction, absorption, caustics, screen-space reflection march | up to 23 depth and 2 screen samples at the default 16 steps, no material textures ([Water](water.md#shaders)) |
+| `SH_Water` | desktop water (`hi/MI_Water`) | transparent pass, opaque result; refraction, absorption, caustics, screen-space reflection march | up to 21 depth and 2 screen samples at the default 16 steps, no material textures ([Water](water.md#shaders)) |
 | `SH_WaterSimple` | mobile and web water (`MI_Water`) | blended; absorption to the floor height, caustics | no texture samples |
 | `SH_Water.gdshaderinc` | included by the two above | ripple noise and slope, caustics, absorption, Fresnel | none |
 
