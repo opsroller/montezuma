@@ -26,7 +26,7 @@ row in the PR that finishes the package.
 | 00 | Project profile, contracts, this plan | project-manager | `CLAUDE.md`, `.claude/`, `docs/README.md`, `docs/reference/project-profile.md`, `docs/reference/contracts.md`, `docs/reference/work-packages.md`, `CONTRIBUTING.md` | — | merged | done (#2) |
 | 01 | C++ core: board, moves, cascades, level state | gameplay-programmer (port thread) | `core/` | — | rules from the spec in C++20 with CTest tests | done (#1, #4) |
 | 02 | GDExtension scaffold, core bindings and Godot project | gameplay-programmer (port thread) | `extension/`, `game/`, `thirdparty/` | 01 | `Match3Board` and `BoardView3D` load in Godot headless on desktop CI | done (#3) |
-| 03 | Settle the rules spec | game-designer | `docs/reference/rules-*.md`, `docs/reference/progression.md`, `docs/explanation/about-the-rules.md`, `docs/explanation/about-rule-sets-and-themes.md`, `docs/design/` | — | no **[verify]** left; totems, bonuses, mini-games and intro levels written; contract ids confirmed | review (#14) |
+| 03 | Settle the rules spec | game-designer | `docs/reference/rules-*.md`, `docs/reference/progression.md`, `docs/explanation/about-the-rules.md`, `docs/explanation/about-rule-sets-and-themes.md`, `docs/reference/balance.md` | — | no **[verify]** left; totems, bonuses, mini-games and intro levels written; contract ids confirmed | review (#14) |
 | 04 | Visual identity | graphic-designer | `design/` | — | logo, palette, type, style guide and tokens | active |
 
 ## Wave 1: build in parallel (17 at once)

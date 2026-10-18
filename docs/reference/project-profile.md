@@ -6,9 +6,9 @@ to do the job; this file says with what, and where.
 ## Product
 
 - A modern 3D remake of the gameplay of *The Treasures of Montezuma*
-  (developed by Visual Shape, published by Alawar Entertainment; first
-  released on PC in 2006 or 2007, sources differ; Nintendo DS in 2009). It
-  plays like the original and looks new. Rules are in
+  (developed by Visual Shape, published by Alawar Entertainment; PC 2006,
+  iOS 2009; sources in `docs/reference/rules-sources.md`). It plays like
+  the original and looks new. Rules are in
   `docs/reference/rules-spec.md`.
 - Targets: Windows, macOS, Linux, Android, iOS, plus a web demo. The
   website's entry is a playable intro level (the game's opening levels,
@@ -54,7 +54,7 @@ Each role loads `engineering-practices` plus its own plugin from
 
 | Role plugin | Owns in this repo | Notes |
 |---|---|---|
-| `game-designer` | `docs/reference/rules-*.md`, `docs/reference/progression.md`, `docs/explanation/about-the-rules.md`, `docs/explanation/about-rule-sets-and-themes.md`, `docs/design/`, `game/data/levels/` | Level files are JSON in the LevelData contract. Sim targets in `docs/design/balance.md` |
+| `game-designer` | `docs/reference/rules-*.md`, `docs/reference/progression.md`, `docs/explanation/about-the-rules.md`, `docs/explanation/about-rule-sets-and-themes.md`, `docs/reference/balance.md`, `game/data/levels/` | Level files are JSON in the LevelData contract. Sim targets in `docs/reference/balance.md` |
 | `gameplay-programmer` | `core/`, `extension/src/match3_board.*`, `tools/sim/` | Namespace `montezuma`; bindings in `montezuma::godot_binding` |
 | `graphics-programmer` | `extension/src/board/`, `extension/src/game/`, `game/scenes/` | Feel constants in `extension/src/board/feel.hpp` |
 | `technical-artist` | `game/assets/models/`, `game/assets/materials/`, `game/assets/textures/`, `game/assets/manifest.json`, `tools/assets/` | Budgets below |
