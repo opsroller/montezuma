@@ -79,3 +79,5 @@ light (0.02) so that its twist is no harder than the level before it:
 
 The human first-try rates in the briefs carry the sawtooth the
 simulator cannot show, and they are provisional until a playtest.
+Episode 5 builds on this episode; its reasoning is in
+[about the episode 5 levels](about-the-episode-5-levels.md).
