@@ -1,0 +1,12 @@
+{
+  "id": "e1-l05",
+  "episode": 1,
+  "index": 5,
+  "rules": "classic",
+  "theme": "temple",
+  "board": { "width": 8, "height": 8, "kinds": 7 },
+  "gem_goal": { "normal": 30, "hard": 45 },
+  "totems_unlocked": ["fire", "time"],
+  "powerups_unlocked": ["tnt", "color_clear", "lightning"],
+  "seed": 20090405
+}

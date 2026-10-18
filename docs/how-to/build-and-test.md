@@ -53,6 +53,14 @@ This build also copies `CREDITS.md` and `LICENSE` into `game/` so the
 credits screen shows them. The tests include `ui_model_tests`, which
 needs the extension build.
 
+Play the intro level to its end headless, as CI does:
+
+```sh
+godot --headless --path game --quit-after 120 -- --game-selftest
+```
+
+It ends with `Match3Game self-test: <n> moves, outcome 1, <n> cues, 0 failures`.
+
 ## Check the assets
 
 Needs Python 3 and Pillow. This is the `assets` CI job.

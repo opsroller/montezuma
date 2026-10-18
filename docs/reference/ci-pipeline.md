@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: GPL-2.0-or-later -->
-# CI pipeline: tests and assets workflows
+# CI pipeline: tests, assets and levels workflows
 
-Facts about `.github/workflows/tests.yml` and
-`.github/workflows/assets.yml`. Desktop packaging is the separate `build`
+Facts about `.github/workflows/tests.yml`,
+`.github/workflows/assets.yml` and `.github/workflows/levels.yml`. Desktop packaging is the separate `build`
 workflow. To run any check locally, use the commands in
 [Build and test](../how-to/build-and-test.md).
 
@@ -21,8 +21,8 @@ Token permissions: `contents: read`.
 
 | Job | Runners | What red means |
 |---|---|---|
-| `core` | Ubuntu, macOS; Windows too on pushes to `main` | the core or a Godot-free test fails to build with warnings as errors, or a CTest test fails, including the website's `site_build_tests` (Python) and `site_js_tests` (Node), which CTest adds when the runner has Python 3.10+ and Node |
-| `extension` | Ubuntu; Windows too on pushes to `main` | the GDExtension (with godot-cpp) or a test fails to build, or a CTest test fails (every test, including `ui_model_tests`); on Ubuntu, Godot (the version in `tools/release/godot.env`) logs an error while loading the game headless |
+| `core` | Ubuntu, macOS; Windows too on pushes to `main` | the core or a Godot-free test fails to build with warnings as errors, or a CTest test fails, including `test_level_files`, which parses every level file and checks its id against its path on every PR (the balance check `montezuma_sim --check` also parses them), and the website's `site_build_tests` (Python) and `site_js_tests` (Node), which CTest adds when the runner has Python 3.10+ and Node |
+| `extension` | Ubuntu; Windows too on pushes to `main` | the GDExtension (with godot-cpp) or a test fails to build, or a CTest test fails (every test, including `ui_model_tests`); on Ubuntu, Godot (the version in `tools/release/godot.env`) logs an error while loading the game headless, the audio or game self-test reports a failure ([Match3Game self-test](match3-game.md#self-test)), or the quality tier self-test (`--quality-selftest`, run once each with `--rendering-method forward_plus`, `mobile` and `gl_compatibility`) reports a failure |
 | `sanitizers` | Ubuntu | a CTest test fails under ASan or UBSan |
 
 Windows does not run on PRs. Pushes to `main` run the Windows `core` and
@@ -68,3 +68,33 @@ against `game/assets/` and the theme manifest. Rules it enforces:
 
 The job takes seconds, so it has no path filter: a check that a PR can
 skip could never be made required.
+
+## Levels workflow
+
+`.github/workflows/levels.yml` builds the
+[balance simulator](../how-to/run-the-balance-simulator.md) and plays every
+level under `game/data/levels/` against the
+[balance targets](balance.md).
+
+| Item | Value |
+|---|---|
+| Triggers | `push` to `main` and `pull_request`, only when the change touches `game/data/levels/**`, `tools/sim/**`, `core/**`, `thirdparty/nlohmann/**` (the JSON library the core parses levels with), `CMakeLists.txt` or `.github/workflows/levels.yml`; a new push cancels the PR's older run |
+| Job | `balance`, on `ubuntu-24.04`, 10-minute timeout |
+| Build | Release, `MONTEZUMA_WERROR=ON`, `MONTEZUMA_BUILD_EXTENSION=OFF`, `MONTEZUMA_BUILD_TESTS=OFF`, `MONTEZUMA_BUILD_SIM=ON`; target `montezuma_sim` only |
+| Command | `montezuma_sim game/data/levels --check` (200 seeds, all bots, both difficulties) |
+| Token permissions | `contents: read` |
+| Secrets, artifacts, caches | none |
+| Required check | no: a path-filtered check never reports on PRs it skips, so requiring it would block them |
+| What red means | exit 2: a level file does not parse or uses an unsupported feature, and stderr names the file and the error; exit 1: a level misses a balance target or curve rule, shown as `FAIL` rows in the report. The log ends with the local command |
+
+Run it locally:
+
+```sh
+cmake -S . -B build-rel -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=OFF -DMONTEZUMA_BUILD_TESTS=OFF
+cmake --build build-rel --target montezuma_sim -j
+build-rel/tools/sim/montezuma_sim game/data/levels --check
+```
+
+The `assets` workflow has no path filter so that it can be made required;
+`levels` is filtered because building the simulator only matters when one
+of its inputs changes.

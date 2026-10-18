@@ -21,6 +21,7 @@ pointing/emulate_touch_from_mouse=false
 
 [rendering]
 
+renderer/rendering_method="forward_plus"
 renderer/rendering_method.mobile="mobile"
 renderer/rendering_method.web="gl_compatibility"
 anti_aliasing/quality/msaa_3d.web=1
@@ -29,6 +30,7 @@ textures/vram_compression/import_etc2_astc=true
 
 [autoload]
 
+QualityTiers="*res://scenes/render/quality_tiers.tscn"
 GameAudio="*res://scenes/audio/game_audio.tscn"
 UiRoot="*res://ui/ui_root.tscn"
 
