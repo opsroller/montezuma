@@ -142,6 +142,8 @@ private:
     double board_padding_ = 0.0;
     godot::Node3D* pieces_root_ = nullptr;
     godot::Node3D* fx_root_ = nullptr;
+    // Worst seconds a move's effects ran past its plan, since load (0: none).
+    double effects_overrun_ = 0.0;
     std::vector<godot::Node3D*> pieces_;
     std::vector<int> kinds_;
     // Markers each cell should show once the playing animation ends.

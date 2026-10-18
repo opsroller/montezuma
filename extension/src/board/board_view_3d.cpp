@@ -542,7 +542,23 @@ void BoardView3D::play_events(const anim::Events& events) {
     // Totem and power-up beats, timed against the plan (WP-29).
     const double span = std::max(grid_.width, grid_.height) * grid_.cell;
     const auto at = [this](fx::Cell c) { return cell_position(c.x, c.y); };
-    for (const fx::Beat& beat : fx::build_beats(plan, fx_steps_)) effects_.play(beat, tween, fx_root_, at, Vector3(), span);
+    // A marker's sparkle goes with the marker, which stays, so it plays on
+    // its own tween and does not hold the move (or input) past plan.total.
+    std::vector<fx::Beat> placed;
+    effects_.reset_end();
+    for (fx::Beat& beat : fx::build_beats(plan, fx_steps_)) {
+        if (beat.kind == fx::Beat::Kind::MarkPlaced)
+            placed.push_back(std::move(beat));
+        else
+            effects_.play(beat, tween, fx_root_, at, Vector3(), span);
+    }
+    effects_overrun_ = std::max(effects_overrun_, effects_.scheduled_end() - plan.total);
+    if (!placed.empty()) {
+        Ref<Tween> marks_tween = fx_root_->create_tween();
+        marks_tween->set_parallel(true);
+        marks_tween->set_speed_scale(static_cast<float>(animation_speed_));
+        for (const fx::Beat& beat : placed) effects_.play(beat, marks_tween, fx_root_, at, Vector3(), span);
+    }
     for (const anim::Phase& p : plan.phases) {
         if (p.kind == anim::Phase::Kind::Clear) {
             tween->tween_callback(callable_mp(this, &BoardView3D::emit_cascade_step).bind(p.step))->set_delay(p.start);
@@ -722,11 +738,14 @@ Dictionary BoardView3D::get_effects_played() const {
     for (size_t i = 0; i < fx::kTotemNames.size(); ++i)
         d[String("totem_") + String(fx::kTotemNames[i].data())] = effects_.beats_played(static_cast<int>(i));
     for (size_t i = 0; i < fx::kPowerUpNames.size(); ++i)
-        d[String("power_up_") + String(fx::kPowerUpNames[i].data())] = effects_.beats_played(7 + static_cast<int>(i));
-    d["gem_collect"] = effects_.beats_played(13);
-    d["steel_break"] = effects_.beats_played(14);
-    d["chain_break"] = effects_.beats_played(15);
-    d["mark_placed"] = effects_.beats_played(16);
+        d[String("power_up_") + String(fx::kPowerUpNames[i].data())] =
+            effects_.beats_played(BoardEffects::power_up_slot(static_cast<int>(i)));
+    const int after = fx::kTotemCount + fx::kPowerUpCount;
+    d["gem_collect"] = effects_.beats_played(after);
+    d["steel_break"] = effects_.beats_played(after + 1);
+    d["chain_break"] = effects_.beats_played(after + 2);
+    d["mark_placed"] = effects_.beats_played(after + 3);
+    d["overrun_seconds"] = effects_overrun_;
     return d;
 }
 

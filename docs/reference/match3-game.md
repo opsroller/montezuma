@@ -69,7 +69,7 @@ changes nothing.
 | `frenzy_changed(bar: float, seconds_left: float)` | On start and when either changes. `bar` is the fill (0..1) while Frenzy is off and the time left as a fraction while it is on |
 | `shuffles_changed(left: int)` | On start and after a manual shuffle |
 | `hint_cost_changed(cost: int, affordable: bool)` | On start and when affordability changes: true while playing with a score of at least `cost`, or a hint already shown |
-| `hint_shown(a: Vector2i, b: Vector2i)` | A bought hint, or the free onboarding hint (`SHUF-05`). The node also rings the pair on the board until the next move |
+| `hint_shown(a: Vector2i, b: Vector2i)` | A bought hint, or the free onboarding hint (`SHUF-05`). The node also rings the pair on the board until the next move; a free hint that arrives while a move is playing is ringed when the move finishes |
 | `level_finished(outcome: int, score: int)` | Once, after the last move's animation ends. The HUD opens the results screen on it |
 
 `streak_changed` and `bonus_changed` from the first contract block are not

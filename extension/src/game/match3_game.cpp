@@ -30,6 +30,9 @@ namespace montezuma::godot_binding {
 
 namespace {
 
+// Effects stages: each totem, then each power-up.
+constexpr int kEffectStages = fx::kTotemCount + fx::kPowerUpCount;
+
 // The last cascade cue; deeper steps repeat it (audio.md, When each cue plays).
 constexpr int kMaxCascadeCue = 8;
 // Self-test: a level this long without an end is a failure.
@@ -72,7 +75,7 @@ Array to_array(const std::vector<anim::Cell>& cells) {
     return out;
 }
 
-String power_up_id(int id) { return id >= 0 && id < 6 ? str(fx::kPowerUpNames[static_cast<std::size_t>(id)]) : String(); }
+String power_up_id(int id) { return id >= 0 && id < fx::kPowerUpCount ? str(fx::kPowerUpNames[static_cast<std::size_t>(id)]) : String(); }
 
 Array to_array(const std::vector<fx::Placement>& placements) {
     Array out;
@@ -304,6 +307,7 @@ bool Match3Game::start_level(const String& level_id, const String& difficulty) {
     warned_ = false;
     board_->set_core_board(session_->board());
     hint_left_ = 0.0;
+    pending_hint_.reset();
     if (BoardView3D* v = view()) {
         v->skip_animation();
         v->show_board(board_);
@@ -361,14 +365,16 @@ bool Match3Game::request_swap(Vector2i a, Vector2i b) {
     cue("swap");
     for (const TotemFiring& firing : report->totems_fired) {
         const String fire = "totem_fire_" + str(totem_name(firing.effect.totem));
-        if (!firing.result || firing.steps.empty()) {
+        // The same steps display_move() lays out: one per cascade.
+        if (!firing.result || firing.result->cascades.empty()) {
             step_cues_.push_back({fire});  // its own empty step: the effect alone
             continue;
         }
-        for (std::size_t i = 0; i < firing.steps.size(); ++i) {
+        for (std::size_t i = 0; i < firing.result->cascades.size(); ++i) {
             step_cues_.emplace_back();
             if (i == 0) step_cues_.back().push_back(fire);
-            step_cues(firing.steps[i], static_cast<int>(step_cues_.size() - 1), step_cues_.back());
+            if (i < firing.steps.size())
+                step_cues(firing.steps[i], static_cast<int>(step_cues_.size() - 1), step_cues_.back());
         }
     }
     if (report->auto_shuffle && report->auto_shuffle->shuffled) {
@@ -511,15 +517,25 @@ void Match3Game::on_animation_finished() {
     step_cues_.clear();
     if (finish_pending_ && session_) emit_finished();
     // The hint power-up's time is still running: show the new board's swaps.
-    if (hint_left_ > 0.0 && is_playing())
+    if (hint_left_ > 0.0 && is_playing()) {
         if (BoardView3D* v = view()) v->show_hints(get_legal_moves(), hint_left_);
+    } else if (pending_hint_ && is_playing()) {
+        // A free hint that arrived mid-move rings once the board settles.
+        show_hint(*pending_hint_);
+    }
+    pending_hint_.reset();
     if (showcase_running_) advance_showcase();
 }
 
 void Match3Game::show_hint(const Swap& hint) {
-    send("hint_shown", to_vec(hint[0]), to_vec(hint[1]));
+    if (!pending_hint_ || *pending_hint_ != hint) send("hint_shown", to_vec(hint[0]), to_vec(hint[1]));
     BoardView3D* v = view();
-    if (!v || v->is_busy()) return;
+    if (!v) return;
+    if (v->is_busy()) {
+        pending_hint_ = hint;
+        return;
+    }
+    pending_hint_.reset();
     Array pair;
     pair.push_back(to_vec(hint[0]));
     pair.push_back(to_vec(hint[1]));
@@ -661,7 +677,7 @@ Array Match3Game::get_legal_moves() const {
 
 bool Match3Game::run_effect_stage(int stage) {
     BoardView3D* v = view();
-    if (!session_ || !is_playing() || (v && v->is_busy()) || stage < 0 || stage >= 13) return false;
+    if (!session_ || !is_playing() || (v && v->is_busy()) || stage < 0 || stage >= kEffectStages) return false;
     LevelSession& s = *session_;
     s.set_gems_collected(0);  // keep the level going through every stage
     const int w = s.board().width();
@@ -675,7 +691,7 @@ bool Match3Game::run_effect_stage(int stage) {
     };
     for (const Swap& m : s.legal_moves()) {
         for (const Run& run : s.runs_for_swap(m[0], m[1])) {
-            if (stage < 7) {
+            if (stage < fx::kTotemCount) {
                 const auto id = static_cast<TotemId>(stage);
                 if (run.kind != totem_kind(id)) continue;
                 TotemSystem& totems = s.totems_for_setup();
@@ -701,7 +717,7 @@ bool Match3Game::run_effect_stage(int stage) {
                 for (const Cell& c : run.cells)
                     if (c != m[0] && c != m[1] && plain(c)) at = c;
                 if (at.x < 0) continue;
-                s.set_power_up(at, PowerUp{static_cast<PowerUpId>(stage - 7), 3});
+                s.set_power_up(at, PowerUp{static_cast<PowerUpId>(stage - fx::kTotemCount), 3});
             }
             if (v) v->show_marks(marks_array(s));
             return request_swap(Vector2i(m[0].x, m[0].y), Vector2i(m[1].x, m[1].y));
@@ -717,14 +733,17 @@ void Match3Game::next_showcase_stage() {
     }
     showcase_running_ = true;
     if (run_effect_stage(showcase_stage_)) {
-        showcase_stage_ = (showcase_stage_ + 1) % 13;
+        showcase_stage_ = (showcase_stage_ + 1) % kEffectStages;
         return;
     }
     // No move of the colour this stage needs: play another and try again.
     const Array legal = get_legal_moves();
-    if (legal.is_empty()) return;
-    const Array m = legal[0];
-    request_swap(m[0], m[1]);
+    if (!legal.is_empty()) {
+        const Array m = legal[0];
+        if (request_swap(m[0], m[1])) return;
+    }
+    // Nothing played, so no animation_finished will follow: try again later.
+    advance_showcase();
 }
 
 void Match3Game::advance_showcase() {
@@ -791,7 +810,7 @@ void Match3Game::run_self_test() {
     // the session's markers.
     int effect_moves = 0;
     if (start_level("e1-l01", "normal") && v) {
-        for (int stage = 0; stage < 13; ++stage) {
+        for (int stage = 0; stage < kEffectStages; ++stage) {
             bool played = false;
             for (int attempt = 0; attempt < 40 && !played && is_playing(); ++attempt) {
                 played = run_effect_stage(stage);
@@ -804,8 +823,9 @@ void Match3Game::run_self_test() {
                 v->skip_animation();
                 ++effect_moves;
             }
-            const String name = stage < 7 ? "totem_" + str(totem_name(static_cast<TotemId>(stage)))
-                                          : "power_up_" + str(power_up_name(static_cast<PowerUpId>(stage - 7)));
+            const String name = stage < fx::kTotemCount
+                                    ? "totem_" + str(totem_name(static_cast<TotemId>(stage)))
+                                    : "power_up_" + str(power_up_name(static_cast<PowerUpId>(stage - fx::kTotemCount)));
             if (!played) fail(String("could not stage ") + name);
             if (static_cast<int>(v->get_effects_played().get(name, 0)) < 1) fail(name + String(" played no effect"));
             if (session_ && v->get_marks() != marks_array(*session_)) fail(String("markers differ from the session after ") + name);
@@ -813,6 +833,10 @@ void Match3Game::run_self_test() {
         const Dictionary played = v->get_effects_played();
         for (const char* name : {"gem_collect", "steel_break", "chain_break", "mark_placed"})
             if (static_cast<int>(played.get(name, 0)) < 1) fail(String(name) + " never played");
+        // Readability rule 3: every move's effects end within its plan, so
+        // animation_finished (and input) is never held past plan.total.
+        if (const double over = played.get("overrun_seconds", 0.0); over > 1e-6)
+            fail("effects ran " + String::num(over, 3) + " s past their move's plan");
         stop_level();
     } else {
         fail("e1-l01 did not start again for the effects");
@@ -833,7 +857,8 @@ void Match3Game::run_self_test() {
         checked[key] = true;
         if (audio && !audio->has_cue(name)) fail("cue '" + name + "' is not in the cue table");
     }
-    UtilityFunctions::print("Match3Game effects: 7 totems and 6 power-ups staged in ", effect_moves, " moves");
+    UtilityFunctions::print("Match3Game effects: ", fx::kTotemCount, " totems and ", fx::kPowerUpCount,
+                            " power-ups staged in ", effect_moves, " moves");
     UtilityFunctions::print("Match3Game self-test: ", moves, " moves, outcome ", first_outcome, ", ",
                             int64_t(checked.size()), " cues, ", failures, " failures");
 }

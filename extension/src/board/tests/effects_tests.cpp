@@ -191,6 +191,7 @@ void test_marks_follow_real_moves() {
     int moves = 0;
     bool kinds_match = true;
     bool marks_match = true;
+    bool within_plan = true;
     std::array<int, 7> totems{};
     std::array<int, 6> power_ups{};
     int placed = 0, gems = 0, steel_in = 0, steel_out = 0, chains = 0, repaints = 0;
@@ -211,7 +212,13 @@ void test_marks_follow_real_moves() {
             hooks.session = &s;
             hooks.grid = &grid;
             hooks.width = s.board().width();
-            anim::walk(anim::build_plan(dm.events), grid, hooks.width, hooks);
+            const anim::Plan plan = anim::build_plan(dm.events);
+            anim::walk(plan, grid, hooks.width, hooks);
+            // Readability rule 3 on real moves: no transient beat holds the
+            // move past its plan (the view's finish waits for its beats).
+            for (const fx::Beat& beat : fx::build_beats(plan, dm.fx))
+                if (beat.kind != fx::Beat::Kind::MarkPlaced)
+                    within_plan = within_plan && beat.start + beat.duration <= plan.total + 1e-9;
             repaints += hooks.repaints;
             const std::vector<Slot> want = slots_of(s);
             for (std::size_t i = 0; i < want.size(); ++i) {
@@ -233,6 +240,7 @@ void test_marks_follow_real_moves() {
     check(moves >= 1000, "played over a thousand real moves");
     check(kinds_match, "every walk ends on the session's board");
     check(marks_match, "every marker ends where the session has it");
+    check(within_plan, "every transient beat ends within its move's plan");
     for (std::size_t i = 0; i < totems.size(); ++i)
         check(totems[i] > 0, "totem " + std::string(fx::kTotemNames[i]) + " fired");
     for (std::size_t i = 0; i < power_ups.size(); ++i)

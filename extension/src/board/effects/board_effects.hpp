@@ -5,6 +5,7 @@
 
 #include <array>
 #include <functional>
+#include <map>
 
 #include <godot_cpp/classes/material.hpp>
 #include <godot_cpp/classes/mesh.hpp>
@@ -31,7 +32,7 @@ class PieceLibrary;
 class BoardEffects {
 public:
     // Kinds of beat counted by beats_played(), for tests and the self-test.
-    static constexpr int kCountSlots = 7 + 6 + 4;
+    static constexpr int kCountSlots = fx::kTotemCount + fx::kPowerUpCount + 4;
 
     // Loads the placeholders for `cell` and the theme's overrides.
     void load(double cell, const PieceLibrary& library);
@@ -48,9 +49,15 @@ public:
               const std::function<godot::Vector3(fx::Cell)>& at, godot::Vector3 board_centre,
               double board_span) const;
 
-    // Beats scheduled since load, by slot: totems 0..6, power-ups 7..12,
-    // then gem collect, steel break, chain break, mark placed.
+    // Beats scheduled since load, by slot: totems first, then power-ups
+    // (power_up_slot), then gem collect, steel break, chain break, mark placed.
     int beats_played(int slot) const { return slot >= 0 && slot < kCountSlots ? counts_[slot] : 0; }
+    static constexpr int power_up_slot(int id) { return fx::kTotemCount + id; }
+
+    // When the last node or fade play() scheduled since reset_end() ends, in
+    // the tween's seconds. The view checks it against the plan's length.
+    double scheduled_end() const { return end_; }
+    void reset_end() const { end_ = 0.0; }
 
 private:
     godot::Node3D* override_for(const godot::String& name) const;
@@ -78,6 +85,9 @@ private:
     godot::Ref<godot::Mesh> cone_;
     godot::Ref<godot::Mesh> shard_;
     mutable std::array<int, kCountSlots> counts_{};
+    mutable double end_ = 0.0;
+    // Materials by colour and settings, shared by every node that uses them.
+    mutable std::map<std::array<float, 7>, godot::Ref<godot::Material>> materials_;
 };
 
 }  // namespace montezuma::godot_binding

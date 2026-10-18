@@ -28,7 +28,7 @@ Draws a `Match3Board` and plays back results. It never applies a rule.
 | `show_hints(pairs: Array, seconds: float = 0)` | method | A pulsing ring under both cells of each `[a, b]` swap, until the next move, or for `seconds` when above 0 |
 | `clear_hints()`, `has_hints()` | method | Removes the hint rings; whether any show |
 | `play_effect(label: String, cells: Array)` | method | Plays one effect outside a move: `label` is `totem:<id>` or `powerup:<id>`. For the benchmark's `bench_event` (WP-46) and look-dev |
-| `get_effects_played() -> Dictionary` | method | Effect beats scheduled since the board was built, by name (`totem_<id>`, `power_up_<id>`, `gem_collect`, `steel_break`, `chain_break`, `mark_placed`); for tests |
+| `get_effects_played() -> Dictionary` | method | Effect beats scheduled since the board was built, by name (`totem_<id>`, `power_up_<id>`, `gem_collect`, `steel_break`, `chain_break`, `mark_placed`), and `overrun_seconds`: the most any move's effects ran past its plan (0 when rule 3 holds); for tests |
 | `play_illegal(a: Vector2i, b: Vector2i)` | method | Bounces the two pieces toward each other and back, then emits `animation_finished` |
 | `is_busy()` | method | True while an animation plays; taps are ignored then |
 | `skip_animation()` | method | Jumps to the end of the playing animation and emits `animation_finished` |
@@ -279,7 +279,10 @@ differ from `marks`, and the view resyncs either way.
 
 Every transient beat ends by the end of the step it belongs to
 ([readability rule 3](visual-target.md#readability-rules-every-tier));
-the planner clamps it, and a marker growing in is not transient. Effects
+the planner clamps it, and the view cuts particle lifetimes to that
+window rather than letting a burst outlive it, so `animation_finished`
+comes at the plan's end. A marker growing in is not transient: its
+sparkle plays on its own tween and never holds the move. Effects
 never move the camera. Additive effects are translucent so the piece
 under them still reads. `animation_speed` scales them; `skip_animation`
 frees them at once and leaves only the end state. On the `mobile` and

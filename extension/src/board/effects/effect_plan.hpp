@@ -30,6 +30,8 @@ inline constexpr std::array<std::string_view, 7> kTotemNames{"fire", "time", "go
                                                              "ward", "gift", "paint"};
 inline constexpr std::array<std::string_view, 6> kPowerUpNames{"tnt",   "color_clear", "lightning",
                                                                "clock", "multiplier",  "hint"};
+inline constexpr int kTotemCount = static_cast<int>(kTotemNames.size());
+inline constexpr int kPowerUpCount = static_cast<int>(kPowerUpNames.size());
 enum Totem { kFire, kTime, kGold, kHarvest, kWard, kGift, kPaint };
 enum PowerUp { kTnt, kColorClear, kLightning, kClock, kMultiplier, kHint };
 

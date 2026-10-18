@@ -32,10 +32,10 @@ namespace {
 
 real_t r(double v) { return static_cast<real_t>(v); }
 
-constexpr int kGemSlot = 13;
-constexpr int kSteelSlot = 14;
-constexpr int kChainSlot = 15;
-constexpr int kPlacedSlot = 16;
+constexpr int kGemSlot = fx::kTotemCount + fx::kPowerUpCount;
+constexpr int kSteelSlot = kGemSlot + 1;
+constexpr int kChainSlot = kGemSlot + 2;
+constexpr int kPlacedSlot = kGemSlot + 3;
 
 // Totem colours follow their kind (red, orange, yellow, green, blue,
 // purple, white); power-up colours are their own.
@@ -126,6 +126,8 @@ Node3D* BoardEffects::override_for(const String& name) const {
 }
 
 Ref<Material> BoardEffects::glow(Color c, float energy, bool transparent) const {
+    Ref<Material>& cached = materials_[{0.0f, c.r, c.g, c.b, c.a, energy, transparent ? 1.0f : 0.0f}];
+    if (cached.is_valid()) return cached;
     Ref<StandardMaterial3D> m;
     m.instantiate();
     m->set_shading_mode(BaseMaterial3D::SHADING_MODE_UNSHADED);
@@ -140,15 +142,19 @@ Ref<Material> BoardEffects::glow(Color c, float energy, bool transparent) const 
         m->set_blend_mode(BaseMaterial3D::BLEND_MODE_ADD);
     }
     m->set_flag(BaseMaterial3D::FLAG_ALBEDO_FROM_VERTEX_COLOR, true);
+    cached = m;
     return m;
 }
 
 Ref<Material> BoardEffects::solid(Color c, float metallic, float roughness) const {
+    Ref<Material>& cached = materials_[{1.0f, c.r, c.g, c.b, c.a, metallic, roughness}];
+    if (cached.is_valid()) return cached;
     Ref<StandardMaterial3D> m;
     m.instantiate();
     m->set_albedo(c);
     m->set_metallic(metallic);
     m->set_roughness(roughness);
+    cached = m;
     return m;
 }
 
@@ -178,7 +184,7 @@ Node3D* BoardEffects::burst(Color c, int amount, double lifetime, float speed, c
     p->set_emitting(false);
     p->set_one_shot(true);
     p->set_amount(std::max(1, static_cast<int>(std::lround(amount * particle_scale_))));
-    p->set_lifetime(lifetime);
+    p->set_lifetime(std::max(lifetime, 0.001));
     p->set_explosiveness_ratio(1.0f);
     p->set_direction(Vector3(0, 1, 0));
     p->set_spread(80.0f);
@@ -201,17 +207,23 @@ void BoardEffects::schedule(Node3D* node, Node3D* root, const Ref<Tween>& tween,
     node->set_visible(false);
     root->add_child(node);
     tween->tween_callback(Callable(node, "set_visible").bind(true))->set_delay(start);
+    // The beat's window is the limit (readability rule 3): particles are cut
+    // to it rather than the node outliving it, so the move ends on time.
+    seconds = std::max(seconds, 0.0);
+    const double lifetime = std::max(seconds, 0.001);
     if (auto* p = Object::cast_to<CPUParticles3D>(node)) {
+        p->set_lifetime(std::min(p->get_lifetime(), lifetime));
         tween->tween_callback(Callable(p, "restart"))->set_delay(start);
-        seconds = std::max(seconds, p->get_lifetime());
     } else if (auto* g = Object::cast_to<GPUParticles3D>(node)) {
+        g->set_lifetime(std::min(g->get_lifetime(), lifetime));
         tween->tween_callback(Callable(g, "restart"))->set_delay(start);
-        seconds = std::max(seconds, g->get_lifetime());
     }
     tween->tween_callback(Callable(node, "queue_free"))->set_delay(start + seconds);
+    end_ = std::max(end_, start + seconds);
 }
 
 void BoardEffects::fade(Node3D* node, const Ref<Tween>& tween, double start, double seconds) const {
+    end_ = std::max(end_, start + seconds);
     tween->tween_property(node, "scale", Vector3(0.001f, 0.001f, 0.001f), seconds)
         ->set_delay(start)
         ->set_trans(Tween::TRANS_QUAD)
@@ -317,7 +329,7 @@ Node3D* BoardEffects::make_marks(int m) const {
         gem->set_position(Vector3(-0.3f * cell_, top, -0.3f * cell_));
         root->add_child(gem);
     }
-    if (const int id = fx::marks::power_up(m); id >= 0 && id < 6) {
+    if (const int id = fx::marks::power_up(m); id >= 0 && id < fx::kPowerUpCount) {
         Node3D* badge = power_up_badge(id);
         badge->set_name("PowerUp");
         badge->set_position(Vector3(0.28f * cell_, top, -0.28f * cell_));
@@ -340,12 +352,12 @@ void BoardEffects::play(const fx::Beat& beat, const Ref<Tween>& tween, Node3D* r
                         const std::function<Vector3(fx::Cell)>& at, Vector3 centre, double span) const {
     using Kind = fx::Beat::Kind;
     const double t0 = beat.start;
-    const double len = std::max(beat.duration, 0.05);
+    const double len = std::max(beat.duration, 0.0);
     const real_t c = cell_;
     auto slot = [&]() -> int {
         switch (beat.kind) {
             case Kind::Totem: return beat.id;
-            case Kind::PowerUp: return 7 + beat.id;
+            case Kind::PowerUp: return power_up_slot(beat.id);
             case Kind::GemCollect: return kGemSlot;
             case Kind::SteelBreak: return kSteelSlot;
             case Kind::ChainBreak: return kChainSlot;
@@ -353,8 +365,8 @@ void BoardEffects::play(const fx::Beat& beat, const Ref<Tween>& tween, Node3D* r
         }
         return -1;
     }();
-    if ((beat.kind == Kind::Totem && (beat.id < 0 || beat.id > 6)) ||
-        (beat.kind == Kind::PowerUp && (beat.id < 0 || beat.id > 5)))
+    if ((beat.kind == Kind::Totem && (beat.id < 0 || beat.id >= fx::kTotemCount)) ||
+        (beat.kind == Kind::PowerUp && (beat.id < 0 || beat.id >= fx::kPowerUpCount)))
         return;
     if (slot >= 0 && slot < kCountSlots) ++counts_[slot];
 
@@ -421,9 +433,9 @@ void BoardEffects::play(const fx::Beat& beat, const Ref<Tween>& tween, Node3D* r
                         Object::cast_to<CPUParticles3D>(embers)->set_param_min(CPUParticles3D::PARAM_SCALE, 0.05f * c);
                         Object::cast_to<CPUParticles3D>(embers)->set_param_max(CPUParticles3D::PARAM_SCALE, 0.1f * c);
                         embers->set_position(to);
-                        schedule(embers, root, tween, t0 + lead, std::max(0.05, len - lead));
+                        schedule(embers, root, tween, t0 + lead, len - lead);
                     }
-                    flash_cells(beat.cells, col, t0 + lead, std::max(0.05, len - lead));
+                    flash_cells(beat.cells, col, t0 + lead, len - lead);
                     break;
                 case fx::kTime:
                     rising_label(seconds_text(beat.value), col, centre);
@@ -446,7 +458,7 @@ void BoardEffects::play(const fx::Beat& beat, const Ref<Tween>& tween, Node3D* r
                     // A wave across the whole board; the gems, chains and
                     // steel it touches play their own beats.
                     ring_wave(centre, col, span * 0.5, t0, len);
-                    flash_cells(beat.cells, col, t0 + lead * 0.5, std::max(0.05, len - lead * 0.5));
+                    flash_cells(beat.cells, col, t0 + lead * 0.5, len - lead * 0.5);
                     break;
                 case fx::kGift:
                     for (const fx::Cell& cell : beat.cells) {
@@ -557,7 +569,7 @@ void BoardEffects::play(const fx::Beat& beat, const Ref<Tween>& tween, Node3D* r
             // A sparkle where a badge or gem appears; the marker pops in on
             // the piece itself.
             const int id = fx::marks::power_up(beat.id);
-            const Color col = id >= 0 && id < 6 ? kPowerUpColors[id] : kGemColor;
+            const Color col = id >= 0 && id < fx::kPowerUpCount ? kPowerUpColors[id] : kGemColor;
             Node3D* sparkle = burst(col, 8, 0.35, 2.0f, octahedron_);
             auto* p = Object::cast_to<CPUParticles3D>(sparkle);
             p->set_param_min(CPUParticles3D::PARAM_SCALE, 0.04f * c);

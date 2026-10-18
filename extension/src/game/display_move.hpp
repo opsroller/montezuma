@@ -108,7 +108,7 @@ inline DisplayMove display_move(const MoveReport& report) {
     }
     for (const TotemFiring& firing : report.totems_fired) {
         out.totem_steps.push_back(static_cast<int>(out.events.steps.size()));
-        if (!firing.result || firing.steps.empty()) {
+        if (!firing.result || firing.result->cascades.empty()) {
             // Clears nothing (time, gold, gift, harvest, a paint that made no
             // run): an empty step carries its lead and repaints.
             out.events.steps.emplace_back();

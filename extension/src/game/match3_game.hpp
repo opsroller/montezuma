@@ -155,6 +155,7 @@ private:
     double warning_seconds_ = 10.0;
     // PWR-11: seconds the hint power-up still shows every legal swap.
     double hint_left_ = 0.0;
+    std::optional<Swap> pending_hint_;  // a free hint waiting for the view
     bool effects_showcase_ = false;
     bool showcase_running_ = false;
     int showcase_stage_ = 0;
