@@ -30,8 +30,8 @@ difficulty, with the upgrades a player would own on reaching it
 | rest of e1 | ≥ 98 % | ≥ 100 s | no floor | ≥ 70 % | ≥ 90 % |
 | e2 | ≥ 95 % | ≥ 70 s | ≥ 50 | ≥ 40 % | ≥ 80 % |
 | e3 | ≥ 90 % | ≥ 50 s | ≥ 70 | ≥ 20 % | ≥ 70 % |
-| e4 | ≥ 85 % | ≥ 35 s | ≥ 90 | ≤ 20 % | ≥ 60 % |
-| e5 | ≥ 80 % | ≥ 25 s | ≥ 110 | ≤ 10 % | ≥ 50 % |
+| e4 | ≥ 85 % | ≥ 35 s | ≥ 90 | none (informational) | ≥ 60 % |
+| e5 | ≥ 80 % | ≥ 25 s | ≥ 110 | none (informational) | ≥ 50 % |
 
 - Too easy: from episode 2 on, `greedy`'s mean moves on normal (over
   all runs, wins and losses) must be at least the floor in the table:
@@ -41,6 +41,11 @@ difficulty, with the upgrades a player would own on reaching it
   moves are about 63 s, inside its brief. Episode 1 has no floor; its
   briefs ask for quick first wins. `--check` counts the floor as part of
   the `greedy`/normal target (WP-56).
+- From episode 4 on, `random` has no target and its row is
+  informational; the moves floor is the too-easy check there. The old
+  ceilings (≤ 20 % in e4, ≤ 10 % in e5) cannot be met with clocks that
+  fit human pace
+  ([why](../explanation/about-the-episode-4-levels.md#why-random-has-no-target)).
 - No level may be harder than the next by more than 10 points of
   `greedy` win rate, except a level that introduces a new idea, which
   must be easier than the level before it (the rest after a spike). A

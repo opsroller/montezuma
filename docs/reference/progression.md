@@ -444,3 +444,143 @@ far (`ward` arrives in e4-l01). Each sets `base_clock` from the
 on hard, peaking at e3-l07. `chained_cells` and
 `steel_rate` are defined in [level data](level-data.md); y = 0 is the
 top row.
+
+## Episode 4 levels
+
+Briefs for episode 4 (WP-26): the `ward` totem from e4-l01, then steel
+and chains in new amounts and shapes. Simulator targets are the e4 row of
+[balance](balance.md), including the moves floor of 90; `random` is
+informational from this episode on. Every tier-3 upgrade of the
+episode is optional (`PROG-04`), and the human targets are for a player
+who has not bought them. Why the episode is ordered this way and what the
+simulator measures here are in
+[about the episode 4 levels](../explanation/about-the-episode-4-levels.md).
+Ward has one use a level at tiers 1 and 2 (`TOT-06`) and fires by itself
+after two moves in a row whose swap match is blue (`TOT-02`, `TOT-03`).
+
+### e4-l01: Blue ward
+
+- **Idea:** The ward totem (blue): two blue matches in a row fire it once a level, and it destroys every steel piece on the board at once.
+- **Feeling:** relief when the steel vanishes.
+- **Duration:** Sim `greedy` 129 to 145 mean moves on normal (105 gems), 201 to 226 on hard (160 gems); about 452 to 508 s of play on normal and 704 to 791 s on hard at 3.5 s a move.
+- **Target success rate:** Normal: at least 80 % of players win on the first try; hard: at least 65 %. Human rates are provisional until a playtest. Simulator: the e4 row of balance.md (`random` informational from e4 on) and the curve rules as `--check` runs them; it introduces an idea after a level that wins every `greedy` run, so it must win every run too (the 100 % tie).
+- **Takeaway:** The player knows two blue matches in a row fire the ward, and that it clears every steel piece on the board, once a level.
+- **Role and levers:** introduce; goal size: 105 gems; complexity: steel_rate 0.04, no chains.
+- **First contact:** Safe because the level does not need it: steel at 0.04 is lighter than e3-l08's 0.05, which players beat without ward, so a ward spent early by accident costs nothing but the chance to watch it work. No chains, so the player meets one thing at a time. As an introducing level after e3-l08 it must win every greedy run (the 100 % tie) and be at least as easy as e4-l03 ([balance](balance.md): the curve rule ties each episode opener to its third level). Lightning tier 3 becomes buyable here; optional.
+- **Clock:** Normal 480 s (137.2 draft mean moves x 3.5), hard 748 s (213.6 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. The first level with ward; the human time here is the episode's lowest.
+
+### e4-l02: Iron rain
+
+- **Idea:** Timing the one ward against steel at the guidance maximum.
+- **Feeling:** tension while holding blue back, then satisfaction when the ward clears a crowd of steel.
+- **Duration:** Sim `greedy` 135 to 152 mean moves on normal (110 gems), 201 to 227 on hard (165 gems); about 472 to 532 s of play on normal and 704 to 794 s on hard at 3.5 s a move.
+- **Target success rate:** Normal: at least 75 % of players win on the first try; hard: at least 60 %. Human rates are provisional until a playtest. Simulator: the e4 row of balance.md (`random` informational from e4 on) and the curve rules as `--check` runs them; `greedy` wins 100 % on the draft, within 10 points of its neighbours.
+- **Takeaway:** The player knows to avoid two blue matches in a row until several steel pieces stand, then fire the ward on purpose.
+- **Role and levers:** develop; goal size: 110 gems; complexity: steel_rate 0.06 (guidance maximum), no chains.
+- **First contact:** Builds on e4-l01: the same single ward, now with enough steel (up to 8 can stand, OBS-02) that firing it early wastes it. Steel left after the ward goes to fire, tnt, lightning and color_clear (its colour, from tier 2) as in episode 3. Clock tier 2 becomes buyable here; optional.
+- **Clock:** Normal 503 s (143.7 draft mean moves x 3.5), hard 749 s (214.1 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Most steel of the first half; the clock covers it from the rule's margin.
+
+### e4-l03: The chains stay
+
+- **Idea:** Ward does not touch chains: chains and steel need different answers on the same board.
+- **Feeling:** discovery (the chains stay after a ward).
+- **Duration:** Sim `greedy` 139 to 157 mean moves on normal (115 gems), 214 to 241 on hard (175 gems); about 486 to 550 s of play on normal and 749 to 844 s on hard at 3.5 s a move.
+- **Target success rate:** Normal: at least 78 % of players win on the first try; hard: at least 63 %. Human rates are provisional until a playtest. Simulator: the e4 row of balance.md (`random` informational from e4 on) and the curve rules as `--check` runs them; chains coming back are not a new idea for the curve rule, but as a twist it is kept at least as easy as e4-l02: `greedy` wins every run.
+- **Takeaway:** The player knows ward clears only steel, and chains still need a run through them or a blast.
+- **Role and levers:** twist; goal size: 115 gems; complexity: steel_rate 0.02 and 8 chained cells in the four centre columns of the bottom two rows.
+- **First contact:** The first level of the episode with chains. On e4-l01 and e4-l02 the ward cleared every obstacle on the board, because steel was the only one; here the first ward meets chains and leaves them. The chains sit in the centre of the bottom two rows, where the bottom-row links cannot fall and the row above only falls when a link under it clears, so they are still there when steel has gathered and the ward fires. Hint tier 2 and gold tier 3 become buyable here; optional. Steel stays light (0.02) so the chains, not the steel, are what the player watches, and so the twist is no harder than e4-l02.
+- **Clock:** Normal 517 s (147.7 draft mean moves x 3.5), hard 795 s (227.2 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Bottom-row chains barely change the simulated length ([about the episode 3 levels](../explanation/about-the-episode-3-levels.md#what-the-simulator-measures-here)).
+
+### e4-l04: Locked floor
+
+- **Idea:** Test: ward, steel and a full row of chains on the floor.
+- **Feeling:** pressure from a locked floor.
+- **Duration:** Sim `greedy` 146 to 165 mean moves on normal (120 gems), 218 to 246 on hard (180 gems); about 511 to 578 s of play on normal and 763 to 861 s on hard at 3.5 s a move.
+- **Target success rate:** Normal: at least 65 % of players win on the first try; hard: at least 50 %. Human rates are provisional until a playtest. Simulator: the e4 row of balance.md (`random` informational from e4 on) and the curve rules as `--check` runs them; `greedy` wins 99 % on the draft, within 10 points of its neighbours.
+- **Takeaway:** The player knows how to split their tools: the ward for steel, runs and blasts for chains, with a floor of locks that never moves on its own.
+- **Role and levers:** test; goal size: 120 gems; complexity: steel_rate 0.05 and 8 chained cells filling the bottom row.
+- **First contact:** Mixes ward, steel and chains; a chained bottom row has nothing below it, so it stays until matched or blasted. Obstacles stay below the episode's maximums so the spike (e4-l08) and the finale (e4-l10) can ask more. Fire tier 3 becomes buyable here; optional.
+- **Clock:** Normal 544 s (155.5 draft mean moves x 3.5), hard 811 s (231.8 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. First test of the episode.
+
+### e4-l05: Open ground
+
+- **Idea:** Building runs of 4 or more on an open board: the lightest obstacle load of the episode at the curve's next goal, before the Accuracy 2 bonus level.
+- **Feeling:** relief.
+- **Duration:** Sim `greedy` 147 to 165 mean moves on normal (125 gems), 226 to 255 on hard (190 gems); about 514 to 578 s of play on normal and 791 to 892 s on hard at 3.5 s a move.
+- **Target success rate:** Normal: at least 75 % of players win on the first try; hard: at least 60 %. Human rates are provisional until a playtest. Simulator: the e4 row of balance.md (`random` informational from e4 on) and the curve rules as `--check` runs them; `greedy` wins 100 % on the draft, within 10 points of its neighbours.
+- **Takeaway:** The player knows a light board leaves room to set up runs of 4 or more, so power-ups are already on the board when the few obstacles arrive.
+- **Role and levers:** rest; goal size: 125 gems (the progression curve); complexity: steel_rate 0.02 and 2 chained cells (guidance minimums).
+- **First contact:** Mixes everything so far at the lightest obstacle load of the episode; the relief is in fewer obstacles, not a shorter level (the +5 goal still rises). Score Frenzy tier 3 becomes buyable here; optional.
+- **Clock:** Normal 546 s (155.9 draft mean moves x 3.5), hard 842 s (240.5 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. A rest by load, not by length.
+
+### e4-l06: Pillars
+
+- **Idea:** Chained columns: two vertical lines of chains wall off the sides of the lower board.
+- **Feeling:** relief when a column opens.
+- **Duration:** Sim `greedy` 157 to 177 mean moves on normal (130 gems), 236 to 266 on hard (195 gems); about 550 to 620 s of play on normal and 826 to 931 s on hard at 3.5 s a move.
+- **Target success rate:** Normal: at least 68 % of players win on the first try; hard: at least 53 %. Human rates are provisional until a playtest. Simulator: the e4 row of balance.md (`random` informational from e4 on) and the curve rules as `--check` runs them; `greedy` wins 100 % on the draft, within 10 points of its neighbours.
+- **Takeaway:** The player knows a column of chains cannot be swapped, so it splits the board, but its links still match, so runs through them and blasts beside them open the wall.
+- **Role and levers:** twist; goal size: 130 gems; complexity: steel_rate 0.03 and 10 chained cells in two columns, five cells each, on the bottom five rows.
+- **First contact:** Chains are familiar; the new shape is a line of them: chained pieces cannot be swapped, so the column splits the lower board. Chained pieces still match normally (OBS-05), so a run that lines up with a link clears it, and the links above a cleared one drop down the column. Steel stays light so the columns are the point. Timer tier 3 and paint tier 3 become buyable here; optional.
+- **Clock:** Normal 584 s (166.8 draft mean moves x 3.5), hard 880 s (251.3 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Moves per gem barely change from e4-l05 (1.25 to 1.28): the columns shape the play more than the length.
+
+### e4-l07: Scattered locks
+
+- **Idea:** Spread locks: four single chains far apart, so most blasts free one at a time and runs through each link do most of the work.
+- **Feeling:** steady satisfaction as each lock goes.
+- **Duration:** Sim `greedy` 161 to 182 mean moves on normal (135 gems), 248 to 279 on hard (205 gems); about 564 to 637 s of play on normal and 868 to 976 s on hard at 3.5 s a move.
+- **Target success rate:** Normal: at least 65 % of players win on the first try; hard: at least 50 %. Human rates are provisional until a playtest. Simulator: the e4 row of balance.md (`random` informational from e4 on) and the curve rules as `--check` runs them; `greedy` wins 100 % on the draft, within 10 points of its neighbours.
+- **Takeaway:** The player knows scattered chains are freed mostly one at a time, by runs through them, so blasts go further on steel; a blast frees two only when chains have drifted close or happen to share its reach.
+- **Role and levers:** develop; goal size: 135 gems; complexity: steel_rate 0.05 and 4 chained cells, no two in the same row or column and each more than four cells (row plus column) from any other, on the bottom five rows.
+- **First contact:** Develops e4-l03 and e4-l06 with a new spacing, not a new rule: packed chains rewarded blasts (e3-l03), spread ones reward runs. At the start no two chains share a row or column and each pair is more than four cells apart, so a blast seldom reaches two; chains fall like any piece (OBS-05), so the spacing loosens as the level goes on, and fire, a lightning cross or color_clear can still catch two. Gift tier 3 becomes buyable here; optional.
+- **Clock:** Normal 600 s (171.3 draft mean moves x 3.5), hard 922 s (263.4 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Fewer chains than e4-l06 but more steel.
+
+### e4-l08: The forge
+
+- **Idea:** Episode spike: both obstacles at their maximums, with steel still arriving after the one ward is spent.
+- **Feeling:** pressure.
+- **Duration:** Sim `greedy` 166 to 187 mean moves on normal (140 gems), 249 to 281 on hard (210 gems); about 581 to 654 s of play on normal and 872 to 984 s on hard at 3.5 s a move.
+- **Target success rate:** Normal: at least 60 % of players win on the first try; hard: at least 45 %. Human rates are provisional until a playtest. Simulator: the e4 row of balance.md (`random` informational from e4 on) and the curve rules as `--check` runs them; `greedy` wins 100 % on the draft, within 10 points of its neighbours. The human targets are for a player who has not bought time tier 3 (buyable here, +180 s twice a level); a player who has finds it lighter.
+- **Takeaway:** The player knows that after the one ward, every blast has to be shared between steady steel and three clusters of chains, and that a blast on a cluster frees several chains at once.
+- **Role and levers:** test; goal size: 140 gems; complexity: steel_rate 0.06 and 10 chained cells (guidance maximums) in three clusters on the bottom two rows.
+- **First contact:** Tests everything in episode 4 at its heaviest: the first level with both obstacles at their maximums, so one ward cannot cover the level: after it, steel goes to fire, tnt, lightning and color_clear (its colour, from tier 2), the same tools the chain clusters want. Clusters let a blast free several chains at once (e3-l03's lesson). Tnt tier 3 and time tier 3 become buyable here; optional.
+- **Clock:** Normal 616 s (176.1 draft mean moves x 3.5), hard 929 s (265.3 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. The spike; the longest level of the episode in simulated moves.
+
+### e4-l09: Quiet before
+
+- **Idea:** Rest before the finale: lighter obstacles at the next goal, where one ward does most of the work.
+- **Feeling:** breather.
+- **Duration:** Sim `greedy` 152 to 171 mean moves on normal (145 gems), 230 to 259 on hard (220 gems); about 532 to 598 s of play on normal and 805 to 906 s on hard at 3.5 s a move.
+- **Target success rate:** Normal: at least 68 % of players win on the first try; hard: at least 53 %. Human rates are provisional until a playtest. Simulator: the e4 row of balance.md (`random` informational from e4 on) and the curve rules as `--check` runs them; `greedy` wins 100 % on the draft, within 10 points of its neighbours.
+- **Takeaway:** The player knows that on a light board one well-timed ward does most of the work: at tier 1 fire it once steel has gathered and blast the few that follow, or with tier 2 (buyable here) fire it early to stop new steel for good.
+- **Role and levers:** rest; goal size: 145 gems (the progression curve); complexity: steel_rate 0.03 and 4 chained cells on the bottom row.
+- **First contact:** A rest at e3-l07's obstacle load, now with ward to answer the steel, after the e4-l08 spike. Ward tier 2 and color_clear tier 3 become buyable here; optional, and the takeaway holds at either ward tier.
+- **Clock:** Normal 565 s (161.3 draft mean moves x 3.5), hard 855 s (244.3 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Simulated moves fall here from e4-l08 because the obstacles are lighter and the simulator buys ward tier 2 (no new steel after the ward) and color_clear tier 3 as they become available; a player who skipped them takes longer ([about level clocks](../explanation/about-level-clocks.md#which-player)).
+
+### e4-l10: Falling iron
+
+- **Idea:** Finale: both obstacles at their maximums with the chains high on the board, falling into the steel, at the episode's biggest goal, before the Memory 2 bonus level.
+- **Feeling:** triumph.
+- **Duration:** Sim `greedy` 155 to 175 mean moves on normal (150 gems), 234 to 264 on hard (225 gems); about 542 to 612 s of play on normal and 819 to 924 s on hard at 3.5 s a move.
+- **Target success rate:** Normal: at least 55 % of players win on the first try; hard: at least 40 %. Human rates are provisional until a playtest. Simulator: the e4 row of balance.md (`random` informational from e4 on) and the curve rules as `--check` runs them; `greedy` wins 100 % on the draft, within 10 points of its neighbours. The human targets are for a player who skipped ward tier 2 and harvest tier 3.
+- **Takeaway:** The player knows they can handle falling locks and heavy steel together: the ward for the steel, runs and blasts for the chains as they land.
+- **Role and levers:** test; goal size: 150 gems; complexity: steel_rate 0.06 and 10 chained cells spread over the upper half.
+- **First contact:** Mixes chains, steel, ward and every totem and power-up so far. Unlike e4-l08's fixed floor locks, these chains start high and fall (e3-l02's falling locks) into a board crowded with steel. A player who bought ward tier 2 (e4-l09) stops steel after the ward and one who buys harvest tier 3 here can clear every chain at once: those purchases make the finale lighter, which is their reward; the brief's targets are for a player who skipped them. Multiplier tier 3 and harvest tier 3 become buyable here; optional.
+- **Clock:** Normal 579 s (165.4 draft mean moves x 3.5), hard 873 s (249.3 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Simulated moves stay below e4-l08 because the simulator owns ward tier 2 and buys harvest tier 3 (removes every chain) here; the human targets are for a player who skipped them.
+
+| Level | File | Gems normal / hard | Totems | Power-ups | Obstacles | Seed |
+|---|---|---|---|---|---|---|
+| e4-l01 | | 105 / 160 | all seven | all six | steel 0.04 | |
+| e4-l02 | | 110 / 165 | all seven | all six | steel 0.06 | |
+| e4-l03 | | 115 / 175 | all seven | all six | steel 0.02, 8 chains | |
+| e4-l04 | | 120 / 180 | all seven | all six | steel 0.05, 8 chains | |
+| e4-l05 | | 125 / 190 | all seven | all six | steel 0.02, 2 chains | |
+| e4-l06 | | 130 / 195 | all seven | all six | steel 0.03, 10 chains | |
+| e4-l07 | | 135 / 205 | all seven | all six | steel 0.05, 4 chains | |
+| e4-l08 | | 140 / 210 | all seven | all six | steel 0.06, 10 chains | |
+| e4-l09 | | 145 / 220 | all seven | all six | steel 0.03, 4 chains | |
+| e4-l10 | | 150 / 225 | all seven | all six | steel 0.06, 10 chains | |
+
+Every episode 4 level has all seven totems and six power-ups unlocked.
+`chained_cells` and `steel_rate` are defined in [level data](level-data.md);
+y = 0 is the top row. File, seed and base clock are set when the levels are authored.
