@@ -55,6 +55,7 @@ own folder.
 - [Build and preview the website](how-to/build-and-preview-the-website.md): build `site/`, preview it with or without the web demo, run its tests.
 - [Add a level](how-to/add-a-level.md): write a campaign level file from the progression tables, test it and play it.
 - [Make content depend on the quality tier](how-to/make-content-depend-on-the-quality-tier.md): desktop-only nodes, fallbacks, light shadows, texture variants.
+- [Capture the effects showcase](how-to/capture-the-effects-showcase.md): record every totem and power-up effect to frames.
 
 ## Explanation
 

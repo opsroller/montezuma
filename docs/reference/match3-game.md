@@ -37,6 +37,7 @@ start sends UiRoot the `quit_level` action, so the episode map comes back.
 | `autostart_level` | empty | A level id to start on `_ready` without the menus (for a test scene); empty waits for UiRoot |
 | `autostart_difficulty` | `normal` | `normal` or `hard` |
 | `warning_seconds` | 10 | `time_warning` plays when time left crosses this |
+| `effects_showcase` | false | Look-dev: after `autostart_level`, fires every totem and sets off every power-up in turn, forever (`game/scenes/board/effects/effects_showcase.tscn`) |
 
 ## Methods
 
@@ -68,7 +69,7 @@ changes nothing.
 | `frenzy_changed(bar: float, seconds_left: float)` | On start and when either changes. `bar` is the fill (0..1) while Frenzy is off and the time left as a fraction while it is on |
 | `shuffles_changed(left: int)` | On start and after a manual shuffle |
 | `hint_cost_changed(cost: int, affordable: bool)` | On start and when affordability changes: true while playing with a score of at least `cost`, or a hint already shown |
-| `hint_shown(a: Vector2i, b: Vector2i)` | A bought hint, or the free onboarding hint (`SHUF-05`); for the view to highlight |
+| `hint_shown(a: Vector2i, b: Vector2i)` | A bought hint, or the free onboarding hint (`SHUF-05`). The node also rings the pair on the board until the next move |
 | `level_finished(outcome: int, score: int)` | Once, after the last move's animation ends. The HUD opens the results screen on it |
 
 `streak_changed` and `bonus_changed` from the first contract block are not
@@ -78,16 +79,24 @@ power-ups.
 ## How a command plays
 
 A legal swap becomes one board animation: the swap's cascades, then each
-fired totem's cascades, then the automatic reshuffle. The mirrored board
-is updated to the session's board before the view plays, so the view ends
-on the session's state. Totem repaints (`paint`) are not animated yet; the
-view snaps to them at the end of the move (WP-29).
+fired totem's cascades, then the automatic reshuffle. A totem that clears
+nothing gets an empty step of its own. Each step carries what it set off
+(power-ups, markers, the totem firing, `paint` repaints) and the result
+carries every cell's markers after the move, in the keys the
+[board view's effects](board-view.md#effects) read; the packing is
+`extension/src/game/display_move.hpp`. The mirrored board is updated to
+the session's board before the view plays, so the view ends on the
+session's state, markers included. On a level start the node calls the
+view's `show_marks`.
+
+When a `hint` power-up goes off (`PWR-11`), every legal swap is ringed
+after each move until its time runs out; another one restarts it.
 
 | Cue | Played |
 |---|---|
 | `swap`, `swap_illegal` | When the request is answered |
 | `match`, `cascade_<n>` (8 and over: `cascade_8`), `gem_collect`, `bonus_use_<id>`, `steel_break`, `chain_break`, `bonus_earned` | On the view's `cascade_step` for that step. `n` counts display steps across the whole move, so a totem's first step plays `cascade_<n>`, not `match` |
-| `totem_fire_<id>` | On the totem's first step; at once for a totem that clears nothing |
+| `totem_fire_<id>` | On the totem's first step, its own empty step for a totem that clears nothing |
 | `totem_charge` | At most once per move, when any owned totem gains charge without firing |
 | `quota_done` | When a quota reaches 0 |
 | `time_warning` | When time left crosses `warning_seconds` downwards |
@@ -111,7 +120,12 @@ Plays `e1-l01` on normal by always taking the first legal move, through
 `request_swap`, `shuffle` and the view, checks that the mirrored board
 matches the session after every move, that every HUD signal fired, that
 `level_finished` fired once with a win, and that every cue it would play
-is in the cue table. It prints
+is in the cue table. Then it starts the level again and, for each totem and power-up in turn,
+sets the session up (a charged totem at tier 3, or a power-up on a piece
+of a legal move's run, steel for ward and chains for harvest) and plays
+the move: the view must schedule that effect and end with the session's
+markers. It prints
+`Match3Game effects: 7 totems and 6 power-ups staged in <n> moves`, then
 `Match3Game self-test: <n> moves, outcome 1, <n> cues, 0 failures`, which
 CI checks. Two expected errors precede it (a missing level and a bad id).
 

@@ -25,6 +25,9 @@ one: [Make a board theme](../how-to/make-a-board-theme.md).*
 | `environment` | `Node3D` | added once; brings `WorldEnvironment`, the sun and other lights, and the backdrop |
 | `cell_highlight` | `Node3D` | shown at the selected cell |
 | `fx_match` | `CPUParticles3D` | one-shot at each cleared cell; freed after `lifetime` |
+| `bonus_<power-up id>` | `Node3D` | badge on a piece carrying that power-up; origin at the badge centre, about 0.35 cell across |
+| `marker_gem`, `marker_steel`, `marker_chain` | `Node3D` | gem (the view places it at the far-left corner, at piece-top height), steel and chain (origin at the cell centre on the board plane) on a piece |
+| `fx_totem_<totem id>`, `fx_power_up_<power-up id>`, `fx_gem_collect`, `fx_steel_break`, `fx_chain_break`, `fx_power_up_placed`, `fx_hint` | `Node3D` | one effect; particles restart when it starts, and it is freed when its beat ends or its particles finish ([Board view, Effects](board-view.md#effects)) |
 
 All values are `res://` paths to `PackedScene`s. A missing name falls back
 to the view's placeholder.

@@ -94,3 +94,33 @@ make rows and columns easy to count.
 
 Piece nodes are pooled per kind, so a long cascade reuses nodes instead of
 allocating new ones every move.
+
+## Effects ride on events, markers ride on pieces
+
+Totem and power-up effects (WP-29) follow the same rule as the move
+animation: the session reports what happened, step by step, and the view
+shows it. The game controller packs each step's report (power-ups going
+off with the cells they clear, markers placed or lost, the totem that
+fires) into the result it hands the view, so the view never asks the
+rules what a TNT reaches or which pieces paint chose. A totem that clears
+nothing still gets a step of its own, with a short lead-in, because the
+player should see the time totem fire, not just a timer that jumps.
+
+Markers (power-up badges, gems, steel, chains) are children of their
+piece. A falling piece carries its badge without the view tracking it
+separately, and a cleared piece takes its markers with it. The view
+walks the same plan the animation plays and applies each marker change
+at the moment the rules made it: at the step's clear, or after its
+refill. The result also carries the markers the session ends with, so
+the view can check its walk and resync, the same way it reconciles
+pieces. `effects_tests` plays thousands of real session moves and checks
+that the walk lands on the session's markers every time.
+
+Timing lives in one planner (`effect_plan.hpp`, no Godot) that clamps
+every transient effect to the step it belongs to. That is the visual
+target's readability rule 3 turned into code: an effect can be as rich as
+the theme likes, but it cannot sit over a cell after that cell's step is
+over. The placeholders are deliberately plain (rings, flashes, labels,
+small particle bursts that every renderer runs); the realistic versions
+are theme scenes under the `fx_*` names, so the technical artist can
+replace each one without touching code (WP-53).
