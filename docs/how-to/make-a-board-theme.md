@@ -27,6 +27,11 @@ With a Blender install instead of `bpy`, run the mesh step as
    python3 tools/assets/validate_assets.py
    ```
 
+   The textures are not committed. In a fresh checkout run
+   `gen_theme_textures.py` (or build the CMake target `textures`) before
+   opening the project in Godot; it does nothing when its inputs have not
+   changed.
+
 3. Open `game/assets/lookdev/LD_Temple.tscn` (whole board from the game
    camera) and `LD_Temple_LineUp.tscn` (pieces close up) in Godot, or render
    them headless:

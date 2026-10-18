@@ -2,7 +2,13 @@
 # Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
 """Generate a board theme's physically based texture sets with numpy.
 
-    python3 tools/assets/gen_theme_textures.py [tools/assets/themes/temple.json]
+    python3 tools/assets/gen_theme_textures.py [params.json ...]   (default: every tools/assets/themes/*.json)
+
+The textures are build outputs, not sources: git ignores them, and CMake and
+CI run this script before anything loads the game. It records a hash of its
+inputs (this script, the parameters, numpy and Pillow versions) in
+game/assets/textures/<theme>/.inputs and does nothing while that hash and
+every output still match, so calling it on every build is cheap.
 
 Writes one PNG set per entry in the parameters' "textures.sets":
 
@@ -19,11 +25,13 @@ frequency domain, cells wrap), so materials map them triplanar without UVs.
 Same parameters and seed give the same bytes.
 """
 
+import hashlib
 import json
 import sys
 from pathlib import Path
 
 import numpy as np
+import PIL
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -246,7 +254,7 @@ def quantise(a):
 
 def save(img, path, mode):
     path.parent.mkdir(parents=True, exist_ok=True)
-    Image.fromarray(img, mode).save(path, optimize=True)
+    Image.fromarray(img, mode).save(path, compress_level=6)
 
 
 def write_set(out, name, maps, n, spec):
@@ -259,12 +267,35 @@ def write_set(out, name, maps, n, spec):
         save(quantise(height), out / f"T_{name}_H.png", "L")
 
 
-def main():
-    params_path = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "tools/assets/themes/temple.json"
-    p = json.loads(params_path.read_text())
+def outputs(theme_dir, tex):
+    for name, spec in sorted(tex["sets"].items()):
+        maps = ["BC", "N", "ORM"] + (["H"] if spec.get("height") else [])
+        for folder in [theme_dir] + ([theme_dir / "hi"] if spec.get("hi") else []):
+            yield from (folder / f"T_{name}_{m}.png" for m in maps)
+
+
+def inputs_hash(params_bytes):
+    h = hashlib.sha256()
+    for part in (Path(__file__).read_bytes(), params_bytes, np.__version__.encode(), PIL.__version__.encode()):
+        h.update(hashlib.sha256(part).digest())
+    return h.hexdigest()
+
+
+def generate(params_path):
+    raw = params_path.read_bytes()
+    p = json.loads(raw)
     tex = p["textures"]
     base_n, hi_n = tex["size"], tex.get("hi_size", tex["size"])
     out = ROOT / "game/assets/textures" / p["theme"]
+    stamp = out / ".inputs"
+    digest = inputs_hash(raw)
+    expected = list(outputs(out, tex))
+    if stamp.exists() and stamp.read_text().strip() == digest and all(f.exists() for f in expected):
+        print(f"{p['theme']}: textures up to date")
+        return
+    for old in list(out.glob("T_*.png")) + list(out.glob("hi/T_*.png")):
+        if old not in expected:
+            old.unlink()
     for index, (name, spec) in enumerate(sorted(tex["sets"].items())):
         rng = np.random.default_rng([p["seed"], index])
         recipe = RECIPES[spec["recipe"]]
@@ -278,6 +309,13 @@ def main():
             sizes = f"{base_n}"
         write_set(out, name, maps, base_n, spec)
         print(f"T_{name}: {sizes}, BC/N/ORM{'/H' if spec.get('height') else ''}")
+    stamp.write_text(digest + "\n")
+
+
+def main():
+    paths = [Path(a) for a in sys.argv[1:]] or sorted((ROOT / "tools/assets/themes").glob("*.json"))
+    for params_path in paths:
+        generate(params_path)
 
 
 if __name__ == "__main__":

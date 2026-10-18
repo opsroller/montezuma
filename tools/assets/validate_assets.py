@@ -286,7 +286,9 @@ def main():
         if path.suffix in (".tscn", ".tres"):
             for ref in scene_refs(path):
                 if not res_to_path(ref).exists():
-                    errors.append(f"{rel}: references missing {ref}")
+                    hint = "; textures are build outputs, run tools/assets/gen_theme_textures.py first" \
+                        if "/textures/" in ref else ""
+                    errors.append(f"{rel}: references missing {ref}{hint}")
         if path.suffix in (".gdshader", ".obj", ".tscn", ".tres") and SPDX not in path.read_text()[:400]:
             errors.append(f"{rel}: missing the SPDX header line")
         if path.suffix == ".png":

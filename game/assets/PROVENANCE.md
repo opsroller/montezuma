@@ -67,7 +67,7 @@ files:
   - game/assets/materials/shaders/SH_Triplanar.gdshaderinc
   - game/assets/lookdev/LD_Temple_Hi.tscn
   - game/assets/lookdev/LD_Temple_LineUp_Hi.tscn
-origin: generated
+origin: generated (textures at build time, not committed; materials, shaders and scenes committed)
 authors: [technical-artist (Claude)]
 created: 2026-10-18
 source:

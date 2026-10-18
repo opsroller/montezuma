@@ -54,17 +54,19 @@ caches are set up this way.
 
 ## Assets workflow
 
-`.github/workflows/assets.yml` runs `tools/assets/validate_assets.py`
-against `game/assets/` and the theme manifest. Rules it enforces:
+`.github/workflows/assets.yml` generates the board theme textures, then
+runs `tools/assets/validate_assets.py` against `game/assets/` and the
+theme manifest. Rules it enforces:
 [Board themes: validator rules](board-themes.md#validator-rules).
 
 | Item | Value |
 |---|---|
 | Triggers | every `push` to `main` and every `pull_request`, no path filter; a new push cancels the PR's older run |
-| Job | `validate`, on `ubuntu-24.04`, 5-minute timeout |
+| Job | `validate`, on `ubuntu-24.04`, 10-minute timeout |
 | Token permissions | `contents: read` |
-| Python packages | `.github/requirements/assets.txt`: Pillow 12.3.0, installed with `--require-hashes` into a virtual environment |
-| What red means | an `error:` line in the log names the file and the broken rule: a manifest path or scene reference that does not exist, a file that does not parse as its format, a piece or board over its triangle budget, a texture over 1024 px (2048 px in `hi/`) or not power-of-two, a texture map in the wrong colour space, slot or value range, a desktop `hi/` variant without a base file, a mobile or web export preset that ships `hi/`, a missing provenance record or SPDX line, or a name off the naming table |
+| Python packages | `.github/requirements/assets.txt`: numpy 2.5.3 and Pillow 12.3.0, installed with `--require-hashes` into a virtual environment |
+| Textures | composite action `.github/actions/textures`: restores `game/assets/textures/*/T_*.png`, `*/hi/T_*.png` and `.inputs` from the Actions cache, key `textures-` plus a hash of `gen_theme_textures.py`, `tools/assets/themes/*.json` and `assets.txt`; on a miss runs `gen_theme_textures.py` (about 40 s). The `tests` extension job (Linux) and the `build` export job use the same action before Godot imports the project |
+| What red means | a failed `Generate textures` step (a generator error), or an `error:` line in the log names the file and the broken rule: a manifest path or scene reference that does not exist, a file that does not parse as its format, a piece or board over its triangle budget, a texture over 1024 px (2048 px in `hi/`) or not power-of-two, a texture map in the wrong colour space, slot or value range, a desktop `hi/` variant without a base file, a mobile or web export preset that ships `hi/`, a missing provenance record or SPDX line, or a name off the naming table |
 
 The job takes seconds, so it has no path filter: a check that a PR can
 skip could never be made required.

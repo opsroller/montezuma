@@ -51,10 +51,15 @@ class Resource:
         return "\n".join(out).rstrip() + "\n"
 
 
+# The theme's "textures.sets", set by main(). Texture files are build outputs
+# (gen_theme_textures.py), so paths follow the parameters, not the disk.
+TEXTURE_SETS = {}
+
+
 def texture_path(theme, tex_set, suffix, hi):
-    """res:// path of one map of a texture set; the hi/ variant when asked for and present."""
+    """res:// path of one map of a texture set; the hi/ variant when asked for and the set has one."""
     name = f"T_{tex_set}_{suffix}.png"
-    if hi and (ROOT / "game/assets/textures" / theme / "hi" / name).exists():
+    if hi and TEXTURE_SETS.get(tex_set, {}).get("hi"):
         return f"res://assets/textures/{theme}/hi/{name}"
     return f"res://assets/textures/{theme}/{name}"
 
@@ -71,8 +76,8 @@ def shader_material(spec, theme, hi):
     r.body += ["[resource]", f"shader = {shader}"]
     if "set" in spec:
         for key, suffix in (("texture_albedo", "BC"), ("texture_normal", "N"), ("texture_orm", "ORM"), ("texture_height", "H")):
-            path = texture_path(theme, spec["set"], suffix, hi)
-            if (ROOT / "game" / path.removeprefix("res://")).exists():
+            if suffix != "H" or TEXTURE_SETS.get(spec["set"], {}).get("height"):
+                path = texture_path(theme, spec["set"], suffix, hi)
                 r.body.append(f"shader_parameter/{key} = {r.ext_id('Texture2D', path)}")
         r.body.append(f"shader_parameter/albedo = {color(spec.get('albedo_tint', spec['albedo']))}")
         r.body.append(f"shader_parameter/triplanar_scale = {spec.get('triplanar_scale', 1.0)}")
@@ -162,6 +167,7 @@ def main():
     params_path = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "tools/assets/themes/temple.json"
     p = json.loads(params_path.read_text())
     theme = p["theme"]
+    TEXTURE_SETS.update(p["textures"]["sets"])
     assets = ROOT / "game/assets"
     models = f"res://assets/models/{theme}"
     entry = {}

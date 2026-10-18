@@ -146,7 +146,7 @@
       "set": "Gold_01",
       "triplanar_scale": 1.6,
       "anisotropy": 0.2,
-      "emission": "#7a4e06",
+      "emission": "#c08a12",
       "emission_energy": 1.0,
       "hi": {}
     },

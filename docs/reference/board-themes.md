@@ -47,8 +47,8 @@ to the view's placeholder.
 | `game/assets/materials/<theme>/` | `MI_*.tres` materials: the base variant every tier can load (mobile, web, fallback) |
 | `game/assets/materials/<theme>/hi/` | desktop variants of some of those materials, same file names |
 | `game/assets/materials/shaders/` | `SH_*.gdshader` and `SH_*.gdshaderinc`, shared by all themes |
-| `game/assets/textures/<theme>/` | `T_<Set>_{BC,N,ORM,H}.png` base texture sets, at most 1024² |
-| `game/assets/textures/<theme>/hi/` | desktop variants of the hero sets, same file names, at most 2048² |
+| `game/assets/textures/<theme>/` | `T_<Set>_{BC,N,ORM,H}.png` base texture sets, at most 1024²; build outputs, ignored by git (see below) |
+| `game/assets/textures/<theme>/hi/` | desktop variants of the hero sets, same file names, at most 2048²; build outputs too |
 | `game/assets/lookdev/` | `LD_*.tscn` look-dev scenes (game camera, line-up) |
 | `game/assets/PROVENANCE.md` | one record per theme or asset family |
 
@@ -101,7 +101,21 @@ byte-identical files.
 | `python3 tools/assets/gen_theme_scenes.py [params]` | `MI_*.tres` and `hi/MI_*.tres`, `PF_*.tscn`, `LD_*.tscn`, the theme's manifest entry, `design/tokens/<theme>-board.json` | standard library |
 | `python3 tools/assets/validate_assets.py` | nothing; exits 1 on errors | Pillow |
 
-`params` defaults to `tools/assets/themes/temple.json`.
+`params` defaults to `tools/assets/themes/temple.json`
+(`gen_theme_textures.py` with no argument does every theme in
+`tools/assets/themes/`).
+
+The `T_*` texture sets are build outputs, not committed: git ignores
+`game/assets/textures/*/T_*.png`, `*/hi/T_*.png` and the `.inputs` stamp.
+Hand-made textures elsewhere in `game/assets/textures/` are still
+committed. `gen_theme_textures.py` writes a theme's `.inputs` stamp, a
+SHA-256 of the script, the theme's parameters and the numpy and Pillow
+versions, and skips the theme when the stamp matches and every file
+exists. Three things run it: the CMake target `textures` (part of `all`
+when CMake finds Python 3 with numpy and Pillow; otherwise configure
+prints how to run it), the CI action `.github/actions/textures` (see
+[CI pipeline](ci-pipeline.md#assets-workflow)), and you, before opening
+the project in Godot from a fresh checkout.
 
 ### Parameter file
 
@@ -157,8 +171,8 @@ A full 8×8 board of pieces averages about 260 triangles each (~17k), so
 the whole scene stays near 31k triangles. Draw calls: one per piece (64),
 6 board parts, 7 backdrop parts, plus shadow passes; pieces share 7
 materials. Textures: seven base sets at 1024² (`Stone_01` with `_H`;
-22 PNGs, 15 MB on disk) and 2048² `hi/` sets for the hero surfaces
-`Stone_01` and `Gold_01` (7 PNGs, 23 MB on disk); all are VRAM-compressed
+22 PNGs, 15 MB generated) and 2048² `hi/` sets for the hero surfaces
+`Stone_01` and `Gold_01` (7 PNGs, 23 MB generated); all are VRAM-compressed
 on import. In VRAM (BPTC/ASTC, about 1 byte per pixel with mipmaps) the
 base sets take about 30 MB and the `hi/` sets add about 40 MB, well
 inside every tier's texture budget. Frame time on target phones
