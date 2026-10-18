@@ -257,7 +257,7 @@ std::vector<PowerUpPlacement> PowerUpLayer::entries() const {
 }
 
 StepClear PowerUpLayer::expand_clear(const Board& board, std::span<const Cell> run_cells, int step,
-                                     const PieceMarks& marks) const {
+                                     const PieceMarks& marks, const std::vector<bool>& holds) const {
     StepClear out;
     const int w = board.width();
     const int h = board.height();
@@ -266,9 +266,15 @@ StepClear PowerUpLayer::expand_clear(const Board& board, std::span<const Cell> r
     std::vector<char> fired(in_clear.size(), 0);
     const auto idx = [w](Cell c) { return static_cast<std::size_t>(c.y * w + c.x); };
     const auto usable = [&](Cell c) { return board.in_bounds(c.x, c.y) && board.at(c.x, c.y) != Board::kEmpty; };
+    // rule: OBS-05 a clear that reaches a chained piece only breaks its chain.
+    std::vector<char> held(in_clear.size(), 0);
+    const auto holds_at = [&](Cell c) { return idx(c) < holds.size() && holds[idx(c)]; };
 
     for (const Cell c : run_cells)
-        if (usable(c)) in_clear[idx(c)] = from_run[idx(c)] = 1;
+        if (usable(c)) {
+            if (holds_at(c)) held[idx(c)] = 1;
+            else in_clear[idx(c)] = from_run[idx(c)] = 1;
+        }
 
     // Power-ups on cleared pieces go off: first those on run cells in
     // row-major order, then those each effect reaches, in the order reached.
@@ -292,7 +298,9 @@ StepClear PowerUpLayer::expand_clear(const Board& board, std::span<const Cell> r
         PowerUpEffect e = power_up_effect(p.id, p.tier, board, c, marks);
         std::vector<Cell> added;
         for (const Cell t : e.cells_to_clear)
-            if (!in_clear[idx(t)]) {
+            if (holds_at(t)) {
+                held[idx(t)] = 1;
+            } else if (!in_clear[idx(t)]) {
                 in_clear[idx(t)] = 1;
                 added.push_back(t);
             }
@@ -303,6 +311,7 @@ StepClear PowerUpLayer::expand_clear(const Board& board, std::span<const Cell> r
 
     for (int y = 0; y < h; ++y)
         for (int x = 0; x < w; ++x) {
+            if (held[idx({x, y})]) out.held.push_back({x, y});
             if (!in_clear[idx({x, y})]) continue;
             out.cells.push_back({x, y});
             if (!from_run[idx({x, y})]) out.power_up_cells.push_back({x, y});

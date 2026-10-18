@@ -137,6 +137,7 @@ struct Model {
     std::size_t i(Cell c) const { return static_cast<std::size_t>(c.y * w + c.x); }
 
     void step(const StepReport& st) {
+        for (Cell c : st.chains_broken) chains[i(c)] = false;  // OBS-05: the piece stays
         for (Cell c : st.cleared) {
             kinds[i(c)] = Board::kEmpty;
             gems[i(c)] = steel[i(c)] = chains[i(c)] = false;
@@ -962,14 +963,17 @@ void test_obstacles() {
         const bool cleared = r && has_cell(r->steps[0].cleared, {4, 0});
         check(tier == 1 ? !cleared : cleared, "OBS-03 color_clear steel by tier");
     }
-    // OBS-05: chained piece matches; its chain goes; chain mark falls.
+    // OBS-05: a run through a chained piece breaks the chain; the piece
+    // stays. Chain marks fall with their pieces.
     {
         LevelSession s = scene(kSimple);
         s.set_chain({0, 7}, true);
         s.set_chain({1, 5}, true);
         auto r = s.swap(kSimpleSwap[0], kSimpleSwap[1]);
-        check(r && r->steps[0].cleared.size() == 3 && has_cell(r->steps[0].chains_broken, {0, 7}),
-              "OBS-05 chained piece matches, chain removed");
+        check(r && r->steps[0].cleared == std::vector<Cell>{{1, 7}, {2, 7}} &&
+                  r->steps[0].chains_broken == std::vector<Cell>{{0, 7}},
+              "OBS-05 chained piece holds, chain removed");
+        check(r && !s.chained({0, 7}), "OBS-05 held piece is plain now");
         check(r && !s.chained({1, 5}) && s.chained({1, 6}), "OBS-05 chain falls with its piece");
     }
     // OBS-06: shuffles leave steel and chained pieces.
@@ -1505,6 +1509,123 @@ void test_reports_and_replay() {
           "tick report");
 }
 
+// OBS-05: chains that hold. Any clear that reaches a chained piece breaks
+// its chain and leaves the piece in place; the next clear takes it.
+void test_chains_hold() {
+    // A run of 3 through one chained piece: two clear, the third stays,
+    // unscored, uncounted and with its gem.
+    {
+        LevelSession s = scene(kSimple);
+        s.set_chain({0, 7}, true);
+        s.set_gem({0, 7}, true);
+        auto r = s.swap(kSimpleSwap[0], kSimpleSwap[1]);
+        check(r && r->steps[0].cleared.size() == 2 && !has_cell(r->steps[0].cleared, {0, 7}),
+              "OBS-05 held piece not cleared");
+        check(r && r->steps[0].points == 2 * kPointsPerPiece, "OBS-05 held piece scores nothing");
+        check(r && r->steps[0].cleared_by_kind.at(kBlue) == 2, "OBS-05 held piece not counted (GOAL-06)");
+        check(r && r->steps[0].gems_collected.empty() && s.gems_collected() == 0, "OBS-05 gem stays on the held piece");
+        bool stayed = true;
+        if (r)
+            for (const Fall& f : r->steps[0].falls) stayed = stayed && f.from != Cell{0, 7};
+        check(r && stayed, "OBS-05 held piece keeps its cell");
+    }
+    // Vertical run with the chained piece in the middle: the ends clear and
+    // the unchained piece falls one row.
+    {
+        const std::vector<std::string> rows{"........", "........", "........", "........",
+                                            "........", "3.......", "3.......", "53......"};
+        LevelSession s = scene(rows);
+        s.set_chain({0, 6}, true);
+        auto r = s.swap({0, 7}, {1, 7});
+        check(r && r->steps[0].cleared == std::vector<Cell>{{0, 5}, {0, 7}} &&
+                  r->steps[0].chains_broken == std::vector<Cell>{{0, 6}},
+              "OBS-05 vertical run holds its middle");
+        check(r && !r->steps[0].falls.empty() && r->steps[0].falls[0] == Fall{{0, 6}, {0, 7}, 3} &&
+                  !s.chained({0, 7}),
+              "OBS-05 unchained piece falls into the gap");
+    }
+    // A run made only of chained pieces: the chains break in one step, the
+    // now plain pieces match in the next.
+    {
+        const std::vector<std::string> rows{"........", "........", "........", "........",
+                                            "........", "........", "..142...", "11225..."};
+        LevelSession s = scene(rows);
+        s.set_chain({0, 7}, true);
+        s.set_chain({1, 7}, true);
+        s.set_chain({2, 6}, true);
+        auto r = s.swap({4, 6}, {4, 7});
+        const std::vector<Cell> line{{0, 7}, {1, 7}, {2, 7}};
+        check(r && r->steps.size() >= 3, "OBS-05 all-chained run takes two steps");
+        if (r && r->steps.size() >= 3) {
+            check(r->steps[1].chains_broken == line && r->steps[1].cleared.empty() && r->steps[1].points == 0,
+                  "OBS-05 all-chained run only breaks chains");
+            bool all = true;
+            for (Cell c : line) all = all && has_cell(r->steps[2].cleared, c);
+            check(all, "OBS-05 unchained pieces clear in the next step");
+        }
+    }
+    // An effect that reaches a chained piece breaks the chain (tnt).
+    {
+        LevelSession s = scene(kSimple, level_with_totems({}, {"tnt"}));
+        s.set_power_up({1, 7}, PowerUp{PowerUpId::Tnt, 1});
+        s.set_chain({0, 6}, true);
+        auto r = s.swap(kSimpleSwap[0], kSimpleSwap[1]);
+        check(r && r->steps[0].power_ups_triggered.size() == 1 && has_cell(r->steps[0].chains_broken, {0, 6}) &&
+                  !has_cell(r->steps[0].cleared, {0, 6}),
+              "OBS-05 tnt breaks a chain, the piece stays");
+    }
+    // A power-up on a chained piece does not go off when the chain breaks;
+    // it stays with the piece and goes off when the piece is cleared.
+    {
+        LevelSession s = scene(kSimple, level_with_totems({}, {"tnt"}));
+        s.set_power_up({0, 7}, PowerUp{PowerUpId::Tnt, 1});
+        s.set_chain({0, 7}, true);
+        auto r = s.swap(kSimpleSwap[0], kSimpleSwap[1]);
+        // The scene has no move left, so the board reshuffles: count it.
+        check(r && r->steps[0].power_ups_triggered.empty() && s.power_ups().count() == 1 && !s.chained({0, 7}),
+              "OBS-05 power-up stays on the held piece");
+    }
+    // A totem's clear (fire) holds chained targets too.
+    {
+        LevelSession s = scene(kBlank, level_with_totems({"fire"}), with_totem(TotemId::Fire, 1));
+        play(s, kRed);
+        // The next red match fires: chain everything above the scene's rows.
+        paint(s, kind_rows(kRed));
+        for (int y = 0; y < 6; ++y)
+            for (int x = 0; x < 8; ++x) s.set_chain({x, y}, true);
+        auto r = s.swap(kSimpleSwap[0], kSimpleSwap[1]);
+        const TotemFiring* f = fired(r, TotemId::Fire);
+        check(f && !f->steps.empty(), "OBS-05 fire fired");
+        if (f && !f->steps.empty()) {
+            const StepReport& st = f->steps[0];
+            bool disjoint = true;
+            for (Cell c : st.chains_broken) disjoint = disjoint && !has_cell(st.cleared, c);
+            check(!st.chains_broken.empty() && disjoint &&
+                      st.cleared.size() + st.chains_broken.size() == f->effect.cells_to_clear.size(),
+                  "OBS-05 fire breaks chains and leaves the pieces");
+        }
+    }
+    // Same seed and moves, same game, with chains held.
+    {
+        LevelData l = base_level();
+        for (int y = 4; y < 8; ++y)
+            for (int x = 0; x < 8; x += 2) l.chained_cells.push_back({x, y});
+        LevelSession a(l, Difficulty::Normal, {}, 11);
+        LevelSession b(l, Difficulty::Normal, {}, 11);
+        int broken = 0;
+        for (int i = 0; i < 40 && a.outcome() == Outcome::Playing; ++i) {
+            auto moves = a.legal_moves();
+            if (moves.empty()) break;
+            const Swap m = moves[static_cast<std::size_t>(i * 5) % moves.size()];
+            auto ra = a.swap(m[0], m[1]);
+            auto rb = b.swap(m[0], m[1]);
+            for (const StepReport& st : ra->steps) broken += static_cast<int>(st.chains_broken.size());
+            check(ra && rb && snap(a) == snap(b), "determinism: chains held the same way");
+        }
+        check(broken > 0, "determinism run broke chains");
+    }
+}
+
 }  // namespace
 
 void test_det_failed_shuffle_leaves_no_hidden_state() {
@@ -1682,6 +1803,7 @@ int main() {
     test_power_ups();
     test_totems();
     test_reports_and_replay();
+    test_chains_hold();
     test_det_failed_shuffle_leaves_no_hidden_state();
     test_det_timer_independent_of_tick_size();
     test_det_streams_do_not_alias();

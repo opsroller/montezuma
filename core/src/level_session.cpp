@@ -88,6 +88,7 @@ struct LevelSession::MoveContext {
     int base_points = 0;
     int multiplier = 1;
     bool frenzy_fill = false;            // the bar filled this step
+    std::vector<Cell> held;              // this step's unchained pieces (OBS-05)
 };
 
 LevelSession::LevelSession(const LevelData& level, Difficulty difficulty, const Upgrades& up, std::uint64_t seed)
@@ -284,10 +285,13 @@ StepHooks LevelSession::make_hooks(MoveContext& ctx) {
             ctx.pending_swap.reset();
         }
         const int global = ctx.step_base + step;
-        StepClear sc = power_ups_.expand_clear(b, cleared, global, marks_);
+        StepClear sc = power_ups_.expand_clear(b, cleared, global, marks_, chains_);
+        ctx.held = sc.held;
         on_step_clear(ctx, sc.cells, sc, global);
         return sc.power_up_cells;
     };
+    // rule: OBS-05 pieces whose chain broke stay where they are.
+    hooks.keep = [&ctx](const Board&, int) { return ctx.held; };
     hooks.after_refill = [this, &ctx](const Board&, const CascadeStep& step, int index) {
         on_step_refill(ctx, step, index);
     };
@@ -326,8 +330,10 @@ void LevelSession::on_step_clear(MoveContext& ctx, const std::vector<Cell>& cell
         }
         points += kPointsPerPiece * (step + 1);  // rule: SCORE-01, OBS-03
         if (steel(c)) sr.steel_removed.push_back(c);
-        if (chained(c)) sr.chains_broken.push_back(c);  // rule: OBS-05
     }
+    // rule: OBS-05 the chain goes; the piece stays, unscored, and is plain now.
+    sr.chains_broken = sc.held;
+    for (Cell c : sc.held) chains_[idx(c)] = false;
     collect_gem_points(ctx, gems, points);
     if (frenzy_on_) points *= kFrenzyPointsFactor;  // rule: SCORE-03
     sr.points = points;
