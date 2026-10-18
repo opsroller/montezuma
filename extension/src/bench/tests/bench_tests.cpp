@@ -207,6 +207,53 @@ void test_resolution_tracker() {
     check(!SizeTracker(Size2{1, 1}).pass(), "no frames, no pass");
 }
 
+void test_unknown_tier_is_not_judged_silently() {
+    for (const char* tier : {"unset", "desktop-hgih", "", "Web"}) {
+        const BudgetSpec spec = budget_for_tier(tier, kDefaultTolerance, 0.0);
+        const std::vector<double> frames(600, 16.9);
+        const BudgetVerdict v = judge_budget(summarize(frames, p95_limit_ms(spec)), spec, 60.0);
+        check(!v.pass && v.reason.find("tier") != std::string::npos,
+              std::string("unknown tier '") + tier + "' fails with a reason naming the tier");
+    }
+    for (const char* tier : {"desktop-high", "desktop-standard", "mobile", "web"})
+        check(!budget_for_tier(tier, kDefaultTolerance, 0.0).rules.empty(), std::string("known tier ") + tier);
+}
+
+void test_tolerance_is_bounded() {
+    const BudgetSpec spec = budget_for_tier("desktop-high", 10.0, 0.0);
+    check(spec.tolerance <= kMaxTolerance, "a tolerance above the maximum is clamped");
+    const std::vector<double> frames(600, 100.0);
+    check(!judge_budget(summarize(frames, p95_limit_ms(spec)), spec, 60.0).pass, "10 fps never passes the 60 fps budget");
+    check(budget_for_tier("desktop-high", -1.0, 0.0).tolerance == 0.0, "a negative tolerance is 0");
+}
+
+void test_too_few_frames_fail() {
+    const BudgetSpec spec = budget_for_tier("desktop-high", kDefaultTolerance, 0.0);
+    const std::vector<double> frames(kMinFrames - 1, 10.0);
+    const BudgetVerdict v = judge_budget(summarize(frames, p95_limit_ms(spec)), spec, 60.0);
+    check(!v.pass && v.reason.find("frames") != std::string::npos, "a capture of a handful of frames is not judged");
+}
+
+void test_unmeasured_runs_do_not_pass() {
+    const BudgetSpec spec = budget_for_tier("desktop-standard", kDefaultTolerance, 0.0);
+    const std::vector<double> frames(600, 7.0);
+    const BudgetVerdict v = judge_budget(summarize(frames, p95_limit_ms(spec)), spec, -1.0, "headless, nothing rendered");
+    check(!v.pass && v.reason.find("not a measurement") != std::string::npos && v.limits.size() == 1,
+          "a headless run keeps its numbers but never passes");
+    check(software_adapter("llvmpipe (LLVM 20.1.2, 256 bits)") && software_adapter("lavapipe") &&
+              software_adapter("SwiftShader Device (Subzero)") && software_adapter("Microsoft Basic Render Driver") &&
+              software_adapter("softpipe"),
+          "software rasterisers are recognised");
+    check(!software_adapter("Apple M4") && !software_adapter("NVIDIA GeForce RTX 3060") && !software_adapter(""),
+          "GPUs are not software");
+}
+
+void test_missing_gpu_samples_are_dropped() {
+    const std::vector<double> some = positive_only({0.0, 4.0, 0.0, 6.0});
+    check(some.size() == 2 && some[0] == 4.0 && some[1] == 6.0, "frames without a GPU timestamp are left out");
+    check(positive_only({0.0, 0.0}).empty(), "no timestamps, no samples");
+}
+
 int main() {
     test_nearest_rank_percentiles();
     test_replay_is_deterministic();
@@ -221,6 +268,11 @@ int main() {
     test_empty_capture_fails();
     test_size_parsing();
     test_resolution_tracker();
+    test_unknown_tier_is_not_judged_silently();
+    test_tolerance_is_bounded();
+    test_too_few_frames_fail();
+    test_unmeasured_runs_do_not_pass();
+    test_missing_gpu_samples_are_dropped();
     std::printf("%d checks, %d failures\n", checks, failures);
     return failures == 0 ? 0 : 1;
 }

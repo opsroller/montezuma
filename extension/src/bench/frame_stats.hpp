@@ -63,6 +63,10 @@ inline constexpr double kTargetHz = 60.0;
 // puts a locked 60 fps run a little either side of 16.67 ms. Owner: the
 // graphics-programmer; a change is a change to the benchmark reference.
 inline constexpr double kDefaultTolerance = 0.05;
+// Above this the budget no longer means 60 fps; larger values are clamped.
+inline constexpr double kMaxTolerance = 0.5;
+// Fewer captured frames than this say nothing about percentiles.
+inline constexpr std::size_t kMinFrames = 30;
 
 struct BudgetRule {
     double percentile = 95.0;  // 50, 95 or 99
@@ -70,6 +74,7 @@ struct BudgetRule {
 };
 
 struct BudgetSpec {
+    std::string tier;
     double target_hz = kTargetHz;
     double tolerance = kDefaultTolerance;
     std::vector<BudgetRule> rules;
@@ -77,12 +82,15 @@ struct BudgetSpec {
 
 // The visual target's budgets for `tier`: p95 within one period on desktop
 // and mobile; p95 within two periods and the median within one on the web.
-// `p95_override_ms` > 0 replaces the p95 budget (--bench-budget).
+// `p95_override_ms` > 0 replaces the p95 budget (--bench-budget). An
+// unknown tier gets no rules, and judge_budget fails it.
 inline BudgetSpec budget_for_tier(std::string_view tier, double tolerance, double p95_override_ms) {
     BudgetSpec spec;
-    spec.tolerance = std::max(0.0, tolerance);
+    spec.tier = std::string(tier);
+    spec.tolerance = std::clamp(tolerance, 0.0, kMaxTolerance);
     const double period = 1000.0 / spec.target_hz;
     const bool web = tier == "web";
+    if (!web && tier != "desktop-high" && tier != "desktop-standard" && tier != "mobile") return spec;
     spec.rules.push_back({95.0, p95_override_ms > 0.0 ? p95_override_ms : (web ? 2.0 : 1.0) * period});
     if (web) spec.rules.push_back({50.0, period});
     return spec;
@@ -121,12 +129,20 @@ inline double percentile_of(const FrameSummary& s, double p) {
 // Judges a frame-time summary against `spec`. `display_hz` is the refresh
 // the frames were shown at (<= 0 when unknown, as headless): a display
 // slower than the target cannot show it, so the run is not judged.
-inline BudgetVerdict judge_budget(const FrameSummary& frames, const BudgetSpec& spec, double display_hz) {
+// `unmeasured` says why the frames are no measurement (headless, a
+// software rasteriser); then the limits are still filled in but it fails.
+inline BudgetVerdict judge_budget(const FrameSummary& frames, const BudgetSpec& spec, double display_hz,
+                                  std::string_view unmeasured = {}) {
     BudgetVerdict v;
     v.period_ms = 1000.0 / spec.target_hz;
-    char buf[160];
-    if (frames.frames == 0) {
-        v.reason = "no frames captured";
+    char buf[200];
+    if (spec.rules.empty()) {
+        v.reason = "unknown tier '" + spec.tier + "': no budget to judge against";
+        return v;
+    }
+    if (frames.frames < kMinFrames) {
+        std::snprintf(buf, sizeof buf, "only %zu frames captured, fewer than %zu", frames.frames, kMinFrames);
+        v.reason = buf;
         return v;
     }
     v.pass = true;
@@ -151,7 +167,28 @@ inline BudgetVerdict judge_budget(const FrameSummary& frames, const BudgetSpec& 
         v.reason = buf;
         v.pass = false;
     }
+    if (!unmeasured.empty()) {
+        v.reason = "not a measurement: " + std::string(unmeasured);
+        v.pass = false;
+    }
     return v;
+}
+
+// GPU samples with a timestamp: a 0 is a frame the driver gave none for.
+inline std::vector<double> positive_only(const std::vector<double>& samples) {
+    std::vector<double> out;
+    for (double v : samples)
+        if (v > 0.0) out.push_back(v);
+    return out;
+}
+
+// Adapter names of CPU rasterisers, whose frame times are not a GPU's.
+inline bool software_adapter(std::string_view adapter) {
+    std::string a(adapter);
+    for (char& c : a) c = static_cast<char>(c >= 'A' && c <= 'Z' ? c - 'A' + 'a' : c);
+    for (const char* name : {"llvmpipe", "lavapipe", "softpipe", "swiftshader", "microsoft basic render"})
+        if (a.find(name) != std::string::npos) return true;
+    return false;
 }
 
 // ---- Render size ------------------------------------------------------------

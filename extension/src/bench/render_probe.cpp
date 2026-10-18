@@ -25,6 +25,8 @@
 #include <godot_cpp/classes/world3d.hpp>
 #include <godot_cpp/variant/array.hpp>
 
+#include "frame_stats.hpp"
+
 using namespace godot;
 
 namespace montezuma::godot_binding::bench {
@@ -191,6 +193,9 @@ Dictionary device_info(Viewport* viewport) {
     d["adapter"] = rs->get_video_adapter_name();
     d["vendor"] = rs->get_video_adapter_vendor();
     d["api_version"] = rs->get_video_adapter_api_version();
+    // Frames from either are no measurement (docs/reference/benchmark.md#budget).
+    d["headless"] = DisplayServer::get_singleton()->get_name() == "headless";
+    d["software"] = software_adapter(rs->get_video_adapter_name().utf8().get_data());
     if (viewport) {
         const Vector2 size = viewport->get_visible_rect().size;
         Array res;

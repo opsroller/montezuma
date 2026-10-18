@@ -76,6 +76,8 @@ private:
     void restart_replay();
     void play_next_beat();
     void sample_frame();
+    void push_process_sample();
+    void on_process_frame();
     void finish();
 
     godot::NodePath board_view_path_;
@@ -91,6 +93,7 @@ private:
     godot::Vector2i render_size_;
     bool disable_vsync_ = false;
     bool size_arg_invalid_ = false;
+    bool tolerance_arg_invalid_ = false;
     bool quit_when_done_ = true;
 
     godot::Ref<Match3Board> board_;
@@ -116,6 +119,9 @@ private:
     std::vector<double> primitives_;
     double video_mem_max_ = 0.0;
     bench::SizeTracker sizes_{std::nullopt};
+    bench::SizeTracker window_sizes_{std::nullopt};
+    // When SceneTree.process_frame fired: the start of this frame's _process.
+    uint64_t process_start_usec_ = 0;
     double display_hz_ = -1.0;
     godot::String vsync_;
     godot::Dictionary features_;
