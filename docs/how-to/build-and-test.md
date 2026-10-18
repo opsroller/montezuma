@@ -49,6 +49,15 @@ godot --headless --path game --import
 godot --headless --path game --quit-after 120    # errors show here
 ```
 
+On macOS, build the universal (arm64 and x86_64) library: the game's
+`.gdextension` only lists `libmontezuma.macos.*.universal.dylib`, so a
+single-architecture build does not load. Configure with:
+
+```sh
+cmake -S . -B build-ext -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON \
+  -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+```
+
 This build also copies `CREDITS.md` and `LICENSE` into `game/` so the
 credits screen shows them. The tests include `ui_model_tests`, which
 needs the extension build.
@@ -60,6 +69,22 @@ godot --headless --path game --quit-after 120 -- --game-selftest
 ```
 
 It ends with `Match3Game self-test: <n> moves, outcome 1, <n> cues, 0 failures`.
+
+Check the web demo's scene, which must be won in play and tell the page
+once ([IntroLevel](../reference/intro-level.md#self-test)):
+
+```sh
+godot --headless --path game --quit-after 120 res://scenes/demo/intro_level.tscn -- --intro-selftest
+```
+
+It ends with `IntroLevel self-test: <n> moves, outcome 1, 1 completions, 0 failures`.
+
+Quit from inside a level, with music playing, as CI does; nothing may
+print an error or a leak at exit:
+
+```sh
+godot --headless --path game --quit-after 600 -- --start-level=e1-l01 --quit-after-frames=60
+```
 
 ## Build and test on Windows
 

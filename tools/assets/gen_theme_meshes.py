@@ -309,7 +309,7 @@ def backdrop_parts(p, rng):
     cs = p["cell_size"]
     half = p["board"]["width"] * cs / 2 + p["board"]["frame_width"]
     tiers = p["backdrop"]["tiers"]
-    stone, stone_dark, bronze, flame, foliage, ground, rocks = (bmesh.new() for _ in range(7))
+    stone, stone_dark, bronze, foliage, ground, rocks = (bmesh.new() for _ in range(6))
 
     top = -0.42
     size = 2 * half + 1.2
@@ -332,7 +332,8 @@ def backdrop_parts(p, rng):
         size += 2.4
     ground_z = top
 
-    # Braziers on pillars at the platform's corners.
+    # Braziers on pillars at the platform's corners. Their fire is particles
+    # (tools/assets/gen_theme_scenes.py, PF_BrazierFire), not a mesh.
     pillar_xy = half + 0.95
     for sx in (-1, 1):
         for sy in (-1, 1):
@@ -346,13 +347,8 @@ def backdrop_parts(p, rng):
             lathe_outline(sub, circle(16, 0.34), [(0.45, 0.25), (0.8, 0.3), (1.0, 0.42), (1.05, 0.47), (0.92, 0.47)])
             transform(sub, dx=cx, dy=cy)
             merge_into(bronze, sub)
-            for k in range(3):
-                sub = bmesh.new()
-                a = 2 * math.pi * k / 3 + rng.uniform(0, 1)
-                lathe_outline(sub, circle(8, 0.16 - 0.03 * k), [(1.0, 0.44), (0.85, 0.6 + 0.08 * k), (0.02, 0.92 + 0.14 * k)],
-                              twist_step=0.4)
-                transform(sub, dx=cx + 0.1 * math.cos(a), dy=cy + 0.1 * math.sin(a))
-                merge_into(flame, sub)
+            for _ in range(3):
+                rng.uniform(0, 1)  # draws the old mesh flames used, so the ferns stay put
 
     # Jungle floor and ferns around the temple, with the water channel (a
     # moat round the lowest tier) cut into it when the theme has one.
@@ -387,7 +383,6 @@ def backdrop_parts(p, rng):
         "Stone": (stone, "MI_StoneFrame", 0.0),
         "StoneDark": (stone_dark, "MI_StoneDark", 0.0),
         "Bronze": (bronze, "MI_Bronze", 40.0),
-        "Flame": (flame, "MI_Flame", 80.0),
         "Ground": (ground, "MI_Ground", 0.0),
         "Foliage": (foliage, "MI_Foliage", 80.0),
         "Rocks": (rocks, "MI_StoneDark", 0.0),

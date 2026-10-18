@@ -7,6 +7,7 @@
 #include <vector>
 
 #include <godot_cpp/classes/audio_stream.hpp>
+#include <godot_cpp/classes/audio_stream_playback.hpp>
 #include <godot_cpp/classes/audio_stream_player.hpp>
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/classes/random_number_generator.hpp>
@@ -40,6 +41,7 @@ public:
     void _exit_tree() override;
     void _ready() override;
     void _process(double delta) override;
+    void _notification(int what);
 
     // One-shots play on a pooled voice. Music cues cross-fade the music
     // player; ambience cues cross-fade the ambience bed. Loops run until
@@ -64,6 +66,16 @@ public:
 
     // Voices currently playing a one-shot, for tests and the debug overlay.
     int get_active_voice_count() const;
+
+    // Quits the game once every sound has stopped and the audio server has
+    // let go of it, or after a short timeout. Use it instead of
+    // SceneTree::quit(); closing the window goes through it too, and so does
+    // the `--quit-after-frames=<n>` user argument, which tests and captures
+    // use instead of Godot's --quit-after. Godot frees
+    // a stopped sound only on a later audio mix and frame, which never come
+    // once the tree is torn down, so quitting with a sound playing leaks its
+    // stream ("resources still in use at exit").
+    void quit(int exit_code);
 
 protected:
     static void _bind_methods();
@@ -111,6 +123,10 @@ private:
     Voice* pick_voice(int cue_index, int priority);
     void apply_bus_volume(int bus_index);
     void run_self_test();
+    // Stops every voice and loop at once and keeps their playbacks until
+    // the audio server drops them; released() says when it has.
+    void release_all();
+    bool released() const;
 
     static GameAudio* singleton_;
 
@@ -133,6 +149,13 @@ private:
     int music_bus_ = -1;
     int ambience_bus_ = -1;
     godot::HashMap<godot::StringName, double> volumes_;
+
+    // Quitting (quit(), the window closing or `--quit-after-frames=<n>`).
+    std::vector<godot::Ref<godot::AudioStreamPlayback>> releasing_;
+    bool releasing_all_ = false;
+    int quit_code_ = -1;  // set while quit() waits for the release
+    uint64_t quit_started_msec_ = 0;
+    uint64_t quit_after_frames_ = 0;  // 0 without --quit-after-frames
 };
 
 }  // namespace montezuma::godot_binding

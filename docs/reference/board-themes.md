@@ -66,6 +66,7 @@ to the view's placeholder.
 | `T_` + `_N` | normal: tangent space, OpenGL (green up), RGB |
 | `T_` + `_ORM` | occlusion, roughness, metallic in R, G, B: linear |
 | `T_` + `_H` | height: linear, greyscale, white is high (parallax) |
+| `T_` + `_R` | roughness: linear, greyscale (legacy; new sets pack it in `_ORM`) |
 
 Names use `A-Z a-z 0-9 _` only. Code refers to logical names in the
 manifest, never to these paths.
@@ -94,6 +95,15 @@ sets fit the web texture budget.
 | Lapis | `ORMMaterial3D`, `Lapis_01` (blue, calcite, metallic pyrite flecks) | none; the base is used everywhere |
 | Water (`MI_Water`) | `SH_WaterSimple`: blended, absorption to the flat floor height, caustics, probe reflections | `SH_Water`: refraction of the screen, depth from the depth buffer, caustics, in-shader screen-space reflections ([Water](water.md)) |
 
+Texture filtering: the `ORMMaterial3D` set uses Godot's default trilinear
+filter with repeat. `SH_TriplanarPBR` and `SH_Gem` filter anisotropically
+(the tier's 2× to 16×) through a clamped sampler and wrap the coordinates
+in `SH_Triplanar.gdshaderinc` (`tri_tex`). No material filters
+anisotropically with repeat: Godot's Metal backend gives that sampler slot
+17, and Metal GPUs without argument buffers (Apple5 family and older, such
+as the macOS CI runner) address slots 0 to 15 only, so the material fails
+to compile there.
+
 ## Generators
 
 Run from the repository root, in this order. Same parameters and seed give
@@ -102,7 +112,7 @@ byte-identical files.
 | Command | Writes | Needs |
 |---|---|---|
 | `python3 tools/assets/gen_theme_meshes.py [params]` | `SM_*.obj`, prints triangle counts, fails over budget | Blender 4.2+ as `bpy` (`pip install bpy`) or `blender -b --factory-startup -P <script> -- [params]` |
-| `python3 tools/assets/gen_theme_textures.py [params]` | `T_*_{BC,N,ORM,H}.png` (tiling), base and `hi/` | numpy, Pillow |
+| `python3 tools/assets/gen_theme_textures.py [params]` | `T_*_{BC,N,ORM,H}.png` (tiling), base and `hi/`, each with its `.import` | numpy, Pillow |
 | `python3 tools/assets/gen_theme_scenes.py [params]` | `MI_*.tres` and `hi/MI_*.tres`, `PF_*.tscn`, `LD_*.tscn`, the theme's manifest entry, `design/tokens/<theme>-board.json` | standard library |
 | `python3 tools/assets/validate_assets.py` | nothing; exits 1 on errors | Pillow |
 
@@ -115,12 +125,36 @@ The `T_*` texture sets are build outputs, not committed: git ignores
 Hand-made textures elsewhere in `game/assets/textures/` are still
 committed. `gen_theme_textures.py` writes a theme's `.inputs` stamp, a
 SHA-256 of the script, the theme's parameters and the numpy and Pillow
-versions, and skips the theme when the stamp matches and every file
-exists. Three things run it: the CMake target `textures` (part of `all`
+versions, and skips drawing the theme when the stamp matches and every
+file exists (it still writes any missing or wrong `.import` file). Three things run it: the CMake target `textures` (part of `all`
 when CMake finds Python 3 with numpy and Pillow; otherwise configure
 prints how to run it), the CI action `.github/actions/textures` (see
 [CI pipeline](ci-pipeline.md#assets-workflow)), and you, before opening
 the project in Godot from a fresh checkout.
+
+### Import settings
+
+Git ignores the `.import` files too, so `gen_theme_textures.py` writes
+one beside every PNG on every run, from `tools/assets/texture_import.py`,
+and leaves alone a file Godot has rewritten as long as it still agrees.
+Godot's defaults (no mipmaps; `detect_3d` switching a texture to VRAM
+compression the first time the editor sees it in 3D) never apply.
+
+| Parameter | `_BC`, `_ORM`, `_H` (and the legacy `_R`) | `_N` | Why |
+|---|---|---|---|
+| `compress/mode` | `2` (VRAM compressed) | `2` | GPU formats: S3TC/BPTC on desktop and web, ETC2/ASTC on mobile |
+| `compress/high_quality` | `false` | `false` | BC1/BC4 and ETC2, half the memory of BC7/ASTC 4×4 |
+| `compress/normal_map` | `2` (off) | `1` (on) | normal maps go two-channel (RGTC/BC5 on desktop and web, EAC RG11 on mobile); the shaders rebuild Z (`tri_unpack`) |
+| `mipmaps/generate` | `true` | `true` | the triplanar samplers filter with mipmaps; without them minified tiles alias |
+| `detect_3d/compress_to` | `0` (off) | `0` | no silent reimport in the editor |
+
+Change the settings in `texture_import.py`, not in the editor's Import
+dock: the generator puts them back on the next run. Another texture
+generator writing under `game/assets/textures/` writes its own `.import`
+files with mipmaps and compression set and `detect_3d/compress_to=0`.
+Git ignores every `.import`, so a hand-made texture under
+`game/assets/textures/` also needs its `.import` committed (a `!` line in
+`.gitignore`) to pass the validator.
 
 ### Parameter file
 
@@ -134,16 +168,20 @@ the project in Godot from a fresh checkout.
 | `water` | optional moat round the lowest tier: `inset`, `width`, `depth`, `level`, `coping_width`, `coping_height`, `causeway_width` ([Water](water.md#parameters)); without it the ground is unbroken |
 | `textures.size`, `textures.hi_size` | base and desktop texture edge in pixels (powers of two, ≤ 1024 and ≤ 2048) |
 | `textures.sets.<Set>` | one PBR set `T_<Set>_*`: `recipe` (a function in `gen_theme_textures.py`: `stone`, `ground`, `gold`, `gem`, `lapis`, `jade`, `moonstone`), `normal_strength` (slope at 1024 px), `hi` (also write a `hi/` set at `hi_size`; the base is filtered down from it), `height` (also write `_H`) |
-| `materials.<MI_name>` | `albedo` (the colour the kind reads as; also the HUD token), optional `albedo_tint` (multiplies the texture instead, for sets that carry their own colour), `set` (a texture set: makes an `ORMMaterial3D` whose roughness, metallic and occlusion come from `_ORM`) with `triplanar_scale`, `normal_scale`, `world_triplanar`; without `set`, `metallic` and `roughness`; `ior` (index of refraction; sets the dielectric reflectance) or `specular`; `emission` + `emission_energy`, `rim` + `rim_tint`, `clearcoat` + `clearcoat_roughness`, `anisotropy`, `subsurface` (`strength`, `transmittance`, `depth`, `boost`), `backlight`, `double_sided`. Or a ShaderMaterial: `shader` + `params` (a hex string is a colour, a list of three numbers a `Vector3`; `water: true` adds the channel's `floor_height`; with `set`, the shader gets `texture_albedo`, `texture_normal`, `texture_orm`, `texture_height`, `albedo`, `triplanar_scale`, `normal_scale`). `hi`: keys that replace these for the desktop variant in `hi/` |
-| `environment` | sky colours, `ambient_energy`, `exposure`, `fog`, `fog_density`, `saturation`, `sun` (`transform` as written in a `.tscn`, basis rows first; `color`, `energy`), `torch` (`color`, `energy`, `range`) |
-| `lookdev` | game camera `camera_transform` and `fov`, `highlight_cell` |
+| `materials.<MI_name>` | `albedo` (the colour the kind reads as; also the HUD token), optional `albedo_tint` (multiplies the texture instead, for sets that carry their own colour), `set` (a texture set: makes an `ORMMaterial3D` whose roughness, metallic and occlusion come from `_ORM`) with `triplanar_scale`, `normal_scale`, `world_triplanar`; without `set`, `metallic` and `roughness`; `ior` (index of refraction; sets the dielectric reflectance) or `specular`; `emission` + `emission_energy`, `rim` + `rim_tint`, `clearcoat` + `clearcoat_roughness`, `anisotropy`, `subsurface` (`strength`, `transmittance`, `depth`, `boost`), `backlight`, `double_sided`. Or a ShaderMaterial: `shader` + `params` (a hex string is a colour, a list of three numbers a `Vector3`; `water: true` adds the channel's `floor_height`), optional `textures` (uniform to a path under `textures/<theme>/`; the `hi` variant takes the file's `hi/` copy), `noise_textures` (uniform to a `NoiseTexture2D`: `seed`, `frequency`, `size`) and `render_priority` (with `set`, the shader gets `texture_albedo`, `texture_normal`, `texture_orm`, `texture_height`, `albedo`, `triplanar_scale`, `normal_scale`). `hi`: keys that replace these for the desktop variant in `hi/` |
+| `environment` | sky colours, `ambient_energy`, `exposure`, `fog`, `fog_density`, `saturation`, `sun` (`transform` as written in a `.tscn`, basis rows first; `color`, `energy`), `torch` (`color`, `energy`, `range` of each brazier's fire light) |
+| `lookdev` | game camera `camera_transform` and `fov`, `highlight_cell`; `fire_camera_transform` and `fire_fov` for the brazier close-up `LD_<Theme>_Fire` |
+| `fire` | brazier fire: `rim_height` and the `flame`, `smoke`, `embers`, `light` and `haze` settings of `PF_BrazierFire` ([Fire](fire.md#pf_brazierfire)) |
 | `surface_tokens`, `extra_tokens` | palette entries exported to `design/tokens/<theme>-board.json`: token name to material (its `albedo`) or to a hex value |
 
 ## Shaders
 
 | Shader | Used by | Render mode | Cost |
 |---|---|---|---|
-| `SH_Flame` | brazier flames | unshaded, additive, no depth write; vertex wobble by height | 12 small cones; no texture samples |
+| `SH_Fire` | brazier flames (`MI_Fire`) | unshaded, additive, no depth write; motion-vector flipbook, blackbody colour, camera-facing billboard | 4 texture and 1 depth sample; see [Fire](fire.md#shaders) |
+| `SH_FireSmoke` | brazier smoke (`MI_FireSmoke`) | lit, alpha-blended, no depth write | 1 texture and 1 depth sample |
+| `SH_Ember`, `SH_EmberTrail` | embers (`MI_Ember`, `MI_EmberTrail`) | unshaded, additive; trails on tiers with `particle_trails` | no texture samples |
+| `SH_HeatHaze` | heat haze (`MI_HeatHaze`), desktop | screen-texture distortion, drawn before the flame | 2 noise and 1 screen sample |
 | `SH_CellHighlight` | `cell_highlight` | unshaded, additive | one 1×1 quad; no texture samples |
 | `SH_Spark` | `fx_match` | unshaded, additive; fades by `INSTANCE_CUSTOM.y` | 16 tiny spheres per burst |
 | `SH_TriplanarPBR` | desktop stone (`hi/MI_Stone*`) | opaque, Burley diffuse, GGX; object-space triplanar PBR set; parallax occlusion on upward faces (`height_depth` metres, 8 to 24 layers by view angle) | 9 texture samples, plus up to 25 height samples on upward faces |
@@ -153,8 +191,10 @@ the project in Godot from a fresh checkout.
 | `SH_WaterSimple` | mobile and web water (`MI_Water`) | blended; absorption to the floor height, caustics | no texture samples |
 | `SH_Water.gdshaderinc` | included by the two above | ripple noise and slope, caustics, absorption, Fresnel | none |
 
-`SH_Flame`, `SH_CellHighlight` and `SH_Spark` run on Forward+, Mobile and
-Compatibility (checked in Godot 4.4.1 on all three). `SH_TriplanarPBR` and
+`SH_CellHighlight` and `SH_Spark` run on Forward+, Mobile and
+Compatibility (checked in Godot 4.4.1 on all three); the fire shaders on
+all three in Godot 4.7.2, except `SH_HeatHaze`, which only the desktop
+tiers show. `SH_TriplanarPBR` and
 `SH_Gem` serve the desktop tiers on Forward+ only (checked in Godot 4.7.2);
 mobile and web get the base materials.
 `SH_Water` serves the desktop tiers on Forward+; `SH_WaterSimple` runs on
@@ -176,17 +216,19 @@ variants up to 2048² ([Visual target](visual-target.md#content-budgets-per-tier
 | Amethyst | 120 |
 | Moonstone | 548 |
 | Board (tiles, frame, fret, studs) | 9,436 |
-| Backdrop (platform, braziers, ground, ferns, rocks) | 4,748 |
+| Backdrop (platform, braziers, ground, ferns, rocks) | 4,220 |
 
 A full 8×8 board of pieces averages about 260 triangles each (~17k), so
 the whole scene stays near 31k triangles. Draw calls: one per piece (64),
-6 board parts, 7 backdrop parts, plus shadow passes; pieces share 7
+6 board parts, 6 backdrop parts, the brazier fires (11 draw calls), plus shadow passes; pieces share 7
 materials. Textures: seven base sets at 1024² (`Stone_01` with `_H`;
 22 PNGs, 15 MB generated) and 2048² `hi/` sets for the hero surfaces
 `Stone_01` and `Gold_01` (7 PNGs, 23 MB generated); all are VRAM-compressed
-on import. In VRAM (BPTC/ASTC, about 1 byte per pixel with mipmaps) the
-base sets take about 30 MB and the `hi/` sets add about 40 MB, well
-inside every tier's texture budget. Frame time on target phones
+on import ([Import settings](#import-settings)). In VRAM on desktop
+(BC1/BC4 about 0.7 and RGTC about 1.3 bytes per pixel with mipmaps; ETC2
+and EAC on mobile are the same sizes) the base sets take about 20 MB and
+the `hi/` sets add about 25 MB, well inside every tier's texture budget.
+Frame time on target phones
 is not measured yet; that is WP-41.
 
 ## Look-dev reference frames
@@ -235,6 +277,15 @@ each as `error: <file>: <rule and fix>`:
   30-240 sRGB and metal (where `_ORM` blue ≥ 0.5) at 180 or more; normals
   unit length, facing out, averaging flat; metallic 0 or 1 except at most
   5% of pixels; roughness ≥ 0.02; height spans a real range.
+- Every PNG under `game/assets/textures/` has a `.import` beside it.
+  `_BC`, `_N`, `_ORM`, `_H` and legacy `_R` maps carry exactly the
+  [import settings](#import-settings); any other texture there sets
+  `compress/mode` and `mipmaps/generate` and turns
+  `detect_3d/compress_to` off.
+- No `.tres`, `.tscn` or `.gdshader` filters anisotropically with repeat
+  (`texture_filter = 4` or `5` without `texture_repeat = false`, or a
+  `filter_*_anisotropic` sampler without `repeat_disable`); see texture
+  filtering above.
 - Every file in a `hi/` folder has a base file of the same name; a `hi/`
   texture is the same map at the same or a larger size.
 - Android, iOS and Web export presets list `*/hi/*` in `exclude_filter`;

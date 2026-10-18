@@ -228,7 +228,9 @@ void UiRoot::set_setting(const String& key, const Variant& value) {
 
 void UiRoot::start_level(const String& level_id) {
     if (level_id.is_empty()) return;
-    current_level_ = level_id;
+    // Restart passes current_level_ itself, and godot-cpp's String
+    // self-assignment empties it.
+    if (&level_id != &current_level_) current_level_ = level_id;
     if (ScreenStack* stack = get_stack()) stack->clear();
     emit_signal("play_requested", level_id, String::utf8(settings_.difficulty.c_str()));
 }
@@ -264,7 +266,13 @@ void UiRoot::on_stack_action(const String& action, const String& target, const D
         emit_signal("level_quit_requested");
         if (stack) stack->reset_to(target.is_empty() ? String("episode_map") : target, params);
     } else if (action == "quit") {
-        get_tree()->quit();
+        // Through GameAudio, which stops every sound before the game exits.
+        Node* audio = get_tree()->get_root()->get_node_or_null(NodePath("GameAudio"));
+        if (audio && audio->has_method("quit")) {
+            audio->call("quit", 0);
+        } else {
+            get_tree()->quit();
+        }
     } else if (action == "url") {
         if (target.begins_with("https://")) OS::get_singleton()->shell_open(target);
     } else {
