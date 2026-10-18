@@ -2,7 +2,7 @@
 
 The interfaces between work packages. They let packages run in parallel:
 each side builds against this file, with stubs, before the other side
-lands. Each section has an owner (see `docs/work-packages.md`); to change
+lands. Each section has an owner (see `docs/reference/work-packages.md`); to change
 one, message the owner (coordinate skill), and the owner lands it as a
 `feat(contracts):` commit.
 
@@ -10,12 +10,19 @@ Status: **proposed** until the package that implements it merges.
 
 ## MoveResult events (owner: gameplay-programmer, WP-01) — proposed
 
-The C++ core (`core/`, namespace `mz`) returns a result for each legal
-swap; an illegal swap returns `std::nullopt`. Cell-level events let the
-board view animate without knowing rules.
+**Today** (`core/include/montezuma/board.hpp`, merged): a legal swap
+returns a `MoveResult` with one entry per cascade step mapping artifact
+kind to pieces cleared, plus `matched_kind`, `shuffled` and `score()`.
+`Match3Board::try_swap` returns it as a `Dictionary`
+`{ steps, matched_kind, shuffled, score }`, or an empty one for an
+illegal swap.
+
+**Proposed** for WP-13 (animation needs cells, not counts): extend it
+with cell-level events so the board view animates without knowing rules.
+The code is the truth for field names once WP-13 lands.
 
 ```cpp
-namespace mz {
+namespace montezuma {
 struct Cell { int x, y; };                 // x left to right, y top to bottom, from 0
 struct Fall  { Cell from, to; int kind; };
 struct Spawn { Cell to; int kind; int drop; };   // drop = rows above the board it starts
@@ -42,12 +49,12 @@ std::optional<MoveResult> Board::try_swap(Cell a, Cell b);
 }
 ```
 
-`MzBoard` (GDExtension) exposes the same as a `Dictionary` with keys
+`Match3Board` (GDExtension) exposes the same as a `Dictionary` with keys
 matching the field names and `Vector2i` cells.
 
 ## LevelData (owner: gameplay-programmer, WP-02; content: game-designer) — proposed
 
-JSON at `data/levels/e<episode>/l<NN>.json`, parsed by `mz::LevelData::parse(std::string_view)`;
+JSON at `game/data/levels/e<episode>/l<NN>.json`, parsed by `montezuma::LevelData::parse(std::string_view)`;
 the engine reads the file and passes the text in.
 
 | Field | Type | Notes |
@@ -66,7 +73,7 @@ Kind names, in index order: `red`, `orange`, `yellow`, `green`, `blue`,
 
 ## Game signals (owner: graphics-programmer, WP-10/WP-26) — proposed
 
-`MzGame` (C++ node in `extension/src/game/`, placed in `scenes/game/game.tscn`)
+`Match3Game` (C++ node in `extension/src/game/`, placed in `game/scenes/game/game.tscn`)
 owns the board and level state and emits, for the HUD and audio:
 
 ```
@@ -80,13 +87,13 @@ bonus_changed(bonus_id: String, count: int)
 level_finished(outcome: int, score: int)                # LevelState.Outcome
 ```
 
-`MzBoardView` API: `show_board(board: MzBoard)`, `play(result: Dictionary)`
+`BoardView3D` API: `show_board(board: Match3Board)`, `play(result: Dictionary)`
 (emits `animation_finished` when done), `play_illegal(a, b)`, signals `swap_requested(a: Vector2i,
 b: Vector2i)` and `animation_finished`.
 
 ## Asset manifest (owner: technical-artist, WP-07/08) — proposed
 
-`assets/manifest.json` maps logical names to resource paths. The board view
+`game/assets/manifest.json` maps logical names to resource paths. The board view
 falls back to a placeholder primitive when a name is missing.
 
 `artifact_0` … `artifact_6` (by kind index), `temple_board`, `temple_env`,
@@ -94,7 +101,7 @@ falls back to a placeholder primitive when a name is missing.
 
 ## Audio cues (owner: sound-designer, WP-14) — proposed
 
-Played by name with `MzAudio::play(name)`; a missing cue warns and is silent.
+Played by name with `GameAudio::play(name)`; a missing cue warns and is silent.
 
 `swap`, `swap_illegal`, `match`, `cascade_1` … `cascade_8`, `piece_land`,
 `bonus_earned`, `bonus_use_<id>`, `totem_charge`, `totem_fire_<id>`,
