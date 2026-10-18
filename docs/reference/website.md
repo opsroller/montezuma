@@ -92,8 +92,8 @@ listed, on the page and in the popup.
 
 ## Demo hand-off contract
 
-Proposed to the web demo's owner (gameplay-programmer, WP-21/WP-34); to be
-copied into [contracts](contracts.md) once agreed.
+Agreed with the web demo's owner (gameplay-programmer, WP-21/WP-34) on
+2026-10-18; to be copied into [contracts](contracts.md) by its owner.
 
 **Files.** The Godot 4.4 single-threaded web export, named `montezuma`
 (`montezuma.js`, `montezuma.wasm`, `montezuma.pck`, plus any helper files
@@ -120,7 +120,7 @@ message pointing to the downloads when either is missing.
 
 | Event | `detail` | When | Page does |
 |---|---|---|---|
-| `montezuma:level-completed` | `{ v: 1, level: "<level id>", score: <int> }` | The intro level is won | Opens the download popup with "You beat the intro level!" |
+| `montezuma:level-completed` | `{ v: 1, level: "<level id>", score: <int> }` | Once, when the intro level is won | Opens the download popup with "You beat the intro level!" |
 | `montezuma:ready` (optional) | `{ v: 1, version: "<game version>" }` | First frame shown | Nothing yet |
 
 **Events, page to game.** None.
