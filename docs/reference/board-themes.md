@@ -66,6 +66,7 @@ to the view's placeholder.
 | `T_` + `_N` | normal: tangent space, OpenGL (green up), RGB |
 | `T_` + `_ORM` | occlusion, roughness, metallic in R, G, B: linear |
 | `T_` + `_H` | height: linear, greyscale, white is high (parallax) |
+| `T_` + `_R` | roughness: linear, greyscale (legacy; new sets pack it in `_ORM`) |
 
 Names use `A-Z a-z 0-9 _` only. Code refers to logical names in the
 manifest, never to these paths.
@@ -138,7 +139,7 @@ and leaves alone a file Godot has rewritten as long as it still agrees.
 Godot's defaults (no mipmaps; `detect_3d` switching a texture to VRAM
 compression the first time the editor sees it in 3D) never apply.
 
-| Parameter | `_BC`, `_ORM`, `_H`, `_R` | `_N` | Why |
+| Parameter | `_BC`, `_ORM`, `_H` (and the legacy `_R`) | `_N` | Why |
 |---|---|---|---|
 | `compress/mode` | `2` (VRAM compressed) | `2` | GPU formats: S3TC/BPTC on desktop and web, ETC2/ASTC on mobile |
 | `compress/high_quality` | `false` | `false` | BC1/BC4 and ETC2, half the memory of BC7/ASTC 4×4 |
@@ -262,7 +263,7 @@ each as `error: <file>: <rule and fix>`:
   unit length, facing out, averaging flat; metallic 0 or 1 except at most
   5% of pixels; roughness ≥ 0.02; height spans a real range.
 - Every PNG under `game/assets/textures/` has a `.import` beside it.
-  `_BC`, `_N`, `_ORM`, `_H` and `_R` maps carry exactly the
+  `_BC`, `_N`, `_ORM`, `_H` and legacy `_R` maps carry exactly the
   [import settings](#import-settings); any other texture there sets
   `compress/mode` and `mipmaps/generate` and turns
   `detect_3d/compress_to` off.
