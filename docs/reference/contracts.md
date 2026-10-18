@@ -71,11 +71,19 @@ the engine reads the file and passes the text in.
 | `id` | string | `e1-l03` |
 | `episode`, `index` | int | 1-based |
 | `board` | `{width, height, kinds}` | defaults 8, 8, 7 |
-| `quotas` | `{kind_name: int}` | kind names below |
-| `time_limit` | `{relaxed: float, normal: float}` | seconds |
-| `totems_unlocked` | `[totem_id]` | |
+| `gem_goal` | `{normal: int, hard: int}` | gems to collect; a level needs `gem_goal` or `quotas` |
+| `quotas` | `{kind_name: int}` | optional; kind names below. With `gem_goal`, both must be met (`GOAL-06`) |
+| `time_limit` | `{normal: float, hard: float}` | optional, seconds; default `270 + 30 × timer tier` (tiers 0 to 4) |
+| `totems_unlocked` | `[totem_id]` | available on this level; the tier comes from player progress (WP-08) |
+| `powerups_unlocked` | `[power-up id]` | optional, as above |
+| `steel_rate` | float | optional, 0 to 1, default 0 (`OBS-02`) |
 | `blocked_cells` | `[[x, y]]` | optional |
+| `chained_cells` | `[[x, y]]` | optional (`OBS-05`) |
+| `rules` | string | optional, default `classic` |
+| `theme` | string | optional, default `temple` |
 | `seed` | int | for sim and tests |
+
+Difficulties: `normal`, `hard`.
 
 Kind names, in index order: `red`, `orange`, `yellow`, `green`, `blue`,
 `purple`, `white`.
@@ -138,10 +146,4 @@ These replace the placeholders `row_clear`, `random_blast`, `color_bomb`
 (bonuses). Asset and audio names follow: `totem_<id>`, `bonus_<id>`,
 `totem_fire_<id>`, `bonus_use_<id>` use these ids.
 
-**Proposed LevelData change** (to the LevelData owner): add `gem_goal`
-`{normal: int, hard: int}`; `quotas` optional (a level needs `gem_goal`
-or `quotas`); `time_limit` optional, keys `normal` and `hard` (default:
-the player's timer tier); difficulty names `normal` and `hard` (no
-`relaxed`); optional `powerups_unlocked` `[power-up id]`, `steel_rate`
-(0 to 1, default 0), `chained_cells` `[[x, y]]`, `rules` (default
-`classic`) and `theme` (default `temple`).
+The LevelData fields above were agreed with the LevelData owner and land with WP-05 (#7).
