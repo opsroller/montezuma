@@ -87,6 +87,9 @@ jobs:
           "$CACHE" --show-stats
       # Same pinned editor as the build pipeline: one version and checksum,
       # in tools/release/godot.env. Not cached; the download takes seconds.
+      - name: Generate textures
+        if: runner.os == 'Linux'
+        uses: ./.github/actions/textures
       - name: Download Godot
         if: runner.os == 'Linux'
         run: |
@@ -117,6 +120,18 @@ jobs:
             ./godot --headless --path game --rendering-method "$method" --quit-after 120 -- --quality-selftest 2>&1 | tee "quality-$method.log"
             grep -E "QualityTiers self-test: [0-9]+ checks, 0 failures" "quality-$method.log"
           done
+      # The benchmark replay runs headless for a few seconds: it must plan,
+      # replay without drifting from the plan and write its report. Frame
+      # times are meaningless here (no GPU); docs/how-to/run-the-benchmark.md.
+      # --quit-after stops a runner that failed to start instead of hanging.
+      - name: Benchmark smoke run
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          ./godot --headless --path game --quit-after 3600 res://scenes/bench/bench.tscn -- \
+            --bench-seconds=3 --bench-warmup=1 --bench-out="$RUNNER_TEMP/bench.json" 2>&1 | tee bench.log
+          if grep -E "ERROR|SCRIPT ERROR" bench.log; then exit 1; fi
+          python3 -c 'import json, sys; r = json.load(open(sys.argv[1])); assert r["cpu_ms"]["frames"] > 0 and r["replay"]["beats"] > 0 and not r["replay"]["diverged"] and r["features"], r' "$RUNNER_TEMP/bench.json"
 
   sanitizers:
     runs-on: ubuntu-latest

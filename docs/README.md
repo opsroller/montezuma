@@ -37,6 +37,7 @@ own folder.
 - [Match3Game](reference/match3-game.md): the game scene's controller, its signals, cues and self-test.
 - [Visual target](reference/visual-target.md): the look per quality tier, frame budgets and acceptance tests.
 - [Quality tiers](reference/quality-tiers.md): the `QualityTiers` autoload, settings key, feature ids, node groups and render settings per tier.
+- [Benchmark and readability capture](reference/benchmark.md): the benchmark replay, its JSON report, feature keys and readability checks.
 
 ## Explanation
 
@@ -57,6 +58,8 @@ own folder.
 - [Build and preview the website](how-to/build-and-preview-the-website.md): build `site/`, preview it with or without the web demo, update the embedded web build, check a deployed demo, run its tests.
 - [Add a level](how-to/add-a-level.md): write a campaign level file from the progression tables, test it and play it.
 - [Make content depend on the quality tier](how-to/make-content-depend-on-the-quality-tier.md): desktop-only nodes, fallbacks, light shadows, texture variants.
+- [Capture the effects showcase](how-to/capture-the-effects-showcase.md): record every totem and power-up effect to frames.
+- [Run the benchmark](how-to/run-the-benchmark.md): measure frame time and check readability on a desktop or a phone.
 
 ## Explanation
 

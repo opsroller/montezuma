@@ -110,3 +110,25 @@ sun, belongs to the theme: mood is part of the look.
 - **Triplanar stone, no UVs.** Stone textures tile and map triplanar, so
   generated meshes need no unwrapping and texel density is the same on
   every surface.
+- **Physically based materials, tiered by file.** The
+  [Visual target](../reference/visual-target.md) asks for stone, gold and
+  gems that hold up close on desktop and still run on a mid-range phone
+  and in a browser. So every surface has one physically based texture set
+  (base colour, normal, occlusion-roughness-metallic, height for stone)
+  and each material comes as a base file every tier can load plus, where
+  desktop can afford more, a `hi/` file of the same name. A missing variant
+  falls back to the base, and mobile and web builds leave `hi/` out
+  entirely, so a theme can be upgraded one surface at a time.
+- **Real optics where the eye checks them.** Gem reflectance comes from
+  each stone's index of refraction (ruby 1.76, quartz 1.54), so rubies
+  flash brighter than amethysts the way real ones do. On desktop the clear
+  gems refract the board behind them with a little dispersion and tint it
+  by absorption, which is what makes a gem read as glass rather than
+  plastic; translucent stones (jade, moonstone, carnelian) scatter light
+  under the surface instead. Phones and the web keep opaque gems with
+  rim light and reflections, because refraction needs a copy of the screen
+  every frame and sub-surface scattering is desktop-only in Godot.
+- **Readability over physics.** The piece colours stay the ones in the
+  palette (they are also the HUD tokens), textures only modulate them, and
+  the faint emission that keeps each kind's value in shadow stays on every
+  tier. Where realism and the greyscale test disagree, the test wins.

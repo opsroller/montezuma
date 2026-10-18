@@ -22,7 +22,7 @@ Token permissions: `contents: read`.
 | Job | Runners | What red means |
 |---|---|---|
 | `core` | Ubuntu, macOS; Windows too on pushes to `main` | the core or a Godot-free test fails to build with warnings as errors, or a CTest test fails, including `test_level_files`, which parses every level file and checks its id against its path on every PR (the balance check `montezuma_sim --check` also parses them), and the website's `site_build_tests` (Python) and `site_js_tests` (Node), which CTest adds when the runner has Python 3.10+ and Node |
-| `extension` | Ubuntu; Windows too on pushes to `main` | the GDExtension (with godot-cpp) or a test fails to build, or a CTest test fails (every test, including `ui_model_tests`); on Ubuntu, Godot (the version in `tools/release/godot.env`) logs an error while loading the game headless, the audio or game self-test reports a failure ([Match3Game self-test](match3-game.md#self-test)), or the quality tier self-test (`--quality-selftest`, run once each with `--rendering-method forward_plus`, `mobile` and `gl_compatibility`) reports a failure |
+| `extension` | Ubuntu; Windows too on pushes to `main` | the GDExtension (with godot-cpp) or a test fails to build, or a CTest test fails (every test, including `ui_model_tests`); on Ubuntu, Godot (the version in `tools/release/godot.env`) logs an error while loading the game headless, the audio or game self-test reports a failure ([Match3Game self-test](match3-game.md#self-test)), or the quality tier self-test (`--quality-selftest`, run once each with `--rendering-method forward_plus`, `mobile` and `gl_compatibility`) reports a failure, or the [benchmark](benchmark.md) smoke run (3 s headless) logs an error, drifts from its plan or writes no report |
 | `sanitizers` | Ubuntu | a CTest test fails under ASan or UBSan |
 
 Windows does not run on PRs. Pushes to `main` run the Windows `core` and
@@ -54,17 +54,21 @@ caches are set up this way.
 
 ## Assets workflow
 
-`.github/workflows/assets.yml` runs `tools/assets/validate_assets.py`
-against `game/assets/` and the theme manifest. Rules it enforces:
+`.github/workflows/assets.yml` generates the board theme textures, then
+runs `tools/assets/validate_assets.py` against `game/assets/` and the
+theme manifest. Rules it enforces:
 [Board themes: validator rules](board-themes.md#validator-rules).
+It then runs the readability-check tests in `tools/bench/tests/` with the
+same Pillow ([Benchmark](benchmark.md#readability-checks)).
 
 | Item | Value |
 |---|---|
 | Triggers | every `push` to `main` and every `pull_request`, no path filter; a new push cancels the PR's older run |
-| Job | `validate`, on `ubuntu-24.04`, 5-minute timeout |
+| Job | `validate`, on `ubuntu-24.04`, 10-minute timeout |
 | Token permissions | `contents: read` |
-| Python packages | `.github/requirements/assets.txt`: Pillow 12.3.0, installed with `--require-hashes` into a virtual environment |
-| What red means | an `error:` line in the log names the file and the broken rule: a manifest path or scene reference that does not exist, a file that does not parse as its format, a piece or board over its triangle budget, a texture over 1024 px or not power-of-two, a missing provenance record or SPDX line, or a name off the naming table |
+| Python packages | `.github/requirements/assets.txt`: numpy 2.5.3 and Pillow 12.3.0, installed with `--require-hashes` into a virtual environment |
+| Textures | composite action `.github/actions/textures`: restores `game/assets/textures/*/T_*.png`, `*/hi/T_*.png` and `.inputs` from the Actions cache, key `textures-` plus a hash of `gen_theme_textures.py`, `tools/assets/themes/*.json` and `assets.txt`; on a miss runs `gen_theme_textures.py` (about 40 s). The `tests` extension job (Linux), the `build` export job and the `web` job use the same action before Godot imports the project |
+| What red means | a failed `Generate textures` step (a generator error), or an `error:` line in the log names the file and the broken rule: a manifest path or scene reference that does not exist, a file that does not parse as its format, a piece or board over its triangle budget, a texture over 1024 px (2048 px in `hi/`) or not power-of-two, a texture map in the wrong colour space, slot or value range, a desktop `hi/` variant without a base file, a mobile or web export preset that ships `hi/`, a missing provenance record or SPDX line, or a name off the naming table |
 
 The job takes seconds, so it has no path filter: a check that a PR can
 skip could never be made required.

@@ -18,6 +18,7 @@
 #include <godot_cpp/classes/interval_tweener.hpp>
 #include <godot_cpp/classes/viewport.hpp>
 #include <godot_cpp/classes/visual_instance3d.hpp>
+#include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/math.hpp>
 
@@ -52,9 +53,87 @@ anim::Cell to_cell(const Variant& v) {
     return {c.x, c.y};
 }
 
+std::vector<anim::Cell> to_cells(const Variant& v) {
+    std::vector<anim::Cell> out;
+    if (v.get_type() != Variant::ARRAY) return out;
+    const Array a = v;
+    for (int64_t i = 0; i < a.size(); ++i) out.push_back(to_cell(a[i]));
+    return out;
+}
+
+int id_of(const Variant& v, bool totem) {
+    const CharString name = String(v).utf8();
+    return totem ? fx::totem_from_name(name.get_data()) : fx::power_up_from_name(name.get_data());
+}
+
+std::vector<fx::Placement> to_placements(const Variant& v) {
+    std::vector<fx::Placement> out;
+    if (v.get_type() != Variant::ARRAY) return out;
+    const Array a = v;
+    for (int64_t i = 0; i < a.size(); ++i) {
+        const Dictionary d = a[i];
+        const int id = id_of(d.get("id", ""), false);
+        if (id >= 0) out.push_back({to_cell(d.get("cell", Vector2i())), id});
+    }
+    return out;
+}
+
+std::vector<anim::Repaint> to_repaints(const Variant& v) {
+    std::vector<anim::Repaint> out;
+    if (v.get_type() != Variant::ARRAY) return out;
+    const Array a = v;
+    for (int64_t i = 0; i < a.size(); ++i) {
+        const Dictionary d = a[i];
+        out.push_back({to_cell(d.get("cell", Vector2i())), static_cast<int>(d.get("kind", -1))});
+    }
+    return out;
+}
+
+// What one display step set off (board-view.md, Effects); empty when absent.
+fx::StepFx parse_fx(const Dictionary& d) {
+    fx::StepFx f;
+    const Array power_ups = d.get("power_ups", Array());
+    for (int64_t i = 0; i < power_ups.size(); ++i) {
+        const Dictionary p = power_ups[i];
+        fx::PowerUpGoOff g;
+        g.id = id_of(p.get("id", ""), false);
+        if (g.id < 0) continue;
+        g.cell = to_cell(p.get("cell", Vector2i()));
+        g.cells = to_cells(p.get("cells", Array()));
+        g.time_seconds = p.get("time", 0.0);
+        g.multiplier = p.get("multiplier", 1);
+        g.hint_seconds = p.get("hint", 0.0);
+        f.power_ups.push_back(std::move(g));
+    }
+    f.power_ups_placed = to_placements(d.get("power_ups_placed", Array()));
+    f.gems_collected = to_cells(d.get("gems_collected", Array()));
+    f.gems_placed = to_cells(d.get("gems_placed", Array()));
+    f.steel_spawned = to_cells(d.get("steel_spawned", Array()));
+    f.steel_removed = to_cells(d.get("steel_removed", Array()));
+    f.chains_broken = to_cells(d.get("chains_broken", Array()));
+    if (d.has("totem")) {
+        const Dictionary t = d["totem"];
+        fx::TotemFire fire;
+        fire.id = id_of(t.get("id", ""), true);
+        if (fire.id >= 0) {
+            fire.targets = to_cells(t.get("targets", Array()));
+            fire.repaints = to_repaints(t.get("repaints", Array()));
+            fire.time_seconds = t.get("time", 0.0);
+            fire.points = t.get("points", 0);
+            fire.gems_harvested = to_cells(t.get("gems_harvested", Array()));
+            fire.gems_placed = to_cells(t.get("gems_placed", Array()));
+            fire.chains_removed = to_cells(t.get("chains_removed", Array()));
+            fire.power_ups_placed = to_placements(t.get("power_ups_placed", Array()));
+            f.totem = std::move(fire);
+        }
+    }
+    return f;
+}
+
 // Reads the cell-level events of a try_swap result (contract "MoveResult
-// events"). False when the result does not carry them yet.
-bool parse_events(const Dictionary& result, anim::Events& ev) {
+// events"), and the effects each step set off. False when the result does
+// not carry cell events yet.
+bool parse_events(const Dictionary& result, anim::Events& ev, std::vector<fx::StepFx>& fx_steps) {
     if (!result.has("cascades")) return false;
     if (result.has("swap")) {
         const Array swap = result["swap"];
@@ -77,7 +156,10 @@ bool parse_events(const Dictionary& result, anim::Events& ev) {
             step.spawns.push_back({to_cell(sp["to"]), static_cast<int>(sp.get("kind", -1)),
                                    std::max(1, static_cast<int>(sp.get("drop", 1)))});
         }
+        step.lead = std::max(0.0, static_cast<double>(d.get("lead", 0.0)));
+        step.repaints = to_repaints(d.get("repaints", Array()));
         ev.steps.push_back(std::move(step));
+        fx_steps.push_back(parse_fx(d.get("fx", Dictionary())));
     }
     ev.shuffled = result.get("shuffled", false);
     ev.redealt = result.get("redealt", false);
@@ -97,6 +179,7 @@ struct BoardView3D::PlanHooks {
     BoardView3D* view;
     Ref<Tween> tween;
     std::vector<Slot>* grid;
+    fx::MarkTracker tracker;
 
     void on_move(const anim::Phase& p, std::size_t i, const Slot& slot, anim::Cell, anim::Cell to) {
         if (!slot.node) return;
@@ -131,13 +214,58 @@ struct BoardView3D::PlanHooks {
         const real_t s0 = r(feel::kSpawnStartScale);
         node->set_scale(Vector3(s0, s0, s0));
         const double seconds = p.spawn_seconds[i];
+        const int marks = tracker.spawn_marks(p.step, sp.to);  // steel arrives with its piece
+        if (marks != fx::marks::kNone) view->set_piece_marks(node, marks, false);
         tween->tween_callback(Callable(node, "set_visible").bind(true))->set_delay(p.start);
         tween->tween_property(node, "position", view->cell_position(sp.to.x, sp.to.y), seconds)
             ->set_delay(p.start)
             ->set_trans(Tween::TRANS_QUAD)
             ->set_ease(Tween::EASE_IN);
         tween->tween_property(node, "scale", Vector3(1, 1, 1), seconds * feel::kSpawnGrowFraction)->set_delay(p.start);
-        return {node, sp.kind};
+        return {node, sp.kind, marks};
+    }
+
+    // The paint totem: the old piece shrinks away and the new kind grows in
+    // where it stood, keeping its markers, during the totem's lead.
+    Slot make_repaint(const anim::Phase& p, const Slot& old, const anim::Repaint& rp) {
+        const double half = std::max(p.duration, 0.1) * 0.5;
+        if (old.node) {
+            tween->tween_property(old.node, "scale", Vector3(0.001f, 0.001f, 0.001f), half)
+                ->set_delay(p.start)
+                ->set_ease(Tween::EASE_IN);
+            view->dying_.push_back(old);
+        }
+        Node3D* node = view->library_.acquire(rp.kind);
+        view->pieces_root_->add_child(node);
+        node->set_visible(false);
+        node->set_position(view->cell_position(rp.cell.x, rp.cell.y));
+        node->set_scale(Vector3(0.001f, 0.001f, 0.001f));
+        if (old.marks != fx::marks::kNone) view->set_piece_marks(node, old.marks, false);
+        tween->tween_callback(Callable(node, "set_visible").bind(true))->set_delay(p.start + half);
+        tween->tween_property(node, "scale", Vector3(1, 1, 1), half)
+            ->set_delay(p.start + half)
+            ->set_trans(Tween::TRANS_BACK)
+            ->set_ease(Tween::EASE_OUT);
+        return {node, rp.kind, old.marks};
+    }
+
+    // Markers change at a step's clear (removed, or a totem's placements)
+    // and after its refill (earned badges, gems); each change is applied to
+    // the piece then, so it travels with the piece from there on.
+    void mark(double at, anim::Cell c, int change, bool on) {
+        if (c.x < 0 || c.y < 0 || c.x >= view->grid_.width || c.y >= view->grid_.height) return;
+        Slot& s = (*grid)[static_cast<std::size_t>(c.y * view->grid_.width + c.x)];
+        if (!s.node) return;
+        s.marks = fx::MarkTracker::apply(s.marks, change, on);
+        tween->tween_callback(callable_mp(view, &BoardView3D::set_piece_marks).bind(s.node, s.marks, on))->set_delay(at);
+    }
+    void before_phase(const anim::Phase& p, std::vector<Slot>&) {
+        if (p.kind != anim::Phase::Kind::Clear) return;
+        tracker.before_clear(p.step, [&](anim::Cell c, int change, bool on) { mark(p.start, c, change, on); });
+    }
+    void after_phase(const anim::Phase& p, std::vector<Slot>&) {
+        if (p.kind != anim::Phase::Kind::Fall) return;
+        tracker.after_fall(p.step, [&](anim::Cell c, int change, bool on) { mark(p.start + p.duration, c, change, on); });
     }
 
     void on_redeal(const anim::Phase& p) {
@@ -202,6 +330,7 @@ void BoardView3D::stop_animation() {
     tween_.unref();
     finish_grow();
     if (pieces_root_) release_dying();
+    clear_effects();
     redealing_ = false;
     busy_ = false;
 }
@@ -223,6 +352,8 @@ void BoardView3D::rebuild() {
     // Pooled pieces were built for the old cell size or theme.
     library_.clear();
     library_.load(grid_.cell, theme_);
+    effects_.load(grid_.cell, library_);
+    clear_hints();
 
     // The theme's environment brings the sky and every light, so the scene
     // around the view supplies none. It outlives redeals; a theme change drops it.
@@ -253,10 +384,19 @@ void BoardView3D::rebuild() {
         fx_root_ = memnew(Node3D);
         fx_root_->set_name("Effects");
         add_child(fx_root_);
+        hints_root_ = memnew(Node3D);
+        hints_root_->set_name("Hints");
+        add_child(hints_root_);
     }
     pieces_.assign(static_cast<size_t>(grid_.width * grid_.height), nullptr);
     kinds_.assign(pieces_.size(), -1);
+    marks_.assign(pieces_.size(), fx::marks::kNone);
+    if (marks_target_.size() != pieces_.size()) {
+        marks_target_.assign(pieces_.size(), fx::marks::kNone);
+        has_marks_target_ = false;
+    }
     sync_to_board(false);
+    sync_marks();
     emit_signal("layout_changed");
 }
 
@@ -264,7 +404,7 @@ void BoardView3D::clear_pieces() {
     for (size_t i = 0; i < pieces_.size(); ++i) {
         if (!pieces_[i]) continue;
         pieces_root_->remove_child(pieces_[i]);
-        library_.release(kinds_[i], pieces_[i]);
+        release_piece(kinds_[i], pieces_[i]);
         pieces_[i] = nullptr;
     }
 }
@@ -283,7 +423,7 @@ void BoardView3D::sync_to_board(bool animate) {
             }
             if (pieces_[i]) {
                 pieces_root_->remove_child(pieces_[i]);
-                library_.release(kinds_[i], pieces_[i]);
+                release_piece(kinds_[i], pieces_[i]);
             }
             Node3D* piece = library_.acquire(kind);
             kinds_[i] = kind;
@@ -316,6 +456,7 @@ Ref<Tween> BoardView3D::begin_animation() {
     if (tween_.is_valid()) tween_->kill();
     finish_grow();
     clear_selection();
+    clear_hints();
     gesture_.reset(grid_.width, grid_.height);
     busy_ = true;
     tween_ = create_tween();
@@ -333,8 +474,18 @@ void BoardView3D::finish_animation() {
 
 void BoardView3D::play(const Dictionary& result) {
     ERR_FAIL_COND_MSG(board_.is_null(), "play() before show_board().");
+    if (result.has("marks")) {
+        const PackedInt32Array marks = result["marks"];
+        if (marks.size() == static_cast<int64_t>(pieces_.size())) {
+            for (int64_t i = 0; i < marks.size(); ++i) marks_target_[static_cast<size_t>(i)] = marks[i];
+            has_marks_target_ = true;
+        }
+    } else {
+        has_marks_target_ = false;  // the walk alone says where markers end
+    }
     anim::Events events;
-    if (parse_events(result, events)) {
+    fx_steps_.clear();
+    if (parse_events(result, events, fx_steps_)) {
         play_events(events);
         return;
     }
@@ -380,12 +531,33 @@ void BoardView3D::play_events(const anim::Events& events) {
     Ref<Tween> tween = begin_animation();
     tween->set_parallel(true);
     std::vector<Slot> grid(pieces_.size());
-    for (size_t i = 0; i < pieces_.size(); ++i) grid[i] = {pieces_[i], kinds_[i]};
-    PlanHooks hooks{this, tween, &grid};
+    for (size_t i = 0; i < pieces_.size(); ++i) grid[i] = {pieces_[i], kinds_[i], marks_[i]};
+    PlanHooks hooks{this, tween, &grid, fx::MarkTracker{&fx_steps_, grid_.width}};
     anim::walk(plan, grid, grid_.width, hooks);
     for (size_t i = 0; i < grid.size(); ++i) {
         pieces_[i] = grid[i].node;
         kinds_[i] = grid[i].kind;
+        marks_[i] = grid[i].marks;
+    }
+    // Totem and power-up beats, timed against the plan (WP-29).
+    const double span = std::max(grid_.width, grid_.height) * grid_.cell;
+    const auto at = [this](fx::Cell c) { return cell_position(c.x, c.y); };
+    // A marker's sparkle goes with the marker, which stays, so it plays on
+    // its own tween and does not hold the move (or input) past plan.total.
+    std::vector<fx::Beat> placed;
+    effects_.reset_end();
+    for (fx::Beat& beat : fx::build_beats(plan, fx_steps_)) {
+        if (beat.kind == fx::Beat::Kind::MarkPlaced)
+            placed.push_back(std::move(beat));
+        else
+            effects_.play(beat, tween, fx_root_, at, Vector3(), span);
+    }
+    effects_overrun_ = std::max(effects_overrun_, effects_.scheduled_end() - plan.total);
+    if (!placed.empty()) {
+        Ref<Tween> marks_tween = fx_root_->create_tween();
+        marks_tween->set_parallel(true);
+        marks_tween->set_speed_scale(static_cast<float>(animation_speed_));
+        for (const fx::Beat& beat : placed) effects_.play(beat, marks_tween, fx_root_, at, Vector3(), span);
     }
     for (const anim::Phase& p : plan.phases) {
         if (p.kind == anim::Phase::Kind::Clear) {
@@ -411,6 +583,7 @@ void BoardView3D::spawn_match_fx(Vector3 position) {
 void BoardView3D::redeal_in() {
     // The old pieces have shrunk away; deal the board's new layout in.
     sync_to_board(false);
+    sync_marks();
     Ref<Tween> grow = create_tween();
     grow_tween_ = grow;
     grow->set_parallel(true);
@@ -424,11 +597,165 @@ void BoardView3D::redeal_in() {
     }
 }
 
+void BoardView3D::release_piece(int kind, Node3D* node) {
+    if (!node) return;
+    if (Node* old = node->get_node_or_null(NodePath("Marks"))) {
+        node->remove_child(old);
+        old->queue_free();
+    }
+    node->set_meta("marks", fx::marks::kNone);
+    library_.release(kind, node);
+}
+
+void BoardView3D::set_piece_marks(Object* piece, int marks, bool pop) {
+    auto* node = Object::cast_to<Node3D>(piece);
+    if (!node) return;
+    const int shown = node->get_meta("marks", fx::marks::kNone);
+    if (shown == marks) return;
+    if (Node* old = node->get_node_or_null(NodePath("Marks"))) {
+        node->remove_child(old);
+        old->queue_free();
+    }
+    node->set_meta("marks", marks);
+    Node3D* drawn = effects_.make_marks(marks);
+    if (!drawn) return;
+    node->add_child(drawn);
+    if (!pop) return;
+    // Something was added: the markers grow in.
+    drawn->set_scale(Vector3(0.001f, 0.001f, 0.001f));
+    Ref<Tween> grow = drawn->create_tween();
+    grow->set_speed_scale(static_cast<float>(animation_speed_));
+    grow->tween_property(drawn, "scale", Vector3(1, 1, 1), feel::kMarkPopSeconds)
+        ->set_trans(Tween::TRANS_BACK)
+        ->set_ease(Tween::EASE_OUT);
+}
+
+void BoardView3D::sync_marks() {
+    if (!has_marks_target_) return;
+    for (size_t i = 0; i < pieces_.size() && i < marks_target_.size(); ++i) {
+        marks_[i] = marks_target_[i];
+        if (pieces_[i]) set_piece_marks(pieces_[i], marks_target_[i], false);
+    }
+}
+
+void BoardView3D::show_marks(const PackedInt32Array& marks) {
+    ERR_FAIL_COND_MSG(marks.size() != static_cast<int64_t>(pieces_.size()),
+                      "show_marks needs one entry per cell of the board shown.");
+    for (int64_t i = 0; i < marks.size(); ++i) marks_target_[static_cast<size_t>(i)] = marks[i];
+    has_marks_target_ = true;
+    if (!busy_) sync_marks();
+}
+
+PackedInt32Array BoardView3D::get_marks() const {
+    // What the pieces show now.
+    PackedInt32Array out;
+    out.resize(static_cast<int64_t>(pieces_.size()));
+    for (size_t i = 0; i < pieces_.size(); ++i)
+        out[static_cast<int64_t>(i)] = pieces_[i] ? static_cast<int>(pieces_[i]->get_meta("marks", 0)) : 0;
+    return out;
+}
+
+void BoardView3D::clear_effects() {
+    // Transient beats end with the animation; a skip drops them at once.
+    if (!fx_root_) return;
+    for (int i = fx_root_->get_child_count() - 1; i >= 0; --i) {
+        Node* child = fx_root_->get_child(i);
+        fx_root_->remove_child(child);
+        child->queue_free();
+    }
+}
+
+void BoardView3D::show_hints(const Array& pairs, double seconds) {
+    clear_hints();
+    if (!hints_root_ || board_.is_null()) return;
+    for (int64_t i = 0; i < pairs.size(); ++i) {
+        const Array pair = pairs[i];
+        if (pair.size() != 2) continue;
+        for (int j = 0; j < 2; ++j) {
+            const Vector2i c = pair[j];
+            if (!in_bounds(c)) continue;
+            Node3D* ring = effects_.make_hint_ring();
+            ring->set_position(ring->get_position() + cell_position(c));
+            hints_root_->add_child(ring);
+            hints_.push_back(ring);
+        }
+    }
+    if (hints_.empty()) return;
+    // One looping pulse for every ring.
+    hint_pulse_ = create_tween();
+    hint_pulse_->set_loops();
+    hint_pulse_->set_parallel(true);
+    for (Node3D* ring : hints_) {
+        const Vector3 base = ring->get_scale();
+        hint_pulse_->tween_property(ring, "scale", base * 1.12f, feel::kHintPulseSeconds * 0.5)->set_trans(Tween::TRANS_SINE);
+        hint_pulse_->tween_property(ring, "scale", base, feel::kHintPulseSeconds * 0.5)
+            ->set_delay(feel::kHintPulseSeconds * 0.5)
+            ->set_trans(Tween::TRANS_SINE);
+    }
+    if (seconds > 0.0) {
+        hint_timer_ = create_tween();
+        hint_timer_->tween_interval(seconds);
+        hint_timer_->tween_callback(callable_mp(this, &BoardView3D::clear_hints));
+    }
+}
+
+void BoardView3D::clear_hints() {
+    if (hint_pulse_.is_valid()) hint_pulse_->kill();
+    hint_pulse_.unref();
+    if (hint_timer_.is_valid()) hint_timer_->kill();
+    hint_timer_.unref();
+    for (Node3D* ring : hints_) {
+        if (ring->get_parent()) ring->get_parent()->remove_child(ring);
+        ring->queue_free();
+    }
+    hints_.clear();
+}
+
+void BoardView3D::play_effect(const String& label, const Array& cells) {
+    ERR_FAIL_COND_MSG(board_.is_null(), "play_effect() before show_board().");
+    // Labels without a kind (a benchmark "swap") have no effect of their own.
+    if (!label.contains(":")) return;
+    const PackedStringArray parts = label.split(":");
+    ERR_FAIL_COND_MSG(parts.size() != 2, "play_effect label must be totem:<id> or powerup:<id>, got '" + label + "'.");
+    const bool totem = parts[0] == "totem";
+    const int id = id_of(parts[1], totem);
+    ERR_FAIL_COND_MSG(id < 0 || (!totem && parts[0] != "powerup"), "play_effect: unknown effect '" + label + "'.");
+    fx::Beat beat;
+    beat.kind = totem ? fx::Beat::Kind::Totem : fx::Beat::Kind::PowerUp;
+    beat.id = id;
+    beat.cells = to_cells(cells);
+    beat.cell = beat.cells.empty() ? fx::Cell{grid_.width / 2, grid_.height / 2} : beat.cells.front();
+    beat.duration = totem ? fx::totem_seconds(id) : fx::power_up_seconds(id);
+    beat.value = id == fx::kTime ? 60.0 : id == fx::kGold ? 1500.0 : id == fx::kClock ? 5.0 : 2.0;
+    Ref<Tween> tween = create_tween();
+    tween->set_parallel(true);
+    tween->set_speed_scale(static_cast<float>(animation_speed_));
+    const double span = std::max(grid_.width, grid_.height) * grid_.cell;
+    effects_.play(beat, tween, fx_root_, [this](fx::Cell c) { return cell_position(c.x, c.y); }, Vector3(), span);
+    tween->tween_interval(beat.duration);
+}
+
+Dictionary BoardView3D::get_effects_played() const {
+    Dictionary d;
+    for (size_t i = 0; i < fx::kTotemNames.size(); ++i)
+        d[String("totem_") + String(fx::kTotemNames[i].data())] = effects_.beats_played(static_cast<int>(i));
+    for (size_t i = 0; i < fx::kPowerUpNames.size(); ++i)
+        d[String("power_up_") + String(fx::kPowerUpNames[i].data())] =
+            effects_.beats_played(BoardEffects::power_up_slot(static_cast<int>(i)));
+    const int after = fx::kTotemCount + fx::kPowerUpCount;
+    d["gem_collect"] = effects_.beats_played(after);
+    d["steel_break"] = effects_.beats_played(after + 1);
+    d["chain_break"] = effects_.beats_played(after + 2);
+    d["mark_placed"] = effects_.beats_played(after + 3);
+    d["overrun_seconds"] = effects_overrun_;
+    return d;
+}
+
 void BoardView3D::release_dying() {
     for (const Slot& slot : dying_) {
         if (!slot.node) continue;
         if (slot.node->get_parent() == pieces_root_) pieces_root_->remove_child(slot.node);
-        library_.release(slot.kind, slot.node);
+        release_piece(slot.kind, slot.node);
     }
     dying_.clear();
 }
@@ -447,14 +774,26 @@ void BoardView3D::reconcile() {
     if (drift && OS::get_singleton()->is_debug_build() && !redealing_) {
         WARN_PRINT("BoardView3D: view drifted from the board after an animation; resyncing.");
     }
+    // Markers: the walk's result should equal what the owner said they are.
+    if (has_marks_target_ && marks_ != marks_target_ && OS::get_singleton()->is_debug_build() && !redealing_) {
+        WARN_PRINT("BoardView3D: markers drifted from the owner's marks after an animation; resyncing.");
+    }
     redealing_ = false;
     sync_to_board(false);
+    if (!has_marks_target_) {
+        // No owner marks: the walked marks are the truth.
+        marks_target_ = marks_;
+        has_marks_target_ = std::any_of(marks_.begin(), marks_.end(), [](int m) { return m != fx::marks::kNone; });
+    }
+    sync_marks();
+    fx_steps_.clear();
 }
 
 void BoardView3D::skip_animation() {
     if (!busy_) return;
     if (tween_.is_valid()) tween_->kill();
     finish_grow();
+    clear_effects();
     finish_animation();
 }
 
@@ -633,6 +972,13 @@ void BoardView3D::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_theme"), &BoardView3D::get_theme);
     ClassDB::bind_method(D_METHOD("get_board_padding"), &BoardView3D::get_board_padding);
     ClassDB::bind_method(D_METHOD("cell_at_screen", "screen_position"), &BoardView3D::cell_at_screen);
+    ClassDB::bind_method(D_METHOD("show_marks", "marks"), &BoardView3D::show_marks);
+    ClassDB::bind_method(D_METHOD("get_marks"), &BoardView3D::get_marks);
+    ClassDB::bind_method(D_METHOD("show_hints", "pairs", "seconds"), &BoardView3D::show_hints, DEFVAL(0.0));
+    ClassDB::bind_method(D_METHOD("clear_hints"), &BoardView3D::clear_hints);
+    ClassDB::bind_method(D_METHOD("has_hints"), &BoardView3D::has_hints);
+    ClassDB::bind_method(D_METHOD("get_effects_played"), &BoardView3D::get_effects_played);
+    ClassDB::bind_method(D_METHOD("play_effect", "label", "cells"), &BoardView3D::play_effect);
 
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "cell_size", PROPERTY_HINT_RANGE, "0.25,4,0.05"), "set_cell_size",
                  "get_cell_size");
