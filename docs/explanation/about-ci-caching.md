@@ -57,7 +57,7 @@ system libraries. Installing them with `playwright install --with-deps`
 took about 40 seconds of apt and browser downloads on every run. The
 Playwright project publishes an image with exactly those browsers for each
 release, so the check runs in that image, pinned by digest, and installs
-nothing. The image tag follows the Playwright version pinned for local
+only the small hash-pinned Python package that drives them. The image tag follows the Playwright version pinned for local
 runs in `tools/release/web-requirements.txt`, so CI and a contributor's
 machine drive the same browser builds.
 

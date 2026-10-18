@@ -92,7 +92,7 @@ jobs:
           if-no-files-found: error
 
   # The browser check runs in Playwright's own image, which ships the three
-  # browsers and their system libraries, so no run installs them. The tag
+  # browsers and their system libraries, so no run downloads them. The tag
   # must match playwright== in tools/release/web-requirements.txt; the digest
   # pins the exact image. See docs/explanation/about-ci-caching.md.
   browser-smoke:
@@ -114,9 +114,15 @@ jobs:
         with:
           name: montezuma-web
           path: dist/web
+      # The image carries the browsers but not the Python package; install
+      # the hash-pinned one into a virtualenv (the image ships virtualenv).
+      - name: Install the Playwright package
+        run: |
+          virtualenv "$RUNNER_TEMP/web-smoke"
+          "$RUNNER_TEMP/web-smoke/bin/pip" install --require-hashes -r tools/release/web-requirements.txt
       - name: Run the demo in a browser
         run: |
-          if ! python3 tools/release/web-smoke.py dist/web/montezuma-*-web.zip chromium firefox webkit; then
+          if ! "$RUNNER_TEMP/web-smoke/bin/python" tools/release/web-smoke.py dist/web/montezuma-*-web.zip chromium firefox webkit; then
             echo "::error::The web demo did not hand off montezuma:ready then montezuma:level-completed in a browser. Reproduce with docs/how-to/export-a-web-build.md (check it in a browser)."
             exit 1
           fi

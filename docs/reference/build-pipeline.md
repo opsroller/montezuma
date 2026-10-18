@@ -184,7 +184,7 @@ WebAssembly. It never deploys; the package is the run's artifact.
 | Main scene | `res://scenes/demo/intro_level.tscn` (`application/run/main_scene.web`); see [IntroLevel](intro-level.md) |
 | Budget | All files gzipped at most 40 MB, checked by `web-export.sh` |
 | Browser check | `web-smoke.py` on the `montezuma-web` artifact in headless Chromium 141, Firefox 142 and WebKit 26 (Playwright 1.56.0): `montezuma:ready`, then `montezuma:level-completed` for `e1-l01` with `--complete-level`, and no browser errors |
-| Browser container | `mcr.microsoft.com/playwright/python:v1.56.0-noble`, pinned by digest, run as the runner's user (`--user 1001`); it ships the browsers and their system libraries. Its tag matches `playwright==` in `web-requirements.txt`; bump both together |
+| Browser container | `mcr.microsoft.com/playwright/python:v1.56.0-noble`, pinned by digest, run as the runner's user (`--user 1001`); it ships the browsers and their system libraries; the job installs only the Python package from `web-requirements.txt` into a virtualenv. Its tag matches `playwright==` in `web-requirements.txt`; bump both together |
 
 | Artifact | Contents | Kept |
 |---|---|---|

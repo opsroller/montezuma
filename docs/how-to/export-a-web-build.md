@@ -66,12 +66,12 @@ To build a branch, run the **web** workflow from the Actions tab with
    Add `firefox` or `webkit` after the archive to try those browsers
    (install them the same way).
 
-   With Docker, run all three browsers in the same image CI uses, with
-   nothing to install:
+   With Docker, run all three browsers in the same image CI uses, with no
+   browsers to install:
 
    ```sh
-   docker run --rm -v "$PWD:/w" -w /w mcr.microsoft.com/playwright/python:v1.56.0-noble \
-     python3 tools/release/web-smoke.py dist/web/montezuma-*-web.zip chromium firefox webkit
+   docker run --rm -v "$PWD:/w" -w /w mcr.microsoft.com/playwright/python:v1.56.0-noble sh -c \
+     'pip install -q playwright==1.56.0 && python3 tools/release/web-smoke.py dist/web/montezuma-*-web.zip chromium firefox webkit'
    ```
 
 ## Play it
