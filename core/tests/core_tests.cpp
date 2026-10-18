@@ -149,9 +149,24 @@ void test_small_boards_stay_playable() {
     for (int s = 0; s < 50; ++s) {
         Board b(3, 3, 3, s);
         check(b.find_matches().empty() && b.has_legal_move(), "3x3 board seed " + std::to_string(s) + " is playable");
-        b.shuffle();
+        check(b.shuffle(), "3x3 board seed " + std::to_string(s) + " shuffle succeeds");
         check(b.find_matches().empty() && b.has_legal_move(), "3x3 board seed " + std::to_string(s) + " stays playable after shuffle");
     }
+}
+
+void test_unshufflable_pieces_fall_back_to_a_fresh_deal() {
+    // Nine distinct pieces can never be rearranged into a legal move, so
+    // shuffle() must deal a new playable board instead of looping or throwing.
+    Board b = board_from({"012", "345", "456"});
+    bool ok = false;
+    try {
+        ok = b.shuffle();
+    } catch (...) {
+        check(false, "shuffle threw");
+    }
+    check(ok, "shuffle falls back to a fresh deal");
+    check(b.find_matches().empty() && b.has_legal_move(), "fresh deal is playable");
+    static_assert(noexcept(b.shuffle()), "shuffle is noexcept");
 }
 
 void test_invalid_levels_are_rejected() {
@@ -166,6 +181,7 @@ int main() {
     test_invalid_boards_are_rejected();
     test_small_boards_stay_playable();
     test_invalid_levels_are_rejected();
+    test_unshufflable_pieces_fall_back_to_a_fresh_deal();
     test_fresh_board_has_no_matches_and_a_move();
     test_illegal_swaps_are_rejected();
     test_legal_swap_clears_and_refills();

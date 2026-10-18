@@ -16,11 +16,42 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_WERROR=ON
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_WERROR=ON -DMONTEZUMA_BUILD_EXTENSION=OFF
       - name: Build
         run: cmake --build build --config Release
       - name: Test
         run: ctest --test-dir build -C Release --output-on-failure
+
+  extension:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Build GDExtension
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_TESTS=OFF -DMONTEZUMA_WERROR=ON
+          cmake --build build --config Release -j4
+      - name: Download Godot
+        if: runner.os == 'Linux'
+        env:
+          GODOT_ZIP: Godot_v4.4.1-stable_linux.x86_64.zip
+          GODOT_SHA512: ef4e76880a514257175544952c61191106fdef3095b909bafed9fcbeb230c3e5533920a0f3012882dd4bbde83028a67549825794e2d2c3cf76eba7918b71370e
+        run: |
+          curl -sSfL -o "$GODOT_ZIP" "https://github.com/godotengine/godot/releases/download/4.4.1-stable/$GODOT_ZIP"
+          echo "$GODOT_SHA512  $GODOT_ZIP" | sha512sum -c -
+          unzip -q "$GODOT_ZIP"
+          mv Godot_v4.4.1-stable_linux.x86_64 godot
+      - name: Load the game headless
+        if: runner.os == 'Linux'
+        run: |
+          ./godot --headless --path game --import
+          ./godot --headless --path game --quit-after 120 2>&1 | tee run.log
+          if grep -E "ERROR|SCRIPT ERROR|Can't open dynamic library" run.log; then exit 1; fi
 
   sanitizers:
     runs-on: ubuntu-latest
@@ -28,7 +59,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Configure with ASan and UBSan
         run: >
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DMONTEZUMA_WERROR=ON
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DMONTEZUMA_WERROR=ON -DMONTEZUMA_BUILD_EXTENSION=OFF
           -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer"
       - name: Build
         run: cmake --build build
