@@ -49,6 +49,7 @@ own folder.
 - [Add a UI screen](how-to/add-a-ui-screen.md): a new menu screen or modal, opened from a button.
 - [Check UI text and layout](how-to/check-ui-text-and-layout.md): pseudo-localization, large text, window sizes, controller only.
 - [Build and preview the website](how-to/build-and-preview-the-website.md): build `site/`, preview it with or without the web demo, run its tests.
+- [Add a level](how-to/add-a-level.md): write a campaign level file from the progression tables.
 
 ## Explanation
 
