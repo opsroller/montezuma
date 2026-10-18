@@ -30,17 +30,25 @@ or a cloud machine without a GPU do not count against the
 
    Add `--driver vulkan`, `metal`, `d3d12` or `opengl3` to pick the
    rendering driver, `--size 2560x1440` for `desktop-high`, and `--godot
-   PATH` when Godot is not on `PATH`. The checks need Python 3; the
+   PATH` when Godot is not on `PATH`. The script locks the render at
+   `--size` (default 1920x1080) and fails the run if any frame rendered
+   at another size. The checks need Python 3; the
    readability check also needs Pillow, installed as in
    [Check the assets](build-and-test.md#check-the-assets) (run the script
    with that venv active). The run takes about 70 s plus two
    short windows for the captures. Do not touch the window while it runs.
 
+   On a display faster than 60 Hz, or to see what a frame costs rather
+   than when the display shows it, run again with `--vsync off`.
+
 3. Read the results in `bench-out/`:
 
-   - `benchmark.json`: `cpu_ms.p95` and `gpu_ms.p95` against the tier's
-     budget, `over_budget` frames, and `replay.diverged`, which must be
-     false.
+   - `run.txt`: the budget verdict (`frame_ms` percentiles against whole
+     60 Hz periods, with its reason when it fails), the render size and
+     the replay, one PASS or FAIL line each. A vsync-locked 60 fps run
+     passes. NOTE lines say when the driver gives no GPU timing.
+   - `benchmark.json`: the full report; `budget`, `resolution` and
+     `timing` explain the verdict.
    - `features.txt`: one line per feature row of the tier, `FAIL` where
      the scene does not match the target.
    - `readability.txt`: one line per rule; open the PNGs in
@@ -48,10 +56,17 @@ or a cloud machine without a GPU do not count against the
 
    The script exits 1 if any run or check failed.
 
+   On macOS with Metal, `gpu_ms` is all zero (`timing.gpu` false): judge
+   by `frame_ms`. `render_cpu_ms` there includes the wait for the next
+   drawable, so with vsync on `cpu_ms` fills the frame whatever the CPU
+   does; read `process_ms` for game logic, and run with `--vsync off` to
+   see the work without that wait.
+
 To run the benchmark alone, without the script:
 
 ```sh
-godot --path game res://scenes/bench/bench.tscn -- --quality=desktop-high --bench-out=/tmp/bench.json
+godot --path game res://scenes/bench/bench.tscn -- --quality=desktop-high --bench-size=2560x1440 --bench-out=/tmp/bench.json
+python3 tools/bench/check_run.py /tmp/bench.json --size 2560x1440
 ```
 
 ## On an Android or iOS phone
@@ -92,5 +107,6 @@ first to use them.
 ## In CI
 
 The `tests` workflow runs the benchmark headless for 3 s on every PR to
-check that the replay plans, plays without drifting and writes its report
+check that the replay plans, plays without drifting, holds its locked
+render size (`check_run.py --no-budget`) and writes its report
 (see [CI pipeline](../reference/ci-pipeline.md)). It measures nothing.

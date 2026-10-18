@@ -49,6 +49,15 @@ godot --headless --path game --import
 godot --headless --path game --quit-after 120    # errors show here
 ```
 
+On macOS, build the universal (arm64 and x86_64) library: the game's
+`.gdextension` only lists `libmontezuma.macos.*.universal.dylib`, so a
+single-architecture build does not load. Configure with:
+
+```sh
+cmake -S . -B build-ext -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON \
+  -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+```
+
 This build also copies `CREDITS.md` and `LICENSE` into `game/` so the
 credits screen shows them. The tests include `ui_model_tests`, which
 needs the extension build.
