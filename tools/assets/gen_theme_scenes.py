@@ -51,36 +51,79 @@ class Resource:
         return "\n".join(out).rstrip() + "\n"
 
 
-def material(spec):
-    r = Resource()
-    if "shader" in spec:
-        shader = r.ext_id("Shader", spec["shader"])
-        r.body.append("[resource]")
-        r.body.append(f"shader = {shader}")
-        for key, value in spec.get("params", {}).items():
-            v = color(value) if isinstance(value, str) else value
-            r.body.append(f"shader_parameter/{key} = {v}")
-        return r.text('[gd_resource type="ShaderMaterial" load_steps={steps} format=3]')
+def texture_path(theme, tex_set, suffix, hi):
+    """res:// path of one map of a texture set; the hi/ variant when asked for and present."""
+    name = f"T_{tex_set}_{suffix}.png"
+    if hi and (ROOT / "game/assets/textures" / theme / "hi" / name).exists():
+        return f"res://assets/textures/{theme}/hi/{name}"
+    return f"res://assets/textures/{theme}/{name}"
 
-    lines = ["[resource]", f"albedo_color = {color(spec['albedo'])}"]
-    if "albedo_texture" in spec:
-        lines.append(f"albedo_texture = {r.ext_id('Texture2D', spec['albedo_texture'])}")
-    lines.append(f"metallic = {spec.get('metallic', 0.0)}")
-    lines.append(f"metallic_specular = {spec.get('specular', 0.5)}")
-    lines.append(f"roughness = {spec.get('roughness', 1.0)}")
-    if "roughness_texture" in spec:
-        lines.append(f"roughness_texture = {r.ext_id('Texture2D', spec['roughness_texture'])}")
-        lines.append("roughness_texture_channel = 0")
+
+def specular_from_ior(ior):
+    """Godot's dielectric reflectance is 0.16 * specular^2; solve it for a real F0."""
+    f0 = ((ior - 1) / (ior + 1)) ** 2
+    return round(min(1.0, (f0 / 0.16) ** 0.5), 3)
+
+
+def shader_material(spec, theme, hi):
+    r = Resource()
+    shader = r.ext_id("Shader", spec["shader"])
+    r.body += ["[resource]", f"shader = {shader}"]
+    if "set" in spec:
+        for key, suffix in (("texture_albedo", "BC"), ("texture_normal", "N"), ("texture_orm", "ORM"), ("texture_height", "H")):
+            path = texture_path(theme, spec["set"], suffix, hi)
+            if (ROOT / "game" / path.removeprefix("res://")).exists():
+                r.body.append(f"shader_parameter/{key} = {r.ext_id('Texture2D', path)}")
+        r.body.append(f"shader_parameter/albedo = {color(spec.get('albedo_tint', spec['albedo']))}")
+        r.body.append(f"shader_parameter/triplanar_scale = {spec.get('triplanar_scale', 1.0)}")
+        r.body.append(f"shader_parameter/normal_scale = {spec.get('normal_scale', 1.0)}")
+    if "ior" in spec and spec["shader"].endswith("SH_TriplanarPBR.gdshader"):
+        r.body.append(f"shader_parameter/specular = {specular_from_ior(spec['ior'])}")
+    for key, value in spec.get("params", {}).items():
+        v = color(value) if isinstance(value, str) else value
+        r.body.append(f"shader_parameter/{key} = {v}")
+    return r.text('[gd_resource type="ShaderMaterial" load_steps={steps} format=3]')
+
+
+def material(spec, theme, hi=False):
+    """One Godot material from a theme material entry; hi=True writes the desktop variant."""
+    if hi:
+        spec = {k: v for k, v in spec.items() if k != "hi"} | spec.get("hi", {})
+    if "shader" in spec:
+        return shader_material(spec, theme, hi)
+
+    r = Resource()
+    orm = "set" in spec
+    lines = ["[resource]", f"albedo_color = {color(spec.get('albedo_tint', spec['albedo']), spec.get('alpha', 1.0))}"]
+    if orm:
+        tex = {s: r.ext_id("Texture2D", texture_path(theme, spec["set"], s, hi)) for s in ("BC", "ORM", "N")}
+        lines += [f"albedo_texture = {tex['BC']}", f"orm_texture = {tex['ORM']}"]
+    specular = specular_from_ior(spec["ior"]) if "ior" in spec else spec.get("specular", 0.5)
+    if orm:
+        lines.append(f"metallic_specular = {specular}")
+    else:
+        lines += [f"metallic = {spec.get('metallic', 0.0)}", f"metallic_specular = {specular}",
+                  f"roughness = {spec.get('roughness', 1.0)}"]
     if "emission" in spec:
         lines += ["emission_enabled = true", f"emission = {color(spec['emission'])}",
                   f"emission_energy_multiplier = {spec.get('emission_energy', 1.0)}"]
-    if "normal_texture" in spec:
+    if orm:
         lines += ["normal_enabled = true", f"normal_scale = {spec.get('normal_scale', 1.0)}",
-                  f"normal_texture = {r.ext_id('Texture2D', spec['normal_texture'])}"]
+                  f"normal_texture = {tex['N']}"]
     if "rim" in spec:
         lines += ["rim_enabled = true", f"rim = {spec['rim']}", f"rim_tint = {spec.get('rim_tint', 0.5)}"]
     if "clearcoat" in spec:
-        lines += ["clearcoat_enabled = true", f"clearcoat = {spec['clearcoat']}", "clearcoat_roughness = 0.1"]
+        lines += ["clearcoat_enabled = true", f"clearcoat = {spec['clearcoat']}",
+                  f"clearcoat_roughness = {spec.get('clearcoat_roughness', 0.1)}"]
+    if "anisotropy" in spec:
+        lines += ["anisotropy_enabled = true", f"anisotropy = {spec['anisotropy']}"]
+    if "subsurface" in spec:
+        sss = spec["subsurface"]
+        lines += ["subsurf_scatter_enabled = true", f"subsurf_scatter_strength = {sss['strength']}",
+                  "subsurf_scatter_transmittance_enabled = true",
+                  f"subsurf_scatter_transmittance_color = {color(sss['transmittance'])}",
+                  f"subsurf_scatter_transmittance_depth = {sss.get('depth', 0.1)}",
+                  f"subsurf_scatter_transmittance_boost = {sss.get('boost', 0.0)}"]
     if "backlight" in spec:
         lines += ["backlight_enabled = true", f"backlight = {color(spec['backlight'])}"]
     if spec.get("double_sided"):
@@ -91,8 +134,11 @@ def material(spec):
                   "uv1_triplanar_sharpness = 4.0"]
         if spec.get("world_triplanar"):
             lines.append("uv1_world_triplanar = true")
+    if orm:
+        lines.append("texture_filter = 5")
     r.body = lines
-    return r.text('[gd_resource type="StandardMaterial3D" load_steps={steps} format=3]')
+    kind = "ORMMaterial3D" if orm else "StandardMaterial3D"
+    return r.text(f'[gd_resource type="{kind}" load_steps={{steps}} format=3]')
 
 
 def mesh_scene(root_name, parts, theme):
@@ -121,7 +167,9 @@ def main():
     entry = {}
 
     for name, spec in p["materials"].items():
-        write(assets / "materials" / theme / f"{name}.tres", material(spec))
+        write(assets / "materials" / theme / f"{name}.tres", material(spec, theme))
+        if "hi" in spec:
+            write(assets / "materials" / theme / "hi" / f"{name}.tres", material(spec, theme, hi=True))
 
     for kind in p["artifacts"]["kinds"]:
         r = mesh_scene(kind["name"], [("Mesh", f"{models}/artifacts/SM_Artifact_{kind['name']}.obj", kind["material"])],
@@ -211,38 +259,58 @@ def main():
     write(assets / f"models/{theme}/fx/PF_MatchBurst.tscn", r.text("[gd_scene load_steps={steps} format=3]"))
     entry["fx_match"] = f"{models}/fx/PF_MatchBurst.tscn"
 
-    # Look-dev: the whole theme from the game camera, on a seeded random board.
-    r = Resource()
-    r.body = [f'[node name="LookDev_{theme}" type="Node3D"]', "",
-              f'[node name="Environment" parent="." instance={r.ext_id("PackedScene", entry["environment"])}]', "",
-              f'[node name="Board" parent="." instance={r.ext_id("PackedScene", entry["board"])}]', "",
-              '[node name="Camera" type="Camera3D" parent="."]',
-              f"transform = {p['lookdev']['camera_transform']}", f"fov = {p['lookdev']['fov']}"]
-    rng = random.Random(p["seed"])
-    w, h = p["board"]["width"], p["board"]["height"]
-    kinds = len(p["artifacts"]["kinds"])
-    for y in range(h):
-        for x in range(w):
-            k = rng.randrange(kinds)
-            px, pz = (x - (w - 1) / 2) * p["cell_size"], (y - (h - 1) / 2) * p["cell_size"]
-            r.body += ["", f'[node name="P{x}_{y}" parent="." instance={r.ext_id("PackedScene", entry[f"artifact_{k}"])}]',
-                       f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, {px}, 0, {pz})"]
-    hx, hy = p["lookdev"]["highlight_cell"]
-    r.body += ["", f'[node name="Highlight" parent="." instance={r.ext_id("PackedScene", entry["cell_highlight"])}]',
-               f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, {(hx - (w - 1) / 2)}, 0.01, {(hy - (h - 1) / 2)})"]
-    write(assets / f"lookdev/LD_{theme.capitalize()}.tscn", r.text("[gd_scene load_steps={steps} format=3]"))
+    # Look-dev scenes, once per tier: base materials (mobile, web) and, as *_Hi,
+    # the desktop variants from materials/<theme>/hi/ swapped in on every part
+    # that has one, the way the quality tier system resolves them in game.
+    kind_material = {k["index"]: k["material"] for k in p["artifacts"]["kinds"]}
+    tiered = [("Board", n, m) for n, m in board_parts] + [("Environment", n, m) for n, m in backdrop_parts]
 
-    # Look-dev line-up: the seven pieces side by side, close up, for silhouette and value checks.
-    r = Resource()
-    r.body = [f'[node name="LineUp_{theme}" type="Node3D"]', "",
-              f'[node name="Environment" parent="." instance={r.ext_id("PackedScene", entry["environment"])}]', "",
-              f'[node name="Board" parent="." instance={r.ext_id("PackedScene", entry["board"])}]', "",
-              '[node name="Camera" type="Camera3D" parent="."]',
-              "transform = Transform3D(1, 0, 0, 0, 0.5, 0.866025, 0, -0.866025, 0.5, 0, 4.6, 3.1)", "fov = 40.0"]
-    for k in range(kinds):
-        r.body += ["", f'[node name="K{k}" parent="." instance={r.ext_id("PackedScene", entry[f"artifact_{k}"])}]',
-                   f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, {k - (kinds - 1) / 2}, 0, 0.5)"]
-    write(assets / f"lookdev/LD_{theme.capitalize()}_LineUp.tscn", r.text("[gd_scene load_steps={steps} format=3]"))
+    def hi_overrides(r, parts):
+        for parent, child, mat in parts:
+            if "hi" in p["materials"][mat]:
+                ref = r.ext_id("Material", f"res://assets/materials/{theme}/hi/{mat}.tres")
+                r.body += ["", f'[node name="{child}" parent="{parent}"]', f"surface_material_override/0 = {ref}"]
+
+    for suffix in ("", "_Hi"):
+        # Look-dev: the whole theme from the game camera, on a seeded random board.
+        r = Resource()
+        r.body = [f'[node name="LookDev_{theme}" type="Node3D"]', "",
+                  f'[node name="Environment" parent="." instance={r.ext_id("PackedScene", entry["environment"])}]', "",
+                  f'[node name="Board" parent="." instance={r.ext_id("PackedScene", entry["board"])}]', "",
+                  '[node name="Camera" type="Camera3D" parent="."]',
+                  f"transform = {p['lookdev']['camera_transform']}", f"fov = {p['lookdev']['fov']}"]
+        rng = random.Random(p["seed"])
+        w, h = p["board"]["width"], p["board"]["height"]
+        kinds = len(p["artifacts"]["kinds"])
+        pieces = []
+        for y in range(h):
+            for x in range(w):
+                k = rng.randrange(kinds)
+                px, pz = (x - (w - 1) / 2) * p["cell_size"], (y - (h - 1) / 2) * p["cell_size"]
+                r.body += ["", f'[node name="P{x}_{y}" parent="." instance={r.ext_id("PackedScene", entry[f"artifact_{k}"])}]',
+                           f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, {px}, 0, {pz})"]
+                pieces.append((f"P{x}_{y}", "Mesh", kind_material[k]))
+        hx, hy = p["lookdev"]["highlight_cell"]
+        r.body += ["", f'[node name="Highlight" parent="." instance={r.ext_id("PackedScene", entry["cell_highlight"])}]',
+                   f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, {(hx - (w - 1) / 2)}, 0.01, {(hy - (h - 1) / 2)})"]
+        if suffix:
+            hi_overrides(r, tiered + pieces)
+        write(assets / f"lookdev/LD_{theme.capitalize()}{suffix}.tscn", r.text("[gd_scene load_steps={steps} format=3]"))
+
+        # Look-dev line-up: the seven pieces side by side, close up, for silhouette and value checks.
+        r = Resource()
+        r.body = [f'[node name="LineUp_{theme}" type="Node3D"]', "",
+                  f'[node name="Environment" parent="." instance={r.ext_id("PackedScene", entry["environment"])}]', "",
+                  f'[node name="Board" parent="." instance={r.ext_id("PackedScene", entry["board"])}]', "",
+                  '[node name="Camera" type="Camera3D" parent="."]',
+                  "transform = Transform3D(1, 0, 0, 0, 0.5, 0.866025, 0, -0.866025, 0.5, 0, 4.6, 3.1)", "fov = 40.0"]
+        for k in range(kinds):
+            r.body += ["", f'[node name="K{k}" parent="." instance={r.ext_id("PackedScene", entry[f"artifact_{k}"])}]',
+                       f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, {k - (kinds - 1) / 2}, 0, 0.5)"]
+        if suffix:
+            hi_overrides(r, tiered + [(f"K{k}", "Mesh", kind_material[k]) for k in range(kinds)])
+        write(assets / f"lookdev/LD_{theme.capitalize()}_LineUp{suffix}.tscn",
+              r.text("[gd_scene load_steps={steps} format=3]"))
 
     # Piece and board colours for 2D use (HUD quota swatches), derived from the same parameters.
     names = ["red", "orange", "yellow", "green", "blue", "purple", "white"]

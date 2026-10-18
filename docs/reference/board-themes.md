@@ -44,9 +44,11 @@ to the view's placeholder.
 |---|---|
 | `tools/assets/themes/<theme>.json` | the theme's parameters: seed, sizes, kinds, materials, environment, look-dev |
 | `game/assets/models/<theme>/{artifacts,board,backdrop,fx}/` | `SM_*.obj` meshes and `PF_*.tscn` scenes |
-| `game/assets/materials/<theme>/` | `MI_*.tres` materials |
-| `game/assets/materials/shaders/` | `SH_*.gdshader`, shared by all themes |
-| `game/assets/textures/<theme>/` | `T_*_{BC,N,R}.png` |
+| `game/assets/materials/<theme>/` | `MI_*.tres` materials: the base variant every tier can load (mobile, web, fallback) |
+| `game/assets/materials/<theme>/hi/` | desktop variants of some of those materials, same file names |
+| `game/assets/materials/shaders/` | `SH_*.gdshader` and `SH_*.gdshaderinc`, shared by all themes |
+| `game/assets/textures/<theme>/` | `T_<Set>_{BC,N,ORM,H}.png` base texture sets, at most 1024² |
+| `game/assets/textures/<theme>/hi/` | desktop variants of the hero sets, same file names, at most 2048² |
 | `game/assets/lookdev/` | `LD_*.tscn` look-dev scenes (game camera, line-up) |
 | `game/assets/PROVENANCE.md` | one record per theme or asset family |
 
@@ -54,13 +56,35 @@ to the view's placeholder.
 |---|---|
 | `SM_` | static mesh (OBJ, one material each) |
 | `PF_` | asset scene the manifest points at |
-| `LD_` | look-dev scene, never shipped from code |
+| `LD_` | look-dev scene, never shipped from code; `_Hi` swaps in the `hi/` materials |
 | `MI_` | material |
 | `SH_` | shader |
-| `T_` + `_BC` / `_N` / `_R` | texture: base colour (sRGB) / normal (OpenGL, green up) / roughness (linear, red) |
+| `T_` + `_BC` | base colour: sRGB, RGB, no light or occlusion baked in |
+| `T_` + `_N` | normal: tangent space, OpenGL (green up), RGB |
+| `T_` + `_ORM` | occlusion, roughness, metallic in R, G, B: linear |
+| `T_` + `_H` | height: linear, greyscale, white is high (parallax) |
 
 Names use `A-Z a-z 0-9 _` only. Code refers to logical names in the
 manifest, never to these paths.
+
+## Quality tier variants
+
+A material or texture that differs on desktop has a second file with the
+same name in a `hi/` folder next to the base one. The base file is what
+`mobile` and `web` load and what every tier falls back to; `desktop-high`
+and `desktop-standard` load the `hi/` file when it exists (the quality
+tier system, WP-45, resolves this; until then the game loads the base
+files and `LD_<Theme>_Hi.tscn` shows the desktop look). Mobile and web
+export presets list `*/hi/*` in `exclude_filter`, so those builds carry
+only their own sizes.
+
+| Material | Base (mobile, web) | `hi/` (desktop) |
+|---|---|---|
+| Stone (`MI_Stone*`) | `ORMMaterial3D`, 1024² `Stone_01` set, normal map, triplanar | `SH_TriplanarPBR`: 2048² `Stone_01` set with parallax occlusion from `_H` |
+| Gold (`MI_Gold`) | `ORMMaterial3D`, 1024² `Gold_01`, metallic 1, anisotropy | same with the 2048² set |
+| Ruby, amethyst | `ORMMaterial3D`, `Gem_01` tinted, opaque, Fresnel from the real index of refraction, rim | `SH_Gem`: refraction of the scene behind with dispersion and absorption by the body colour |
+| Carnelian, jade, moonstone | `ORMMaterial3D` with backlight for cheap translucency | sub-surface scattering with a transmittance colour; moonstone adds a stronger clearcoat |
+| Lapis | `ORMMaterial3D`, `Lapis_01` (blue, calcite, metallic pyrite flecks) | none; the base is used everywhere |
 
 ## Generators
 
@@ -70,8 +94,8 @@ byte-identical files.
 | Command | Writes | Needs |
 |---|---|---|
 | `python3 tools/assets/gen_theme_meshes.py [params]` | `SM_*.obj`, prints triangle counts, fails over budget | Blender 4.2+ as `bpy` (`pip install bpy`) or `blender -b --factory-startup -P <script> -- [params]` |
-| `python3 tools/assets/gen_theme_textures.py [params]` | `T_*.png` (tiling) | numpy, Pillow |
-| `python3 tools/assets/gen_theme_scenes.py [params]` | `MI_*.tres`, `PF_*.tscn`, `LD_*.tscn`, the theme's manifest entry, `design/tokens/<theme>-board.json` | standard library |
+| `python3 tools/assets/gen_theme_textures.py [params]` | `T_*_{BC,N,ORM,H}.png` (tiling), base and `hi/` | numpy, Pillow |
+| `python3 tools/assets/gen_theme_scenes.py [params]` | `MI_*.tres` and `hi/MI_*.tres`, `PF_*.tscn`, `LD_*.tscn`, the theme's manifest entry, `design/tokens/<theme>-board.json` | standard library |
 | `python3 tools/assets/validate_assets.py` | nothing; exits 1 on errors | Pillow |
 
 `params` defaults to `tools/assets/themes/temple.json`.
@@ -85,8 +109,9 @@ byte-identical files.
 | `artifacts.piece_width` | piece footprint as a fraction of a cell |
 | `artifacts.kinds[]` | `index`, `name` (file names), `shape` (a function in `gen_theme_meshes.py`: `round_gem`, `pyramid`, `sun`, `leaf`, `diamond`, `hex_crystal`, `crescent`), `material` |
 | `backdrop` | `tiers`, `foliage_clumps`, `ground_size` |
-| `textures.size` | texture edge in pixels (power of two, ≤ 1024) |
-| `materials.<MI_name>` | StandardMaterial3D: `albedo`, `metallic`, `roughness`, `specular`, `emission` + `emission_energy`, `rim` + `rim_tint`, `clearcoat`, `backlight`, `double_sided`, `albedo_texture` / `normal_texture` / `roughness_texture` with `triplanar_scale`, `normal_scale`, `world_triplanar`. Or ShaderMaterial: `shader` + `params` |
+| `textures.size`, `textures.hi_size` | base and desktop texture edge in pixels (powers of two, ≤ 1024 and ≤ 2048) |
+| `textures.sets.<Set>` | one PBR set `T_<Set>_*`: `recipe` (a function in `gen_theme_textures.py`: `stone`, `ground`, `gold`, `gem`, `lapis`, `jade`, `moonstone`), `normal_strength` (slope at 1024 px), `hi` (also write a `hi/` set at `hi_size`; the base is filtered down from it), `height` (also write `_H`) |
+| `materials.<MI_name>` | `albedo` (the colour the kind reads as; also the HUD token), optional `albedo_tint` (multiplies the texture instead, for sets that carry their own colour), `set` (a texture set: makes an `ORMMaterial3D` whose roughness, metallic and occlusion come from `_ORM`) with `triplanar_scale`, `normal_scale`, `world_triplanar`; without `set`, `metallic` and `roughness`; `ior` (index of refraction; sets the dielectric reflectance) or `specular`; `emission` + `emission_energy`, `rim` + `rim_tint`, `clearcoat` + `clearcoat_roughness`, `anisotropy`, `subsurface` (`strength`, `transmittance`, `depth`, `boost`), `backlight`, `double_sided`. Or a ShaderMaterial: `shader` + `params` (with `set`, the shader gets `texture_albedo`, `texture_normal`, `texture_orm`, `texture_height`, `albedo`, `triplanar_scale`, `normal_scale`). `hi`: keys that replace these for the desktop variant in `hi/` |
 | `environment` | sky colours, `ambient_energy`, `exposure`, `fog`, `fog_density`, `saturation`, `sun` (`transform` as written in a `.tscn`, basis rows first; `color`, `energy`), `torch` (`color`, `energy`, `range`) |
 | `lookdev` | game camera `camera_transform` and `fov`, `highlight_cell` |
 | `surface_tokens`, `extra_tokens` | palette entries exported to `design/tokens/<theme>-board.json`: token name to material (its `albedo`) or to a hex value |
@@ -98,14 +123,20 @@ byte-identical files.
 | `SH_Flame` | brazier flames | unshaded, additive, no depth write; vertex wobble by height | 12 small cones; no texture samples |
 | `SH_CellHighlight` | `cell_highlight` | unshaded, additive | one 1×1 quad; no texture samples |
 | `SH_Spark` | `fx_match` | unshaded, additive; fades by `INSTANCE_CUSTOM.y` | 16 tiny spheres per burst |
+| `SH_TriplanarPBR` | desktop stone (`hi/MI_Stone*`) | opaque, Burley diffuse, GGX; object-space triplanar PBR set; parallax occlusion on upward faces (`height_depth` metres, 8 to 24 layers by view angle) | 9 texture samples, plus up to 25 height samples on upward faces |
+| `SH_Gem` | desktop ruby and amethyst (`hi/MI_Ruby`, `hi/MI_Amethyst`) | transparent pass (reads the screen texture), depth write; refraction with `ior` and `dispersion`, absorption by the body colour over `thickness` | 9 texture samples, 3 screen and 3 depth samples |
+| `SH_Triplanar.gdshaderinc` | included by the two above | object-space triplanar sampling, normal-map blending, Y-face parallax | none of its own |
 
-All three run on Forward+, Mobile and Compatibility (checked in Godot
-4.4.1 on all three).
+`SH_Flame`, `SH_CellHighlight` and `SH_Spark` run on Forward+, Mobile and
+Compatibility (checked in Godot 4.4.1 on all three). `SH_TriplanarPBR` and
+`SH_Gem` serve the desktop tiers on Forward+ only (checked in Godot 4.7.2);
+mobile and web get the base materials.
 
 ## Budgets and the temple theme's numbers
 
 Budgets from the project profile: piece < 2,000 triangles, board < 20,000,
-textures ≤ 1024².
+textures ≤ 1024² for everything mobile and web ship; desktop `hi/`
+variants up to 2048² ([Visual target](visual-target.md#content-budgets-per-tier)).
 
 | Asset | Triangles |
 |---|---|
@@ -122,9 +153,29 @@ textures ≤ 1024².
 A full 8×8 board of pieces averages about 260 triangles each (~17k), so
 the whole scene stays near 31k triangles. Draw calls: one per piece (64),
 6 board parts, 7 backdrop parts, plus shadow passes; pieces share 7
-materials. Textures: two sets of three 512² PNGs
-(1.8 MB on disk, VRAM-compressed on import). Frame time on target phones
+materials. Textures: seven base sets at 1024² (`Stone_01` with `_H`;
+22 PNGs, 15 MB on disk) and 2048² `hi/` sets for the hero surfaces
+`Stone_01` and `Gold_01` (7 PNGs, 23 MB on disk); all are VRAM-compressed
+on import. In VRAM (BPTC/ASTC, about 1 byte per pixel with mipmaps) the
+base sets take about 30 MB and the `hi/` sets add about 40 MB, well
+inside every tier's texture budget. Frame time on target phones
 is not measured yet; that is WP-41.
+
+## Look-dev reference frames
+
+Rendered in Godot 4.7.2 at 1280×720 from the look-dev scenes (software
+Vulkan and OpenGL, so lighting is the theme's, not tuned per GPU). Later
+look packages compare against these.
+
+| Frame | Scene | Renderer | Materials |
+|---|---|---|---|
+| [temple-board-before-wp48.jpg](../images/lookdev/temple-board-before-wp48.jpg) | `LD_Temple` | Forward+ | first pass, before WP-48 |
+| [temple-board-base-forward.jpg](../images/lookdev/temple-board-base-forward.jpg) | `LD_Temple` | Forward+ | base PBR |
+| [temple-board-desktop.jpg](../images/lookdev/temple-board-desktop.jpg) | `LD_Temple_Hi` | Forward+ | desktop `hi/` |
+| [temple-board-base-compatibility.jpg](../images/lookdev/temple-board-base-compatibility.jpg) | `LD_Temple` | Compatibility (web) | base PBR |
+| [temple-lineup-before-wp48.jpg](../images/lookdev/temple-lineup-before-wp48.jpg) | `LD_Temple_LineUp` | Forward+ | first pass, before WP-48 |
+| [temple-lineup-base-forward.jpg](../images/lookdev/temple-lineup-base-forward.jpg) | `LD_Temple_LineUp` | Forward+ | base PBR |
+| [temple-lineup-desktop.jpg](../images/lookdev/temple-lineup-desktop.jpg) | `LD_Temple_LineUp_Hi` | Forward+ | desktop `hi/` |
 
 ## Validator rules
 
@@ -142,6 +193,21 @@ each as `error: <file>: <rule and fix>`:
   faces with in-range indices, `.tscn` and `.tres` are Godot text
   resources.
 - `.gdshader`, `.obj`, `.tscn`, `.tres` carry the SPDX line.
-- PNGs are power-of-two, ≤ 1024 px; `_N` maps are RGB.
+- PNGs are power-of-two, ≤ 1024 px (≤ 2048 px in `hi/`).
+- Each map's suffix is one of `_BC`, `_N`, `_ORM`, `_H` (and the legacy
+  `_R`) with its channels: RGB, RGB, RGB, greyscale. No gamma or ICC
+  chunk (values are stored as they are meant).
+- Colour space follows the slot: a `_BC` map is wired only to an albedo
+  slot and the data maps only to their own slots in every `.tres`; shader
+  samplers `texture_albedo` and `texture_emission` carry `source_color`,
+  `texture_normal`, `texture_orm`, `texture_height` do not.
+- Values are physically plausible: dielectric base colour within
+  30-240 sRGB and metal (where `_ORM` blue ≥ 0.5) at 180 or more; normals
+  unit length, facing out, averaging flat; metallic 0 or 1 except at most
+  5% of pixels; roughness ≥ 0.02; height spans a real range.
+- Every file in a `hi/` folder has a base file of the same name; a `hi/`
+  texture is the same map at the same or a larger size.
+- Android, iOS and Web export presets list `*/hi/*` in `exclude_filter`;
+  desktop presets do not.
 - `PROVENANCE.md` has a record for each theme.
 - `design/tokens/temple-board.json` piece colours match the theme parameters (catches a hand edit of the generated file).

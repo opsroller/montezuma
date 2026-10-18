@@ -9,7 +9,10 @@ each required logical name; every path resolves; meshes stay inside the
 triangle budgets; textures are power-of-two and at most 1024 px; scenes and
 materials only reference files that exist; every file parses as its format;
 every theme has a provenance record; source files carry the SPDX header;
-names follow the prefixes.
+names follow the prefixes. Texture sets: each map has the channels and
+colour space of its suffix, is wired to the matching material slot, and
+holds physically plausible values; every desktop variant under hi/ has a
+base file; mobile and web export presets leave the hi/ variants out.
 Needs only the standard library and Pillow.
 """
 
@@ -24,8 +27,20 @@ ROOT = Path(__file__).resolve().parents[2]
 GAME = ROOT / "game"
 ASSETS = GAME / "assets"
 REQUIRED = [f"artifact_{k}" for k in range(7)] + ["board", "environment", "cell_highlight", "fx_match"]
-PIECE_TRIS, BOARD_TRIS, MAX_TEXTURE = 2000, 20000, 1024
-PREFIXES = {".obj": "SM_", ".png": "T_", ".tres": "MI_", ".gdshader": "SH_"}
+PIECE_TRIS, BOARD_TRIS, MAX_TEXTURE, MAX_TEXTURE_HI = 2000, 20000, 1024, 2048
+PREFIXES = {".obj": "SM_", ".png": "T_", ".tres": "MI_", ".gdshader": "SH_", ".gdshaderinc": "SH_"}
+# Texture map suffix -> (allowed PIL modes, colour space, material slots that may use it).
+MAPS = {
+    "BC": (("RGB", "RGBA"), "sRGB", ("albedo_texture", "shader_parameter/texture_albedo")),
+    "N": (("RGB",), "linear", ("normal_texture", "shader_parameter/texture_normal")),
+    "ORM": (("RGB",), "linear", ("orm_texture", "shader_parameter/texture_orm")),
+    "H": (("L",), "linear", ("shader_parameter/texture_height",)),
+    "R": (("L",), "linear", ("roughness_texture",)),
+}
+# Shader samplers by colour space: colour data needs source_color, data maps must not have it.
+SRGB_SAMPLERS = {"texture_albedo", "texture_emission"}
+DATA_SAMPLERS = {"texture_normal", "texture_orm", "texture_height", "texture_roughness"}
+TIERED = "hi"  # desktop variant folder; mobile and web exports leave it out
 SPDX = "SPDX-License-Identifier: GPL-2.0-or-later"
 HEADERS = {".tscn": "[gd_scene", ".tres": "[gd_resource"}
 
@@ -82,6 +97,151 @@ def scene_tris(path, seen=None):
     return total
 
 
+def map_suffix(path):
+    return path.stem.rsplit("_", 1)[-1] if "_" in path.stem else ""
+
+
+def percentile(hist, q):
+    """Value below which q of the pixels of a 256-bin histogram fall."""
+    total, seen = sum(hist), 0
+    for value, count in enumerate(hist):
+        seen += count
+        if seen >= q * total:
+            return value
+    return 255
+
+
+def texture_errors(path, rel):
+    """Format, size, colour space and value checks for one texture map."""
+    errors = []
+    try:
+        with Image.open(path) as image:
+            if image.format != "PNG":
+                raise UnidentifiedImageError(f"{image.format} data")
+            image.load()
+            image = image.copy()
+    except (UnidentifiedImageError, OSError, SyntaxError) as problem:
+        return [f"{rel}: not a readable PNG ({problem}); regenerate it"]
+    (w, h), mode = image.size, image.mode
+    limit = MAX_TEXTURE_HI if path.parent.name == TIERED else MAX_TEXTURE
+    if w > limit or h > limit or w & (w - 1) or h & (h - 1):
+        errors.append(f"{rel}: {w}x{h}; textures must be power-of-two and at most {limit}px"
+                      f"{' (hi/ desktop variant)' if limit == MAX_TEXTURE_HI else ''}")
+    suffix = map_suffix(path)
+    if suffix not in MAPS:
+        return errors + [f"{rel}: unknown map suffix '_{suffix}'; use one of "
+                         f"{', '.join('_' + s for s in MAPS)} (docs/reference/board-themes.md)"]
+    modes, space, _ = MAPS[suffix]
+    if mode not in modes:
+        errors.append(f"{rel}: {mode} image; a _{suffix} map must be {' or '.join(modes)}")
+        return errors
+    # Godot reads 8-bit PNGs as stored values; a gamma or ICC chunk means the
+    # file was saved by a tool that converted it, and would be misread.
+    if "gamma" in image.info or "icc_profile" in image.info:
+        errors.append(f"{rel}: carries a gamma or ICC chunk; save {space} values without colour management")
+    if suffix == "BC":
+        lum = image.convert("L")
+        orm_path = path.with_name(path.name.replace("_BC.png", "_ORM.png"))
+        metal = None
+        if orm_path.exists():
+            with Image.open(orm_path) as orm:
+                if orm.mode == "RGB" and orm.size == image.size:
+                    metal = orm.split()[2].point(lambda v: 255 if v >= 128 else 0)
+        dielectric = metal.point(lambda v: 255 - v) if metal else None
+        hist = lum.histogram(mask=dielectric)
+        if sum(hist):
+            lo, hi = percentile(hist, 0.005), percentile(hist, 0.995)
+            if lo < 30 or hi > 240:
+                errors.append(f"{rel}: dielectric base colour spans {lo}-{hi} sRGB; keep it within 30-240 "
+                              "(no baked light or shadow)")
+        if metal and sum(hist := lum.histogram(mask=metal)):
+            if percentile(hist, 0.01) < 180:
+                errors.append(f"{rel}: metal base colour drops to {percentile(hist, 0.01)} sRGB; raw metal "
+                              "reflects 180-255")
+    elif suffix == "N":
+        r, g, b = image.split()
+        if b.getextrema()[0] < 128:
+            errors.append(f"{rel}: blue drops below 128 (normals facing into the surface); "
+                          "is it a normal map in OpenGL convention?")
+        mean_r, mean_g = (sum(i * c for i, c in enumerate(ch.histogram())) / (w * h) for ch in (r, g))
+        if abs(mean_r - 127.5) > 12 or abs(mean_g - 127.5) > 12:
+            errors.append(f"{rel}: average normal leans ({mean_r:.0f}, {mean_g:.0f}); a tiling map averages "
+                          "flat (128, 128)")
+        sample = image.resize((64, 64), Image.NEAREST).tobytes()
+        for x, y, z in zip(sample[0::3], sample[1::3], sample[2::3]):
+            length = ((x / 127.5 - 1) ** 2 + (y / 127.5 - 1) ** 2 + (z / 127.5 - 1) ** 2) ** 0.5
+            if abs(length - 1) > 0.06:
+                errors.append(f"{rel}: normals are not unit length ({length:.2f}); regenerate from height")
+                break
+    elif suffix == "ORM":
+        occ, rough, metal = image.split()
+        hist = metal.histogram()
+        mixed = sum(hist[26:230]) / (w * h)
+        if mixed > 0.05:
+            errors.append(f"{rel}: {mixed:.0%} of metallic values are between 0.1 and 0.9; metal is 0 or 1 "
+                          "apart from thin transitions")
+        if rough.getextrema()[0] < 5:
+            errors.append(f"{rel}: roughness reaches {rough.getextrema()[0]}; below 0.02 highlights alias, "
+                          "keep it at 5 or more")
+    elif suffix == "H":
+        lo, hi = image.getextrema()
+        if hi - lo < 50:
+            errors.append(f"{rel}: height spans only {lo}-{hi}; a flat height map belongs in a parameter")
+    return errors
+
+
+def slot_errors(path, rel):
+    """Each texture a material uses sits in the slot of its map kind (colour space follows the slot)."""
+    text = path.read_text()
+    ids = dict(re.findall(r'\[ext_resource type="Texture2D" path="(res://[^"]+)" id="([^"]+)"\]', text))
+    by_id = {v: k for k, v in ids.items()}
+    errors = []
+    for slot, ref in re.findall(r'^(\S+) = ExtResource\("([^"]+)"\)', text, re.M):
+        res = by_id.get(ref)
+        if not res or not res.endswith(".png"):
+            continue
+        suffix = map_suffix(Path(res))
+        if suffix in MAPS and slot not in MAPS[suffix][2]:
+            errors.append(f"{rel}: {Path(res).name} ({MAPS[suffix][1]} _{suffix} map) is wired to {slot}; "
+                          f"use {' or '.join(MAPS[suffix][2])}")
+    return errors
+
+
+def sampler_errors(path, rel):
+    """Colour samplers are marked source_color (sRGB); data samplers are not."""
+    errors = []
+    for name, hints in re.findall(r"uniform\s+sampler2D\s+(\w+)\s*(?::\s*([^;=]+))?", path.read_text()):
+        srgb = "source_color" in (hints or "")
+        if name in SRGB_SAMPLERS and not srgb:
+            errors.append(f"{rel}: sampler {name} holds colour; add the source_color hint")
+        if name in DATA_SAMPLERS and srgb:
+            errors.append(f"{rel}: sampler {name} holds linear data; remove the source_color hint")
+    return errors
+
+
+def export_errors():
+    """Mobile and web presets exclude the desktop texture and material variants; desktop presets keep them."""
+    path = GAME / "export_presets.cfg"
+    if not path.exists():
+        return []
+    errors = []
+    for block in re.split(r"^\[preset\.\d+\]$", path.read_text(), flags=re.M)[1:]:
+        name = re.search(r'^name="([^"]*)"', block, re.M)
+        platform = re.search(r'^platform="([^"]*)"', block, re.M)
+        exclude = re.search(r'^exclude_filter="([^"]*)"', block, re.M)
+        name = name.group(1) if name else "?"
+        platform = platform.group(1) if platform else ""
+        filters = [f.strip() for f in (exclude.group(1) if exclude else "").split(",")]
+        strips = f"*/{TIERED}/*" in filters
+        if platform in ("Android", "iOS", "Web") and not strips:
+            errors.append(f"game/export_presets.cfg: preset '{name}' ({platform}) must list */{TIERED}/* in "
+                          "exclude_filter so desktop-only variants stay out of the build")
+        if platform in ("Windows Desktop", "Linux", "macOS") and strips:
+            errors.append(f"game/export_presets.cfg: desktop preset '{name}' excludes */{TIERED}/*; "
+                          "desktop builds ship the hi/ variants")
+    return errors
+
+
 def main():
     errors, warnings = [], []
     manifest_path = ASSETS / "manifest.json"
@@ -130,19 +290,23 @@ def main():
         if path.suffix in (".gdshader", ".obj", ".tscn", ".tres") and SPDX not in path.read_text()[:400]:
             errors.append(f"{rel}: missing the SPDX header line")
         if path.suffix == ".png":
-            try:
-                with Image.open(path) as image:
-                    if image.format != "PNG":
-                        raise UnidentifiedImageError(f"{image.format} data")
-                    (w, h), mode = image.size, image.mode
-                    image.load()
-            except (UnidentifiedImageError, OSError, SyntaxError) as problem:
-                errors.append(f"{rel}: not a readable PNG ({problem}); regenerate it")
-                continue
-            if w > MAX_TEXTURE or h > MAX_TEXTURE or w & (w - 1) or h & (h - 1):
-                errors.append(f"{rel}: {w}x{h}; textures must be power-of-two and at most {MAX_TEXTURE}px")
-            if path.stem.endswith("_N") and mode != "RGB":
-                errors.append(f"{rel}: normal map must be RGB")
+            errors += texture_errors(path, rel)
+        if path.suffix == ".tres":
+            errors += slot_errors(path, rel)
+        if path.suffix == ".gdshader":
+            errors += sampler_errors(path, rel)
+        if path.parent.name == TIERED and path.suffix in (".png", ".tres"):
+            base = path.parent.parent / path.name
+            if not base.exists():
+                errors.append(f"{rel}: desktop variant has no base file {base.relative_to(ROOT)}; "
+                              "every tier falls back to the base, so add it")
+            elif path.suffix == ".png":
+                with Image.open(path) as hi, Image.open(base) as lo:
+                    if hi.size[0] < lo.size[0] or hi.mode != lo.mode:
+                        errors.append(f"{rel}: {hi.size[0]}px {hi.mode}, base is {lo.size[0]}px {lo.mode}; "
+                                      "a desktop variant is the same map at the same or a larger size")
+
+    errors += export_errors()
 
     tokens_path = ROOT / "design/tokens/temple-board.json"
     params_path = ROOT / "tools/assets/themes/temple.json"
