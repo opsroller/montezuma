@@ -100,9 +100,13 @@ struct TargetRow {
     int random_pct;           // >= or <=
     bool random_at_most;
     int planner_hard_pct;     // >=
+    int greedy_min_moves;     // >= mean moves a run, greedy/normal; 0 for none
 };
 // The balance.md row for a level id; empty for ids with no target.
 std::optional<TargetRow> target_row(int episode, int index);
+// rule: balance.md "Too easy" greedy's mean moves on normal must reach this
+// floor (mean over all runs, not the median); 0 where there is none.
+int moves_floor(int episode, int index);
 // Target text and verdict for one row ("-" and None when it has no target).
 std::string target_text(const Row& row);
 Verdict evaluate(const Row& row);

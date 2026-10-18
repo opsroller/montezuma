@@ -36,7 +36,8 @@ LevelData level(int episode, int index) {
     return l;
 }
 
-Row row(int episode, int index, Bot bot, Difficulty d, int seeds, int wins, std::vector<double> times = {}) {
+Row row(int episode, int index, Bot bot, Difficulty d, int seeds, int wins, std::vector<double> times = {},
+        long long total_moves = 0) {
     Row r;
     r.level = level(episode, index).id;
     r.episode = episode;
@@ -46,6 +47,7 @@ Row row(int episode, int index, Bot bot, Difficulty d, int seeds, int wins, std:
     r.seeds = seeds;
     r.wins = wins;
     r.win_times = std::move(times);
+    r.total_moves = total_moves;
     return r;
 }
 
@@ -119,22 +121,30 @@ void test_targets() {
         int random;
         bool at_most;
         int planner;
+        int moves;  // greedy mean moves floor, 0 for none
     };
-    const Case cases[] = {{1, 2, 98, 100, 70, false, 90}, {2, 3, 95, 70, 40, false, 80}, {3, 5, 90, 50, 20, false, 70},
-                          {4, 2, 85, 35, 20, true, 60},   {5, 9, 80, 25, 10, true, 50}};
+    const Case cases[] = {{1, 2, 98, 100, 70, false, 90, 0},  {2, 3, 95, 70, 40, false, 80, 50},
+                          {3, 5, 90, 50, 20, false, 70, 70},  {4, 2, 85, 35, 20, true, 60, 90},
+                          {5, 9, 80, 25, 10, true, 50, 110}};
     for (const Case& c : cases) {
         const std::string tag = "e" + std::to_string(c.episode);
         const int seeds = 200;
         const int need = c.greedy * seeds / 100;
-        check(evaluate(row(c.episode, c.index, Bot::Greedy, Difficulty::Normal, seeds, need,
-                           std::vector<double>(static_cast<std::size_t>(need), c.median))) == Verdict::Pass,
-              tag + " greedy at threshold passes");
-        check(evaluate(row(c.episode, c.index, Bot::Greedy, Difficulty::Normal, seeds, need - 1,
-                           std::vector<double>(static_cast<std::size_t>(need - 1), c.median))) == Verdict::Fail,
-              tag + " greedy below fails");
-        check(evaluate(row(c.episode, c.index, Bot::Greedy, Difficulty::Normal, seeds, need,
-                           std::vector<double>(static_cast<std::size_t>(need), c.median - 0.5))) == Verdict::Fail,
-              tag + " greedy median below fails");
+        const long long at_floor = static_cast<long long>(c.moves) * seeds;
+        const auto greedy = [&](int wins, double median, long long moves) {
+            return evaluate(row(c.episode, c.index, Bot::Greedy, Difficulty::Normal, seeds, wins,
+                                std::vector<double>(static_cast<std::size_t>(wins), median), moves));
+        };
+        check(greedy(need, c.median, at_floor) == Verdict::Pass, tag + " greedy at threshold passes");
+        check(greedy(need - 1, c.median, at_floor) == Verdict::Fail, tag + " greedy below fails");
+        check(greedy(need, c.median - 0.5, at_floor) == Verdict::Fail, tag + " greedy median below fails");
+        if (c.moves > 0) {
+            check(greedy(need, c.median, at_floor - 1) == Verdict::Fail, tag + " greedy one move under the floor fails");
+            check(greedy(need - 1, c.median, at_floor * 2) == Verdict::Fail,
+                  tag + " greedy over the floor but below the win rate fails");
+        } else {
+            check(greedy(need, c.median, seeds) == Verdict::Pass, tag + " has no moves floor (1 move a run passes)");
+        }
         const int r = c.random * seeds / 100;
         check(evaluate(row(c.episode, c.index, Bot::Random, Difficulty::Normal, seeds, r)) == Verdict::Pass,
               tag + " random at threshold passes");
@@ -147,6 +157,29 @@ void test_targets() {
         check(evaluate(row(c.episode, c.index, Bot::Planner, Difficulty::Hard, seeds, p - 1)) == Verdict::Fail,
               tag + " planner hard below");
     }
+    // Moves floor (balance.md "Too easy"): greedy/normal only, mean over all runs.
+    check(moves_floor(1, 1) == 0 && moves_floor(1, 5) == 0 && moves_floor(2, 1) == 50 && moves_floor(3, 1) == 70 &&
+              moves_floor(4, 1) == 90 && moves_floor(5, 12) == 110 && moves_floor(9, 1) == 0,
+          "moves floor per episode");
+    check(evaluate(row(1, 1, Bot::Greedy, Difficulty::Normal, 200, 200, std::vector<double>(200, 150.0), 200)) ==
+              Verdict::Pass,
+          "e1-l01 has no moves floor");
+    check(evaluate(row(2, 1, Bot::Random, Difficulty::Normal, 200, 80, {}, 0)) == Verdict::Pass,
+          "e2 random ignores the floor");
+    check(evaluate(row(2, 1, Bot::Planner, Difficulty::Hard, 200, 160, {}, 0)) == Verdict::Pass,
+          "e2 planner hard ignores the floor");
+    check(evaluate(row(2, 1, Bot::Greedy, Difficulty::Hard, 200, 200, {}, 0)) == Verdict::None, "e2 greedy hard no target");
+    check(evaluate(row(2, 1, Bot::Greedy, Difficulty::Normal, 3, 3, {80, 80, 80}, 149)) == Verdict::Fail,
+          "e2 mean 49.67 moves fails");
+    check(evaluate(row(2, 1, Bot::Greedy, Difficulty::Normal, 3, 3, {80, 80, 80}, 150)) == Verdict::Pass,
+          "e2 mean 50 moves passes");
+    check(target_text(row(2, 1, Bot::Greedy, Difficulty::Normal, 200, 0)) == "win>=95% median>=70.0s moves>=50",
+          "e2 greedy target text names the floor");
+    check(target_text(row(5, 1, Bot::Greedy, Difficulty::Normal, 200, 0)) == "win>=80% median>=25.0s moves>=110",
+          "e5 greedy target text names the floor");
+    check(target_text(row(1, 2, Bot::Greedy, Difficulty::Normal, 200, 0)) == "win>=98% median>=100.0s",
+          "e1 greedy target text has no floor");
+    check(target_text(row(2, 1, Bot::Random, Difficulty::Normal, 200, 0)) == "win>=40%", "e2 random text unchanged");
     // Exact on counts: 3 seeds, 98 % needs all 3 (294 >= 294).
     check(evaluate(row(1, 2, Bot::Random, Difficulty::Normal, 3, 3)) == Verdict::Pass, "exact counts");
     check(evaluate(row(2, 2, Bot::Random, Difficulty::Normal, 5, 2)) == Verdict::Pass, "40 % of 5 is 2");
@@ -262,6 +295,17 @@ void test_bots_and_play() {
     check(t.find("e9-l01") != std::string::npos, "table has the level");
     check(c.find("e9-l01,greedy,normal,2,0,0.0,,0.0,0,-,-") != std::string::npos, "csv empty median");
     check(j.find("\"median_time_left\": null") != std::string::npos, "json null median");
+    // Format: an e2 greedy row under the moves floor (40 a run) fails in every format.
+    std::vector<Row> e2{row(2, 1, Bot::Greedy, Difficulty::Normal, 2, 2, {90, 90}, 80)};
+    const std::string t2 = format_report(e2, {}, Format::Table);
+    const std::string c2 = format_report(e2, {}, Format::Csv);
+    const std::string j2 = format_report(e2, {}, Format::Json);
+    check(t2.find("win>=95% median>=70.0s moves>=50   FAIL") != std::string::npos, "table floor target and FAIL");
+    check(c2.find("e2-l01,greedy,normal,2,2,100.0,90.0,40.0,0,win>=95% median>=70.0s moves>=50,FAIL") !=
+              std::string::npos,
+          "csv floor target and FAIL, same columns");
+    check(j2.find("\"target\": \"win>=95% median>=70.0s moves>=50\", \"result\": \"FAIL\"") != std::string::npos,
+          "json floor target and FAIL");
 }
 
 }  // namespace
