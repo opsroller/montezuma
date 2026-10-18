@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 # Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
 #
-# Generates the board theme texture sets (git ignores them) before anything validates,
-# imports or exports the game. The output is cached by a hash of its inputs:
-# the generator, every theme's parameters and the pinned numpy and Pillow.
-# On a cache hit the generator only confirms its .inputs stamp and exits.
+# Generates the board theme texture sets and fire flipbooks (git ignores them)
+# before anything validates, imports or exports the game. Each output is cached
+# by a hash of its inputs: the generator, its parameters and the pinned numpy
+# and Pillow. On a cache hit a generator only confirms its .inputs stamp and
+# exits; on a miss the fire simulation takes about five minutes.
 # Reference: docs/reference/ci-pipeline.md
 name: Generate textures
-description: Restore or generate the board theme textures
+description: Restore or generate the board theme textures and fire flipbooks
 runs:
   using: composite
   steps:
@@ -19,6 +20,14 @@ runs:
           game/assets/textures/*/hi/T_*.png
           game/assets/textures/*/.inputs
         key: textures-${{ hashFiles('tools/assets/gen_theme_textures.py', 'tools/assets/themes/*.json', '.github/requirements/assets.txt') }}
+    - name: Cache fire flipbooks
+      uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+      with:
+        path: |
+          game/assets/textures/*/fx/T_*.png
+          game/assets/textures/*/fx/hi/T_*.png
+          game/assets/textures/*/fx/.inputs
+        key: fire-${{ hashFiles('tools/assets/fx/gen_fire.py', 'tools/assets/fx/fire.json', '.github/requirements/assets.txt') }}
     - name: Install numpy and Pillow (pinned, hash-checked)
       shell: bash
       run: |
@@ -27,3 +36,6 @@ runs:
     - name: Generate textures
       shell: bash
       run: .venv/bin/python tools/assets/gen_theme_textures.py
+    - name: Generate fire flipbooks
+      shell: bash
+      run: .venv/bin/python tools/assets/fx/gen_fire.py

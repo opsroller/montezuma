@@ -70,9 +70,10 @@ if(MONTEZUMA_BUILD_EXTENSION)
   configure_file(LICENSE "${PROJECT_SOURCE_DIR}/game/LICENSE.txt" COPYONLY)
 endif()
 
-# Board theme textures are build outputs, never committed: generate them into
-# game/assets/textures when Python 3 with numpy and Pillow is on the machine.
-# The generator skips themes whose inputs hash has not changed.
+# Board theme textures and fire flipbooks are build outputs, never committed:
+# generate them into game/assets/textures when Python 3 with numpy and Pillow
+# is on the machine. The generators skip work whose inputs hash has not
+# changed (the fire simulation takes a few minutes the first time).
 # Docs: docs/reference/board-themes.md
 find_package(Python3 3.10 COMPONENTS Interpreter QUIET)
 if(Python3_Interpreter_FOUND)
@@ -82,11 +83,13 @@ endif()
 if(Python3_Interpreter_FOUND AND _montezuma_texture_deps EQUAL 0)
   add_custom_target(textures ALL
     COMMAND "${Python3_EXECUTABLE}" tools/assets/gen_theme_textures.py
+    COMMAND "${Python3_EXECUTABLE}" tools/assets/fx/gen_fire.py
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-    COMMENT "Generating board theme textures")
+    COMMENT "Generating board theme textures and fire flipbooks")
 else()
   message(STATUS "Board theme textures: numpy and Pillow not found, so they are not generated. "
-    "Run: pip install -r .github/requirements/assets.txt && python3 tools/assets/gen_theme_textures.py")
+    "Run: pip install -r .github/requirements/assets.txt && python3 tools/assets/gen_theme_textures.py "
+    "&& python3 tools/assets/fx/gen_fire.py")
 endif()
 
 # Godot-free parts of the board view (layout, camera fit) and the quality
