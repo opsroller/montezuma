@@ -9,6 +9,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 option(MONTEZUMA_BUILD_TESTS "Build core rules tests" ON)
 option(MONTEZUMA_BUILD_EXTENSION "Build the Godot GDExtension (needs thirdparty/godot-cpp)" ON)
+option(MONTEZUMA_WERROR "Treat compiler warnings as errors" OFF)
 
 # Engine-independent game rules. The Godot GDExtension links against this.
 add_library(montezuma_core STATIC
@@ -16,16 +17,22 @@ add_library(montezuma_core STATIC
   core/src/level_state.cpp
 )
 target_include_directories(montezuma_core PUBLIC core/include)
-if(MSVC)
-  target_compile_options(montezuma_core PRIVATE /W4 /permissive-)
-else()
-  target_compile_options(montezuma_core PRIVATE -Wall -Wextra -Wpedantic)
-endif()
+
+# Warnings for our own targets (not third-party code).
+function(montezuma_warnings target)
+  if(MSVC)
+    target_compile_options(${target} PRIVATE /W4 /permissive- $<$<BOOL:${MONTEZUMA_WERROR}>:/WX>)
+  else()
+    target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic $<$<BOOL:${MONTEZUMA_WERROR}>:-Werror>)
+  endif()
+endfunction()
+montezuma_warnings(montezuma_core)
 
 if(MONTEZUMA_BUILD_TESTS)
   enable_testing()
   add_executable(montezuma_core_tests core/tests/core_tests.cpp)
   target_link_libraries(montezuma_core_tests PRIVATE montezuma_core)
+  montezuma_warnings(montezuma_core_tests)
   add_test(NAME core_tests COMMAND montezuma_core_tests)
 endif()
 

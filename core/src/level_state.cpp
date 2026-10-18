@@ -4,12 +4,18 @@
 #include "montezuma/level_state.hpp"
 
 #include <algorithm>
+#include <stdexcept>
 #include <utility>
 
 namespace montezuma {
 
 LevelState::LevelState(std::map<int, int> quotas, double time_limit)
-    : quotas_(std::move(quotas)), time_left_(time_limit) {}
+    : quotas_(std::move(quotas)), time_left_(time_limit) {
+    if (quotas_.empty()) throw std::invalid_argument("A level needs at least one quota");
+    for (const auto& [kind, needed] : quotas_)
+        if (needed <= 0) throw std::invalid_argument("Level quotas must be positive");
+    if (time_limit <= 0.0) throw std::invalid_argument("Level time limit must be positive");
+}
 
 void LevelState::apply_move(const MoveResult& result) {
     if (outcome_ != Outcome::Playing) return;

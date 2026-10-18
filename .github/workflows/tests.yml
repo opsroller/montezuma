@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=OFF
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_WERROR=ON -DMONTEZUMA_BUILD_EXTENSION=OFF
       - name: Build
         run: cmake --build build --config Release
       - name: Test
@@ -42,3 +42,16 @@ jobs:
           ./godot --headless --path game --import
           ./godot --headless --path game --quit-after 120 2>&1 | tee run.log
           if grep -E "ERROR|SCRIPT ERROR|Can't open dynamic library" run.log; then exit 1; fi
+
+  sanitizers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure with ASan and UBSan
+        run: >
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DMONTEZUMA_WERROR=ON -DMONTEZUMA_BUILD_EXTENSION=OFF
+          -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer"
+      - name: Build
+        run: cmake --build build
+      - name: Test
+        run: ctest --test-dir build --output-on-failure

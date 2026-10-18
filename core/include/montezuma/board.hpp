@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <cassert>
 #include <cstdint>
 #include <map>
 #include <optional>
@@ -36,16 +37,29 @@ struct MoveResult {
 class Board {
 public:
     static constexpr int kEmpty = -1;
+    static constexpr int kMinSize = 3;
+    static constexpr int kMinKinds = 3;
 
+    // Throws std::invalid_argument for a board smaller than 3x3 or fewer than
+    // 3 kinds, and std::runtime_error if no playable board can be dealt.
     Board(int width = 8, int height = 8, int kinds = 7, std::uint64_t seed = 0);
+    // Non-throwing variant for callers built without exceptions (the Godot
+    // extension). Empty when the constructor would throw.
+    static std::optional<Board> try_create(int width, int height, int kinds, std::uint64_t seed) noexcept;
 
     int width() const { return width_; }
     int height() const { return height_; }
     int kinds() const { return kinds_; }
     const std::vector<int>& cells() const { return cells_; }
 
-    int at(int x, int y) const { return cells_[index(x, y)]; }
-    void set(int x, int y, int kind) { cells_[index(x, y)] = kind; }
+    int at(int x, int y) const {
+        assert(in_bounds(x, y));
+        return cells_[index(x, y)];
+    }
+    void set(int x, int y, int kind) {
+        assert(in_bounds(x, y));
+        cells_[index(x, y)] = kind;
+    }
     bool in_bounds(int x, int y) const { return x >= 0 && y >= 0 && x < width_ && y < height_; }
 
     // Fills the board with no pre-existing matches and at least one legal move.
@@ -60,6 +74,9 @@ public:
     void shuffle();
 
 private:
+    static constexpr int kMaxFillAttempts = 1000;
+    static constexpr int kMaxShuffleAttempts = 100;
+
     int index(int x, int y) const { return y * width_ + x; }
     int pick_non_matching(int x, int y);
     void swap_cells(Cell a, Cell b);
