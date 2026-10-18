@@ -166,24 +166,30 @@ Git ignores every `.import`, so a hand-made texture under
 | `backdrop` | `tiers`, `foliage_clumps`, `ground_size` |
 | `textures.size`, `textures.hi_size` | base and desktop texture edge in pixels (powers of two, ≤ 1024 and ≤ 2048) |
 | `textures.sets.<Set>` | one PBR set `T_<Set>_*`: `recipe` (a function in `gen_theme_textures.py`: `stone`, `ground`, `gold`, `gem`, `lapis`, `jade`, `moonstone`), `normal_strength` (slope at 1024 px), `hi` (also write a `hi/` set at `hi_size`; the base is filtered down from it), `height` (also write `_H`) |
-| `materials.<MI_name>` | `albedo` (the colour the kind reads as; also the HUD token), optional `albedo_tint` (multiplies the texture instead, for sets that carry their own colour), `set` (a texture set: makes an `ORMMaterial3D` whose roughness, metallic and occlusion come from `_ORM`) with `triplanar_scale`, `normal_scale`, `world_triplanar`; without `set`, `metallic` and `roughness`; `ior` (index of refraction; sets the dielectric reflectance) or `specular`; `emission` + `emission_energy`, `rim` + `rim_tint`, `clearcoat` + `clearcoat_roughness`, `anisotropy`, `subsurface` (`strength`, `transmittance`, `depth`, `boost`), `backlight`, `double_sided`. Or a ShaderMaterial: `shader` + `params` (with `set`, the shader gets `texture_albedo`, `texture_normal`, `texture_orm`, `texture_height`, `albedo`, `triplanar_scale`, `normal_scale`). `hi`: keys that replace these for the desktop variant in `hi/` |
-| `environment` | sky colours, `ambient_energy`, `exposure`, `fog`, `fog_density`, `saturation`, `sun` (`transform` as written in a `.tscn`, basis rows first; `color`, `energy`), `torch` (`color`, `energy`, `range`) |
-| `lookdev` | game camera `camera_transform` and `fov`, `highlight_cell` |
+| `materials.<MI_name>` | `albedo` (the colour the kind reads as; also the HUD token), optional `albedo_tint` (multiplies the texture instead, for sets that carry their own colour), `set` (a texture set: makes an `ORMMaterial3D` whose roughness, metallic and occlusion come from `_ORM`) with `triplanar_scale`, `normal_scale`, `world_triplanar`; without `set`, `metallic` and `roughness`; `ior` (index of refraction; sets the dielectric reflectance) or `specular`; `emission` + `emission_energy`, `rim` + `rim_tint`, `clearcoat` + `clearcoat_roughness`, `anisotropy`, `subsurface` (`strength`, `transmittance`, `depth`, `boost`), `backlight`, `double_sided`. Or a ShaderMaterial: `shader` + `params`, optional `textures` (uniform to a path under `textures/<theme>/`; the `hi` variant takes the file's `hi/` copy), `noise_textures` (uniform to a `NoiseTexture2D`: `seed`, `frequency`, `size`) and `render_priority` (with `set`, the shader gets `texture_albedo`, `texture_normal`, `texture_orm`, `texture_height`, `albedo`, `triplanar_scale`, `normal_scale`). `hi`: keys that replace these for the desktop variant in `hi/` |
+| `environment` | sky colours, `ambient_energy`, `exposure`, `fog`, `fog_density`, `saturation`, `sun` (`transform` as written in a `.tscn`, basis rows first; `color`, `energy`), `torch` (`color`, `energy`, `range` of each brazier's fire light) |
+| `lookdev` | game camera `camera_transform` and `fov`, `highlight_cell`; `fire_camera_transform` and `fire_fov` for the brazier close-up `LD_<Theme>_Fire` |
+| `fire` | brazier fire: `rim_height` and the `flame`, `smoke`, `embers`, `light` and `haze` settings of `PF_BrazierFire` ([Fire](fire.md#pf_brazierfire)) |
 | `surface_tokens`, `extra_tokens` | palette entries exported to `design/tokens/<theme>-board.json`: token name to material (its `albedo`) or to a hex value |
 
 ## Shaders
 
 | Shader | Used by | Render mode | Cost |
 |---|---|---|---|
-| `SH_Flame` | brazier flames | unshaded, additive, no depth write; vertex wobble by height | 12 small cones; no texture samples |
+| `SH_Fire` | brazier flames (`MI_Fire`) | unshaded, additive, no depth write; motion-vector flipbook, blackbody colour, camera-facing billboard | 4 texture and 1 depth sample; see [Fire](fire.md#shaders) |
+| `SH_FireSmoke` | brazier smoke (`MI_FireSmoke`) | lit, alpha-blended, no depth write | 1 texture and 1 depth sample |
+| `SH_Ember`, `SH_EmberTrail` | embers (`MI_Ember`, `MI_EmberTrail`) | unshaded, additive; trails on tiers with `particle_trails` | no texture samples |
+| `SH_HeatHaze` | heat haze (`MI_HeatHaze`), desktop | screen-texture distortion, drawn before the flame | 2 noise and 1 screen sample |
 | `SH_CellHighlight` | `cell_highlight` | unshaded, additive | one 1×1 quad; no texture samples |
 | `SH_Spark` | `fx_match` | unshaded, additive; fades by `INSTANCE_CUSTOM.y` | 16 tiny spheres per burst |
 | `SH_TriplanarPBR` | desktop stone (`hi/MI_Stone*`) | opaque, Burley diffuse, GGX; object-space triplanar PBR set; parallax occlusion on upward faces (`height_depth` metres, 8 to 24 layers by view angle) | 9 texture samples, plus up to 25 height samples on upward faces |
 | `SH_Gem` | desktop ruby and amethyst (`hi/MI_Ruby`, `hi/MI_Amethyst`) | transparent pass (reads the screen texture), depth write; refraction with `ior` and `dispersion`, absorption by the body colour over `thickness` | 9 texture samples, 3 screen and 3 depth samples |
 | `SH_Triplanar.gdshaderinc` | included by the two above | object-space triplanar sampling, normal-map blending, Y-face parallax | none of its own |
 
-`SH_Flame`, `SH_CellHighlight` and `SH_Spark` run on Forward+, Mobile and
-Compatibility (checked in Godot 4.4.1 on all three). `SH_TriplanarPBR` and
+`SH_CellHighlight` and `SH_Spark` run on Forward+, Mobile and
+Compatibility (checked in Godot 4.4.1 on all three); the fire shaders on
+all three in Godot 4.7.2, except `SH_HeatHaze`, which only the desktop
+tiers show. `SH_TriplanarPBR` and
 `SH_Gem` serve the desktop tiers on Forward+ only (checked in Godot 4.7.2);
 mobile and web get the base materials.
 
@@ -203,11 +209,11 @@ variants up to 2048² ([Visual target](visual-target.md#content-budgets-per-tier
 | Amethyst | 120 |
 | Moonstone | 548 |
 | Board (tiles, frame, fret, studs) | 9,436 |
-| Backdrop (platform, braziers, ground, ferns, rocks) | 4,748 |
+| Backdrop (platform, braziers, ground, ferns, rocks) | 4,220 |
 
 A full 8×8 board of pieces averages about 260 triangles each (~17k), so
 the whole scene stays near 31k triangles. Draw calls: one per piece (64),
-6 board parts, 7 backdrop parts, plus shadow passes; pieces share 7
+6 board parts, 6 backdrop parts, the brazier fires (11 draw calls), plus shadow passes; pieces share 7
 materials. Textures: seven base sets at 1024² (`Stone_01` with `_H`;
 22 PNGs, 15 MB generated) and 2048² `hi/` sets for the hero surfaces
 `Stone_01` and `Gold_01` (7 PNGs, 23 MB generated); all are VRAM-compressed

@@ -288,12 +288,84 @@
       "metallic": 1.0,
       "roughness": 0.42
     },
-    "MI_Flame": {
-      "shader": "res://assets/materials/shaders/SH_Flame.gdshader",
+    "MI_Fire": {
+      "shader": "res://assets/materials/shaders/SH_Fire.gdshader",
+      "textures": {
+        "flame_sheet": "fx/T_Fire_Flame.png",
+        "motion_sheet": "fx/T_Fire_Motion.png"
+      },
       "params": {
-        "core_color": "#fff1b0",
-        "edge_color": "#ff6a12",
-        "intensity": 3.0
+        "sheet_grid": 4,
+        "motion_scale": 0.12,
+        "temperature_min_k": 1100.0,
+        "temperature_max_k": 1900.0,
+        "temperature_brightness": 1.5,
+        "intensity": 10.0,
+        "foreshorten": 0.45,
+        "soft_distance": 0.12,
+        "emission_gamma": 1.0
+      },
+      "hi": {
+        "params": {
+          "sheet_grid": 8,
+          "motion_scale": 0.03,
+          "temperature_min_k": 1100.0,
+          "temperature_max_k": 1900.0,
+          "temperature_brightness": 1.5,
+          "intensity": 10.0,
+          "foreshorten": 0.45,
+          "soft_distance": 0.12,
+          "emission_gamma": 1.0
+        }
+      }
+    },
+    "MI_FireSmoke": {
+      "shader": "res://assets/materials/shaders/SH_FireSmoke.gdshader",
+      "textures": {
+        "flame_sheet": "fx/T_Fire_Flame.png"
+      },
+      "params": {
+        "sheet_grid": 4,
+        "smoke_color": "#3a3633",
+        "opacity": 0.35,
+        "translucency": 0.5,
+        "soft_distance": 0.3
+      },
+      "hi": {
+        "params": {
+          "sheet_grid": 8,
+          "smoke_color": "#3a3633",
+          "opacity": 0.35,
+          "translucency": 0.5,
+          "soft_distance": 0.3
+        }
+      }
+    },
+    "MI_Ember": {
+      "shader": "res://assets/materials/shaders/SH_Ember.gdshader",
+      "params": {
+        "intensity": 8.0
+      }
+    },
+    "MI_EmberTrail": {
+      "shader": "res://assets/materials/shaders/SH_EmberTrail.gdshader",
+      "params": {
+        "intensity": 8.0
+      }
+    },
+    "MI_HeatHaze": {
+      "shader": "res://assets/materials/shaders/SH_HeatHaze.gdshader",
+      "render_priority": -1,
+      "noise_textures": {
+        "noise": {
+          "seed": 7,
+          "frequency": 0.02,
+          "size": 256
+        }
+      },
+      "params": {
+        "strength": 0.006,
+        "speed": 0.8
       }
     },
     "MI_CellHighlight": {
@@ -337,7 +409,9 @@
     "highlight_cell": [
       3,
       4
-    ]
+    ],
+    "fire_camera_transform": "Transform3D(0.759257, -0.159672, 0.630900, 0.000000, 0.969435, 0.245350, -0.650791, -0.186284, 0.736050, 7.300000, 1.550000, 7.600000)",
+    "fire_fov": 40.0
   },
   "surface_tokens": {
     "sandstone-light": "MI_StoneTileLight",
@@ -350,5 +424,76 @@
   "extra_tokens": {
     "torch": "#ff9a3c",
     "glow": "#ffd36b"
+  },
+  "fire": {
+    "_comment": "Brazier fire (WP-49): one PF_BrazierFire per brazier, at the bowl's rim. Light colour, energy and range come from environment.torch. Docs: docs/reference/fire.md.",
+    "rim_height": 0.44,
+    "flame": {
+      "amount": 10,
+      "lifetime": 1.2,
+      "size": [
+        0.6,
+        1.2
+      ],
+      "emission_radius": 0.12,
+      "velocity": [
+        0.02,
+        0.08
+      ],
+      "scale": [
+        0.75,
+        1.15
+      ],
+      "angle": 8.0,
+      "anim_speed": 0.56,
+      "offset": -0.1
+    },
+    "smoke": {
+      "amount": 12,
+      "lifetime": 2.6,
+      "size": [
+        0.8,
+        1.5
+      ],
+      "offset": 0.55,
+      "emission_radius": 0.15,
+      "velocity": [
+        0.25,
+        0.45
+      ],
+      "scale": [
+        0.7,
+        1.6
+      ],
+      "turbulence": 0.6
+    },
+    "embers": {
+      "amount": 18,
+      "lifetime": 1.6,
+      "emission_radius": 0.18,
+      "velocity": [
+        0.6,
+        1.3
+      ],
+      "spread": 25.0,
+      "size": 0.022,
+      "turbulence": 2.2,
+      "trail_lifetime": 0.12
+    },
+    "light": {
+      "height": 0.42,
+      "flicker": 0.22,
+      "speed": 7.0,
+      "sway": 0.0,
+      "shadow_blur": 1.5,
+      "fog_energy": 2.0
+    },
+    "haze": {
+      "offset": 0.95,
+      "size": [
+        0.9,
+        1.1
+      ]
+    }
   }
 }

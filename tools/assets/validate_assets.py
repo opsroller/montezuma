@@ -44,10 +44,13 @@ MAPS = {
     "ORM": (("RGB",), "linear", ("orm_texture", "shader_parameter/texture_orm")),
     "H": (("L",), "linear", ("shader_parameter/texture_height",)),
     "R": (("L",), "linear", ("roughness_texture",)),
+    # Fire flipbooks (tools/assets/fx/gen_fire.py): packed data, not colour.
+    "Flame": (("RGBA",), "linear", ("shader_parameter/flame_sheet",)),
+    "Motion": (("RGBA",), "linear", ("shader_parameter/motion_sheet",)),
 }
 # Shader samplers by colour space: colour data needs source_color, data maps must not have it.
 SRGB_SAMPLERS = {"texture_albedo", "texture_emission"}
-DATA_SAMPLERS = {"texture_normal", "texture_orm", "texture_height", "texture_roughness"}
+DATA_SAMPLERS = {"texture_normal", "texture_orm", "texture_height", "texture_roughness", "flame_sheet", "motion_sheet"}
 TIERED = "hi"  # desktop variant folder; mobile and web exports leave it out
 SPDX = "SPDX-License-Identifier: GPL-2.0-or-later"
 HEADERS = {".tscn": "[gd_scene", ".tres": "[gd_resource"}
@@ -336,7 +339,8 @@ def main():
         if path.suffix in (".tscn", ".tres"):
             for ref in scene_refs(path):
                 if not res_to_path(ref).exists():
-                    hint = "; textures are build outputs, run tools/assets/gen_theme_textures.py first" \
+                    hint = "; textures are build outputs, run tools/assets/gen_theme_textures.py and " \
+                        "tools/assets/fx/gen_fire.py first" \
                         if "/textures/" in ref else ""
                     errors.append(f"{rel}: references missing {ref}{hint}")
         if path.suffix in (".gdshader", ".obj", ".tscn", ".tres") and SPDX not in path.read_text()[:400]:
