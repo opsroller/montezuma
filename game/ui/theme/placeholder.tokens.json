@@ -1,0 +1,51 @@
+{
+  "$description": "Placeholder UI tokens (W3C DTCG format) until the graphic designer's WP-04 tokens land. Our own values, GPL-2.0-or-later. Contrast checked: text on surface and on surface-raised, text-on-accent on accent, and focus on surface all >= 4.5:1.",
+  "color": {
+    "$type": "color",
+    "surface": { "$value": "#1d1813", "$description": "Screen panels" },
+    "surface-raised": { "$value": "#3a3027", "$description": "Buttons, cards, tracks" },
+    "text": { "$value": "#f5ecd9" },
+    "text-muted": { "$value": "#c8b9a0" },
+    "text-on-accent": { "$value": "#1d1813" },
+    "accent": { "$value": "#e0a83a", "$description": "Primary actions, titles, meters" },
+    "accent-pressed": { "$value": "#f2c35f" },
+    "focus": { "$value": "#7fd4ff", "$description": "Focus ring for keyboard and controller" },
+    "danger": { "$value": "#ff8a7a" },
+    "scrim": { "$value": "#000000a0", "$description": "Behind modals" }
+  },
+  "font": {
+    "size": {
+      "$type": "dimension",
+      "caption": { "$value": { "value": 16, "unit": "px" } },
+      "body": { "$value": { "value": 22, "unit": "px" } },
+      "heading": { "$value": { "value": 32, "unit": "px" } },
+      "title": { "$value": { "value": 56, "unit": "px" } }
+    },
+    "family": {
+      "body": { "$value": "", "$description": "res:// path to a font file; empty uses Godot's default" },
+      "display": { "$value": "" }
+    }
+  },
+  "space": {
+    "$type": "dimension",
+    "1": { "$value": { "value": 4, "unit": "px" } },
+    "2": { "$value": { "value": 8, "unit": "px" } },
+    "3": { "$value": { "value": 12, "unit": "px" } },
+    "4": { "$value": { "value": 16, "unit": "px" } },
+    "5": { "$value": { "value": 24, "unit": "px" } },
+    "6": { "$value": { "value": 40, "unit": "px" } }
+  },
+  "radius": {
+    "control": { "$type": "dimension", "$value": { "value": 8, "unit": "px" } }
+  },
+  "border": {
+    "focus-width": { "$type": "dimension", "$value": { "value": 3, "unit": "px" } }
+  },
+  "motion": {
+    "duration": {
+      "$type": "duration",
+      "fast": { "$value": { "value": 100, "unit": "ms" } },
+      "normal": { "$value": { "value": 150, "unit": "ms" } }
+    }
+  }
+}

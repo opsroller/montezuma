@@ -9,6 +9,7 @@
 
 #include "board_view_3d.hpp"
 #include "match3_board.hpp"
+#include "ui/register_ui.hpp"
 
 using namespace godot;
 
@@ -18,6 +19,7 @@ void initialize_montezuma(ModuleInitializationLevel level) {
     if (level != MODULE_INITIALIZATION_LEVEL_SCENE) return;
     GDREGISTER_CLASS(montezuma::godot_binding::Match3Board);
     GDREGISTER_CLASS(montezuma::godot_binding::BoardView3D);
+    montezuma::godot_binding::register_ui();
 }
 
 void uninitialize_montezuma(ModuleInitializationLevel) {}

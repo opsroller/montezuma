@@ -124,3 +124,24 @@ Totems: `row_clear`, `random_blast`, `time`, `lightning`, `color_bomb`,
 `multiplier`. Bonuses: `hammer`, `lightning`, `extra_time`, `shuffle`,
 `dynamite`, `freeze`. Placeholders until WP-03 settles the originals'
 behaviour; ids may be renamed then.
+
+## UI requests (owner: ui-developer, WP-19) — proposed
+
+`UiRoot` (autoload at `/root/UiRoot`, `extension/src/ui/ui_root.*`) is the
+menus' side of the hand-off to play. Details in `docs/reference/ui.md`.
+
+```
+# UiRoot emits, for the game scene:
+play_requested(level_id: String, difficulty: String)   # "e1-l03", "relaxed" | "normal"
+level_quit_requested()                                  # left from the pause menu
+# The game scene calls:
+show_results(outcome: int, score: int, level_id: String = "")   # LevelState.Outcome
+open_pause()
+```
+
+The UI pauses the tree (`get_tree().paused`) while the pause menu is open;
+board and game nodes keep the default pausable process mode. During play
+ui_cancel and `ui_pause` (P, controller Start) open the pause menu. UI
+sounds are played with `GameAudio.play("ui_click")` and `"ui_back"` when
+the autoload exists. Volumes go to audio buses `Music` and `SFX`.
+

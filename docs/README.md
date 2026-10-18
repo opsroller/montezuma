@@ -15,11 +15,18 @@ own folder.
 - [Project profile](reference/project-profile.md): stack, commands, who owns what, project rules.
 - [Contracts](reference/contracts.md): interfaces between work packages.
 - [Work packages](reference/work-packages.md): the plan and its status.
+- [UI](reference/ui.md): UI classes, screens, actions, settings, theme tokens and strings.
 - [Rules spec](rules-spec.md): the game's rules (moving to `reference/`).
 
 ## How-to guides
 
 - [Build and test](how-to/build-and-test.md): build the core and extension, run tests, load the game.
+- [Add a UI screen](how-to/add-a-ui-screen.md): a new menu screen or modal, opened from a button.
+- [Check UI text and layout](how-to/check-ui-text-and-layout.md): pseudo-localization, large text, window sizes, controller only.
+
+## Explanation
+
+- [UI architecture](explanation/ui-architecture.md): why a C++ screen stack, an overlay and a tokens-built theme.
 
 Tutorials, more how-to guides and explanations are added by the work
 packages that create what they describe.
