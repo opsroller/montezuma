@@ -11,11 +11,14 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/godot-cpp ${CMAKE_BINARY_DIR}/
 add_library(montezuma_extension SHARED
   src/register_types.cpp
   src/match3_board.cpp
+  src/match3_level.cpp
   src/board/board_view_3d.cpp
   src/board/board_camera_3d.cpp
   src/board/board_playtest.cpp
   src/board/piece_library.cpp
   src/board/register_board.cpp
+  src/audio/game_audio.cpp
+  src/audio/register_audio.cpp
 )
 target_include_directories(montezuma_extension PRIVATE src)
 target_link_libraries(montezuma_extension PRIVATE montezuma_core godot-cpp)

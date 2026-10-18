@@ -31,7 +31,7 @@ uses are unchanged.
 namespace montezuma {
 struct Cell  { int x, y; };                      // x left to right, y top to bottom, from 0
 struct Fall  { Cell from, to; int kind; };       // to.x == from.x, to.y > from.y
-struct Spawn { Cell to; int kind; int drop; };   // starts at y = to.y - drop, drop >= 1
+struct Spawn { Cell to; int kind; int drop; };   // starts at y = -drop, drop >= 1
 struct Run   { std::vector<Cell> cells; int kind; bool horizontal() const; };
 
 struct CascadeStep {
@@ -70,8 +70,9 @@ Differences from the proposal, and why:
 - `steps` and `stuck` stay for the binding and `LevelState`.
 
 `Match3Board` (GDExtension) exposes the same as a `Dictionary` with keys
-matching the field names and `Vector2i` cells; until the binding adds the
-cell-level keys it returns `{ steps, matched_kind, shuffled, stuck, score }`.
+matching the field names, `Vector2i` cells and plain `Array`s, from
+`try_swap(a, b)` and from `clear_cells(cells)` (no `swap` key). The key table
+is in [move-result.md](move-result.md#for-the-godot-binding).
 
 ## LevelData (owner: gameplay-programmer, WP-02; content: game-designer) — proposed
 
@@ -123,15 +124,23 @@ falls back to a placeholder primitive when a name is missing.
 `artifact_0` … `artifact_6` (by kind index), `temple_board`, `temple_env`,
 `cell_highlight`, `fx_match`, `fx_cascade`, `totem_<id>`, `bonus_<id>`.
 
-## Audio cues (owner: sound-designer, WP-14) — proposed
+## Audio cues (owner: sound-designer, WP-15 to 17) — proposed
 
-Played by name with `GameAudio::play(name)`; a missing cue warns and is silent.
+Played by name with `GameAudio::play(name)` (C++:
+`GameAudio::get_singleton()`; scenes: the `/root/GameAudio` autoload); a
+missing cue warns and is silent. Volume per bus with
+`set_volume(bus, linear)`. Full API and when each cue plays:
+[audio.md](audio.md#audio-system).
 
 `swap`, `swap_illegal`, `match`, `cascade_1` … `cascade_8`, `piece_land`,
-`bonus_earned`, `bonus_use_<id>`, `totem_charge`, `totem_fire_<id>`,
-`quota_done`, `time_warning`, `level_won`, `level_lost`, `ui_click`,
-`ui_back`, `trophy`, `music_menu`, `music_play_<episode>`,
-`ambience_jungle`.
+`gem_collect`, `steel_break`, `chain_break`, `bonus_earned` (a power-up
+appears on the board), `bonus_use_<power-up id>`, `totem_charge`,
+`totem_fire_<totem id>`, `quota_done`, `time_warning`, `level_won`,
+`level_lost`, `ui_click`, `ui_back`, `trophy`, `music_menu`,
+`music_play_<episode>`, `ambience_jungle`.
+
+Ids are the settled totem and power-up ids below. Files, levels and
+status per cue: [audio.md](audio.md).
 
 ## Totem and bonus ids (owner: game-designer, WP-03) — proposed
 

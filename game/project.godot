@@ -25,6 +25,7 @@ textures/vram_compression/import_etc2_astc=true
 
 [autoload]
 
+GameAudio="*res://scenes/audio/game_audio.tscn"
 UiRoot="*res://ui/ui_root.tscn"
 
 [internationalization]

@@ -22,18 +22,18 @@ Draws a `Match3Board` and plays back results. It never applies a rule.
 | Member | Kind | Meaning |
 |---|---|---|
 | `show_board(board: Match3Board)` | method | Draws the board as it is now, no animation. Call again after the board is re-dealt |
-| `play(result: Dictionary)` | method | Plays a `Match3Board.try_swap` result, then emits `animation_finished`. Uses `result.swap` when present, otherwise the last requested pair |
+| `play(result: Dictionary)` | method | Plays a `Match3Board.try_swap` result step by step (see [Move animation](#move-animation)), then emits `animation_finished` |
 | `play_illegal(a: Vector2i, b: Vector2i)` | method | Bounces the two pieces toward each other and back, then emits `animation_finished` |
 | `is_busy()` | method | True while an animation plays; taps are ignored then |
+| `skip_animation()` | method | Jumps to the end of the playing animation and emits `animation_finished` |
+| `animation_speed` | property | Playback speed, 0.1 to 10, default 1. Fast-forward and reduced motion use it; outcomes never change |
 | `cell_at_screen(pos: Vector2) -> Vector2i` | method | Cell under a screen position using the active camera; `(-1, -1)` off the board |
 | `get_board_width()`, `get_board_height()` | method | Size of the board last shown |
 | `cell_size` | property | World size of one cell, 0.25 to 4, default 1 |
 | `swap_requested(a: Vector2i, b: Vector2i)` | signal | The player asked to swap two adjacent cells |
 | `animation_finished` | signal | A `play` or `play_illegal` finished; the view now matches the board |
+| `cascade_step(step: int)` | signal | Step `step` (0 = the swap's own match) starts clearing. Audio plays `cascade_<step+1>` and effects hook here |
 | `layout_changed` | signal | The board was (re)built; cameras refit |
-
-Until WP-13 lands, `play` animates the swap, then every changed cell drops
-in at once.
 
 ### `BoardCamera3D` (Camera3D)
 
@@ -123,11 +123,47 @@ is never cropped.
 | `kIllegalReach` | 0.45 cell | How far an illegal swap travels before bouncing |
 | `kSettleSeconds` | 0.18 s | A changed piece dropping into place |
 | `kSettleDropCells` | 1.5 cells | Height it drops from |
+| `kClearPopSeconds` | 0.05 s | Cleared piece pops |
+| `kClearShrinkSeconds` | 0.10 s | Then shrinks away |
+| `kClearPopScale` | 1.25 | Size at the pop |
+| `kFallGravityCells` | 120 cells/s² | Gravity for falls and spawns |
+| `kFallMinSeconds` | 0.08 s | Shortest fall |
+| `kSpawnStartScale` | 0.3 | New piece's size as it enters |
+| `kSpawnGrowFraction` | 0.4 | Share of its fall spent growing to full size |
+| `kCascadeGapSeconds` | 0.04 s | Pause between cascade steps |
+| `kShuffleSeconds` | 0.35 s | Shuffle glide |
+| `kRedealOutSeconds` | 0.18 s | Old deal shrinking away |
+| `kRedealInSeconds` | 0.22 s | New deal growing in |
 | `kSelectedScale` | 1.18 | Size of the selected piece |
 | `kSelectedLiftCells` | 0.12 cell | Lift of the selected piece |
 | `kCameraTiltDegrees` | 15° | Camera pitch from straight down |
 | `kCameraFovDegrees` | 40° | Vertical field of view |
 | `kCameraMargin` | 0.08 | Empty viewport fraction per side |
+
+## Move animation
+
+`play` reads the cell events of the result (contract "MoveResult events";
+fields in [MoveResult reference](move-result.md)) and builds a plan of
+phases (`extension/src/board/animator.hpp`), played on one tween:
+
+| Phase | Starts | Lasts | Shows |
+|---|---|---|---|
+| Swap | 0 | `kSwapSeconds` | The two pieces trade cells |
+| Clear (per step) | when the previous phase lands, plus `kCascadeGapSeconds` after step 0 | `kClearPopSeconds + kClearShrinkSeconds` | Cleared pieces pop to `kClearPopScale`, then shrink away |
+| Fall (per step) | when its clear ends | the longest fall in the step | Pieces fall under gravity (`kFallGravityCells`, at least `kFallMinSeconds`); new pieces start `drop` rows above the board, grow from `kSpawnStartScale` and fall in |
+| Shuffle | after the last step | `kShuffleSeconds` | Pieces glide to their shuffled cells (`shuffle_map`) |
+| Redeal | after the last step | `kRedealOutSeconds + kRedealInSeconds` | Old pieces shrink away, the new deal grows in |
+
+A fall of `n` rows takes `sqrt(2n / g)` seconds: one row about 0.13 s, the
+full 8-row board about 0.37 s.
+
+When the animation ends or is skipped, the view releases cleared pieces
+to the pool and checks every cell against the board; in debug builds a
+mismatch logs a warning, and the view resyncs either way. A result
+without `cascades` (older binding) falls back to the swap followed by one
+settle beat.
+
+![Frames 0.1 s apart: swap, pop, empty cells, fall and refill](../images/board-cascade-frames.png)
 
 ## Input (until WP-14)
 

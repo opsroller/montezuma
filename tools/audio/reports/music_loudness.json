@@ -1,0 +1,63 @@
+{
+  "ambience_jungle.ogg": {
+    "bytes": 835883,
+    "integrated_lufs": -30.2,
+    "mood": "humid jungle, birds and insects",
+    "seconds": 64.0,
+    "true_peak_dbtp": -14.7
+  },
+  "music_menu.ogg": {
+    "bars": 32,
+    "bpm": 80,
+    "bytes": 1017726,
+    "integrated_lufs": -22.0,
+    "mood": "calm and open",
+    "seconds": 96.0,
+    "true_peak_dbtp": -11.6
+  },
+  "music_play_1.ogg": {
+    "bars": 32,
+    "bpm": 92,
+    "bytes": 1046298,
+    "integrated_lufs": -22.0,
+    "mood": "curious, a gentle pulse",
+    "seconds": 83.478,
+    "true_peak_dbtp": -11.5
+  },
+  "music_play_2.ogg": {
+    "bars": 32,
+    "bpm": 96,
+    "bytes": 1010024,
+    "integrated_lufs": -22.0,
+    "mood": "shadowed, a darker mode",
+    "seconds": 80.0,
+    "true_peak_dbtp": -10.7
+  },
+  "music_play_3.ogg": {
+    "bars": 32,
+    "bpm": 100,
+    "bytes": 979527,
+    "integrated_lufs": -22.0,
+    "mood": "steady, more drive",
+    "seconds": 76.8,
+    "true_peak_dbtp": -9.6
+  },
+  "music_play_4.ogg": {
+    "bars": 32,
+    "bpm": 104,
+    "bytes": 1057192,
+    "integrated_lufs": -21.9,
+    "mood": "bright and busy",
+    "seconds": 73.846,
+    "true_peak_dbtp": -10.9
+  },
+  "music_play_5.ogg": {
+    "bars": 32,
+    "bpm": 110,
+    "bytes": 1015323,
+    "integrated_lufs": -22.0,
+    "mood": "urgent, the finale",
+    "seconds": 69.818,
+    "true_peak_dbtp": -10.9
+  }
+}
