@@ -1,0 +1,10 @@
+{
+  "extraKnownMarketplaces": {
+    "opsroller": {
+      "source": { "source": "github", "repo": "opsroller/claude-plugins" }
+    }
+  },
+  "enabledPlugins": {
+    "engineering-practices@opsroller": true
+  }
+}
