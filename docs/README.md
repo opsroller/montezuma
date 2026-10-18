@@ -15,6 +15,7 @@ own folder.
 - [Project profile](reference/project-profile.md): stack, commands, who owns what, project rules.
 - [Contracts](reference/contracts.md): interfaces between work packages.
 - [Work packages](reference/work-packages.md): the plan and its status.
+- [Build pipeline](reference/build-pipeline.md): desktop build jobs, artifacts, versions and pinned tools.
 - [Board themes](reference/board-themes.md): theme files, asset names, generators, budgets, validator.
 - [Audio](reference/audio.md): sound formats, levels and the files behind each cue.
 - [Power Totems](reference/totems.md): totem ids, charging, effects and tuning.
@@ -39,6 +40,7 @@ own folder.
 ## How-to guides
 
 - [Build and test](how-to/build-and-test.md): build the core and extension, run tests, load the game, capture screenshots.
+- [Export a desktop build](how-to/export-a-desktop-build.md): get or make the Windows, macOS and Linux packages.
 - [Make a board theme](how-to/make-a-board-theme.md): change the temple look or add a new theme.
 - [Regenerate or add sounds](how-to/regenerate-or-add-sounds.md): rebuild the generated audio, add a cue.
 - [Play a sound from code](how-to/play-a-sound-from-code.md): call a cue from C++ or a scene, start and stop music.
@@ -51,6 +53,7 @@ own folder.
 - [About the board view](explanation/about-the-board-view.md): why the view never applies rules, and how the camera frames the board.
 - [Art direction](explanation/art-direction.md): why the board looks the way it does, and the rules new art follows.
 - [About CI caching](explanation/about-ci-caching.md): why CI uses a compiler cache and what it leaves uncached.
+- [About the build pipeline](explanation/about-the-build-pipeline.md): why builds compile natively and export once.
 - [Sound direction](explanation/sound-direction.md): why the game sounds the way it does.
 
 Tutorials, more how-to guides and explanations are added by the work
