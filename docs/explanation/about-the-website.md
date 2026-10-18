@@ -1,4 +1,11 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- Copyright (C) 2026 Charles (opsroller) and Montezuma contributors -->
 # About the website
+
+Explanation of why the website is shaped the way it is. For anyone
+changing `site/`. The facts are in the
+[website reference](../reference/website.md); the steps to build it are in
+[How to build and preview the website](../how-to/build-and-preview-the-website.md).
 
 The website exists to turn a curious visitor into a player. Its front
 page is the game itself: the visitor plays the intro level in the browser,
@@ -35,7 +42,24 @@ bytes (the side module) arrive outside its progress reports, and a failed
 file leaves its start pending forever. Watching the page's own requests
 covers both without downloading anything twice or patching Godot's
 files, which the site takes unchanged from each web build. A timer that
-gives up after a minute without progress stays as a backstop.
+gives up after a minute without progress stays as a backstop. Godot also
+keeps a failed start in its module state, which is why a retry reloads
+the page. The behaviour is listed in the
+[demo hand-off contract](../reference/website.md#demo-hand-off-contract).
+
+## Why the extension is preloaded by hand
+
+Godot's `gdextensionLibs` setting fetches the extension relative to the
+page and opens it by that same path, so it fails when the build lives in
+a subfolder such as `play/`. Preloading it under its bare name puts it
+where the game opens it. This was found in WP-21 by running the export
+in a browser.
+
+## Why the site is not public yet
+
+The site goes public only once the game is polished. The team owns that
+quality bar and decides when the site is ready; the project-manager
+takes the decision to the owner, whose only sign-off is going public.
 
 ## Why the demo runs in the page, not an iframe
 

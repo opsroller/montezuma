@@ -1,9 +1,12 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- Copyright (C) 2026 Charles (opsroller) and Montezuma contributors -->
 # How to build and preview the website
 
 Build `site/` into a static folder, look at it in a browser and run its
 tests. Run from the repository root. Needs Python 3.10+ and, for the
 tests, Node 20+. Field-by-field facts are in the
-[website reference](../reference/website.md).
+[website reference](../reference/website.md); the reasons behind the
+site's shape are in [About the website](../explanation/about-the-website.md).
 
 ## Build and preview
 
@@ -51,6 +54,22 @@ no site change. Repeat the steps above with the newer
 browser console shows `Can't open dynamic library`, the package and the
 loader disagree on the extension's file name: compare it with the
 [demo hand-off contract](../reference/website.md#demo-hand-off-contract).
+
+## Check a deployed demo
+
+On a deployed copy of the site, check that the host compresses the demo's
+largest files (the play button's size assumes it) and lets browsers cache
+them:
+
+```sh
+for f in montezuma.side.wasm montezuma.wasm montezuma.pck; do
+  curl -sI -H 'Accept-Encoding: gzip' "https://<site>/play/$f" \
+    | grep -iE '^(content-type|content-encoding|cache-control):'
+done
+```
+
+Each `.wasm` shows `content-type: application/wasm`, each file
+`content-encoding: gzip`, and `cache-control` is not `no-store`.
 
 ## Run the tests
 

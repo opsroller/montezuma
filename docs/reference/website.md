@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- Copyright (C) 2026 Charles (opsroller) and Montezuma contributors -->
 # Website
 
 Facts about the project website in `site/` (owner: frontend-web-developer,
@@ -106,7 +108,9 @@ folder: the `montezuma-<version>-web.zip` artifact of the `web` workflow
 the export's own HTML page.
 
 **Loading.** On the visitor's click, the page loads `play/montezuma.js`
-and starts it with Godot's `Engine` API:
+and starts it with Godot's `Engine` API. The contract's minimal form
+(the page also passes `focusCanvas: false` and `fileSizes`, and waits on
+`startGame()` under the watch described below):
 
 ```js
 const lib = "libmontezuma.web.template_release.wasm32.nothreads.wasm";
@@ -123,11 +127,9 @@ await engine.startGame();
 
 The extension must be preloaded under its bare file name: Godot opens it
 by that name from the game's file system. Without it the game starts
-with no game classes and logs `Can't open dynamic library`. (Godot's
-`gdextensionLibs` setting does not work from a subfolder: it fetches the
-file relative to the page and opens it by the same path.) The canvas
-needs an `id`; Godot selects it with `#<id>`. Amended in WP-21
-(2026-10-18) after running the export in a browser.
+with no game classes and logs `Can't open dynamic library`. Godot's
+`gdextensionLibs` setting is not used. The canvas needs an `id`; Godot
+selects it with `#<id>`.
 
 It checks `WebAssembly` and `Engine.isWebGLAvailable(2)` first. When
 either is missing the status line says which and links to the downloads,
@@ -144,7 +146,7 @@ failed request instead.
 **Load failures.** A failed request for a demo file, or loading that
 makes no progress for 60 seconds (a backstop), puts the poster back in
 the stage with a "Try again" button and focuses it. Once Godot's engine has been created, "Try again" reloads the
-page, because Godot keeps a failed start in its module state; a
+page; a
 `sessionStorage` flag (`montezuma-demo-retry`) makes the reloaded page
 start the demo without another click.
 
@@ -189,22 +191,19 @@ without the win heading. Without JavaScript it jumps to `#download`.
 
 ## Hosting
 
-**Not public yet.** The site stays unpublished until the game itself is
-polished. The team owns that quality bar and decides when the site is
-ready; the project-manager then takes that decision to the owner, whose
-only sign-off is going public. Until
-then CI builds the site as a downloadable preview artifact only; there is
-no Pages deployment.
+**Not public yet.** There is no Pages deployment; CI builds the site as a
+downloadable preview artifact only. Going public is decided as described
+in [About the website](../explanation/about-the-website.md).
 
 When it goes live, the target is GitHub Pages, deployed from `main` by a
 workflow owned by devops-engineer. The single-threaded export needs no
 cross-origin-isolation headers; GitHub Pages serves `.wasm` as
 `application/wasm`.
 
-To check at the first deployment: that Pages gzips `play/*.wasm` and
-`play/montezuma.pck` (`curl -sI -H 'Accept-Encoding: gzip' <url>` shows
-`Content-Encoding: gzip`). The play button's size assumes it; uncompressed
-the five files are about 62 MB against 22 MB gzipped.
+The play button's size assumes the host gzips `play/*.wasm` and
+`play/montezuma.pck`: the five files are about 62 MB uncompressed and
+22 MB gzipped. To confirm it on a deployment, see
+[How to build and preview the website](../how-to/build-and-preview-the-website.md#check-a-deployed-demo).
 
 No page sets a Content-Security-Policy. Pages cannot send headers, so one
 would be a `<meta http-equiv>` tag, and on `/` it must allow
