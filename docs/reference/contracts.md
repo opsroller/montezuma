@@ -86,7 +86,7 @@ the engine reads the file and passes the text in.
 | `board` | `{width, height, kinds}` | defaults 8, 8, 7 |
 | `gem_goal` | `{normal: int, hard: int}` | gems to collect; a level needs `gem_goal` or `quotas` |
 | `quotas` | `{kind_name: int}` | optional; kind names below. With `gem_goal`, both must be met (`GOAL-06`) |
-| `time_limit` | `{normal: float, hard: float}` | optional, seconds; default `270 + 30 × timer tier` (tiers 0 to 4) |
+| `base_clock` | `{normal: float, hard: float}` | optional, seconds, default 270; the level starts at `base_clock + 30 × timer tier` (tiers 0 to 4, `GOAL-03`). Replaces `time_limit`, which is rejected |
 | `totems_unlocked` | `[totem_id]` | available on this level; the tier comes from player progress (WP-08) |
 | `powerups_unlocked` | `[power-up id]` | optional, as above |
 | `steel_rate` | float | optional, 0 to 1, default 0 (`OBS-02`) |

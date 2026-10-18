@@ -42,8 +42,9 @@ struct BoardSpec {
     int kinds = kDefaultKinds;
 };
 
-// Per-difficulty level time in seconds, when the level sets its own.
-struct TimeLimit {
+// Per-difficulty base clock in seconds, when the level sets its own. The
+// timer tier's bonus is added on top (GOAL-03).
+struct BaseClock {
     double normal = 0.0;  // seconds
     double hard = 0.0;    // seconds
 };
@@ -61,9 +62,9 @@ struct LevelGoal {
     bool quotas = false;  // quotas is non-empty (rule-variant goal)
 };
 
-// Level time from the timer tier when a level has no time_limit:
-// 270 s at tier 0, then 300, 330, 360 and 390 s with upgrades.
-// rule: <tbd>
+// Level time is the base clock plus 30 s per timer tier (GOAL-03). A level
+// without base_clock has 270 s: 270, 300, 330, 360 and 390 s by tier.
+// rule: GOAL-03
 inline constexpr int kMinTimerTier = 0;
 inline constexpr int kMaxTimerTier = 4;
 inline constexpr double kBaseTimerSeconds = 270.0;
@@ -93,7 +94,7 @@ struct LevelData {
     BoardSpec board;
     std::optional<GemGoal> gem_goal;
     std::map<int, int> quotas;             // kind index -> pieces to clear; empty when absent
-    std::optional<TimeLimit> time_limit;   // absent: the timer tier decides
+    std::optional<BaseClock> base_clock;   // absent: kBaseTimerSeconds
     std::vector<std::string> totems_unlocked;
     std::vector<std::string> powerups_unlocked;
     double steel_rate = 0.0;               // chance per spawned piece, 0 to 1
@@ -113,10 +114,13 @@ struct LevelData {
     // Which goal kinds this level has.
     LevelGoal goal() const;
 
-    // Seconds for the difficulty: time_limit when the level has one,
-    // otherwise the timer tier's time. Throws std::invalid_argument when
-    // timer_tier is outside kMinTimerTier..kMaxTimerTier, even when
-    // time_limit overrides it.
+    // The difficulty's base clock: base_clock when the level has one,
+    // otherwise kBaseTimerSeconds.
+    double base_clock_for(Difficulty difficulty) const;
+    // Seconds the level starts with: base_clock_for() plus
+    // kTimerTierStepSeconds per timer tier. Throws std::invalid_argument when
+    // timer_tier is outside kMinTimerTier..kMaxTimerTier, or when the base
+    // clock is not a number greater than 0 (set in code; the parser rejects it).
     double time_limit_for(Difficulty difficulty, int timer_tier = 0) const;
     // Fresh level state for this level's quotas and time_limit_for()'s timer.
     // Throws std::invalid_argument for a bad timer_tier, and for a level with

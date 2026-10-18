@@ -6,6 +6,7 @@
   "theme": "temple",
   "board": { "width": 8, "height": 8, "kinds": 7 },
   "gem_goal": { "normal": 95, "hard": 145 },
+  "base_clock": { "normal": 590, "hard": 900 },
   "totems_unlocked": ["fire", "time", "gold", "gift", "harvest", "paint"],
   "powerups_unlocked": ["tnt", "color_clear", "lightning", "clock", "multiplier", "hint"],
   "steel_rate": 0.03,
