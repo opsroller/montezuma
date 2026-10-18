@@ -5,8 +5,8 @@
 
 Reference for the balance simulator (WP-22, `tools/sim/`) and the level
 packages (WP-23 to WP-27). A level ships only when it meets its row.
-Rules are in the [rules spec](../reference/rules-spec.md); levels in
-[progression](../reference/progression.md).
+Rules are in the [rules spec](rules-spec.md); levels in
+[progression](progression.md).
 
 ## Bots
 

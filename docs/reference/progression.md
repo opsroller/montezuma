@@ -125,7 +125,7 @@ listed under [S1].
 Every level: 8 × 8 board, 7 kinds, the player's timer tier, every item
 unlocked so far. Steel rate and chains per level are set in WP-23 to
 WP-27 against the simulator targets in
-[balance](../design/balance.md); guidance: chains 2 to 10 cells,
+[balance](balance.md); guidance: chains 2 to 10 cells,
 `steel_rate` 0.02 to 0.06.
 
 ## Trophies

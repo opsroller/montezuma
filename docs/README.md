@@ -19,7 +19,7 @@ own folder.
   [Power Totems](reference/rules-totems.md), [power-ups](reference/rules-power-ups.md),
   [bonus games](reference/rules-bonus-games.md) and [sources](reference/rules-sources.md).
 - [Progression](reference/progression.md): episodes, levels, unlocks, upgrades, trophies, intro level.
-- [Balance targets](design/balance.md): what the simulator checks each level against.
+- [Balance targets](reference/balance.md): what the simulator checks each level against.
 
 ## Explanation
 
