@@ -12,6 +12,7 @@
 #include "game/register_game.hpp"
 #include "match3_board.hpp"
 #include "match3_level.hpp"
+#include "render/register_render.hpp"
 #include "ui/register_ui.hpp"
 
 using namespace godot;
@@ -26,6 +27,7 @@ void initialize_montezuma(ModuleInitializationLevel level) {
     montezuma::godot_binding::register_audio();
     montezuma::godot_binding::register_ui();
     montezuma::godot_binding::register_game();
+    montezuma::godot_binding::register_render();
 }
 
 void uninitialize_montezuma(ModuleInitializationLevel) {}

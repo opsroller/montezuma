@@ -108,6 +108,15 @@ jobs:
         run: |
           ./godot --headless --path game --quit-after 120 -- --game-selftest 2>&1 | tee game.log
           grep -E "Match3Game self-test: [0-9]+ moves, outcome 1, [0-9]+ cues, 0 failures" game.log
+      # Each rendering method offers different quality tiers (desktop pair,
+      # mobile, web); switch through them on every method.
+      - name: Quality tier self-test
+        if: runner.os == 'Linux'
+        run: |
+          for method in forward_plus mobile gl_compatibility; do
+            ./godot --headless --path game --rendering-method "$method" --quit-after 120 -- --quality-selftest 2>&1 | tee "quality-$method.log"
+            grep -E "QualityTiers self-test: [0-9]+ checks, 0 failures" "quality-$method.log"
+          done
 
   sanitizers:
     runs-on: ubuntu-latest
