@@ -13,7 +13,7 @@ set it is in [add a level](../how-to/add-a-level.md).
 
 The simulator's bots move every 1.5 s and their moves resolve without
 animation. A person looks, thinks and waits for cascades, about 3.5 s a
-move. Every level used to start at 270 s, which covered episode 1 but not
+move. Every level used to share one 270 s base, which covered episode 1 but not
 the longer levels after it: at a human's pace e2-l03 on hard needs about
 490 s. The clock rule turns the simulator's move count into human time,
 adds 15 % so an average player is not cut off at the last move, and
@@ -49,7 +49,7 @@ clocks would be much longer (e3-l08 on hard: 1100 s instead of 800 s).
 That player leans on the time totem and the clock power-up.
 
 A longer clock also helps the `random` bot: with human-pace clocks it
-wins every episode 3 run on both difficulties. Episode 4 and 5 targets
+wins every episode 3 run on normal ([current results](../reference/balance.md#current-results)). Episode 4 and 5 targets
 cap `random` at 20 % and 10 % on normal, so those episodes' difficulty
 has to come from goals and obstacles that a random player cannot clear,
 not from a short clock.

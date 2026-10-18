@@ -40,7 +40,7 @@ difficulty therefore comes from the gem goal and, more weakly, from
 `steel_rate` (raising e3-l08's from 0.05 to 0.06 barely changed its
 results). The climb shows in `greedy` mean moves (82 to 145). Before the levels had
 their own clocks, `random` also fell on hard, from 78 % on e3-l05 to 17 %
-on e3-l07; with human-pace clocks it wins every run on both difficulties
+on e3-l07; with human-pace clocks it wins every run on normal
 ([about level clocks](about-level-clocks.md)). `greedy` wins every
 run on every level, so the curve rules hold by the 100 % tie rather than
 by a measured sawtooth; chains are a teaching device more than a

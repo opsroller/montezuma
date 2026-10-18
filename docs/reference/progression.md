@@ -43,7 +43,7 @@ level each becomes available:
 
 | Item | Base | Tier 1 | Tier 2 | Tier 3 | Tier 4 | Source |
 |---|---|---|---|---|---|---|
-| Timer, added to the level's base clock (`GOAL-03`) | +0 s | +30 s (e1-l02) | +60 s (e3-l04) | +90 s (e4-l06) | +120 s (e5-l08) | [S1]; amounts chosen; base clock per level, [clock rule](balance.md#clock) |
+| Timer, added to the level's base clock (`GOAL-03`, [clock rule](balance.md#clock)) | +0 s | +30 s (e1-l02) | +60 s (e3-l04) | +90 s (e4-l06) | +120 s (e5-l08) | [S1]; amounts chosen |
 | Gems on board | 5 | 6 (e2-l05) | 7 (e3-l08) | 8 (e5-l02) | — | [S1] |
 | Score Frenzy | — | 15 s (e1-l04, free) | 20 s (e3-l03) | 25 s (e4-l05) | 30 s (e5-l07) | [S1] |
 
@@ -188,12 +188,12 @@ Briefs for the rest of episode 1 (WP-23). Each level adds one idea to the
 intro level's swap-and-collect loop and stays a quick win: episode 1
 teaches, it does not test. Simulator targets are the "rest of e1" row in
 [balance](balance.md); every level also has every item unlocked so far,
-the player's timer tier and 5 gems on the board.
+its base clock plus the player's timer tier, and 5 gems on the board.
 
 ### e1-l02: Solidarity
 
 - **Teaches:** a run of 5 makes two power-ups, and `color_clear` clears
-  every piece of one kind; the timer has its first upgrade (300 s).
+  every piece of one kind; the timer has its first upgrade (+30 s).
 - **Feeling:** "bigger matches pay more", a second easy win that ends on a
   big clear.
 - **Target:** median 90 to 120 s; at least 95 % of players win on the
@@ -385,7 +385,7 @@ human time at 3.5 s a move, and the level table adds an Obstacles column.
 - **Target success rate:** Normal: at least 65 % first try; hard: at least 50 %. Human rates are provisional until a playtest ([why](../explanation/about-the-episode-3-levels.md#human-time-against-the-clock)). Simulator: the e3 row of [balance](balance.md), `greedy` expected to win every run, so the curve rules hold by the 100 % tie.
 - **Takeaway:** The player knows how to open a locked centre: line up runs through the chained pieces and set off power-ups next to them.
 - **Role and levers:** test; goal size: 80 gems; complexity: 10 chained cells (the guidance maximum) in the four centre columns, on the bottom three rows so they last.
-- **First contact:** Tests chains with every earlier tool; nothing new arrives in the level. Timer tier 2 (330 s) becomes buyable here; optional, and the brief's human time does not assume it.
+- **First contact:** Tests chains with every earlier tool; nothing new arrives in the level. Timer tier 2 (+60 s on top of the base clock) becomes buyable here; optional, and the brief's human time does not assume it.
 
 ### e3-l05: Loose ends
 

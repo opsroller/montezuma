@@ -57,7 +57,7 @@ difficulty, with the upgrades a player would own on reaching it
   +5 curve within ±10), then `steel_rate`, then chains. Change one at a
   time and record before and after in the PR, and set the base clock
   last ([Clock](#clock)). Measured chain effect, e3-l04 with no upgrades:
-  no chains 100 % `greedy` normal, 149 s median, 86.5 % hard; its ten
+  on the default 270 s clock: no chains 100 % `greedy` normal, 149 s median, 86.5 % hard; its ten
   chains 98.5 %, 141 s, 84 %; 32 chains 97.5 %, 129.5 s, 75 %
   ([why chains are weak](../explanation/about-the-episode-3-levels.md#what-the-simulator-measures-here)).
 
@@ -82,8 +82,8 @@ required clock = ceil(greedy mean moves × 3.5 s × 1.15 / 10) × 10
 - A level sets `base_clock` when either difficulty needs more than 270 s,
   with both values: each is the larger of 270 s and that difficulty's
   required clock. Otherwise it leaves `base_clock` out (270 s).
-- After setting `base_clock`, run `--check` again and repeat until the
-  values stop changing.
+- Each `base_clock` is a fixed point of the rule: re-running `--check`
+  with it gives the same values ([add a level](../how-to/add-a-level.md)).
 - Timer upgrades add 30 s a tier on top (`GOAL-03`).
 
 With no upgrades at all the requirement is higher: e2-l06 380/570 s
@@ -119,7 +119,8 @@ Win rates in %, median time left and base clocks in seconds.
 
 Both curve rules and every clock line pass for episodes 1 to 3. Each
 level's base clock is the larger of 270 s and its [clock rule](#clock)
-value, so the medians above include that longer clock. Every episode 2 level clears the moves floor of 50 (59
+value. Medians are time left on the base clock plus the `auto` timer
+tier (+30 s from e1-l02, +60 s from e3-l04). Every episode 2 level clears the moves floor of 50 (59
 to 77) and every episode 3 level the floor of 70 (82 to 145), at the gem
 goals in [progression](progression.md); every level wins every `greedy`
 run, so the curve rule holds by the 100 % tie. Why episode 3 is built and
