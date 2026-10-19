@@ -1,0 +1,98 @@
+#cloud-config
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
+#
+# Provisions the self-hosted runner base image once (bake.sh): the packages
+# the Linux jobs expect from GitHub's ubuntu-24.04 image, a "runner" user
+# with passwordless sudo, the pinned actions runner, and a unit that runs
+# exactly one job from the JIT config in SMBIOS OEM string 1, then powers
+# the VM off. Reference: docs/reference/ci-pipeline.md
+users:
+  - name: runner
+    shell: /bin/bash
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    lock_passwd: true
+package_update: true
+packages:
+  - build-essential
+  - ccache
+  - clang
+  - cmake
+  - curl
+  - dmidecode
+  - file
+  - git
+  - git-lfs
+  - jq
+  - libfontconfig1
+  - libgl1-mesa-dri
+  - libvulkan1
+  - libxcursor1
+  - libxi6
+  - libxinerama1
+  - libxrandr2
+  - lld
+  - mesa-vulkan-drivers
+  - ninja-build
+  - pkg-config
+  - python3
+  - python3-pip
+  - python3-venv
+  - rsync
+  - unzip
+  - wget
+  - xauth
+  - xvfb
+  - xz-utils
+  - zip
+  - zstd
+write_files:
+  # Job VMs get fresh MAC addresses, so match any wired interface.
+  - path: /etc/netplan/60-runner.yaml
+    permissions: "0600"
+    content: |
+      network:
+        version: 2
+        ethernets:
+          wired:
+            match: {name: "en*"}
+            dhcp4: true
+  - path: /etc/systemd/system/actions-job.service
+    content: |
+      [Unit]
+      Description=Run one GitHub Actions job, then power off
+      After=network-online.target
+      Wants=network-online.target
+      ConditionPathExists=/opt/actions-runner/run.sh
+
+      [Service]
+      Type=oneshot
+      User=runner
+      WorkingDirectory=/opt/actions-runner
+      ExecStart=/bin/sh -c 'exec ./run.sh --jitconfig "$(sudo dmidecode --oem-string 1)"'
+      ExecStopPost=+/bin/systemctl poweroff
+      TimeoutStartSec=4h
+
+      [Install]
+      WantedBy=multi-user.target
+# One script so any failure (a checksum mismatch above all) stops the bake
+# before poweroff; bake.sh then times out and keeps no image.
+runcmd:
+  - - sh
+    - -ec
+    - |
+      mkdir -p /opt/actions-runner
+      curl -sfL -o /tmp/runner.tgz https://github.com/actions/runner/releases/download/v2.338.0/actions-runner-linux-x64-2.338.0.tar.gz
+      echo "af4b794c1bc41d73d40535e3fe092a39f9679cd8d965954c2aca25a05ca41d32  /tmp/runner.tgz" | sha256sum -c
+      tar -xzf /tmp/runner.tgz -C /opt/actions-runner
+      rm /tmp/runner.tgz
+      /opt/actions-runner/bin/installdependencies.sh
+      chown -R runner:runner /opt/actions-runner
+      systemctl enable actions-job.service
+      rm -f /etc/netplan/50-cloud-init.yaml
+      touch /etc/cloud/cloud-init.disabled
+      # Tell bake.sh this run finished (its seed server logs the request).
+      seed="$(dmidecode -s system-serial-number | sed -n 's/.*;s=\(.*\)/\1/p')"
+      cloud-init clean --logs --machine-id
+      curl -s "${seed}done" >/dev/null || true
+      poweroff
