@@ -43,7 +43,7 @@ the 3D scene, so fog cannot reach them. The floating score labels are 3D,
 and Godot fogs a 3D surface by the fog between the camera and that
 surface; they start 0.8 cell above the tiles, their lowest edge about
 0.5 m up, and the veil is gone by 0.25 m, so the rays from the camera to a
-label never pass through it. Keep `veil_height` under that edge.
+label never pass through it. That is why `veil_height` stops at 0.4 m.
 
 The fog stays low (it thins to nothing 2.4 m above the board), because
 seen from a camera nearly straight above, rays to the board's edge pass
@@ -194,9 +194,13 @@ frame's saturation rises from 58.8 to 72.2 and its mean luma falls from
 133.3 to 131.1. The runs and their conditions are in
 [Benchmark results](../reference/benchmark-results.md#wp-51-atmosphere).
 
-The ground mist rework (banks on the floor, a volume that stops at the
-board's height) costs next to nothing: on the reference Mac at native 5K
+The ground mist rework (banks on the floor, a volume that then stopped
+at the board's height) costs next to nothing: on the reference Mac at native 5K
 with no upscaler the median frame is 139.9 ms against 140.3 ms before, and
 on an RTX 4080 SUPER at native 4K, full screen and uncapped, the GPU time
 per frame goes from 9.78 to 9.85 ms; video memory is unchanged on both
 ([Benchmark results](../reference/benchmark-results.md#ground-mist-rework)).
+The veil over the board, with the volume raised 0.45 m above the board
+and a third noise sample, costs nothing measurable either: on the RTX
+4080 SUPER the GPU time per frame is 4.15 ms with and without it
+([Benchmark results](../reference/benchmark-results.md#fog-veil-over-the-board)).

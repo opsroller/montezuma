@@ -82,14 +82,15 @@ benchmark on the reference Mac mini M4 replaces them.
 7. **No environment-wide fog.** Depth fog failed rules 2 and 4. Height fog
    that starts below the platform (`fog_height` −0.6 m) passed on web, but
    in the board view on Forward+ it still left a haze over the board (rule
-   2: mean change 11 against a limit of 1 on `desktop-high`). So the
+   2, under the luma-difference check of the time: mean change 11 against
+   a limit of 1 on `desktop-high`). So the
    temple's environment has no fog, and haze in the backdrop comes from
    WP-51's `FogVolume`s, which leave only a thin, patchy veil over the board. A theme can still
    set `lighting.fog` for height fog if its readability capture passes on
    every tier. Measured afterwards at 1280 × 720 (software rendering, so
-   look only, not speed), with the WP-49 braziers in: on `web` rule 2
-   passes (mean change 0.003) and rule 4 passes (0.9%); on `desktop-high`
-   rule 2 passes under the luma-difference check of the time (mean 0.72,
+   look only, not speed), with the WP-49 braziers in, all under that
+   check: on `web` rule 2 passes (mean change 0.003) and rule 4 passes (0.9%); on `desktop-high`
+   rule 2 passes (mean 0.72,
    p99 4) and rule 4 passes for the atmosphere
    alone (0.4%), but fails at 12.5% with glow on too, because glow blooms
    the fire and the gold. Glow, and with it rule 6, belongs to WP-52;
