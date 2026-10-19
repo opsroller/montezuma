@@ -52,13 +52,13 @@ uniform vec3 wind = vec3(0.12, 0.0, -0.05);
 uniform float base_shade : hint_range(0.0, 1.0) = 0.55;
 // The veil over the board: extinction per metre on the tiles, the height
 // above the tiles where it has thinned to nothing, the size in metres of
-// one tile of its noise (smaller than the board, so its patches have clear
+// one tile of its noise (its patches are a few tiles across, with clear
 // tiles between them) and the noise values mapped to no veil and full veil.
 // It spreads veil_spread metres past the board edge, where it meets the banks.
-uniform float veil_density : hint_range(0.0, 4.0, 0.001) = 0.6;
+uniform float veil_density : hint_range(0.0, 4.0, 0.001) = 1.5;
 uniform float veil_height = 0.3;
-uniform float veil_scale = 4.0;
-uniform vec2 veil_coverage = vec2(0.48, 0.7);
+uniform float veil_scale = 14.0;
+uniform vec2 veil_coverage = vec2(0.45, 0.65);
 uniform float veil_spread = 1.0;
 
 void fog() {
