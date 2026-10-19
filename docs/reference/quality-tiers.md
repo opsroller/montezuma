@@ -119,7 +119,7 @@ target names.
 | `ssr` | `Environment.ssr_enabled` (half size on standard) | ✔ | ✔ | — | — |
 | `sdfgi` | `Environment.sdfgi_enabled` (only if WP-47 picks SDFGI over VoxelGI) | ✔ | — | — | — |
 | `voxel_gi` | nodes in `quality:voxel_gi` | ✔ | — | — | — |
-| `volumetric_fog` | `Environment.volumetric_fog_enabled` | ✔ | ✔ | — | — |
+| `volumetric_fog` | `Environment.volumetric_fog_enabled`; also off, with its fallback nodes shown, on a GPU without atomic `R32_UINT` storage images (Godot's fog needs them; some virtual GPUs lack them and crash) | ✔ | ✔ | — | — |
 | `fog_fire_light` | volumetric fog energy of lights in `quality_fog_light` | ✔ | — | — | — |
 | `auto_exposure` | `CameraAttributes.auto_exposure_enabled` | ✔ | ✔ | — | — |
 | `depth_of_field` | `CameraAttributesPractical` far and near blur | ✔ | ✔ | — | — |
@@ -142,6 +142,7 @@ target names.
 | `quality_fallback:<feature id>` | any node with `visible` | shown only where the tier lacks it (light-shaft cards, cube-map gems, 4×4 flipbooks) |
 | `quality_shadow_light` | `Light3D` | the nearest N to the active camera keep the shadow the scene gave them, the rest lose it |
 | `quality_fog_light` | `Light3D` | keeps its authored volumetric fog energy only with `fog_fire_light` |
+| (metadata) `fog_material_path` | `FogVolume` | its material is loaded from this path only with `volumetric_fog`, and cleared without it: Compatibility prints an error for any fog shader it loads |
 
 A group naming an unknown feature id logs a warning and is ignored.
 
