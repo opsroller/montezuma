@@ -15,7 +15,7 @@ build for real runs:
 
 ```sh
 cmake -S . -B build-rel -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=OFF
-cmake --build build-rel -j
+cmake --build build-rel -j 4
 ```
 
 Pass `-DMONTEZUMA_BUILD_SIM=OFF` to skip it; the core is unaffected.

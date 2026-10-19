@@ -17,7 +17,7 @@ or a cloud machine without a GPU do not count against the
 
    ```sh
    cmake -S . -B build-ext -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON
-   cmake --build build-ext -j
+   cmake --build build-ext -j 4
    godot --headless --path game --import
    ```
 

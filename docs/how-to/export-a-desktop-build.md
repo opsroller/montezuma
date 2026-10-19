@@ -28,7 +28,7 @@ To build a branch, run the **build** workflow from the Actions tab with
    ```sh
    cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON \
      -DMONTEZUMA_BUILD_TESTS=OFF -DMONTEZUMA_WERROR=ON -DGODOTCPP_TARGET=template_release
-   cmake --build build/release -j
+   cmake --build build/release -j 4
    ```
 
 2. Fetch the pinned Godot and the templates you need (the templates

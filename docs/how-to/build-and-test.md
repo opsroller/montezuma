@@ -11,13 +11,19 @@ cd montezuma
 git submodule update --init --recursive    # godot-cpp in thirdparty/
 ```
 
+Always give `-j` a number, as below. A bare `-j` lets Make start every
+compile at once, and godot-cpp alone has about a thousand: on a 16 GB
+machine that runs out of memory, and the compilers stall in swap instead of
+finishing. Four jobs suit 16 GB; raise it only with more memory. To build
+one thing, name it with `--target`.
+
 ## Build and test the core only
 
 Needs CMake 3.22+ and a C++20 compiler. No Godot needed.
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DMONTEZUMA_WERROR=ON -DMONTEZUMA_BUILD_EXTENSION=OFF
-cmake --build build -j
+cmake --build build -j 4
 ctest --test-dir build --output-on-failure
 ```
 
@@ -30,7 +36,7 @@ add `-DMONTEZUMA_BUILD_SIM=OFF` to skip it. Running it is in
 ```sh
 cmake -S . -B build-asan -DCMAKE_BUILD_TYPE=Debug -DMONTEZUMA_WERROR=ON -DMONTEZUMA_BUILD_EXTENSION=OFF \
   -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer"
-cmake --build build-asan -j
+cmake --build build-asan -j 4
 ctest --test-dir build-asan --output-on-failure
 ```
 
@@ -43,7 +49,7 @@ would keep the extension off. The library lands in `game/bin/`.
 
 ```sh
 cmake -S . -B build-ext -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON
-cmake --build build-ext -j
+cmake --build build-ext -j 4
 ctest --test-dir build-ext --output-on-failure   # every test, as CI's extension job
 godot --headless --path game --import
 godot --headless --path game --quit-after 120    # errors show here

@@ -68,7 +68,7 @@ jobs:
             fi
             echo "To fix, correct or tune the level (docs/how-to/run-the-balance-simulator.md), then rerun locally:"
             echo "  cmake -S . -B build-rel -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=OFF -DMONTEZUMA_BUILD_TESTS=OFF"
-            echo "  cmake --build build-rel --target montezuma_sim -j"
+            echo "  cmake --build build-rel --target montezuma_sim -j 4"
             echo "  build-rel/tools/sim/montezuma_sim game/data/levels --check"
             exit "$status"
           fi

@@ -153,7 +153,7 @@ Run it locally:
 
 ```sh
 cmake -S . -B build-rel -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=OFF -DMONTEZUMA_BUILD_TESTS=OFF
-cmake --build build-rel --target montezuma_sim -j
+cmake --build build-rel --target montezuma_sim -j 4
 build-rel/tools/sim/montezuma_sim game/data/levels --check
 ```
 
