@@ -196,7 +196,8 @@ def mesh_scene(root_name, parts, theme, dynamic=False):
     """A Node3D with one MeshInstance3D per (mesh, material) part.
 
     Static parts are baked into the lightmap; dynamic ones (pieces, which
-    move) are lit by its probes and by real-time GI instead.
+    move) are lit by its probes and receive VoxelGI, but are kept out of GI
+    (gi_mode 0): a dynamic-GI object is voxelized again on every frame.
     """
     r = Resource()
     r.body.append(f'[node name="{root_name}" type="Node3D"]')
@@ -206,7 +207,7 @@ def mesh_scene(root_name, parts, theme, dynamic=False):
         r.body += ["", f'[node name="{name}" type="MeshInstance3D" parent="."]', f"mesh = {mesh}",
                    f"surface_material_override/0 = {mat_ref}"]
         if dynamic:
-            r.body.append("gi_mode = 2")
+            r.body.append("gi_mode = 0")
     return r
 
 

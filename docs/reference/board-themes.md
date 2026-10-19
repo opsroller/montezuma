@@ -202,13 +202,14 @@ the parameter file's `lighting` section:
 | `Fire1`…`Fire4/Light` | `FlickerLight3D` in each brazier's `PF_BrazierFire` ([Fire](fire.md)), dual paraboloid shadows (seam flat above the board), group `quality_shadow_light` | all; shadows on the nearest 8 or 2 | `torch` (`lumens`, `kelvin`, `color`, `size`, `range`) | 60,000 lm, 1900 K, range 4.5 m |
 | `SkyFill` | `AreaLight3D` over the board, group `quality:area_light`, not baked | `desktop-high` | `sky_fill` (`transform`, `lumens`, `color`, `size`, `range`) | 20,000 lm, 10 × 10 m |
 | `ReflectionProbe` | box-projected probe; leaves out render layer 2 (fire effects, [Fire](fire.md#pf_brazierfire), and the light-shaft cards) | all | `reflection_probe` (`position`, `size`) | 12 × 4 × 12 m |
-| `VoxelGI` | real-time bounce for the moving pieces, group `quality:voxel_gi`, baked at run time | `desktop-high` | `voxel_gi` (`position`, `size`, `subdiv`) | 14 × 4 × 14 m, 64 cells |
+| `VoxelGI` | real-time bounce received by the moving pieces, group `quality:voxel_gi`, baked at run time | `desktop-high` | `voxel_gi` (`position`, `size`, `subdiv`) | 14 × 4 × 14 m, 64 cells |
 | `Lightmap` | `LightmapGI` with probes | all | `lightmap` (`quality`, `bounces`, `texel_scale`, `max_texture_size`, `probes_subdiv`) | medium, 3 bounces |
 
 Static meshes (board and backdrop) bake into the lightmap: their
 `.obj.import` files set `generate_lightmap_uv2=true` and are committed.
-Pieces are dynamic (`gi_mode = 2`): the lightmap's probes light them, and
-`VoxelGI` adds real-time bounce on `desktop-high`. Lightmapped surfaces
+Pieces stay out of GI (`gi_mode = 0`): the lightmap's probes light them,
+and on `desktop-high` they receive `VoxelGI`'s bounce without being
+voxelized into it each frame. Lightmapped surfaces
 take indirect light only from the lightmap; SSIL adds the moving bounce
 on them.
 
