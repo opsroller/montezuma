@@ -202,5 +202,7 @@ per frame goes from 9.78 to 9.85 ms; video memory is unchanged on both
 ([Benchmark results](../reference/benchmark-results.md#ground-mist-rework)).
 The veil over the board, with the volume raised 0.45 m above the board
 and a third noise sample, costs nothing measurable either: on the RTX
-4080 SUPER the GPU time per frame is 4.15 ms with and without it
+4080 SUPER, through `desktop-high`'s FSR 2 rather than at native
+resolution as above, the GPU time per frame is 4.15 ms with and without
+it
 ([Benchmark results](../reference/benchmark-results.md#fog-veil-over-the-board)).

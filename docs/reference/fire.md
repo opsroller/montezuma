@@ -228,7 +228,7 @@ never carries the 8×8 sheets.
 \*\* The light carries `light_volumetric_fog_energy` 2.0 and lights the
 temple's dusty air where it reaches it
 ([Board themes: Atmosphere](board-themes.md#atmosphere)), including the
-thin veil over the board, which is too thin for the glow to show.
+thin veil over the board.
 
 ## Cost
 

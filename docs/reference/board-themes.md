@@ -257,16 +257,16 @@ The material's parameters:
 
 | Parameter | Temple | Meaning |
 |---|---|---|
-| `density` | 6 | extinction per metre in the core of a bank: the floor all but disappears under one |
+| `density` | 6 (0 to 8) | extinction per metre in the core of a bank: the floor all but disappears under one |
 | `albedo` | `#ebedf0` | scattering colour; mist is water and scatters every colour alike, so it is near white and the light gives it its colour |
 | `board_half` | 4.55 (set by the generator) | half the side of the board, frame included; the veil lies inside it and the banks thicken with distance outside it |
 | `ground_y` | −1.92 m | the plaza floor the mist lies on (platform top −0.42 m less three 0.5 m tiers) |
-| `bank_height`, `top_soft` | 1.4 m, 0.6 m | tallest a bank gets above the floor, and how far its top fades out |
-| `thicken_over`, `near_amount` | 7 m, 0.5 | banks next to the platform are `near_amount` as tall as those `thicken_over` metres out: more mist further away |
-| `bank_scale`, `coverage` | 9 m, (0.56, 0.64) | size of one tile of bank noise, and the noise values mapped to no bank and a full bank; the narrow range leaves clear floor between banks |
-| `wisp_scale`, `wisp_stretch`, `wisp_amount` | 4 m, 3, 0.35 | finer noise drawn out along the wind that breaks up the banks' tops and edges |
+| `bank_height`, `top_soft` | 1.4 m, 0.6 m (0.05 to 2) | tallest a bank gets above the floor, and how far its top fades out |
+| `thicken_over`, `near_amount` | 7 m, 0.5 (0 to 1) | banks next to the platform are `near_amount` as tall as those `thicken_over` metres out: more mist further away |
+| `bank_scale`, `coverage` | 9 m (1 to 40), (0.56, 0.64) | size of one tile of bank noise, and the noise values mapped to no bank and a full bank; the narrow range leaves clear floor between banks |
+| `wisp_scale`, `wisp_stretch`, `wisp_amount` | 4 m (0.5 to 20), 3 (1 to 8), 0.35 (0 to 1) | finer noise drawn out along the wind that breaks up the banks' tops and edges |
 | `wind` | (0.12, 0, −0.05) m/s | drift of the banks (the wisps drift 1.6 times faster) |
-| `base_shade` | 0.75 | share of the light the bottom of a bank scatters against its top; Godot's fog does not shadow itself, so this gives the banks lit tops |
+| `base_shade` | 0.75 (0 to 1) | share of the light the bottom of a bank scatters against its top; Godot's fog does not shadow itself, so this gives the banks lit tops |
 | `veil_density` | 1.0 (0 to 2) | extinction per metre on the tiles in the core of a patch: thin enough to read the tiles and pieces through |
 | `veil_height` | 0.25 m (0.05 to 0.4) | height above the tiles where the veil has thinned to nothing; the range stops under the score labels' bottom edge (about 0.5 m) |
 | `veil_scale`, `veil_coverage` | 12 m (2 to 24), (0.58, 0.78) | size of one tile of veil noise, and the noise values mapped to no veil and full veil: patches a few cells across with clear cells between them. Keep `wind` × 3600 s (Godot's `TIME` rollover) a whole number of `veil_scale` tiles, or the patches jump once an hour |
