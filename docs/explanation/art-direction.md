@@ -78,6 +78,41 @@ Piece colours are in [`design/tokens/temple-board.json`](../../design/tokens/tem
 so the HUD's quota icons match the board. That file is generated from the
 theme parameters, so the 3D pieces and the 2D swatches have one source.
 
+## Material references
+
+The stone and the plaza floor are generated, but what the generator draws
+comes from looking at real places. No reference image is copied, traced or
+shipped; each one only told us which weathering to model.
+
+- **The original game** ([sources](../reference/rules-sources.md): S2
+  StrategyWiki, S3 MobyGames) frames play in a 1935 museum in Cancún, on a
+  stone tablet among Aztec totems. So the board is one carved stone
+  surface, not a grid of loose tiles, and the theme keeps that tablet.
+- **Aztec sculpture** was carved mostly in basalt and andesite and was
+  originally painted in strong colours, of which mostly traces survive
+  ([World History Encyclopedia, Aztec Art](https://www.worldhistory.org/Aztec_Art/)).
+  The board stone therefore carries faint red-ochre pigment only in its
+  hollows, where paint would outlast weather.
+- **Maya limestone and stucco in the jungle**, as at Palenque (Texas Tech
+  University archive photographs), show how such stone ages under rain and
+  shade: dark biofilm in the hollows, crustose lichen on exposed faces,
+  vertical run-off stains, dissolution pores along the softer beds, and
+  moss rooted in every joint. Those are the board stone's layers, and the
+  plaza floor's: irregular flags settled at different depths, chipped at the
+  edges, soil in the joints, moss spilling from the damp joints while dry
+  ones stay bare, leaf litter and damp patches.
+- **Mexica turquoise, shell and greenstone mosaics** (Smarthistory) inform
+  the gem sets; they are unchanged in this round.
+
+Two scale rules follow from how the textures are used. The board maps about
+one stone tile per cell, so the stone avoids any large blotch: it would
+repeat on every cell and read as a pattern. Its weathering comes as many
+small colonies and fine streaks instead, and its average stays near-neutral
+so the light and dark tile materials can tint it. The plaza floor repeats
+every few metres around the board, so it is darker (base colour about 0.35
+against the stone's 0.65) and lower in contrast, and the board stays in
+front.
+
 ## Light
 
 Late-afternoon sun from the far left at about 42 degrees, warm white, with
