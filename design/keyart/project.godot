@@ -1,0 +1,44 @@
+; SPDX-License-Identifier: GPL-2.0-or-later
+; Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
+; Key-art stills of the Montezuma's mark. render_all.tscn renders every still in one
+; launch on an 8192x8192 canvas (the viewport below); see its header for the commands.
+
+config_version=5
+
+[application]
+
+config/name="Montezuma's key art"
+run/main_scene="res://render_all.tscn"
+config/features=PackedStringArray("4.7", "Forward Plus")
+
+[display]
+
+window/size/viewport_width=8192
+window/size/viewport_height=8192
+window/size/window_width_override=1024
+window/size/window_height_override=1024
+window/stretch/mode="viewport"
+
+[rendering]
+
+viewport/transparent_background=true
+
+lights_and_shadows/directional_shadow/size=16384
+lights_and_shadows/directional_shadow/soft_shadow_filter_quality=5
+lights_and_shadows/positional_shadow/soft_shadow_filter_quality=5
+lights_and_shadows/positional_shadow/atlas_size=8192
+textures/default_filters/anisotropic_filtering_level=4
+anti_aliasing/quality/msaa_3d=3
+anti_aliasing/quality/use_taa=true
+anti_aliasing/quality/use_debanding=true
+environment/ssao/quality=4
+environment/ssao/half_size=false
+environment/ssil/quality=4
+environment/ssil/half_size=false
+environment/volumetric_fog/volume_size=256
+environment/volumetric_fog/volume_depth=128
+lightmapping/bake_quality/ultra_quality_ray_count=2048
+lightmapping/bake_quality/ultra_quality_probe_ray_count=2048
+camera/depth_of_field/depth_of_field_bokeh_quality=3
+camera/depth_of_field/depth_of_field_bokeh_shape=2
+environment/screen_space_reflection/half_size=false

@@ -1,0 +1,18 @@
+; SPDX-License-Identifier: GPL-2.0-or-later
+; Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
+; Loads the game's extension from game/bin (build it first, docs/how-to/build-and-test.md)
+; only for its lightmap baker (--bake-lightmaps=...), which writes the .lmbake files the stage scenes need.
+[configuration]
+
+entry_symbol = "montezuma_library_init"
+compatibility_minimum = "4.7"
+reloadable = false
+
+[libraries]
+
+linux.debug.x86_64 = "../../game/bin/libmontezuma.linux.template_debug.x86_64.so"
+linux.release.x86_64 = "../../game/bin/libmontezuma.linux.template_release.x86_64.so"
+windows.debug.x86_64 = "../../game/bin/libmontezuma.windows.template_debug.x86_64.dll"
+windows.release.x86_64 = "../../game/bin/libmontezuma.windows.template_release.x86_64.dll"
+macos.debug = "../../game/bin/libmontezuma.macos.template_debug.universal.dylib"
+macos.release = "../../game/bin/libmontezuma.macos.template_release.universal.dylib"

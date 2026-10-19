@@ -1,0 +1,130 @@
+[gd_scene format=3]
+; SPDX-License-Identifier: GPL-2.0-or-later
+; Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
+; App icon: the temple filling the square on a deep teal-to-dark backdrop, no text.
+; Output renders/app-icon-3d.png, 1024x1024 (rendered at 2048x2048 in render_all.tscn).
+; Render all stills in one launch (see render_all.tscn):
+;   python3 design/keyart/gen/build.py
+;   godot --editor --path design/keyart -- --bake-lightmaps=res://stage_studio.tscn,res://stage_plaza.tscn
+;   godot --path design/keyart --write-movie /tmp/keyart/all.png --fixed-fps 1 --quit-after 16
+;   python3 design/keyart/gen/finish.py /tmp/keyart/all00000015.png
+
+
+[ext_resource type="PackedScene" path="res://stage_studio.tscn" id="stage"]
+[ext_resource type="Texture2D" path="res://textures/sky_golden.png" id="sky"]
+
+[sub_resource type="PanoramaSkyMaterial" id="sky_mat"]
+panorama = ExtResource("sky")
+energy_multiplier = 1.3
+
+[sub_resource type="Sky" id="sky"]
+sky_material = SubResource("sky_mat")
+radiance_size = 4
+
+[sub_resource type="Gradient" id="g_grade"]
+offsets = PackedFloat32Array(0, 0.25, 0.5, 0.75, 1)
+colors = PackedColorArray(0.0, 0.006, 0.022, 1, 0.24, 0.25, 0.265, 1, 0.505, 0.5, 0.485, 1, 0.765, 0.75, 0.72, 1, 1, 0.99, 0.95, 1)
+
+[sub_resource type="GradientTexture1D" id="t_grade"]
+gradient = SubResource("g_grade")
+width = 256
+
+[sub_resource type="Environment" id="env"]
+background_mode = 1
+background_color = Color(0.025, 0.16, 0.18, 1)
+sky = SubResource("sky")
+ambient_light_source = 3
+reflected_light_source = 2
+tonemap_mode = 2
+tonemap_white = 6.0
+ssao_enabled = true
+ssao_radius = 1.2
+ssao_intensity = 1.2
+ssil_enabled = true
+ssil_intensity = 0.5
+glow_enabled = true
+glow_intensity = 0.35
+glow_hdr_threshold = 1.5
+fog_enabled = true
+fog_mode = 1
+fog_light_color = Color(0.025, 0.16, 0.18, 1)
+fog_sky_affect = 1.0
+fog_depth_begin = 190.0
+fog_depth_end = 250.0
+adjustment_enabled = true
+adjustment_saturation = 1.06
+adjustment_contrast = 1.06
+adjustment_color_correction = SubResource("t_grade")
+
+[sub_resource type="Gradient" id="g_vig"]
+offsets = PackedFloat32Array(0, 0.6, 1)
+colors = PackedColorArray(0, 0, 0, 0, 0, 0, 0, 0.1375, 0, 0, 0, 0.55)
+
+[sub_resource type="GradientTexture2D" id="t_vig"]
+gradient = SubResource("g_vig")
+width = 512
+height = 512
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1.08, 1.08)
+
+[sub_resource type="Gradient" id="g_dust"]
+offsets = PackedFloat32Array(0, 0.55, 1)
+colors = PackedColorArray(0.55, 0.47, 0.37, 0.75, 0.55, 0.47, 0.37, 0.45, 0.55, 0.47, 0.37, 0)
+
+[sub_resource type="GradientTexture2D" id="t_dust"]
+gradient = SubResource("g_dust")
+width = 512
+height = 512
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1.0, 0.5)
+
+[node name="Icon" type="Node3D"]
+
+[node name="Stage" parent="." instance=ExtResource("stage")]
+
+[node name="Smoke" parent="Stage/Temple/Props/BaseBrazierNorth"]
+visible = false
+
+[node name="Smoke" parent="Stage/Temple/Props/BaseBrazierSouth"]
+visible = false
+
+[node name="BaseDust" type="Decal" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 10)
+size = Vector3(110, 3, 100)
+texture_albedo = SubResource("t_dust")
+modulate = Color(1, 1, 1, 0.7)
+upper_fade = 0.5
+lower_fade = 0.5
+normal_fade = 0.6
+
+[node name="Fill" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.50000, -0.36600, 0.78489, 0.00000, 0.90631, 0.42262, -0.86603, -0.21131, 0.45315, 0.78489, 50.42262, 0.45315)
+light_color = Color(0.62, 0.74, 1.0, 1)
+light_energy = 0.25
+light_specular = 0.2
+light_bake_mode = 0
+
+[node name="Env" type="WorldEnvironment" parent="."]
+environment = SubResource("env")
+
+[node name="Vignette" type="CanvasLayer" parent="."]
+
+[node name="Shade" type="TextureRect" parent="Vignette"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("t_vig")
+expand_mode = 1
+
+[node name="Camera" type="Camera3D" parent="."]
+transform = Transform3D(1.00000, 0.00000, 0.00000, 0.00000, 0.98666, 0.16277, 0.00000, -0.16277, 0.98666, 0.00000, 52.00000, 205.00000)
+fov = 17.5
+far = 3000.0
+
+[editable path="Stage"]
+[editable path="Stage/Temple"]

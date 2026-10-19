@@ -1,0 +1,16 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- Copyright (C) 2026 Charles (opsroller) and Montezuma contributors -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 971 100" width="971" height="100" role="img" aria-label="Montezuma's wordmark">
+<title>Montezuma's wordmark</title>
+<path transform="translate(0.00 0.00) scale(10)" d="M0 0H2.4L4.5 4.6L6.6 0H9V10H7V4.2L5.5 7.6H3.5L2 4.2V10H0Z" fill="#1c1a17" fill-rule="evenodd"/>
+<path transform="translate(104.00 0.00) scale(10)" d="M2.5 0H5.5L8 2.5V7.5L5.5 10H2.5L0 7.5V2.5Z M3 2L2 3V7L3 8H5L6 7V3L5 2Z" fill="#1c1a17" fill-rule="evenodd"/>
+<path transform="translate(198.00 0.00) scale(10)" d="M0 0H2.3L6 6.2V0H8V10H5.7L2 3.8V10H0Z" fill="#1c1a17" fill-rule="evenodd"/>
+<path transform="translate(292.00 0.00) scale(10)" d="M0 0H8V2H5V10H3V2H0Z" fill="#1c1a17" fill-rule="evenodd"/>
+<path transform="translate(386.00 0.00) scale(10)" d="M0 0H7V2H2V4H6V6H2V8H7V10H0Z" fill="#1c1a17" fill-rule="evenodd"/>
+<path transform="translate(470.00 0.00) scale(10)" d="M0 0H8V2L2.8 8H8V10H0V8L5.2 2H0Z" fill="#1c1a17" fill-rule="evenodd"/>
+<path transform="translate(564.00 0.00) scale(10)" d="M0 0H2V7L3 8H5L6 7V0H8V7.5L5.5 10H2.5L0 7.5Z" fill="#1c1a17" fill-rule="evenodd"/>
+<path transform="translate(658.00 0.00) scale(10)" d="M0 0H2.4L4.5 4.6L6.6 0H9V10H7V4.2L5.5 7.6H3.5L2 4.2V10H0Z" fill="#1c1a17" fill-rule="evenodd"/>
+<path transform="translate(762.00 0.00) scale(10)" d="M2.5 0H5.5L8 2.5V10H6V6.5H2V10H0V2.5Z M3 2L2 3V4.5H6V3L5 2Z" fill="#1c1a17" fill-rule="evenodd"/>
+<path transform="translate(856.00 0.00) scale(10)" d="M0 0H2V2.6L1.2 4.4H0Z" fill="#1c1a17" fill-rule="evenodd"/>
+<path transform="translate(890.00 0.00) scale(10)" d="M2.5 0H8V2H3L2 3V4H5.5L8 6.5V7.5L5.5 10H0V8H5L6 7V6H2.5L0 3.5V2.5Z" fill="#1c1a17" fill-rule="evenodd"/>
+</svg>
