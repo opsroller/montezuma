@@ -25,7 +25,7 @@ namespace {
 
 void initialize_montezuma(ModuleInitializationLevel level) {
     if (level == MODULE_INITIALIZATION_LEVEL_EDITOR) {
-        // Editor-only tooling: the lightmap bake step (tools/assets/bake_lightmaps.sh).
+        // Editor-only tooling: the lightmap bake step (tools/assets/bake_lightmaps.cmake).
         GDREGISTER_CLASS(montezuma::godot_binding::LightmapBaker);
         EditorPlugins::add_by_type<montezuma::godot_binding::LightmapBaker>();
         return;

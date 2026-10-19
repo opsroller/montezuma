@@ -72,7 +72,7 @@ shows up on `main` after merge, and the next PR fixes it.
   stamp, keyed by a hash of the board and backdrop folders, the materials,
   the textures' `.inputs` stamps, the `LD_*_Bake.tscn` scenes, the bake
   driver `lightmap_baker.cpp`, `godot.env` and `project.godot`. Then
-  `tools/assets/bake_lightmaps.sh --check` compares the stamps; only when
+  `cmake -DCHECK=ON -P tools/assets/bake_lightmaps.cmake` compares the stamps; only when
   one is stale does the action install Mesa lavapipe and xvfb, build the
   native extension if the job has none (and delete it afterwards, so it
   never reaches a web or desktop export), import the project and bake

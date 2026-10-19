@@ -13,7 +13,7 @@ namespace montezuma::godot_binding {
 // (docs/reference/board-themes.md#lighting):
 // - each LightmapGI under `lighting` loads the bake its
 //   "light_data_path" metadata names, when that build output exists
-//   (tools/assets/bake_lightmaps.sh), and re-resolves its meshes, which
+//   (tools/assets/bake_lightmaps.cmake), and re-resolves its meshes, which
 //   it finds by path from itself, so call again after the board is rebuilt;
 // - each VoxelGI under `lighting` is baked from `scene` (the node holding
 //   both the theme backdrop and the board) the first time the quality
