@@ -50,7 +50,11 @@ Files land in `game/assets/audio/music/`, levels in
    that returns a mono numpy signal, built from the instruments in
    `tools/audio/synth.py`. `r` is the file's random generator, `v` the
    variation index. Give it a one-line docstring saying what the player
-   should learn from it.
+   should learn from it. For a sound of objects touching (a knock, a
+   slide, a break), build it from `impact`, `friction` and `debris` in
+   `stone_room`, then `fit` it to its length; pass it through
+   `soft_limit` only if its sharpest peaks keep it under its level
+   target.
 3. Add it to `CUES` with its variation count (more than one only for
    sounds that fire often) and its category from the levels table in
    [the audio reference](../reference/audio.md#levels).
