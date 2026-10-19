@@ -99,6 +99,7 @@ Profile make_mobile() {
     p.soft_shadows = SoftShadows::VeryLow;
     p.positional_shadow_atlas = 0;
     p.shadow_casting_lights = 0;
+    p.batch_pieces = true;
     p.texture_variant = "";
     return p;
 }
@@ -113,9 +114,11 @@ Profile make_web() {
     p.anisotropy = 2;
     p.mesh_lod_threshold = 2.0f;
     p.sun_shadow_size = 1024;
+    p.sun_shadow_splits = 1;
     p.soft_shadows = SoftShadows::Hard;
     p.positional_shadow_atlas = 0;
     p.shadow_casting_lights = 0;
+    p.batch_pieces = true;
     p.texture_variant = "lo";
     return p;
 }

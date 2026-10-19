@@ -86,7 +86,13 @@ benchmark on the reference Mac mini M4 replaces them.
    temple's environment has no fog, and haze in the backdrop comes from
    WP-51's `FogVolume`s, which are kept off the board. A theme can still
    set `lighting.fog` for height fog if its readability capture passes on
-   every tier.
+   every tier. Measured afterwards at 1280 × 720 (software rendering, so
+   look only, not speed), with the WP-49 braziers in: on `web` rule 2
+   passes (mean change 0.003) and rule 4 passes (0.9%); on `desktop-high`
+   rule 2 passes (mean 0.72, p99 4) and rule 4 passes for the atmosphere
+   alone (0.4%), but fails at 12.5% with glow on too, because glow blooms
+   the fire and the gold. Glow, and with it rule 6, belongs to WP-52;
+   rule 5 to WP-48.
 8. **`desktop-high` renders 3D at most 720 lines high.** Above a 720-line
    output the temporal upscaler (MetalFX on Metal, FSR 2.2 elsewhere)
    takes over at 720 / output height, never below 0.5: 0.67 at 1080p, 0.5
@@ -178,6 +184,15 @@ it at 64 cells and 6.9 s at 128 cells; with SDFGI instead, 1.0 s. That
 is the CPU emulating compute shaders and says nothing about a GPU, but it
 marks the voxel re-light as the item to measure first, and is why the
 volume is 64 cells.
+
+**The reflection probe (measured on the same lavapipe setup, `VoxelGI`
+off).** The scene's one box probe, captured once, cost about 35 to 50 ms
+of a 356 ms p50 frame. With its cull mask emptied it cost about the same,
+so the cost is sampling, not repeated captures. Godot's default
+reflection atlas (64 probes) added 500 MB of video memory for that one
+probe, so `project.godot` sets the atlas to 8 probes, which brings it to
+about 80 MB. Every probe added to a theme takes one of those 8 slots and
+is captured on load.
 
 ## Options considered
 

@@ -1,14 +1,26 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 # Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
 #
-# Windows build and tests for PRs that change the build system. Windows is
-# off the other PR checks for speed, so a CMake, submodule or godot-cpp
-# change that breaks MSVC (such as a C runtime mismatch at link) would only
-# show up on main. Code-only PRs skip this; main still builds Windows in the
-# tests and build workflows. Reference: docs/reference/ci-pipeline.md
+# Windows build and tests for branch pushes and PRs that change the build
+# system. Windows is off the other branch and PR checks for speed, so a
+# CMake, submodule or godot-cpp change that breaks MSVC (such as a C runtime
+# mismatch at link) would only show up on main. Code-only changes skip this;
+# main still builds Windows in the tests and build workflows. Reference: docs/reference/ci-pipeline.md
 name: windows
 
+# The push filter sees only the files of that push; the pull_request run
+# matches the whole PR, so a PR's head is always checked when the PR
+# touches the build system. Windows runs too long to drop the filter.
 on:
+  push:
+    branches-ignore: [main]
+    paths:
+      - CMakeLists.txt
+      - "**/CMakeLists.txt"
+      - "**/*.cmake"
+      - .gitmodules
+      - thirdparty/**
+      - .github/workflows/windows.yml
   pull_request:
     paths:
       - CMakeLists.txt
@@ -24,7 +36,7 @@ permissions:
 
 concurrency:
   group: windows-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   build-and-test:

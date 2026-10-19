@@ -69,6 +69,7 @@ to the view's placeholder.
 | `T_` + `_N` | normal: tangent space, OpenGL (green up), RGB |
 | `T_` + `_ORM` | occlusion, roughness, metallic in R, G, B: linear |
 | `T_` + `_H` | height: linear, greyscale, white is high (parallax) |
+| `T_` + `_R` | roughness: linear, greyscale (legacy; new sets pack it in `_ORM`) |
 | `T_Grade_LUT` | colour grade lookup table in `grade/`: display-space RGB, imported as a 3D texture |
 
 Names use `A-Z a-z 0-9 _` only. Code refers to logical names in the
@@ -115,7 +116,7 @@ byte-identical files.
 | Command | Writes | Needs |
 |---|---|---|
 | `python3 tools/assets/gen_theme_meshes.py [params]` | `SM_*.obj`, prints triangle counts, fails over budget | Blender 4.2+ as `bpy` (`pip install bpy`) or `blender -b --factory-startup -P <script> -- [params]` |
-| `python3 tools/assets/gen_theme_textures.py [params]` | `T_*_{BC,N,ORM,H}.png` (tiling), base and `hi/`; `grade/T_Grade_LUT.png` and its `.import` for a theme with a `grade` ([Colour grade](#colour-grade)) | numpy, Pillow |
+| `python3 tools/assets/gen_theme_textures.py [params]` | `T_*_{BC,N,ORM,H}.png` (tiling), base and `hi/`, each with its `.import`; `grade/T_Grade_LUT.png` and its `.import` for a theme with a `grade` ([Colour grade](#colour-grade)) | numpy, Pillow |
 | `python3 tools/assets/gen_theme_scenes.py [params]` | `MI_*.tres`, `hi/MI_*.tres` and `lo/MI_*.tres`, `PF_*.tscn`, `LD_*.tscn` (with `LD_<Theme>_Bake.tscn`), the theme's manifest entry, `design/tokens/<theme>-board.json` | standard library |
 | `tools/assets/bake_lightmaps.sh [--godot PATH] [--xvfb] [--force] [--check]` | each theme's `PF_Environment.lmbake` and `.exr`, and a `.lightmap-inputs` stamp; skips themes whose stamp matches (`--check` only reports, exit 3 when stale) | Godot 4.7.2 editor, the native extension built, the textures generated, a Vulkan driver (Mesa lavapipe works without a GPU) |
 | `python3 tools/assets/validate_assets.py` | nothing; exits 1 on errors | Pillow, numpy (colour grade) |
@@ -130,13 +131,38 @@ The `T_*` texture sets are build outputs, not committed: git ignores
 Hand-made textures elsewhere in `game/assets/textures/` are still
 committed. `gen_theme_textures.py` writes a theme's `.inputs` stamp, a
 SHA-256 of the script, the theme's parameters and the numpy and Pillow
-versions, and skips the theme when the stamp matches and every file
-exists. The grade LUT takes milliseconds, so it is compared and rewritten
-on every run, stamp or not. Three things run it: the CMake target `textures` (part of `all`
+versions, and skips drawing the theme when the stamp matches and every
+file exists (it still writes any missing or wrong `.import` file). The
+grade LUT takes milliseconds, so it is compared and rewritten on every
+run, stamp or not. Three things run it: the CMake target `textures` (part of `all`
 when CMake finds Python 3 with numpy and Pillow; otherwise configure
 prints how to run it), the CI action `.github/actions/textures` (see
 [CI pipeline](ci-pipeline.md#assets-workflow)), and you, before opening
 the project in Godot from a fresh checkout.
+
+### Import settings
+
+Git ignores the `.import` files too, so `gen_theme_textures.py` writes
+one beside every PNG on every run, from `tools/assets/texture_import.py`,
+and leaves alone a file Godot has rewritten as long as it still agrees.
+Godot's defaults (no mipmaps; `detect_3d` switching a texture to VRAM
+compression the first time the editor sees it in 3D) never apply.
+
+| Parameter | `_BC`, `_ORM`, `_H` (and the legacy `_R`) | `_N` | Why |
+|---|---|---|---|
+| `compress/mode` | `2` (VRAM compressed) | `2` | GPU formats: S3TC/BPTC on desktop and web, ETC2/ASTC on mobile |
+| `compress/high_quality` | `false` | `false` | BC1/BC4 and ETC2, half the memory of BC7/ASTC 4×4 |
+| `compress/normal_map` | `2` (off) | `1` (on) | normal maps go two-channel (RGTC/BC5 on desktop and web, EAC RG11 on mobile); the shaders rebuild Z (`tri_unpack`) |
+| `mipmaps/generate` | `true` | `true` | the triplanar samplers filter with mipmaps; without them minified tiles alias |
+| `detect_3d/compress_to` | `0` (off) | `0` | no silent reimport in the editor |
+
+Change the settings in `texture_import.py`, not in the editor's Import
+dock: the generator puts them back on the next run. Another texture
+generator writing under `game/assets/textures/` writes its own `.import`
+files with mipmaps and compression set and `detect_3d/compress_to=0`.
+Git ignores every `.import`, so a hand-made texture under
+`game/assets/textures/` also needs its `.import` committed (a `!` line in
+`.gitignore`) to pass the validator.
 
 ### Parameter file
 
@@ -175,7 +201,7 @@ the parameter file's `lighting` section:
 | `Sun` | `DirectionalLight3D`, shadows | all | `sun` (`lux`, `kelvin`, `color`, `angular_distance`) | 11,000 lux, 4500 K, 0.6° |
 | `Fire1`…`Fire4/Light` | `FlickerLight3D` in each brazier's `PF_BrazierFire` ([Fire](fire.md)), dual paraboloid shadows (seam flat above the board), group `quality_shadow_light` | all; shadows on the nearest 8 or 2 | `torch` (`lumens`, `kelvin`, `color`, `size`, `range`) | 60,000 lm, 1900 K, range 4.5 m |
 | `SkyFill` | `AreaLight3D` over the board, group `quality:area_light`, not baked | `desktop-high` | `sky_fill` (`transform`, `lumens`, `color`, `size`, `range`) | 20,000 lm, 10 × 10 m |
-| `ReflectionProbe` | box-projected probe | all | `reflection_probe` (`position`, `size`) | 12 × 4 × 12 m |
+| `ReflectionProbe` | box-projected probe; leaves out render layer 2 (fire effects, [Fire](fire.md#pf_brazierfire)) | all | `reflection_probe` (`position`, `size`) | 12 × 4 × 12 m |
 | `VoxelGI` | real-time bounce for the moving pieces, group `quality:voxel_gi`, baked at run time | `desktop-high` | `voxel_gi` (`position`, `size`, `subdiv`) | 14 × 4 × 14 m, 64 cells |
 | `Lightmap` | `LightmapGI` with probes | all | `lightmap` (`quality`, `bounces`, `texel_scale`, `max_texture_size`, `probes_subdiv`) | medium, 3 bounces |
 
@@ -295,14 +321,19 @@ variants up to 2048² ([Visual target](visual-target.md#content-budgets-per-tier
 | Backdrop (platform, braziers, ground, ferns, rocks) | 4,220 |
 
 A full 8×8 board of pieces averages about 260 triangles each (~17k), so
-the whole scene stays near 31k triangles. Draw calls: one per piece (64),
-6 board parts, 6 backdrop parts, the brazier fires (11 draw calls), plus shadow passes; pieces share 7
-materials. Textures: seven base sets at 1024² (`Stone_01` with `_H`;
+the whole scene stays near 31k triangles. Draw calls on desktop: one per
+piece (64), 6 board parts, 6 backdrop parts, the brazier fires (11 draw
+calls), plus shadow passes; pieces share 7 materials. On `mobile` and
+`web` the pieces and markers are batched to one draw per piece kind and
+marker ([Board view](board-view.md#draw-calls)), and `web` draws its sun
+shadow in one cascade. Textures: seven base sets at 1024² (`Stone_01` with `_H`;
 22 PNGs, 15 MB generated) and 2048² `hi/` sets for the hero surfaces
 `Stone_01` and `Gold_01` (7 PNGs, 23 MB generated); all are VRAM-compressed
-on import. In VRAM (BPTC/ASTC, about 1 byte per pixel with mipmaps) the
-base sets take about 30 MB and the `hi/` sets add about 40 MB, well
-inside every tier's texture budget. Frame time on target phones
+on import ([Import settings](#import-settings)). In VRAM on desktop
+(BC1/BC4 about 0.7 and RGTC about 1.3 bytes per pixel with mipmaps; ETC2
+and EAC on mobile are the same sizes) the base sets take about 20 MB and
+the `hi/` sets add about 25 MB, well inside every tier's texture budget.
+Frame time on target phones
 is not measured yet; that is WP-41.
 
 ## Look-dev reference frames
@@ -351,6 +382,11 @@ each as `error: <file>: <rule and fix>`:
   30-240 sRGB and metal (where `_ORM` blue ≥ 0.5) at 180 or more; normals
   unit length, facing out, averaging flat; metallic 0 or 1 except at most
   5% of pixels; roughness ≥ 0.02; height spans a real range.
+- Every PNG under `game/assets/textures/` has a `.import` beside it.
+  `_BC`, `_N`, `_ORM`, `_H` and legacy `_R` maps carry exactly the
+  [import settings](#import-settings); any other texture there sets
+  `compress/mode` and `mipmaps/generate` and turns
+  `detect_3d/compress_to` off.
 - No `.tres`, `.tscn` or `.gdshader` filters anisotropically with repeat
   (`texture_filter = 4` or `5` without `texture_repeat = false`, or a
   `filter_*_anisotropic` sampler without `repeat_disable`); see texture

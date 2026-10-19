@@ -79,7 +79,7 @@ void LightmapBaker::_process(double delta) {
             return;
         case Step::WaitImport: {
             EditorFileSystem* fs = editor->get_resource_filesystem();
-            wait_frames_ = fs->is_scanning() ? 0 : wait_frames_ + 1;
+            wait_frames_ = fs->is_scanning() || fs->is_importing() ? 0 : wait_frames_ + 1;
             if (wait_frames_ >= kSettleFrames) step_ = Step::Open;
             return;
         }
@@ -105,7 +105,8 @@ void LightmapBaker::_process(double delta) {
         case Step::Bake: {
             // The plugin shows its button once the node is selected.
             Button* button = find_bake_button(editor->get_base_control());
-            if (!button || !button->is_visible_in_tree()) {
+            EditorFileSystem* fs = editor->get_resource_filesystem();
+            if (!button || !button->is_visible_in_tree() || fs->is_scanning() || fs->is_importing()) {
                 if (step_elapsed_ > kStepTimeoutSeconds) finish(false, "no Bake Lightmaps button");
                 return;
             }
@@ -137,12 +138,21 @@ void LightmapBaker::_process(double delta) {
 void LightmapBaker::finish(bool ok, const String& why) {
     if (ok) {
         UtilityFunctions::print("LIGHTMAP_BAKE ok ", scenes_[index_], " ", why);
+    } else if (!retried_) {
+        UtilityFunctions::printerr("LIGHTMAP_BAKE retry ", scenes_[index_], " ", why);
+        print_dialogs(get_tree()->get_root());
+        retried_ = true;
+        step_ = Step::WaitImport;
+        wait_frames_ = 0;
+        step_elapsed_ = 0.0;
+        return;
     } else {
         ++failures_;
         UtilityFunctions::printerr("LIGHTMAP_BAKE fail ", scenes_[index_], " ", why);
         print_dialogs(get_tree()->get_root());
     }
     ++index_;
+    retried_ = false;
     step_ = index_ < scenes_.size() ? Step::Open : Step::Done;
     step_elapsed_ = 0.0;
 }

@@ -77,6 +77,7 @@ Per frame, from the previous frame (the newest the engine has):
 | `gpu_ms` | `RenderingServer.viewport_get_measured_render_time_gpu()` of the root viewport; frames with no timestamp (0) are left out |
 | `frame_ms` | wall-clock time between frames |
 | draw calls, primitives | `Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME`, `RENDER_TOTAL_PRIMITIVES_IN_FRAME` |
+| draw calls by pass | `RenderingServer.viewport_get_render_info` of the root viewport for `VISIBLE`, `SHADOW` and `CANVAS`. The Compatibility renderer (Godot 4.7.2) counts its shadow-map draws under `VISIBLE` and reports 0 for `SHADOW` |
 | video memory | `Performance.RENDER_VIDEO_MEM_USED`, maximum |
 | render size | the root viewport's texture size, checked against the requested size |
 | window size | `DisplayServer.window_get_size()`, which must not change during the capture |
@@ -183,13 +184,13 @@ reach):
 | `device` | `os`, `model`, `godot`, `rendering_method` (`forward_plus`, `mobile`, `gl_compatibility`), `rendering_driver`, `adapter`, `vendor`, `api_version`, `resolution` [w, h], `headless`, `software` (a CPU rasteriser adapter) |
 | `gpu_timing` | false when no frame had a GPU timestamp (headless, or a driver without timer queries: Metal in Godot 4.7.2); then `gpu_ms` is null and no verdict uses GPU time |
 | `process_ms`, `render_cpu_ms`, `cpu_ms`, `gpu_ms`, `frame_ms` | each `{frames, mean, p50, p95, p99, max, over_budget}`; `over_budget` counts frames over the p95 limit |
-| `render` | `draw_calls_p95`, `draw_calls_max`, `primitives_p95`, `primitives_max`, `video_mem_max_mb` |
+| `render` | `draw_calls_p95`, `draw_calls_max`, `draw_calls_by_pass` (`scene_p95`, `shadow_p95`, `canvas_p95`), `piece_draws` (the board view's `get_piece_draws()` at the end of the run), `primitives_p95`, `primitives_max`, `video_mem_max_mb` |
 | `replay` | `scenario` (`busiest-board`), `seed`, `beats`, `loops`, `deep_cascades` (beats of 4+ steps played), `max_cascade_steps`, `diverged` |
 | `features` | the feature list below, read when the capture starts |
 | `quality_features` | `QualityTiers.get_active_features()`: the feature ids the active tier switches on ([Quality tiers](quality-tiers.md#feature-ids)) |
 
 `check_run.py REPORT [--size WxH] [--no-budget]` prints a PASS or FAIL
-line for the budget, the render and window size (with `--size`, also that
+line for the budget, the draw calls, the render and window size (with `--size`, also that
 the run was locked at that size) and the replay. It does not take the
 runner's pass flags on trust: it re-derives the budget from the tier's
 rules and the report's percentiles (an unknown tier, a missing rule, a
@@ -202,7 +203,11 @@ display, any non-default tolerance or budget, missing GPU timing and the
 Metal display wait. It exits 1 when a check fails and 2 when the report
 is unreadable, not schema 2, has a budget limit that is not numbers, or
 carries `gpu_ms` numbers under `timing.gpu` false. `--no-budget` prints the budget as SKIP (CI smoke
-runs).
+runs). The draw-call line compares `draw_calls_p95` with the tier's cap
+from the [content budgets](visual-target.md#content-budgets-per-tier)
+(2000, 1000, 300, 200): a count is the same on any GPU and on a software
+renderer, so it is judged on every run that drew frames, `--no-budget`
+included, and skipped headless.
 
 ## Features
 

@@ -213,6 +213,14 @@ def fade_ramp(name, stops):
             f'[sub_resource type="GradientTexture1D" id="{name}_tex"]', f'gradient = SubResource("{name}")', ""]
 
 
+# Render layer of the fire effects. Reflection probes leave it out: on
+# Compatibility a probe that draws a material reading the depth texture
+# blits its depth-only atlas into a depth-stencil buffer, which WebGL
+# (WebKit) rejects. Fire is too fast to keep in a probe captured once anyway.
+FX_LAYER = 2
+ALL_LAYERS = (1 << 20) - 1
+
+
 def brazier_fire(p, theme):
     """PF_BrazierFire: flame, smoke and embers on GPU particles, heat haze and a flickering light.
 
@@ -273,7 +281,7 @@ def brazier_fire(p, theme):
     def particles(name, amount, lifetime, process, mesh, material, extra=(), groups=None):
         head = f'[node name="{name}" type="GPUParticles3D" parent="."'
         head += f' groups=["{groups}"]]' if groups else "]"
-        return ["", head, "cast_shadow = 0", f"amount = {amount}", f"lifetime = {lifetime}", f"preprocess = {lifetime}",
+        return ["", head, f"layers = {FX_LAYER}", "cast_shadow = 0", f"amount = {amount}", f"lifetime = {lifetime}", f"preprocess = {lifetime}",
                 f"visibility_aabb = {aabb}", f'process_material = SubResource("{process}")',
                 f'draw_pass_1 = SubResource("{mesh}")', f"material_override = {material}", *extra]
 
@@ -289,7 +297,7 @@ def brazier_fire(p, theme):
     r.body += particles("EmbersNoTrail", em["amount"], em["lifetime"], "ember_process", "ember_quad", mat["MI_Ember"],
                         groups="quality_fallback:particle_trails")
     r.body += ["", '[node name="HeatHaze" type="MeshInstance3D" parent="." groups=["quality:heat_haze"]]',
-               f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, {hz['offset']}, 0)", "cast_shadow = 0",
+               f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, {hz['offset']}, 0)", f"layers = {FX_LAYER}", "cast_shadow = 0",
                'mesh = SubResource("haze_quad")', f"surface_material_override/0 = {mat['MI_HeatHaze']}"]
     # Physical units (lumens, Kelvin) from the theme's lighting section. Dual
     # paraboloid shadows take two passes instead of a cube's six; the light is
@@ -453,7 +461,8 @@ def main():
     probe = light["reflection_probe"]
     r.body += ["", '[node name="ReflectionProbe" type="ReflectionProbe" parent="."]',
                f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, {', '.join(map(str, probe['position']))})",
-               f"size = Vector3({', '.join(map(str, probe['size']))})", "box_projection = true"]
+               f"size = Vector3({', '.join(map(str, probe['size']))})", "box_projection = true",
+               f"cull_mask = {ALL_LAYERS & ~FX_LAYER}"]
     vgi = light["voxel_gi"]
     r.body += ["", '[node name="VoxelGI" type="VoxelGI" parent="." groups=["quality:voxel_gi"]]',
                f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, {', '.join(map(str, vgi['position']))})",

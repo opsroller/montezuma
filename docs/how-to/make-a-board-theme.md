@@ -33,7 +33,8 @@ With a Blender install instead of `bpy`, run the mesh step as
    The textures are not committed. In a fresh checkout run
    `gen_theme_textures.py` (or build the CMake target `textures`) before
    opening the project in Godot; it does nothing when its inputs have not
-   changed.
+   changed. It also writes each texture's Godot import settings
+   (mipmaps, compression); leave the editor's Import dock alone for them.
 
    Then bake the lightmap, which is not committed either
    ([Build and test: bake the lightmaps](build-and-test.md#bake-the-lightmaps)):
@@ -96,7 +97,7 @@ With a Blender install instead of `bpy`, run the mesh step as
 1. Add a recipe to `tools/assets/gen_theme_textures.py`: a function
    `(rng, n)` that returns base colour, height, occlusion, roughness and
    metallic arrays for an `n`×`n` tile. Build it from the periodic helpers
-   (`fbm`, `voronoi`, `cavity`) so it tiles. Keep base colour free of
+   (`fbm`, `voronoi`, `warp`, `blur`, `cavity`, `leaves`) so it tiles. Keep base colour free of
    light and shadow; put roughness variation where the surface story is.
    Register it in `RECIPES`.
 2. Add the set under `textures.sets` in the parameter file, for example
@@ -150,6 +151,12 @@ own: mobile and web never see the variant.
 
 Each error names the file and the rule. Over budget: lower the segment
 counts in the shape function or the bevels. Missing reference: re-run
-`gen_theme_scenes.py`. Missing provenance: add the record. Never hand-edit
+`gen_theme_scenes.py`. Missing provenance: add the record. Missing or
+wrong `.import` for a generated texture: re-run `gen_theme_textures.py`;
+to change an import setting, edit `tools/assets/texture_import.py`. For a
+hand-made texture under `game/assets/textures/`, import it once in Godot
+with the settings in
+[Import settings](../reference/board-themes.md#import-settings), then
+commit its `.import` with a `!` line in `.gitignore`. Never hand-edit
 generated `.obj`, `.tres` or `.tscn` files; change the parameters or the
 generator, or your edit is lost on the next run.

@@ -70,6 +70,15 @@ godot --headless --path game --quit-after 120 -- --game-selftest
 
 It ends with `Match3Game self-test: <n> moves, outcome 1, <n> cues, 0 failures`.
 
+Check the web demo's scene, which must be won in play and tell the page
+once ([IntroLevel](../reference/intro-level.md#self-test)):
+
+```sh
+godot --headless --path game --quit-after 120 res://scenes/demo/intro_level.tscn -- --intro-selftest
+```
+
+It ends with `IntroLevel self-test: <n> moves, outcome 1, 1 completions, 0 failures`.
+
 Quit from inside a level, with music playing, as CI does; nothing may
 print an error or a leak at exit:
 
@@ -125,7 +134,9 @@ tools/assets/bake_lightmaps.sh --godot "$(command -v godot)" --xvfb
 
 It skips themes whose bake inputs did not change, and prints
 `LIGHTMAP_BAKE ok res://assets/lookdev/LD_<Theme>_Bake.tscn …` for each
-bake. Without a bake the game still runs, without baked light. Details:
+bake. If the editor starts an import of its own during a bake, the bake
+fails, prints `LIGHTMAP_BAKE retry …` and runs once more. Without a bake
+the game still runs, without baked light. Details:
 [Board themes: Lighting](../reference/board-themes.md#lighting).
 
 ## Capture screenshots without a display
@@ -161,4 +172,5 @@ xvfb-run -a -s "-screen 0 1280x720x24" \
 ## Export a build
 
 See [Export a desktop build](export-a-desktop-build.md). CI builds the
-Windows, macOS and Linux packages on every push to `main`.
+Windows, macOS and Linux packages on every push to `main`, and the macOS
+and Linux packages on every push to any other branch.

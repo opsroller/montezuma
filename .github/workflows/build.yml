@@ -10,7 +10,7 @@ name: build
 
 on:
   push:
-    branches: [main]
+    branches: ["**"]
   pull_request:
     paths:
       - .github/workflows/build.yml
@@ -27,17 +27,21 @@ permissions:
 
 concurrency:
   group: build-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   extension:
+    # A branch of this repository is checked by its push run on the same
+    # commit; pull_request runs only for forks.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork
     name: extension (${{ matrix.platform }})
     strategy:
       fail-fast: false
       matrix:
-        # Windows builds only on pushes to main, not on PRs, to keep PR
-        # feedback fast. A Windows break shows up on main.
-        platform: ${{ fromJSON(github.event_name == 'pull_request' && '["linux","macos"]' || '["linux","windows","macos"]') }}
+        # Windows builds only on main and manual runs, not on feature
+        # branches or PRs, to keep feedback fast. A Windows break shows up
+        # on main.
+        platform: ${{ fromJSON((github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && '["linux","windows","macos"]' || '["linux","macos"]') }}
     env:
       # Per-platform settings, looked up by matrix.platform. (An include list
       # would re-add Windows on PRs.)
@@ -124,7 +128,7 @@ jobs:
       - name: Export
         env:
           GODOT: /home/runner/godot-dl/godot
-          PLATFORMS: ${{ github.event_name == 'pull_request' && 'linux macos' || 'linux windows macos' }}
+          PLATFORMS: ${{ (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && 'linux windows macos' || 'linux macos' }}
         run: |
           version="$(tools/release/version.sh)"
           echo "Version $version" >> "$GITHUB_STEP_SUMMARY"
@@ -145,7 +149,7 @@ jobs:
           path: dist/linux/montezuma-*
           if-no-files-found: error
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        if: github.event_name != 'pull_request'
+        if: (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch')
         with:
           name: montezuma-windows
           path: dist/windows/montezuma-*
@@ -162,7 +166,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: ${{ fromJSON(github.event_name == 'pull_request' && '["linux","macos"]' || '["linux","windows","macos"]') }}
+        platform: ${{ fromJSON((github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && '["linux","windows","macos"]' || '["linux","macos"]') }}
     runs-on: ${{ fromJSON('{"linux":"ubuntu-22.04","windows":"windows-2022","macos":"macos-14"}')[matrix.platform] }}
     timeout-minutes: 20
     steps:

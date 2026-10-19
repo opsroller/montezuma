@@ -24,6 +24,9 @@ namespace montezuma::godot_binding {
 // LightmapGI named "Lightmap" in it, bakes it (the editor writes the
 // .lmbake and its textures next to the scene that owns the node), prints
 // "LIGHTMAP_BAKE ok|fail <scene> <ms>" and quits with status 1 if any failed.
+// A failed bake is retried once after the editor is idle again: an import
+// the editor starts on its own while the bake runs makes the bake's import
+// of its atlas fail ("reimport_files() recursively").
 // Without the argument it does nothing.
 class LightmapBaker : public godot::EditorPlugin {
     GDCLASS(LightmapBaker, godot::EditorPlugin)
@@ -44,6 +47,7 @@ private:
     godot::PackedStringArray scenes_;
     int index_ = 0;
     int failures_ = 0;
+    bool retried_ = false;
     Step step_ = Step::Idle;
     int wait_frames_ = 0;
     double elapsed_ = 0.0;

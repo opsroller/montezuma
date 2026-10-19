@@ -115,6 +115,11 @@ struct StepHooks {
     // ignored. The extra cells are recorded in that step's `cleared` and
     // counted in its `steps` entry; `runs` stays as found.
     std::function<std::vector<Cell>(const Board& board, const std::vector<Cell>& cleared, int step)> extend_clear;
+    // Called once per step right after extend_clear, with the same `step`.
+    // Returns cells of the step to leave in place: they are not emptied, not
+    // recorded in `cleared` and not counted in `steps` (chains, OBS-05).
+    // Cells the step would not clear are ignored.
+    std::function<std::vector<Cell>(const Board& board, int step)> keep;
     // Called once per step after its falls and refill, with the step as
     // recorded.
     std::function<void(const Board& board, const CascadeStep& step, int index)> after_refill;

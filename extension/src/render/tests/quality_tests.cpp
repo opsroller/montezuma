@@ -113,6 +113,11 @@ void test_profiles_match_visual_target() {
     check(high.shadow_casting_lights == 8 && standard.shadow_casting_lights == 2 &&
               mobile.shadow_casting_lights == 0 && web.shadow_casting_lights == 0,
           "shadow-casting light budget 8/2/0/0");
+    check(high.sun_shadow_splits == 4 && standard.sun_shadow_splits == 4 && mobile.sun_shadow_splits == 4 &&
+              web.sun_shadow_splits == 1,
+          "sun shadow cascades 4/4/4/1 (web draws its casters once)");
+    check(!high.batch_pieces && !standard.batch_pieces && mobile.batch_pieces && web.batch_pieces,
+          "pieces batched on mobile and web only");
     check(standard.ssr_half_size && !high.ssr_half_size, "SSR half resolution on standard only");
     check(high.dof_quality == DofQuality::Medium && standard.dof_quality == DofQuality::Low,
           "depth of field medium on high, low on standard");

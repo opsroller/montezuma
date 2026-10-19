@@ -77,9 +77,11 @@ own folder.
 - [About lighting](explanation/about-lighting.md): baked and real-time GI per tier, why VoxelGI over SDFGI, physical units, height fog and the lighting costs.
 - [About post-processing and the colour grade](explanation/about-post-processing.md): glow before tonemapping, the CDL grade as a LUT and its palette check, backdrop depth of field that follows the camera, and their costs.
 - [About CI caching](explanation/about-ci-caching.md): why CI uses a compiler cache and what it leaves uncached.
+- [About CI on every push](explanation/about-ci-on-every-push.md): why every branch push runs the checks, and why branch PRs skip their own run.
 - [About level clocks](explanation/about-level-clocks.md): why each level has its own base clock, why timer upgrades add to it, and why the clock rule counts only wins.
 - [About the episode 3 levels](explanation/about-the-episode-3-levels.md): why chains then steel, what the simulator measures for chains, and human time against the clock.
 - [About the episode 4 levels](explanation/about-the-episode-4-levels.md): how the one ward is taught, the chain shapes, and why `random` has no target from episode 4.
+- [About the episode 5 levels](explanation/about-the-episode-5-levels.md): how the final episode gets harder through goals and obstacles alone, its new chain shapes, and what the simulator cannot see there.
 - [About the build pipeline](explanation/about-the-build-pipeline.md): why builds compile natively and export once, and how the web demo is built.
 - [Sound direction](explanation/sound-direction.md): why the game sounds the way it does.
 - [About the website](explanation/about-the-website.md): why the front page is the playable intro level and how it hands off to downloads.
