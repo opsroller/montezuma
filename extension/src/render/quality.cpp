@@ -46,6 +46,7 @@ Profile make_desktop_high() {
     p.render_scale = 1.0f;
     p.taa = true;
     p.anisotropy = 16;
+    p.debanding = true;
     p.sun_shadow_size = 4096;
     p.soft_shadows = SoftShadows::High;
     p.positional_shadow_atlas = 4096;
@@ -68,6 +69,7 @@ Profile make_desktop_standard() {
     p.scaling = Scaling::TemporalUpscale;
     p.render_scale = 0.77f;
     p.anisotropy = 8;
+    p.debanding = true;
     p.sun_shadow_size = 2048;
     p.soft_shadows = SoftShadows::Low;
     p.positional_shadow_atlas = 2048;

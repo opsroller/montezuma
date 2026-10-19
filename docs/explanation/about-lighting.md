@@ -108,6 +108,38 @@ benchmark on the reference Mac mini M4 replaces them.
    material has a `lo/` copy at 1 nit that `QualityTiers` loads on the
    web tier, the same way it loads `hi/` materials on desktop.
 
+## Revision: darker shadows (WP-60)
+
+The first temple lighting read flat: the sky lit every surface about as
+much as the sun did. Two fills did it. The `LightmapGI` baked the scene's
+full 15,000-nit sky as bounce light, and lightmapped surfaces take their
+indirect light only from the lightmap, so lowering the environment's
+ambient alone changed nothing on the static stone. The sky fill area light
+and the ambient energy added more on top.
+
+So the lightmap now bakes the theme's sky at a reduced energy
+(`lighting.lightmap.sky_energy`, 0.3), the ambient energy drops from 0.4
+to 0.15 and the sky fill from 20,000 to 6,000 lm. The braziers go up to
+90,000 lm so their pools of light show against the darker shadows, the
+exposure multiplier drops to 0.7 so sunlit stone no longer sits near
+white, and SSAO goes to intensity 3 (power 1.5, light affect 0.3) so the
+creases between tiles and pieces darken. On a 4K capture of the first
+level the darkest 5% of the board view went from 0.27 to 0.23 luminance
+and the brightest 5% from 0.75 to 0.66. The colour grade (glow, contrast,
+saturation) is WP-52's, which takes it from here.
+
+Lowering the ambient also lowers what the volumetric fog picks up
+through its ambient injection; the ground mist (#79) was checked with
+these values and needed no retuning.
+
+Readability capture on `desktop-high` at 3840 × 2160 (RTX 4080 SUPER),
+`main` with the ground mist against this change: rule 4 passes both times
+(6.9% and 9.0%); rule 2 (effects inside the board) falls from a mean of
+2.24 to 1.01; rule 6's bloom past a quarter cell falls from 19.5% to 11.6%
+of the board; rule 5's closest greyscale pair goes from 7.2 to 8.0 on the
+light tiles and from 5.3 to 5.0 on the dark ones. Rules 2, 5 and 6 already
+failed at 4K before this change.
+
 ## Bake settings
 
 | Setting | Value | Why |

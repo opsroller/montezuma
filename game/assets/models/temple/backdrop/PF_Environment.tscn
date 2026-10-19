@@ -29,7 +29,7 @@ sky_material = SubResource("sky_mat")
 
 [sub_resource type="CameraAttributesPractical" id="camera"]
 exposure_sensitivity = 440
-exposure_multiplier = 1.0
+exposure_multiplier = 0.7
 auto_exposure_enabled = true
 auto_exposure_scale = 0.45
 auto_exposure_speed = 0.5
@@ -41,12 +41,15 @@ background_mode = 2
 background_intensity = 15000
 sky = SubResource("sky")
 ambient_light_source = 3
-ambient_light_energy = 0.4
+ambient_light_energy = 0.15
 reflected_light_source = 2
 tonemap_mode = 4
 tonemap_agx_white = 16.0
 tonemap_agx_contrast = 1.25
 ssao_enabled = true
+ssao_intensity = 3.0
+ssao_power = 1.5
+ssao_light_affect = 0.3
 ssil_enabled = true
 glow_enabled = true
 glow_intensity = 0.6
@@ -150,7 +153,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0.44, 5.5)
 
 [node name="SkyFill" type="AreaLight3D" parent="." groups=["quality:area_light"]]
 transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 6, 0)
-light_intensity_lumens = 20000
+light_intensity_lumens = 6000
 light_color = Color(0.7216, 0.8314, 1.0000, 1.0000)
 light_bake_mode = 0
 area_size = Vector2(10.0, 10.0)
@@ -174,6 +177,9 @@ bounces = 3
 texel_scale = 1.0
 max_texture_size = 2048
 generate_probes_subdiv = 2
+environment_mode = 2
+environment_custom_sky = SubResource("sky")
+environment_custom_energy = 0.3
 camera_attributes = SubResource("camera")
 metadata/light_data_path = "res://assets/models/temple/backdrop/PF_Environment.lmbake"
 

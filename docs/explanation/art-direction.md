@@ -178,9 +178,11 @@ the reasoning in [About the atmosphere](about-the-atmosphere.md).
 ## Light
 
 Late-afternoon sun from the far left at about 42 degrees, warm white, with
-shadows; sky ambient kept low so the shadows have shape; four torches warm
-the corners. Filmic tonemapping and a light glow make the flames and gold
-bloom slightly. The same scene runs on all three renderers the profile
+shadows; sky ambient and sky fill kept low, and the baked sky bounce
+dimmed, so shadows go properly dark and the sun and the four braziers make
+pools of light. Filmic tonemapping and a light glow make the flames and gold
+bloom slightly. This is a lighting choice only; no material or motif
+changed, so it adds no claim about Mexica art. The same scene runs on all three renderers the profile
 names (Forward+, Mobile, Compatibility for the web demo); Compatibility
 looks a little flatter and brighter, which we accept.
 
