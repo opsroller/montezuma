@@ -1,4 +1,5 @@
 <!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- Copyright (C) 2026 Charles (opsroller) and Montezuma contributors -->
 # Direction 1 palette sketch: the twin temple
 
 Six stone colours, one per pigment family in the

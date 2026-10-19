@@ -14,6 +14,6 @@ was taken from the others is in
 | [`2/`](2/notes.md) | The step-fret band | Its band became the secondary pattern (`design/patterns/`) |
 | [`3/`](3/notes.md) | Three treasures in a row | Idea left for store art (WP-38) |
 
-Each folder has `notes.md`, `palette.md`, `type.md` and the `build.py`
-that drew it. Their colours, type choices and contrast figures are
+Each folder has `notes.md`, `palette.md`, `type.md` and the SVGs and
+PNGs it produced. Their colours, type choices and contrast figures are
 superseded by the style guide.

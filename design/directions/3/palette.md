@@ -1,4 +1,5 @@
 <!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- Copyright (C) 2026 Charles (opsroller) and Montezuma contributors -->
 # Direction 3 palette sketch
 
 Five stone pigment families (CO-01, CO-02, CO-03, CO-06) carry the mark and

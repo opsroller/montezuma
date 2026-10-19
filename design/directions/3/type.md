@@ -1,8 +1,9 @@
 <!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- Copyright (C) 2026 Charles (opsroller) and Montezuma contributors -->
 # Direction 3 type pairing
 
 The wordmark is not set in a font: it is drawn on a 10-unit cap grid with a
-2-unit stem and 45-degree cut corners (`build.py`, glyph table `G`), the cut
+2-unit stem and 45-degree cut corners (`wordmark.svg`), the cut
 corners echoing ground stone rather than a pixel font. The fonts below are
 for everything else.
 

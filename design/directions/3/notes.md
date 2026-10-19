@@ -1,4 +1,5 @@
 <!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- Copyright (C) 2026 Charles (opsroller) and Montezuma contributors -->
 # Direction 3: Three treasures in a row
 
 **Idea.** The identity says what the game is: three small precious things
@@ -12,8 +13,7 @@ the painted-book way: black outline, flat colour, no gradients, no facets.
 ribs, heavier outlines, objects enlarged), `wordmark.svg` (drawn on a grid,
 no font), `lockup.svg` and `lockup.png` (stacked), `app-icon.svg` with
 `icon-1024.png` and `icon-48.png`; `icon-16.png` is rendered from
-`mark-small.svg`. `palette.md`, `type.md`. Everything regenerates with
-`render.sh` (runs `build.py`, then headless Chromium).
+`mark-small.svg`. `palette.md`, `type.md`. PNGs were rendered with headless Chromium.
 
 ## Sources
 

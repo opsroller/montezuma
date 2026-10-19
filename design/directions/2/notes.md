@@ -13,7 +13,6 @@ to the centre) on an ochre plaque between blue and red bands.
 
 | File | What |
 |---|---|
-| `build.py` | Generates every SVG from grid geometry; run `python3 design/directions/2/build.py` |
 | `mark.svg` | Symbol: 30-unit plaque, M on a 20-unit grid, stroke and gaps 2 units |
 | `mark-small.svg` | 16 px variant: 8 x 8 px stepped M in soot, no spirals, pixel-snapped |
 | `wordmark.svg` | MONTEZUMA'S drawn on a 10-unit cap grid, stroke 2, stepped diagonals, between a blue and a red band |
@@ -51,7 +50,7 @@ on a grid; no surviving piece's fret was traced or measured.
   motif for UI.
 - Pure grid geometry: tiles losslessly, renders crisp at integer scales,
   cheap to build in Godot as a StyleBox texture or 9-slice and in CSS as a
-  repeating background; regenerated from `build.py`.
+  repeating background.
 - Flat fills and a soot outline meet the painted-book rule with no
   gradients; contrast pairs pass AA (see `palette.md`).
 

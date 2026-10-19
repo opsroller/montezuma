@@ -6,23 +6,22 @@ identity's, vendor the two fonts, and place the logo in a new layout. The
 rules and values: [Style guide](../../design/README.md). Why:
 [About the visual identity](../explanation/about-the-visual-identity.md).*
 
-You need Python 3. Regenerating previews also needs `chromium` on `PATH`.
+## Change an identity file
 
-## Regenerate and check the identity files
+1. Edit the SVG or token file directly. Keep SVG coordinates on their
+   integer grid, and change `design/tokens/montezuma.tokens.json` and
+   `design/tokens/tokens.css` together.
+2. For any new or changed colour pair, measure it with the WCAG 2.2
+   contrast formula (any contrast checker) and add it to the style
+   guide's [approved pairs](../../design/README.md#approved-pairs) only
+   if it passes.
+3. Replace the matching PNG in `design/previews/` with a fresh snapshot,
+   for example with headless Chromium:
 
-Do this after any change to `design/identity/build.py`, and before
-copying tokens anywhere.
-
-```sh
-python3 design/identity/build.py          # SVGs and both token files
-python3 design/identity/check_contrast.py # must print "all checks pass"
-python3 design/identity/render.py         # PNG previews (downloads fonts to a cache)
-```
-
-`render.py` downloads Archivo and Atkinson Hyperlegible Next to
-`~/.cache/montezuma/fonts` (or `$MONTEZUMA_FONT_CACHE`) and checks their
-sha256; it never copies them into the repository. Offline, add
-`--no-fonts`.
+   ```sh
+   chromium --headless --no-sandbox --window-size=180,180 \
+     --screenshot=design/previews/icon-180.png design/icons/app-icon.svg
+   ```
 
 ## Swap the game's tokens (ui-developer)
 
@@ -115,7 +114,8 @@ sha256; it never copies them into the repository. Offline, add
    - light ground: the plain files; dark ground: `-reversed` lockups or
      `mark-on-dark.svg`;
    - one colour only: `mark-mono.svg` (soot) or `mark-reversed.svg` (lime);
-   - under 40 px wide: `mark-small.svg` at exactly 16 or 32 px.
+   - under 40 px wide: `mark-small.svg` at 32 px, or at 16 px where 32
+     does not fit.
 2. Size it at or above the minimum in the style guide's
    [clear space and minimum size](../../design/README.md#clear-space-and-minimum-size)
    table.
@@ -123,11 +123,9 @@ sha256; it never copies them into the repository. Offline, add
    x = 0.048 x the horizontal lockup's width). Keep 1 x empty on every
    side.
 4. Check the ground: the soot outline (light grounds) or the lime keyline
-   (dark grounds) must reach 3 : 1 against it. Test a colour with:
-
-   ```sh
-   python3 -c "import sys; sys.path.insert(0, 'design/identity'); import check_contrast as c; print(c.ratio('#1e1916', '#RRGGBB'))"
-   ```
+   (dark grounds) must reach 3 : 1 against it. Measure the outline colour
+   (`#1e1916` or `#f4ecdc`) against the ground with any WCAG contrast
+   checker.
 
 5. Compare the result with the
    [misuse sheet](../../design/previews/misuse.png): not mirrored,

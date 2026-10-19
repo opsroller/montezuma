@@ -1,7 +1,8 @@
 <!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- Copyright (C) 2026 Charles (opsroller) and Montezuma contributors -->
 # Direction 1 type pairing: the twin temple
 
-The wordmark is drawn, not typeset (see `wordmark.svg` and `build.py`):
+The wordmark is drawn, not typeset (see `wordmark.svg`):
 cap height 12 units, stem 2.6, square-cut straight letters, round
 letters with a 1.5-unit chamfer like a cut stone block. The fonts below
 are for everything else and are chosen to sit beside it.

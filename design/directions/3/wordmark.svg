@@ -1,4 +1,5 @@
 <!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- Copyright (C) 2026 Charles (opsroller) and Montezuma contributors -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 971 100" width="971" height="100" role="img" aria-label="Montezuma's wordmark">
 <title>Montezuma's wordmark</title>
 <path transform="translate(0.00 0.00) scale(10)" d="M0 0H2.4L4.5 4.6L6.6 0H9V10H7V4.2L5.5 7.6H3.5L2 4.2V10H0Z" fill="#1c1a17" fill-rule="evenodd"/>

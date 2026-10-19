@@ -87,7 +87,7 @@ The exploration's twin temple had four problems, each fixed here:
   as knockouts, along with the stairs and roofs.
 - **The UI ochre sat near the yellow piece.** It is now a deeper ochre
   `#d8901e`, at least CIEDE2000 15 from both the yellow and the orange
-  pieces, checked by script.
+  pieces (16.3 and 16.8).
 
 ## What was folded in, and what was left
 
@@ -114,9 +114,9 @@ UI and web can pick a passing pair without inventing colours. Roles
 alias ramp steps, with a light and a dark value for each, so a theme
 change is a remap. Hematite (stone) and cochineal (cloth and UI) are kept
 apart, as the reference asks. A codex green exists only for success.
-Every intended pair is checked by `design/identity/check_contrast.py`,
-which reads the committed token files and fails the run on any
-regression.
+Every intended pair was measured against WCAG 2.2 AA, and the
+approved pairs are listed in the style guide, so a new pairing is
+checked against that list before use.
 
 ## Type
 

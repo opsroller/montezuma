@@ -2,7 +2,7 @@
 <!-- Copyright (C) 2026 Charles (opsroller) and Montezuma contributors -->
 # Direction 2 type pairing: the step-fret band
 
-The wordmark is drawn, not typed (`wordmark.svg`, built by `build.py` on a
+The wordmark is drawn, not typed (`wordmark.svg`, drawn on a
 2-unit stroke grid with stepped diagonals). Fonts carry everything else.
 
 | Job | Family | Licence | Source | Why |
