@@ -167,7 +167,10 @@ bool tier_is_free(UpgradeItem item, int tier) {
 bool Progress::is_open(std::string_view level_id, Difficulty d) const {
     const auto i = campaign_index(level_id);
     if (!i) return false;
-    if (*i == 0) return true;
+    if (*i == 0) {
+        // rule: DIFF-02 hard unlocks when the last normal level is won.
+        return d == Difficulty::Normal || is_won(level_ids().back(), Difficulty::Normal);
+    }
     return is_won(level_ids()[static_cast<std::size_t>(*i - 1)], d);
 }
 
@@ -193,14 +196,14 @@ Reward Progress::record_level(std::string_view level_id, Difficulty d, const Lev
     if (play.outcome == Outcome::Playing) throw std::invalid_argument("the play is not finished");
     if (play.score < 0) throw std::invalid_argument("score must not be negative");
     if (play.star_sand < 0) throw std::invalid_argument("star sand must not be negative");
+    if (!(play.time_left >= 0.0)) throw std::invalid_argument("time left must be a number at least 0");
 
     Reward reward;
     LevelRecord& rec = levels_[di(d)][std::string(level_id)];
     rec.best_score = std::max(rec.best_score.value_or(play.score), play.score);
     if (play.outcome == Outcome::Won && !rec.won) {
         rec.won = true;
-        stars_ += kStarsPerFirstWin;
-        reward.stars += kStarsPerFirstWin;
+        reward.stars += add_stars(kStarsPerFirstWin);
     }
     reward.stars += add_star_sand(play.star_sand);
 
@@ -233,10 +236,7 @@ Reward Progress::record_bonus(std::string_view bonus_id, bool passed) {
     if (before == BonusResult::NotPlayed) {
         // rule: BG-01 the first play decides the star; BG-02 replays never give one.
         bonus_[std::string(bonus_id)] = passed ? BonusResult::Passed : BonusResult::Failed;
-        if (passed) {
-            stars_ += kStarsPerFirstWin;
-            reward.stars = kStarsPerFirstWin;
-        }
+        if (passed) reward.stars = add_stars(kStarsPerFirstWin);
     } else if (passed && before == BonusResult::Failed) {
         bonus_[std::string(bonus_id)] = BonusResult::Passed;  // passed in practice, no star
     }
@@ -247,13 +247,18 @@ Reward Progress::record_bonus(std::string_view bonus_id, bool passed) {
 
 // --- Stars -----------------------------------------------------------------------
 
+int Progress::add_stars(int n) {
+    // Saturate at kMaxStars so the count never wraps and every save loads.
+    const int added = std::min(n, kMaxStars - stars_);
+    stars_ += added;
+    return added;
+}
+
 int Progress::add_star_sand(int sand) {
     if (sand < 0) throw std::invalid_argument("star sand must not be negative");
     const std::int64_t total = static_cast<std::int64_t>(star_sand_) + sand;
-    const int made = static_cast<int>(total / kStarSandPerStar);
     star_sand_ = static_cast<int>(total % kStarSandPerStar);
-    stars_ += made;
-    return made;
+    return add_stars(static_cast<int>(total / kStarSandPerStar));
 }
 
 // --- Upgrades ----------------------------------------------------------------------
@@ -400,7 +405,7 @@ ProgressLoadResult Progress::try_from_json(std::string_view text) noexcept {
             fail("save.version: must be " + std::to_string(kSaveVersion));
 
         Progress p;
-        p.stars_ = optional_int(j, "stars", "save", 0, kIntMax);
+        p.stars_ = optional_int(j, "stars", "save", 0, kMaxStars);
         p.star_sand_ = optional_int(j, "star_sand", "save", 0, kStarSandPerStar - 1);
 
         if (const auto it = j.find("levels"); it != j.end()) {

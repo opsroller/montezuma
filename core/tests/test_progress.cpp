@@ -3,6 +3,7 @@
 
 // Progress, save and trophy tests (progression.md, rules-bonus-games.md
 // BG-01/BG-02, rules-spec.md FRZ-04). No framework dependency; run via ctest.
+#include <cmath>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
@@ -97,7 +98,7 @@ void test_campaign_ids() {
 
 void test_opening_levels() {
     Progress p;
-    check(p.is_open("e1-l01", N) && p.is_open("e1-l01", H), "PROG-01: e1-l01 open on both difficulties");
+    check(p.is_open("e1-l01", N) && !p.is_open("e1-l01", H), "PROG-01, DIFF-02: only normal e1-l01 open at first");
     check(!p.is_open("e1-l02", N) && !p.is_open("e1-l02", H), "PROG-01: e1-l02 closed on a fresh profile");
     check(!p.is_open("e9-l01", N), "unknown level is never open");
 
@@ -119,6 +120,10 @@ void test_opening_levels() {
     check(throws<std::invalid_argument>([&] { p.record_level("e1-l01", N, LevelPlay{}); }),
           "a play still in progress is rejected");
     check(throws<std::invalid_argument>([&] { p.record_level("e1-l01", N, won(-1)); }), "negative score rejected");
+    check(throws<std::invalid_argument>([&] { p.record_level("e1-l01", N, won(1, -1.0)); }),
+          "negative time left rejected");
+    check(throws<std::invalid_argument>([&] { p.record_level("e1-l01", N, won(1, std::nan(""))); }),
+          "NaN time left rejected");
 }
 
 void test_first_win_stars() {
@@ -127,10 +132,14 @@ void test_first_win_stars() {
     check(r.stars == 1 && p.stars() == 1, "PROG-02: first win on normal gives 1 star");
     r = p.record_level("e1-l01", N, won());
     check(r.stars == 0 && p.stars() == 1, "PROG-02: second win on normal gives none");
-    r = p.record_level("e1-l01", H, won());
-    check(r.stars == 1 && p.stars() == 2, "PROG-02: first win on hard gives one more");
     r = p.record_level("e1-l02", N, lost());
-    check(r.stars == 0 && p.stars() == 2, "PROG-07: a loss gives nothing");
+    check(r.stars == 0 && p.stars() == 1, "PROG-07: a loss gives nothing");
+
+    Progress all;
+    win_through(all, 40, N);
+    const int before = all.stars();
+    r = all.record_level("e1-l01", H, won());
+    check(r.stars == 1 && all.stars() == before + 1, "PROG-02: first win on hard gives one more");
 }
 
 void test_best_scores() {
@@ -158,7 +167,7 @@ void test_bonus_levels() {
     check(!p.bonus_open("bg_accuracy-1"), "BG-01: closed before e1-l05 is won");
     check(throws<std::invalid_argument>([&] { p.record_bonus("bg_accuracy-1", true); }), "closed bonus rejected");
     check(throws<std::invalid_argument>([&] { p.record_bonus("bg_nothing-1", true); }), "unknown bonus rejected");
-    win_through(p, 4, H);
+    win_through(p, 4, N);
     check(p.bonus_open("bg_accuracy-1"), "BG-01: open once e1-l05 is won on any difficulty");
     const int before = p.stars();
     Reward r = p.record_bonus("bg_accuracy-1", true);
@@ -169,7 +178,7 @@ void test_bonus_levels() {
     r = p.record_bonus("bg_accuracy-1", false);
     check(p.bonus_result("bg_accuracy-1") == BonusResult::Passed, "a failed replay keeps Passed");
 
-    win_through(p, 10, H);
+    win_through(p, 10, N);
     r = p.record_bonus("bg_memory-1", false);
     check(r.stars == 0 && p.bonus_result("bg_memory-1") == BonusResult::Failed, "BG-01: a failure gives nothing");
     r = p.record_bonus("bg_memory-1", true);
@@ -271,11 +280,6 @@ void test_buying() {
     check(all.tier(UpgradeItem::timer()) == 4 && all.tier(UpgradeItem::gems()) == 3 &&
               all.tier(UpgradeItem::power_up(PowerUpId::Tnt)) == 3,
           "PROG-04: timer 4, gems 3, tnt 3 are the last tiers");
-
-    // PROG-04: reached on either difficulty.
-    Progress hard;
-    hard.record_level("e1-l01", H, won());
-    check(hard.can_buy(UpgradeItem::timer()), "PROG-04 AMBIGUOUS default: reached on hard counts too");
 }
 
 void test_upgrades_for() {
@@ -429,9 +433,9 @@ void test_watch_totems_and_play() {
     check(r.trophies.empty(), "trophies are earned once");
 
     Progress q;
+    win_through(q, 40, N);  // DIFF-02: opens hard
     r = q.record_level("e1-l01", H, won(100, 149.9));
-    check(!has(r.trophies, TrophyId::QuickHands) && has(r.trophies, TrophyId::FirstFind),
-          "quick_hands: 149.9 s is not enough; first_find on hard");
+    check(!has(r.trophies, TrophyId::QuickHands), "quick_hands: 149.9 s is not enough");
     LevelPlay slow_loss = lost();
     slow_loss.time_left = 200.0;
     r = q.record_level("e1-l02", H, slow_loss);
@@ -482,7 +486,7 @@ void test_profile_trophies() {
 
 void test_save_round_trip() {
     Progress p;
-    win_through(p, 12, N);
+    win_through(p, 40, N);
     p.record_level("e1-l01", H, won(4242, 151.0));
     p.record_level("e1-l02", H, lost(777));
     p.record_bonus("bg_accuracy-1", true);
@@ -547,6 +551,64 @@ void test_bad_saves() {
     }
 }
 
+void test_star_count_overflow() {
+    // The loader accepts stars up to INT_MAX; every later gain must not wrap.
+    const ProgressLoadResult full = Progress::try_from_json(
+        R"({"version":1,"stars":2147483647,"levels":{"normal":{"e1-l05":{"won":true}}}})");
+    check(full.progress.has_value(), "a save with INT_MAX stars loads");
+    if (!full.progress) return;
+
+    Progress a = *full.progress;
+    try { a.record_level("e1-l01", N, won()); } catch (const std::exception&) {}
+    check(a.stars() >= 0, "PROG-02: a first win at INT_MAX stars does not wrap negative");
+    check(Progress::try_from_json(a.to_json()).progress.has_value(),
+          "save written after a first win at INT_MAX stars loads again");
+
+    Progress b = *full.progress;
+    try { b.add_star_sand(100); } catch (const std::exception&) {}
+    check(b.stars() >= 0, "PROG-06: sand turning into stars at INT_MAX does not wrap negative");
+    check(Progress::try_from_json(b.to_json()).progress.has_value(),
+          "save written after sand at INT_MAX stars loads again");
+
+    Progress c = *full.progress;
+    try { c.record_bonus("bg_accuracy-1", true); } catch (const std::exception&) {}
+    check(c.stars() >= 0, "BG-01: a bonus star at INT_MAX stars does not wrap negative");
+    check(Progress::try_from_json(c.to_json()).progress.has_value(),
+          "save written after a bonus star at INT_MAX stars loads again");
+}
+
+void test_star_count_bounds() {
+    // The loader accepts stars up to INT_MAX; any further star must not
+    // wrap the count negative, and every profile to_json writes must load.
+    ProgressLoadResult r = Progress::try_from_json(R"({"version":1,"stars":2147483647})");
+    check(r.progress.has_value(), "a save at the stars bound loads");
+    Progress p = *r.progress;
+    p.record_level("e1-l01", N, won());
+    check(p.stars() >= 0, "PROG-02: a first win at the stars bound does not wrap the count negative");
+    check(Progress::try_from_json(p.to_json()).progress.has_value(),
+          "a profile written by to_json always loads back");
+
+    Progress q;
+    for (int i = 0; i < 60; ++i) q.add_star_sand(2147483647);
+    check(q.stars() >= 0, "PROG-06: star sand never wraps the star count negative");
+    check(Progress::try_from_json(q.to_json()).progress.has_value(),
+          "a profile written by to_json after much star sand loads back");
+}
+
+void test_hard_unlocks_after_last_normal_level() {
+    // rule: DIFF-02 hard unlocks when the last normal level is won.
+    Progress p;
+    check(!p.is_open("e1-l01", H), "DIFF-02: hard e1-l01 closed on a fresh profile");
+    check(throws<std::invalid_argument>([&] { p.record_level("e1-l01", H, won()); }),
+          "DIFF-02: a hard play before hard unlocks is rejected");
+    check(p.stars() == 0, "DIFF-02: no star from a locked hard level");
+    win_through(p, 39, N);  // e1-l01 .. e5-l11 on normal
+    check(!p.is_open("e1-l01", H), "DIFF-02: hard still closed before e5-l12 is won on normal");
+    p.record_level("e5-l12", N, won());
+    check(p.is_open("e1-l01", H), "DIFF-02: hard e1-l01 opens when e5-l12 is won on normal");
+    check(!p.is_open("e1-l02", H), "DIFF-02: only hard e1-l01 opens, not the rest");
+}
+
 }  // namespace
 
 int main() {
@@ -566,6 +628,9 @@ int main() {
     test_profile_trophies();
     test_save_round_trip();
     test_bad_saves();
+    test_star_count_overflow();
+    test_star_count_bounds();
+    test_hard_unlocks_after_last_normal_level();
     std::printf("%d checks, %d failures\n", checks, failures);
     return failures == 0 ? 0 : 1;
 }

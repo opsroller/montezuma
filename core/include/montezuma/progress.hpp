@@ -35,9 +35,8 @@ inline constexpr int kStarSandPerStar = 50;
 inline constexpr int kStarsPerFirstWin = 1;
 // rule: PROG-04 every tier above the free ones costs this many stars.
 inline constexpr int kStarsPerTier = 1;
-// AMBIGUOUS: levels open per difficulty: the next level opens when this one
-// is won on the same difficulty.
-inline constexpr bool kUnlockPerDifficulty = true;
+// The star count saturates here instead of wrapping.
+inline constexpr int kMaxStars = 2147483647;
 // The save format's version.
 inline constexpr int kSaveVersion = 1;
 
@@ -101,13 +100,15 @@ struct ProgressLoadResult;
 class Progress {
 public:
     // --- Campaign --------------------------------------------------------
-    // rule: PROG-01 e1-l01 is always open; the next opens on a win.
+    // rule: PROG-01 the next level opens on a win on the same difficulty
+    // (AMBIGUOUS: per difficulty). DIFF-02 hard e1-l01 opens when e5-l12 is
+    // won on normal; normal e1-l01 is always open.
     bool is_open(std::string_view level_id, Difficulty d) const;
     bool is_won(std::string_view level_id, Difficulty d) const;
     std::optional<int> best_score(std::string_view level_id, Difficulty d) const;
     // Record one finished play (Won or Lost). Throws std::invalid_argument
     // for an unknown or closed level, a play still in progress, a negative
-    // score or negative star sand.
+    // score, negative star sand or a time left that is negative or NaN.
     Reward record_level(std::string_view level_id, Difficulty d, const LevelPlay& play);
 
     // --- Bonus levels ----------------------------------------------------
@@ -139,8 +140,9 @@ public:
     Upgrades upgrades_for(std::string_view level_id) const;
 
     // --- Trophies ------------------------------------------------------------
-    bool has_trophy(TrophyId id) const { return trophies_[static_cast<std::size_t>(id)]; }
-    bool totem_fired(TotemId id) const { return totems_fired_[static_cast<std::size_t>(id)]; }
+    // Throw std::out_of_range for a value outside the enum.
+    bool has_trophy(TrophyId id) const { return trophies_.at(static_cast<std::size_t>(id)); }
+    bool totem_fired(TotemId id) const { return totems_fired_.at(static_cast<std::size_t>(id)); }
 
     // --- Save file ---------------------------------------------------------
     // Deterministic JSON: the same progress gives the same text.
@@ -153,6 +155,8 @@ public:
 private:
     // Earned trophies not yet held, marked held, in TrophyId order.
     void award(TrophyId id, Reward& reward);
+    // Adds up to n stars, saturating at kMaxStars; returns the stars added.
+    int add_stars(int n);
     void check_profile_trophies(Reward& reward);
     int bought(UpgradeItem item) const;
     int& bought_ref(UpgradeItem item);
