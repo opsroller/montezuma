@@ -156,7 +156,19 @@ With vsync on, the GPU clocks down between frames, so `gpu_ms` there is
 not a measure of the work. Uncapped, `main` stopped with
 `VK_ERROR_DEVICE_LOST` in warm-up both times, while the pieces out of GI
 ran at `frame_ms` p50 2.15 ms.
-The M4 re-run is pending.
+
+On the Mac mini M4 (Metal, `desktop-high`, 2560×1440, vsync off, seed
+52, three alternating runs per build, which agreed within 0.6 ms; both
+builds without baked lightmaps):
+
+| Build | `frame_ms` p50 | p95 | Video memory max | Verdict |
+|---|---|---|---|---|
+| `main` at b67b96a | 50.0 | 59.4 | 1503 MB | over budget |
+| Pieces out of GI (a83326a) | 17.5 | 18.4 | 747 MB | over budget: p95 0.7 to 1.3 ms above the 17.5 ms limit |
+
+The M4 presents paced to the display even with vsync off, so no frame
+there is shorter than 16.67 ms; the p95 miss is against that floor, and
+the budget is unchanged.
 
 ## Feature rows
 
