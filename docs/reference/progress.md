@@ -3,7 +3,8 @@
 
 # Progress, save and trophies
 
-The player's profile for the `classic` campaign (WP-08), in the core
+Reference for programmers using the player profile: the profile for the
+`classic` campaign (WP-08), in the core
 library: `montezuma/progress.hpp` and `montezuma/trophies.hpp`, namespace
 `montezuma`. The rules it applies are in [progression](progression.md)
 and [bonus games](rules-bonus-games.md#common-rules-bg-); why it works
