@@ -4,14 +4,12 @@
 // Temple water for desktop (Forward+): the channel floor seen through the
 // surface, bent by the ripples (refraction) and fading to the water's own
 // colour with depth (absorption over the true path length, from the depth
-// texture), caustic lines on that floor, and reflections: an in-shader
-// screen-space ray march (Godot's SSR skips the transparent pass this
-// material draws in), with the sky through the engine's own specular
-// wherever the march misses. Mobile and web use
-// SH_WaterSimple (no refraction, no march). Cost per pixel: 2 depth and 1
-// screen sample, then up to ssr_steps + 3 depth and 1 screen sample for the
-// reflection; 3 noise octaves, and 2 caustic layers where they can show;
-// no material textures.
+// texture), caustic lines on that floor, and the sky reflected through the
+// engine's own specular. No screen-space reflection march: on the
+// benchmark Mac it cost several times the water's whole budget. Mobile and
+// web use SH_WaterSimple (no refraction). Cost per pixel: 2 depth and 1
+// screen sample; 3 noise octaves, and 2 caustic layers where they can
+// show; no material textures.
 shader_type spatial;
 render_mode blend_mix, depth_draw_always, cull_back, diffuse_burley, specular_schlick_ggx;
 
@@ -34,9 +32,6 @@ uniform float roughness : hint_range(0.0, 0.3, 0.001) = 0.04;
 uniform float refraction_strength : hint_range(0.0, 0.15, 0.001) = 0.04;
 uniform float caustic_strength : hint_range(0.0, 4.0, 0.01) = 2.2;
 uniform float caustic_scale : hint_range(0.2, 4.0, 0.01) = 1.3;
-// Reflection ray march: how far a ray may travel and in how many steps.
-uniform float ssr_max_distance : hint_range(1.0, 30.0, 0.1) = 10.0;
-uniform int ssr_steps : hint_range(8, 32) = 16;
 // Width of the soft line where the water meets stone, metres of water.
 uniform float edge_softness : hint_range(0.0, 0.3, 0.001) = 0.08;
 
@@ -49,11 +44,6 @@ void vertex() {
 vec3 view_pos(vec2 uv, float depth, mat4 inv_proj) {
 	vec4 v = inv_proj * vec4(uv * 2.0 - 1.0, depth, 1.0);
 	return v.xyz / v.w;
-}
-
-vec2 to_uv(vec3 pos, mat4 proj) {
-	vec4 c = proj * vec4(pos, 1.0);
-	return c.xy / c.w * 0.5 + 0.5;
 }
 
 void fragment() {
@@ -96,55 +86,11 @@ void fragment() {
 	vec3 transmitted = seen * trans * (1.0 - fresnel);
 	float edge = 1.0 - smoothstep(0.0, max(edge_softness, 0.001), len);
 
-	// Reflection ray march in view space, growing steps, then a short
-	// bisection on the hit. hit = 0 leaves the sky reflection alone.
-	vec3 rd = reflect(normalize(VERTEX), n);
-	float hit = 0.0;
-	vec3 reflected = vec3(0.0);
-	float step_len = ssr_max_distance / float(ssr_steps * ssr_steps);
-	float t = step_len;
-	float t_prev = 0.0;
-	for (int i = 1; i <= 32; i++) {
-		if (i > ssr_steps) {
-			break;
-		}
-		t = step_len * float(i * i);
-		vec3 p = VERTEX + rd * t;
-		vec2 ruv = to_uv(p, PROJECTION_MATRIX);
-		if (ruv.x < 0.0 || ruv.x > 1.0 || ruv.y < 0.0 || ruv.y > 1.0 || p.z > -0.05) {
-			break;
-		}
-		vec3 s = view_pos(ruv, textureLod(depth_texture, ruv, 0.0).r, INV_PROJECTION_MATRIX);
-		float gap = s.z - p.z;
-		if (gap > 0.0 && gap < 0.25 + 0.08 * t) {
-			float lo = t_prev;
-			float hi = t;
-			for (int k = 0; k < 3; k++) {
-				float mid = 0.5 * (lo + hi);
-				vec3 pm = VERTEX + rd * mid;
-				vec2 muv = to_uv(pm, PROJECTION_MATRIX);
-				vec3 sm = view_pos(muv, textureLod(depth_texture, muv, 0.0).r, INV_PROJECTION_MATRIX);
-				if (sm.z > pm.z) {
-					hi = mid;
-				} else {
-					lo = mid;
-				}
-			}
-			vec2 huv = to_uv(VERTEX + rd * hi, PROJECTION_MATRIX);
-			vec2 border = min(huv, 1.0 - huv);
-			hit = smoothstep(0.0, 0.08, min(border.x, border.y)) * (1.0 - smoothstep(0.6, 1.0, hi / ssr_max_distance));
-			reflected = textureLod(screen_texture, huv, 0.0).rgb;
-			break;
-		}
-		t_prev = t;
-	}
-
 	ALBEDO = water_color.rgb * (1.0 - dot(trans, vec3(0.3333))) + vec3(0.35) * edge * caustic;
 	ROUGHNESS = roughness;
 	METALLIC = 0.0;
-	// F0 0.02 is Godot's specular 0.354; scaled down where the march hit, so
-	// the sky reflection gives way to the screen-space one.
-	SPECULAR = 0.354 * (1.0 - hit);
+	// F0 0.02 is Godot's specular 0.354.
+	SPECULAR = 0.354;
 	NORMAL = n;
-	EMISSION = (transmitted + reflected * fresnel * hit) * EXPOSURE;
+	EMISSION = transmitted * EXPOSURE;
 }

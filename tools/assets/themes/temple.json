@@ -426,8 +426,6 @@
           "caustic_strength": 2.2,
           "caustic_scale": 1.3,
           "refraction_strength": 0.04,
-          "ssr_max_distance": 10.0,
-          "ssr_steps": 16,
           "edge_softness": 0.08
         }
       }

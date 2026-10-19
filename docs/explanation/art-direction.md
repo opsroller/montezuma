@@ -90,8 +90,7 @@ looks a little flatter and brighter, which we accept.
 ## Water
 
 The temple stands in a stone-lined moat. Still water is the cheapest way
-to say "real place" in a top-down view: it carries the sky and the stone
-above it, shows a floor under it, and moves when nothing else does. It
+to say "real place" in a top-down view: it carries the sky, shows a floor under it, and moves when nothing else does. It
 sits round the lowest tier because that is where the game camera looks
 past the platform (left and right on a wide screen, top and bottom on a
 tall one), and it never comes near the board, so it adds place without
@@ -111,19 +110,19 @@ Choices behind the [reference](../reference/water.md):
   no generated texture to the build, and it never shows a tile repeat.
 - **Desktop reads the scene, phones and web do not.** On desktop the
   shader refracts the screen and measures the true depth from the depth
-  buffer; that forces Godot's transparent pass, where its own screen-space
-  reflections do not run, so the shader marches its own reflection rays
-  and falls back to the sky. Mobile and web blend a
-  cheaper surface over the real floor and take the path length from the
-  known floor height, which is exact for a flat channel.
+  buffer. Mobile and web blend a cheaper surface over the real floor and
+  take the path length from the known floor height, which is exact for a
+  flat channel.
 - **Caustics belong to the floor point.** Both shaders find the floor
   point the eye sees through the water and draw the caustic lines there,
   so they sit on the stone and move with it, not with the surface.
-- **No reflection probes.** A box probe per strip was tried first, to
-  reflect the temple into the water on every tier. In this scene they
-  kept re-rendering, and on the benchmark Mac they cost far more than the
-  whole water budget, so the temple's reflection comes from the
-  desktop ray march alone and the other tiers reflect the sky.
+- **Sky reflections only.** Box reflection probes per strip, and then a
+  screen-space reflection march in the desktop shader, were both tried to
+  reflect the temple into the water. On the benchmark Mac each cost many
+  times the water's 0.5 ms budget (the probes kept re-rendering; the
+  march's chain of depth reads added 3.9 ms at 1440p), and from the game
+  camera the strips sit at the edge of the frame, so every tier reflects
+  the sky through the engine's own specular.
 
 ## Why a theme, not a scene
 

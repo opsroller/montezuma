@@ -67,7 +67,7 @@ The tier picks the material through the `hi/` variant
 | Depth colour | absorption over the true path, from the depth texture | same | absorption over the path to the flat floor height | same as mobile |
 | Refraction | screen texture, bent by the ripples, never toward what is in front of the water | same | — (blended over the real floor) | — |
 | Caustics | 2 layers on the floor point from the depth texture | same | 1 layer on the flat floor point | same as mobile |
-| Reflections | in-shader screen-space ray march, falling back to the sky | same | sky | same as mobile |
+| Reflections | sky, through the engine's specular | same | sky | same as mobile |
 | Contact line at the stone | yes | yes | — | — |
 
 ## Parameters
@@ -87,8 +87,6 @@ desktop variant. The generator adds `floor_height` to materials marked
 | `caustic_strength` | both | 0 to 4 | 2.2 | brightness of the caustic lines on the floor |
 | `caustic_scale` | both | 0.2 to 4 | 1.3 | caustic pattern size |
 | `refraction_strength` | `SH_Water` | 0 to 0.15 | 0.04 | screen-space bend per metre of water |
-| `ssr_max_distance` | `SH_Water` | 1 to 30 m | 10 | how far a reflection ray travels |
-| `ssr_steps` | `SH_Water` | 8 to 32 | 16 | reflection march steps; the main cost knob |
 | `edge_softness` | `SH_Water` | 0 to 0.3 m | 0.08 | width of the soft line where the water meets stone |
 | `floor_height` | `SH_WaterSimple` | metres, Godot Y | −2.52 (generated) | the flat channel floor the path length and caustics use |
 | `floor_albedo` | `SH_WaterSimple` | 0 to 1 | 0.12 | how bright the caustic lines make the floor; they are added to the lit albedo, so they follow sun, shadow and exposure |
@@ -111,7 +109,7 @@ nodes.
 
 | Shader | Render mode | Samplers | Cost per pixel |
 |---|---|---|---|
-| `SH_Water` | transparent pass (reads the screen texture), opaque result (no `ALPHA`), depth write, Burley diffuse, GGX | `hint_screen_texture` (linear, no mipmaps, clamp) and `hint_depth_texture` (nearest, clamp) | 2 depth and 1 screen sample, then up to `ssr_steps` + 3 depth and 1 screen sample for the reflection (at the default 16 steps: 21 depth and 2 screen, 23 samples in all); 3 noise octaves, and 2 caustic layers (4 noise evaluations) only where the caustics can show |
+| `SH_Water` | transparent pass (reads the screen texture), opaque result (no `ALPHA`), depth write, Burley diffuse, GGX | `hint_screen_texture` (linear, no mipmaps, clamp) and `hint_depth_texture` (nearest, clamp) | 2 depth and 1 screen sample; 3 noise octaves, and 2 caustic layers (4 noise evaluations) only where the caustics can show |
 | `SH_WaterSimple` | blended (`ALPHA` from the absorption, at least the Fresnel), Burley diffuse, GGX | none | 2 noise octaves, 1 caustic layer (3 noise evaluations) where it can show, no texture samples, no trigonometry in the noise |
 | `SH_Water.gdshaderinc` | — | none | gradient noise with analytic derivatives (integer hash, gradients from hashed bytes, no trigonometry), ripple slope, caustics, Beer-Lambert transmittance, Schlick Fresnel |
 
@@ -130,7 +128,7 @@ repeatable at a fixed frame rate.
 | Measure | Value |
 |---|---|
 | Budget | `SH_WaterSimple` ≤ 0.3 ms at 1280×720 on an Intel UHD 620 class GPU; `SH_Water` ≤ 0.5 ms at 1440p on the benchmark Mac (M4) |
-| Measured | desktop-high, 2560×1440, Apple M4 ([benchmark](benchmark.md), busiest board): with the four reflection probes the first version had, p50 6.90 → 25.63 ms and p95 21.34 → 28.07 ms against main. On lavapipe at 640×360 the probes alone account for nearly all of that (p50 263 ms with neither probes nor water, 274 ms with the water only, 306 ms with the probes only, 687 ms with both). The water without probes is pending a re-measure on the M4 |
-| Estimate | software rendering (lavapipe, llvmpipe) runs the look-dev scene at 1 to 2 fps with or without the water, so it cannot resolve the cost. By count: `SH_WaterSimple` is up to 5 noise evaluations (2 for the ripples, 3 for the caustics), each 4 integer hashes and no trigonometry, and no texture samples; `SH_Water` up to 7 noise evaluations and up to 21 depth and 2 screen samples (23 in all) |
+| Measured | desktop-high, 2560×1440, Apple M4 ([benchmark](benchmark.md), busiest board, main and the branch run alternately in one session): the version with an in-shader screen-space reflection march (up to 16 steps and 3 refinements, 21 depth and 2 screen samples per pixel) added 3.9 ms per frame at p50 and p95 (20.8 → 24.7 ms p50), all of it on the GPU; the march was removed for that reason. The shader as it stands is pending a re-measure |
+| Estimate | software rendering (lavapipe, llvmpipe) cannot resolve the cost: the water close-up runs at the same 6.5 fps at 640×360 with the water shader, with the march, with `SH_WaterSimple` or with no water. By count: `SH_WaterSimple` is up to 5 noise evaluations (2 for the ripples, 3 for the caustics), each 4 integer hashes and no trigonometry, and no texture samples; `SH_Water` up to 7 noise evaluations and 3 texture samples |
 | Triangles | 12 per strip slab (60 in all); the channel adds about 400 to the backdrop |
-| Reflection probes | none: four box probes, one per strip, re-rendered continuously in the lit, animated scene and took desktop-high on the M4 from 6.9 to 25.6 ms per frame at p50 (and about 500 MB of video memory) in the first measurement on #61; without them the water reflects the temple through the ray march on desktop and the sky elsewhere |
+| Reflection probes | none. The first version had a box probe per strip: they took video memory from 578 to 1095 MB on the M4 (Godot's default 64-slot reflection atlas) and, on lavapipe at 640×360, the bench's p50 from 263 to 687 ms with the water (306 ms without it), so they were removed |

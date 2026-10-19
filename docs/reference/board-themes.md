@@ -93,7 +93,7 @@ sets fit the web texture budget.
 | Ruby, amethyst | `ORMMaterial3D`, `Gem_01` tinted, opaque, Fresnel from the real index of refraction, rim | `SH_Gem`: refraction of the scene behind with dispersion and absorption by the body colour |
 | Carnelian, jade, moonstone | `ORMMaterial3D` with backlight for cheap translucency | sub-surface scattering with a transmittance colour; moonstone adds a stronger clearcoat |
 | Lapis | `ORMMaterial3D`, `Lapis_01` (blue, calcite, metallic pyrite flecks) | none; the base is used everywhere |
-| Water (`MI_Water`) | `SH_WaterSimple`: blended, absorption to the flat floor height, caustics, sky reflections | `SH_Water`: refraction of the screen, depth from the depth buffer, caustics, in-shader screen-space reflections ([Water](water.md)) |
+| Water (`MI_Water`) | `SH_WaterSimple`: blended, absorption to the flat floor height, caustics, sky reflections | `SH_Water`: refraction of the screen, depth from the depth buffer, caustics, sky reflections ([Water](water.md)) |
 
 Texture filtering: the `ORMMaterial3D` set uses Godot's default trilinear
 filter with repeat. `SH_TriplanarPBR` and `SH_Gem` filter anisotropically
@@ -187,7 +187,7 @@ Git ignores every `.import`, so a hand-made texture under
 | `SH_TriplanarPBR` | desktop stone (`hi/MI_Stone*`) | opaque, Burley diffuse, GGX; object-space triplanar PBR set; parallax occlusion on upward faces (`height_depth` metres, 8 to 24 layers by view angle) | 9 texture samples, plus up to 25 height samples on upward faces |
 | `SH_Gem` | desktop ruby and amethyst (`hi/MI_Ruby`, `hi/MI_Amethyst`) | transparent pass (reads the screen texture), depth write; refraction with `ior` and `dispersion`, absorption by the body colour over `thickness` | 9 texture samples, 3 screen and 3 depth samples |
 | `SH_Triplanar.gdshaderinc` | included by the two above | object-space triplanar sampling, normal-map blending, Y-face parallax | none of its own |
-| `SH_Water` | desktop water (`hi/MI_Water`) | transparent pass, opaque result; refraction, absorption, caustics, screen-space reflection march | up to 21 depth and 2 screen samples at the default 16 steps, no material textures ([Water](water.md#shaders)) |
+| `SH_Water` | desktop water (`hi/MI_Water`) | transparent pass, opaque result; refraction, absorption, caustics | 2 depth and 1 screen sample, no material textures ([Water](water.md#shaders)) |
 | `SH_WaterSimple` | mobile and web water (`MI_Water`) | blended; absorption to the floor height, caustics | no texture samples |
 | `SH_Water.gdshaderinc` | included by the two above | ripple noise and slope, caustics, absorption, Fresnel | none |
 

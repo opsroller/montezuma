@@ -127,7 +127,7 @@ target names.
 | `subsurface_scattering` | nodes in `quality:subsurface_scattering`; SSS quality high, medium, off | ✔ | ✔ | — | — |
 | `parallax_occlusion` | nodes in `quality:parallax_occlusion` | ✔ | ✔ | — | — |
 | `gem_refraction` | nodes in `quality:gem_refraction` | ✔ | ✔ | — | — |
-| `water_refraction` | the `hi/MI_Water` variant (`SH_Water`, refraction and screen-space reflections) on the water strips; mobile and web keep `MI_Water` ([Water](water.md#tiers)) | ✔ | ✔ | — | — |
+| `water_refraction` | the `hi/MI_Water` variant (`SH_Water`, refraction and depth from the depth buffer) on the water strips; mobile and web keep `MI_Water` ([Water](water.md#tiers)) | ✔ | ✔ | — | — |
 | `heat_haze` | nodes in `quality:heat_haze` | ✔ | ✔ | — | — |
 | `decals` | nodes in `quality:decals` | ✔ | ✔ | ✔ | — |
 | `area_light` | nodes in `quality:area_light` | ✔ | — | — | — |
