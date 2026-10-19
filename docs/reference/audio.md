@@ -45,7 +45,9 @@ margin under the -1 dBTP limit). No file is held back by the ceiling:
 each lands within 0.3 LU of its category target. The sharpest contact
 sounds (`swap_illegal`, `steel_break`, `bonus_use_tnt`) pass through a
 soft limiter that rounds off their few highest transient peaks before
-levelling, so they reach their target under the ceiling.
+levelling, so they reach their target under the ceiling. `piece_land`
+is soft-limited too, to at most -5.5 dBTP, so its ±2 dB random volume
+and stacked landings in a cascade stay clear of the `Master` limiter.
 
 ## Sound effects
 

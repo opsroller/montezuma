@@ -104,8 +104,8 @@ the world:
   the same temple.
 
 Each design is also cut to its length budget, and the sharpest ones
-(the illegal swap, the steel break and the blast) have their highest
-transient peaks rounded off, as a recording chain would, so the realism
+(the landing, the illegal swap, the steel break and the blast) have
+their highest transient peaks rounded off, as a recording chain would, so the realism
 costs nothing in loudness or voice time. Because the models are
 seeded, each variation is a different strike on a slightly different
 object, and the files still rebuild exactly from the script.
