@@ -74,7 +74,7 @@ outside its Depends on column, named in brackets. A draft PR is `active`.
 | 36 | Android build | devops-engineer | Android job in `.github/workflows/build.yml` | 20 | debug APK as a CI artifact | todo |
 | 37 | iOS build | devops-engineer | iOS job in `.github/workflows/build.yml` | 20 | builds on a macOS runner; signing documented | todo |
 | 38 | App icons and store art | graphic-designer | `design/icons/`, `design/store/` | 04, 28 | icons at every size, store graphics and captioned screenshots per store spec | todo |
-| 39 | License notices and credits | devops-engineer | `CREDITS.md` structure, `tools/release/notices*` | 20 | every dependency's notice ships in-app and in releases; GPL source link per release | todo (in-game notices done in #31; release notices need WP-42) |
+| 39 | License notices and credits | devops-engineer | `CREDITS.md` structure, `tools/release/notices*` | 20, 42 | every dependency's notice ships in-app and in releases; GPL source link per release | todo (in-game notices done in #31; release notices need WP-42; Emscripten runtime notices to add) |
 
 ## Wave V: high-end visual target
 
@@ -98,7 +98,7 @@ except the optional WP-54: nothing goes public until it looks finished.
 | 51 | Volumetrics and atmosphere | technical-artist | `FogVolume`s and dust in `game/assets/models/<theme>/backdrop/`, light-shaft cards | 47 | sun shafts and dust through volumetric fog on desktop, card substitutes on mobile and web, zero density over the board | done ([Atmosphere](board-themes.md#atmosphere)) |
 | 52 | Post-processing and colour grade | technical-artist + graphic-designer | theme `WorldEnvironment` and `CameraAttributes`, `game/assets/textures/<theme>/grade/`, grade notes in `design/` | 47 | glow, LUT grade, backdrop-only depth of field and per-tier anti-aliasing and upscaling set per the target; grade checked against the palette and readability rules; re-check glow on Forward+ first: WP-44 compared 4.4.1 and 4.7.2 on Compatibility only (same exposure, cleaner shadows), not the 4.6 glow-before-tonemap change | active (draft #72) |
 | 53 | Realistic match, power-up and totem effects | technical-artist | `game/assets/models/<theme>/fx/`, effect scenes for `fx_*` manifest names | 45, 29 | every board effect rebuilt on GPU particles (sparks, stone dust, shards, light) with mobile and web variants, inside rule 3 of the target | todo |
-| 54 | Hardware ray-tracing spike (optional) | graphics-programmer | `extension/src/render/rt/` (behind a build option) | 44, 46 | ray-traced reflections or shadows on gems and gold via the 4.7 `RenderingDevice` ray-tracing API as a compositor effect on Vulkan desktop; benchmark numbers and a written keep-or-drop decision; never required by any tier | todo |
+| 54 | Hardware ray-tracing spike (optional) | graphics-programmer | `extension/src/render/rt/` (behind a build option) | 44, 46 | ray-traced reflections or shadows on gems and gold via the 4.7 `RenderingDevice` ray-tracing API as a compositor effect on Vulkan desktop; benchmark numbers and a written keep-or-drop decision; never required by any tier | blocked (needs a check that the 4.7 `RenderingDevice` ray-tracing API exists on the 4.7.2 pin: [About lighting](../explanation/about-lighting.md) and [About the visual target](../explanation/about-the-visual-target.md) disagree) |
 | 55 | High-detail asset pass | technical-artist | `game/assets/models/<theme>/`, `tools/assets/gen_theme_meshes.py` | 48 | pieces, board, frame and backdrop rebuilt to the desktop budgets with LOD chains down to the mobile budgets; silhouettes and sizes unchanged; validator checks every LOD; mobile and web export presets strip LOD0 and desktop-only files; mobile install under 150 MB and web demo under 40 MB checked | todo |
 | 57 | Tier material variants in the game | graphics-programmer (+ ui-developer settings row) | material swap in `extension/src/render/quality_tiers.*`, the Graphics quality row in `game/ui/screens/settings/` and `extension/src/ui/screens/settings_screen.*` | 45, 48 | the game shows the `hi/` materials on desktop tiers and the base on mobile and web, switching at runtime; settings screen offers `quality_tier`; self-test checks the swap | done (#47) |
 
@@ -106,8 +106,8 @@ except the optional WP-54: nothing goes public until it looks finished.
 
 | WP | Package | Role | Owns | Depends on | Done when | Status |
 |---|---|---|---|---|---|---|
-| 40 | Feel pass against reference | game-designer + graphics-programmer | `extension/src/board/feel.hpp`, spec feel section | 28 | timings in the spec match reference video | todo |
-| 41 | Performance pass | graphics-programmer | with owners | 28, 46 | 60 fps mid-range Android and older iPhones; demo under 40 MB compressed | todo |
+| 40 | Feel pass | game-designer + graphics-programmer | `extension/src/board/feel.hpp`, [Feel constants](board-view.md#feel-constants) | 28 | timings in the spec feel section set from our own targets and checked in playtests (the original is not studied: owner, 2026-10-19) | todo |
+| 41 | Performance pass | graphics-programmer | with owners | 28, 46, 53, 55 | 60 fps mid-range Android and older iPhones; demo under 40 MB compressed | todo |
 | 42 | Releases and changelog | devops-engineer | `.github/workflows/release.yml`, `tools/release/` | 20 | tag `vX.Y.Z` builds every target and publishes notes from Conventional Commits | todo |
 | 43 | Store submissions | devops-engineer | `docs/stores/` | 36, 37, 38, 39, 42 | App Store, Google Play and desktop listings prepared; steps needing Charles's accounts listed for him | todo |
 
@@ -120,11 +120,18 @@ author squash-merges it.
 
 ## Risks
 
-As of 2026-10-19 (status sweep).
+As of 2026-10-19 16:15 UTC (status sweep).
 
 | Risk | Effect | Owner |
 |---|---|---|
-| Desktop frame time far from the goal: M4 at native 5K with no upscaler, frame p50 140 ms ([benchmark results](benchmark-results.md#ground-mist-rework)) | Wave V effects merge only once each fits its budget; tracked in #78 and each effect PR | graphics-programmer, technical-artist |
+| K-1 Desktop frame time far from the goal: M4 at native 5K with no upscaler, frame p50 112.8 ms ([benchmark results](benchmark-results.md#gpu-time-per-pass-and-per-effect)) | Wave V effects merge only once each fits its budget; tracked in each effect PR | graphics-programmer, technical-artist |
+| K-2 Review and CI queue backing up on technical-artist: #61, #72, #86 and #88 open at once on the same lit scene | whichever merges first forces rebases of the others; each still merges as soon as its own checks pass | project-manager |
+| K-3 CI runners starved or hung: macOS extension, levels balance and export queued or running over 30 min on #86 and #72 | PRs wait on CI, not review | devops-engineer |
+| K-4 WP-04 unassigned (role available since opsroller/graphic-designer#1) | placeholder tokens stay in the game UI and site; WP-38 and WP-43 wait | project-manager |
+| K-5 Ship path unstarted: WP-42 → WP-39 → WP-43 and WP-36/37 → WP-43 | nothing can be released or submitted | devops-engineer |
+| K-6 Phone performance never measured: WP-41 needs a mid-range Android and an older iPhone, none run | the mobile 60 fps goal is unverified | graphics-programmer |
+| K-7 Store and signing accounts (Apple Developer, App Store Connect, Play Console) needed for WP-37 signing and WP-43 | those steps wait on the account holder; asked when the packages reach them | devops-engineer (account holder Charles) |
+| K-8 WP-54 may rest on a `RenderingDevice` ray-tracing API that 4.7.2 lacks; About lighting and About the visual target disagree on it | WP-54 blocked until checked; opportunity: drop the optional spike | graphics-programmer |
+| K-10 Unexplained WebKit `Out of bounds memory access` wasm trap in the web smoke job | possible memory-safety bug in shipped code; a passing re-run does not count as green for it until it is explained | gameplay-programmer, devops-engineer |
 | Role plugins not available on the owner's build machine | review sessions run in the cloud | Charles |
-| WP-04 not staffed | WP-38 store art and the ship path wait | project-manager |
 | Plan rows drift from reality | status reports can be wrong; checked at every status sweep | project-manager |
