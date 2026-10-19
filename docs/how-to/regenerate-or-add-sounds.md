@@ -55,10 +55,11 @@ Files land in `game/assets/audio/music/`, levels in
    `s.debris`, combine them with `s.mix`, pass the mix through
    `s.stone_room` and cut the result to length with `s.fit` (why: see
    [physical models for contact sounds](../explanation/sound-direction.md#physical-models-for-contact-sounds)).
-   Wrap it in `s.soft_limit` only if its row in
+   Wrap it in `s.soft_limit` if its row in
    `tools/audio/reports/sfx_loudness.json` lands below its category
-   target because the true-peak ceiling held it back: its true peak
-   reads about -1.5 dBTP.
+   target because the true-peak ceiling held it back (its true peak
+   reads about -1.5 dBTP), or if the cue's `volume_random_db` would
+   push its true peak above -1 dBTP.
 3. Add it to `CUES` with its variation count (more than one only for
    sounds that fire often) and its category from the levels table in
    [the audio reference](../reference/audio.md#levels).

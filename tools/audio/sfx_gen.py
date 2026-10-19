@@ -7,9 +7,11 @@ Usage, from the repository root:
     python3 tools/audio/sfx_gen.py            # writes game/assets/audio/sfx/
     python3 tools/audio/sfx_gen.py --only match,swap
 
-Each sound is built from the instruments in synth.py (jade chimes, wood
-and slit drums, hide drums, rattles, clay flute, conch) so the palette
-sounds like one temple. Output is 48 kHz 16-bit mono WAV, levelled per
+Musical cues are built from the instruments in synth.py (jade chimes,
+wood and slit drums, hide drums, rattles, clay flute, conch) so the
+palette sounds like one temple; contact sounds (swaps, landings, breaks,
+the blast) use its physical models (impact, friction, debris,
+stone_room). Output is 48 kHz 16-bit mono WAV, levelled per
 category (see LEVELS) and checked against a -1 dBTP ceiling. A loudness
 report is written next to the files.
 """

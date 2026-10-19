@@ -80,10 +80,10 @@ imitated. Its sound cues informed only which events need a sound.
 
 A stone piece sliding, landing or bumping, a steel band smashed, a
 chain snapping and a charge blowing the board apart should sound like
-what they are, because the board shows them as real things. A few fixed sine tones read as "a sound effect";
-a real knock on stone has dozens of partials that each ring and fade at
-their own rate. So these cues are built the way the sound is made in
-the world:
+what they are, because the board shows them as real things. A few
+fixed sine tones read as "a sound effect"; a real knock on stone has
+dozens of partials that each ring and fade at their own rate. So
+these cues are built the way the sound is made in the world:
 
 - **Modal impacts.** An object rings at a set of resonant modes whose
   spacing, decay and brightness depend on its material: stone modes are
@@ -105,7 +105,7 @@ the world:
 
 Each design is also cut to its length budget, and the sharpest ones
 (the landing, the illegal swap, the steel break and the blast) have
-their highest transient peaks rounded off, as a recording chain would, so the realism
+their peaks rounded off, as a recording chain would, so the realism
 costs nothing in loudness or voice time. Because the models are
 seeded, each variation is a different strike on a slightly different
-object, and the files still rebuild exactly from the script.
+object, and the files still rebuild from the script.

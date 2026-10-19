@@ -385,9 +385,11 @@ def fit(sig: np.ndarray, seconds: float, fade_out: float = 0.04) -> np.ndarray:
 
 
 def soft_limit(sig: np.ndarray, headroom_db: float = 6.0) -> np.ndarray:
-    """Round off the few sharpest transient peaks (as a recording chain
-    would) so a short sound can reach its loudness under the true-peak
-    ceiling. Peaks are first scaled to headroom_db above the knee."""
+    """Saturate a sound's peaks with tanh (as a recording chain would) so
+    a short sound can reach its loudness under the true-peak ceiling.
+    The peak is scaled to headroom_db of drive into tanh, so everything
+    within roughly headroom_db of the peak is compressed, not only the
+    sharpest transients."""
     x = sig / (np.max(np.abs(sig)) + 1e-12) * 10 ** (headroom_db / 20)
     return np.tanh(x)
 

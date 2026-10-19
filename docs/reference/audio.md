@@ -44,10 +44,17 @@ Every file is rendered with a true-peak ceiling of -1.5 dBTP (0.5 dB of
 margin under the -1 dBTP limit). No file is held back by the ceiling:
 each lands within 0.3 LU of its category target. The sharpest contact
 sounds (`swap_illegal`, `steel_break`, `bonus_use_tnt`) pass through a
-soft limiter that rounds off their few highest transient peaks before
-levelling, so they reach their target under the ceiling. `piece_land`
-is soft-limited too, to at most -5.5 dBTP, so its ±2 dB random volume
-and stacked landings in a cascade stay clear of the `Master` limiter.
+tanh soft limiter that saturates their peaks before levelling, so they
+reach their target under the ceiling. `piece_land` is soft-limited too,
+for headroom: after levelling its files peak at -5.5 dBTP or lower, so
+its ±2 dB random volume stays clear of the `Master` limiter.
+
+`swap` and `swap_illegal` are timed to the board animation constants in
+`extension/src/board/feel.hpp`: the swap settle lands at
+`kSwapSeconds` (0.12 s), the illegal bump at `kIllegalLegSeconds`
+(0.09 s) and its settle at the end of the bounce (0.18 s). The times
+are copied into `tools/audio/sfx_gen.py`, so when those constants
+change, the two cues are regenerated in the same PR.
 
 ## Sound effects
 
