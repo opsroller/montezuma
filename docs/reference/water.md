@@ -64,10 +64,10 @@ The tier picks the material through the `hi/` variant
 |---|---|---|---|---|
 | Material | `hi/MI_Water` (`SH_Water`) | `hi/MI_Water` at 0.77 render scale | `MI_Water` (`SH_WaterSimple`) | `MI_Water` |
 | Ripple normals | 2 swells + 3 noise octaves | same | 2 swells + 2 octaves | same as mobile |
-| Depth colour | absorption over the true path, from the depth texture | same | absorption over the path to the flat floor height | same as mobile |
-| Refraction | screen texture, bent by the ripples, never toward what is in front of the water | same | — (blended over the real floor) | — |
-| Caustics | 2 layers on the floor point from the depth texture | same | 1 layer on the flat floor point | same as mobile |
-| Reflections | sky, through the engine's specular | same | sky | same as mobile |
+| Depth colour | absorption over the traced path to the stone it reaches | same | absorption over the path to the flat floor height | same as mobile |
+| Refraction | the view ray bent by the ripples (IOR 1.33) and traced through the channel box to the floor, a wall or a causeway side; the stone there is drawn from its colour map, with slab joints, wall shadow and darker corners | same | — (blended over the real floor) | — |
+| Caustics | 2 layers on the traced floor point | same | 1 layer on the flat floor point | same as mobile |
+| Reflections | the engine's on an opaque surface: sky, reflection probe and, where the tier has it, screen-space reflection, through a dielectric specular | same | sky | same as mobile |
 | Contact line at the stone | yes | yes | — | — |
 
 ## Parameters
@@ -78,17 +78,22 @@ desktop variant. The generator adds `floor_height` to materials marked
 
 | Parameter | Shaders | Range | Temple | Meaning |
 |---|---|---|---|---|
-| `water_color` | both | colour | `#1d4a40` | colour deep water scatters back, lit by the scene |
+| `water_color` | both | colour | `#1d4a40` base, `#17494a` desktop | colour deep water scatters back, lit by the scene |
 | `absorption` | both | 0 to 4 per metre, per channel (negative counts as 0) | (1.1, 0.34, 0.28) | light lost per metre, red, green, blue; red goes first, so depth turns the water green-teal |
 | `wave_scale` | both | 0.2 to 4 | 1.4 | ripple size; wavelength and height scale together, so the slope stays the same |
 | `wave_strength` | both | 0 to 1 | 0.18 | ripple slope; capped at a 0.6 slope (about 31°) so no setting turns the surface into glitter |
 | `flow_speed` | both | 0 to 0.5 | 0.05 | drift rate of the ripple noise (the pattern moves at about a third of this in m/s); the two swells and the caustics move at fixed slow rates |
 | `roughness` | both | 0 to 0.3 | 0.04 | surface roughness of the reflections |
-| `caustic_strength` | both | 0 to 4 | 2.2 | brightness of the caustic lines on the floor |
+| `caustic_strength` | both | 0 to 4 | 2.2 base, 1.4 desktop | brightness of the caustic lines on the floor |
 | `caustic_scale` | both | 0.2 to 4 | 1.3 | caustic pattern size |
-| `refraction_strength` | `SH_Water` | 0 to 0.15 | 0.04 | screen-space bend per metre of water |
 | `edge_softness` | `SH_Water` | 0 to 0.3 m | 0.08 | width of the soft line where the water meets stone |
-| `floor_height` | `SH_WaterSimple` | metres, Godot Y | −2.52 (generated) | the flat channel floor the path length and caustics use |
+| `floor_height` | both | metres, Godot Y | −2.52 (generated) | the flat channel floor the path length and caustics use |
+| `channel_inner`, `channel_outer`, `causeway_half`, `channel_top` | `SH_Water` | metres (generated) | 8.45, 10.45, 1.5, −1.92 | the channel box the refracted ray is traced through: ring half-widths, half the causeway's width, rim height |
+| `texture_albedo`, `floor_tint`, `floor_scale` | `SH_Water` | generated from `MI_StoneDark` | `T_Stone_01_BC`, `#5c5246`, 0.9 | the channel stone's colour map, tint and triplanar scale |
+| `sun_direction` | `SH_Water` | unit vector (generated) | (−0.426, 0.669, 0.609) | towards the sun: stone the walls hide from it is shaded |
+| `shade_level` | `SH_Water` | 0 to 1 | 0.25 (shader default) | brightness of stone the sun does not reach, against sunlit floor |
+| `corner_level`, `corner_width` | `SH_Water` | 0 to 1; 0.01 to 1 m | 0.35, 0.5 (shader defaults) | how much light the corner where floor meets wall keeps, and how far out it is back to full |
+| `floor_slab`, `wall_block`, `joint_level` | `SH_Water` | metres; 0 to 1 | (0.9, 0.6), (0.6, 0.3), 0.25 (shader defaults) | the slab and block joints drawn on the traced stone (its map has none), each row offset half a slab, and how dark the joints are |
 | `floor_albedo` | `SH_WaterSimple` | 0 to 1 | 0.12 | how bright the caustic lines make the floor; they are added to the lit albedo, so they follow sun, shadow and exposure |
 
 The theme's `water` block:
@@ -109,12 +114,13 @@ nodes.
 
 | Shader | Render mode | Samplers | Cost per pixel |
 |---|---|---|---|
-| `SH_Water` | transparent pass (reads the screen texture), opaque result (no `ALPHA`), depth write, Burley diffuse, GGX | `hint_screen_texture` (linear, no mipmaps, clamp) and `hint_depth_texture` (nearest, clamp) | 2 depth and 1 screen sample; 3 noise octaves, and 2 caustic layers (4 noise evaluations) only where the caustics can show |
+| `SH_Water` | opaque, depth write, Burley diffuse, GGX; no screen or depth texture | `texture_albedo`, the channel stone's colour map (anisotropic, mipmapped, clamped and wrapped by hand) | 1 texture sample; 3 noise octaves; the ray traced through the channel box (a floor plane and up to three wall planes); the slab joints (a few ALU operations); 2 caustic layers (4 noise evaluations) only where the caustics can show |
 | `SH_WaterSimple` | blended (`ALPHA` from the absorption, at least the Fresnel), Burley diffuse, GGX | none | 2 noise octaves, 1 caustic layer (3 noise evaluations) where it can show, no texture samples, no trigonometry in the noise |
 | `SH_Water.gdshaderinc` | — | none | gradient noise with analytic derivatives (integer hash, gradients from hashed bytes, no trigonometry), ripple slope, caustics, Beer-Lambert transmittance, Schlick Fresnel |
 
-No static switches: two compiled user variants. Neither shader samples a
-material texture, so the water adds no anisotropic or repeating sampler
+No static switches: two compiled user variants. `SH_WaterSimple` samples
+no texture; `SH_Water` samples one, the stone's colour map, through a
+clamped sampler wrapped by hand, so the water adds no repeating sampler
 and stays inside the 16 Metal sampler slots
 ([Board themes](board-themes.md#quality-tier-variants)). `SH_Water` is
 written for Forward+ (Vulkan, D3D12, Metal) and checked on Vulkan; Metal is
@@ -128,7 +134,7 @@ repeatable at a fixed frame rate.
 | Measure | Value |
 |---|---|
 | Budget | `SH_WaterSimple` ≤ 0.3 ms at 1280×720 on an Intel UHD 620 class GPU; `SH_Water` ≤ 0.5 ms at 1440p on the benchmark Mac (M4) |
-| Measured | desktop-high, 2560×1440, Apple M4 ([benchmark](benchmark.md), busiest board, main and the branch run alternately in one session): the version with an in-shader screen-space reflection march (up to 16 steps and 3 refinements, 21 depth and 2 screen samples per pixel) added 3.9 ms per frame at p50 and p95 (20.8 → 24.7 ms p50), all of it on the GPU; the march was removed for that reason. The shader as it stands is pending a re-measure |
+| Measured | desktop-high, 2560×1440, Apple M4 ([benchmark](benchmark.md), busiest board, main and the branch run alternately in one session): the version with an in-shader screen-space reflection march (up to 16 steps and 3 refinements, 21 depth and 2 screen samples per pixel) added 3.9 ms per frame at p50 and p95 (20.8 → 24.7 ms p50), all of it on the GPU; the march was removed for that reason. The shader as it stands, dev reading on an RTX 4080 SUPER (Vulkan, Linux), desktop-high, full screen 3840×2160 (FSR 2 at 0.5), vsync off, busiest board, one 10 s run each: GPU time p50 4.27 ms (mean 4.35 ms) with the water, 4.30 ms (mean 4.38 ms) with the four water nodes hidden, so the water is within run-to-run noise |
 | Estimate | software rendering (lavapipe, llvmpipe) cannot resolve the cost: the water close-up runs at the same 6.5 fps at 640×360 with the water shader, with the march, with `SH_WaterSimple` or with no water. By count: `SH_WaterSimple` is up to 5 noise evaluations (2 for the ripples, 3 for the caustics), each 4 integer hashes and no trigonometry, and no texture samples; `SH_Water` up to 7 noise evaluations and 3 texture samples |
 | Triangles | 12 per strip slab (60 in all); the channel adds about 400 to the backdrop |
 | Reflection probes | none. The first version had a box probe per strip: they took video memory from 578 to 1095 MB on the M4 (Godot's default 64-slot reflection atlas) and, on lavapipe at 640×360, the bench's p50 from 263 to 687 ms with the water (306 ms without it), so they were removed |

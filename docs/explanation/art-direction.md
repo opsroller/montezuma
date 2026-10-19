@@ -147,13 +147,17 @@ Choices behind the [reference](../reference/water.md):
 
 - **Ripples are computed, not textured.** Gradient noise with its exact
   slope, plus two long swells, gives normals without a texture, so the
-  water adds no sampler (the Metal limit that bit the stone shaders) and
-  no generated texture to the build, and it never shows a tile repeat.
-- **Desktop reads the scene, phones and web do not.** On desktop the
-  shader refracts the screen and measures the true depth from the depth
-  buffer. Mobile and web blend a cheaper surface over the real floor and
-  take the path length from the known floor height, which is exact for a
-  flat channel.
+  ripples add no sampler (the Metal limit that bit the stone shaders) and
+  no generated texture to the build, and they never show a tile repeat.
+- **Desktop traces the channel, phones and web blend.** The channel is a
+  known stone box, so the desktop shader bends the view ray at the
+  surface, follows it to the floor or wall it reaches and draws that
+  stone itself, with its slab joints, the walls' shadow and darker
+  corners, then absorbs it over the true path. It is opaque and reads no
+  screen or depth texture: on the benchmark Mac those copies cost several
+  times the water's budget. Mobile and web blend a cheaper surface over
+  the real floor and take the path length from the known floor height,
+  which is exact for a flat channel.
 - **Caustics belong to the floor point.** Both shaders find the floor
   point the eye sees through the water and draw the caustic lines there,
   so they sit on the stone and move with it, not with the surface.
@@ -162,8 +166,9 @@ Choices behind the [reference](../reference/water.md):
   reflect the temple into the water. On the benchmark Mac each cost many
   times the water's 0.5 ms budget (the probes kept re-rendering; the
   march's chain of depth reads added 3.9 ms at 1440p), and from the game
-  camera the strips sit at the edge of the frame, so every tier reflects
-  the sky through the engine's own specular.
+  camera the strips sit at the edge of the frame, so the water reflects
+  through the engine's own specular: the sky, plus on desktop the scene's
+  reflection probe and, where the tier has it, screen-space reflection.
 
 ## Why a theme, not a scene
 

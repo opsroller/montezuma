@@ -6,7 +6,8 @@
 // generator writes its size), so the shader follows the refracted view ray
 // to the stone it reaches, samples that stone's colour there, and lets the
 // water's own colour take over with the true path length (Beer-Lambert
-// absorption). Caustic lines brighten the shallow floor. The engine lights
+// absorption). The stone gets slab joints, the walls' shadow and darker
+// corners; caustic lines brighten the shallow floor. The engine lights
 // the result and adds the reflections (sky, reflection probe and, where the
 // tier has it, screen-space reflection) through a smooth dielectric
 // specular. No screen or depth texture: on the benchmark Mac their copies
@@ -51,7 +52,16 @@ uniform float causeway_half = 1.5;
 uniform float channel_top = -2.42;
 uniform vec3 sun_direction = vec3(-0.426, 0.669, 0.609);
 // How bright stone the sun does not reach is, against sunlit floor.
-uniform float shade_level : hint_range(0.0, 1.0, 0.01) = 0.4;
+uniform float shade_level : hint_range(0.0, 1.0, 0.01) = 0.25;
+// How much light a corner, where floor meets wall, keeps, and how far from
+// the corner it is back to full, metres.
+uniform float corner_level : hint_range(0.0, 1.0, 0.01) = 0.35;
+uniform float corner_width : hint_range(0.01, 1.0, 0.01) = 0.5;
+// Floor slabs and wall blocks, metres (along, across), and how bright their
+// joints are against the stone.
+uniform vec2 floor_slab = vec2(0.9, 0.6);
+uniform vec2 wall_block = vec2(0.6, 0.3);
+uniform float joint_level : hint_range(0.0, 1.0, 0.01) = 0.25;
 
 varying vec3 w_pos;
 
@@ -79,6 +89,18 @@ float in_channel(vec3 p) {
 		m = min(m, abs(p.x) - causeway_half);
 	}
 	return m;
+}
+
+// The channel's stone has no joints in its map, so draw them: slabs of the
+// given size in metres, each row offset by half a slab, with dark joints
+// (softened by the pixel footprint fw) and a slight tone per slab.
+float slab_tone(vec2 p, vec2 size, float fw) {
+	vec2 q = p / size;
+	q.x += 0.5 * floor(q.y);
+	vec2 f = min(fract(q), 1.0 - fract(q)) * size;
+	float joint = smoothstep(0.006, 0.018 + fw, min(f.x, f.y));
+	float h = fract(sin(dot(floor(q), vec2(127.1, 311.7))) * 43758.5453);
+	return mix(joint_level, 1.0, joint) * (0.86 + 0.28 * h);
 }
 
 void fragment() {
@@ -129,8 +151,10 @@ void fragment() {
 
 	// The stone there, mapped like SH_TriplanarPBR's projection for that face.
 	vec2 uv = face == 1 ? hit.xz : (face == 0 ? vec2(hit.z * sign(rd.x), -hit.y) : vec2(-hit.x * sign(rd.z), -hit.y));
+	float fw = length(fwidth(uv));
+	float slabs = slab_tone(uv, face == 1 ? floor_slab : wall_block, fw);
 	uv *= floor_scale;
-	vec3 stone = floor_tint.rgb * textureGrad(texture_albedo, fract(uv), dFdx(uv), dFdy(uv)).rgb;
+	vec3 stone = floor_tint.rgb * slabs * textureGrad(texture_albedo, fract(uv), dFdx(uv), dFdy(uv)).rgb;
 
 	// Caustics: brighter where the floor lies a little under the surface,
 	// fading in from the edge and out with depth.
@@ -152,7 +176,7 @@ void fragment() {
 	vec3 rim = hit + to_sun * (max(channel_top - hit.y, 0.0) / max(to_sun.y, 0.05));
 	direct *= smoothstep(-0.04, 0.04, in_channel(rim));
 	float corner = face == 1 ? in_channel(hit) : hit.y - floor_height;
-	stone *= mix(shade_level, 1.0, direct) * mix(0.6, 1.0, smoothstep(0.0, 0.35, corner));
+	stone *= mix(shade_level, 1.0, direct) * mix(corner_level, 1.0, smoothstep(0.0, corner_width, corner));
 
 	vec3 trans = wt_transmittance(absorption, t);
 	float edge = 1.0 - smoothstep(0.0, max(edge_softness, 0.001), t);
