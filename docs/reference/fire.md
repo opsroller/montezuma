@@ -110,7 +110,7 @@ and the light's lumens, temperature, colour, size and range from `lighting.torch
 | `Embers` | `GPUParticles3D` | `quality:particle_trails` | 18 particles, 1.6 s, 0.6 to 1.3 m/s up within 25°, turbulence, 0.12 s tube trails; `MI_EmberTrail` |
 | `EmbersNoTrail` | `GPUParticles3D` | `quality_fallback:particle_trails` | the same embers as dots; `MI_Ember` |
 | `HeatHaze` | `MeshInstance3D` | `quality:heat_haze` | 0.9 × 1.1 m quad 0.95 m above the rim; `MI_HeatHaze` |
-| `Light` | `FlickerLight3D` | `quality_shadow_light`, `quality_fog_light` | 0.42 m above the rim, turned so its dual paraboloid shadow seam lies flat; 60,000 lm at 1900 K; shadows on, blur 1.5; volumetric fog energy 2.0; bake mode dynamic |
+| `Light` | `FlickerLight3D` | `quality_shadow_light`, `quality_fog_light` | 0.42 m above the rim, turned so its dual paraboloid shadow seam lies flat; `lighting.torch` (temple: 90,000 lm at 1900 K); shadows on, blur 1.5; volumetric fog energy 2.0; bake mode dynamic |
 
 Every particle system starts full (`preprocess` = lifetime) and casts no
 shadow. The particles and the heat haze are on render layer 2, which

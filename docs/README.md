@@ -39,6 +39,7 @@ own folder.
 - [Visual target](reference/visual-target.md): the look per quality tier, frame budgets and acceptance tests.
 - [Fire](reference/fire.md): the brazier fire's simulation, flipbooks, scene, shaders, flickering light and per-tier behaviour.
 - [Quality tiers](reference/quality-tiers.md): the `QualityTiers` autoload, settings key, feature ids, node groups and render settings per tier.
+- [Water](reference/water.md): the temple water channel, its two shaders, parameters, tiers and cost.
 - [Benchmark and readability capture](reference/benchmark.md): the benchmark replay, its JSON report, feature keys and readability checks.
 - [Benchmark results](reference/benchmark-results.md): measured frame times, feature rows and readability per machine and tier.
 - [Operations](reference/operations.md): cost, flow and quality measures, operations-review findings and the review log.
@@ -78,6 +79,7 @@ own folder.
 - [About the fire](explanation/about-the-fire.md): why a simulated flipbook with motion vectors, why our own simulation, how it stays off the board.
 - [About quality tiers](explanation/about-quality-tiers.md): how a tier is picked, why the renderer is fixed per platform, why tiers only switch effects off.
 - [About lighting](explanation/about-lighting.md): baked and real-time GI per tier, why VoxelGI over SDFGI, physical units, height fog and the lighting costs.
+- [About post-processing and the colour grade](explanation/about-post-processing.md): glow before tonemapping, the CDL grade as a LUT and its palette check, backdrop depth of field that follows the camera, and their costs.
 - [About the atmosphere](explanation/about-the-atmosphere.md): why one fog volume with only a thin, patchy veil over the board, why shafts come from stretched noise, why cards on mobile and web.
 - [About CI caching](explanation/about-ci-caching.md): why CI uses a compiler cache and what it leaves uncached.
 - [About CI on every push](explanation/about-ci-on-every-push.md): why every branch push runs the checks, and why branch PRs skip their own run.

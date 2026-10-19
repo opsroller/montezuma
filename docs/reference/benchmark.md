@@ -160,7 +160,12 @@ it.
 
 `ReadabilityCapture`: `seed` (`--capture-seed=N`, 52), `output_dir`
 (`--capture-out=DIR`, `user://bench/readability`), `settle_frames` (45,
-frames each effect set renders before its capture).
+frames each effect set renders before its capture), `average_frames`
+(`--capture-average=N`, 64, frames averaged into each capture after it
+settles: temporal anti-aliasing and upscaling jitter each frame and the
+fire lights flicker, which on desktop tiers made two captures of the same
+board differ by more than rules 2 and 6 allow). The capture also holds
+every `FlickerLight3D` at its authored energy and position.
 
 ## Report
 
@@ -217,7 +222,7 @@ attributes and the visible nodes of the scene tree.
 | `glow`, `fog`, `volumetric_fog`, `ssr`, `ssao`, `ssil`, `sdfgi` | bool | that `Environment` setting is on |
 | `color_grade_lut` | bool | adjustments on with a colour-correction texture |
 | `auto_exposure` | bool | the camera attributes have auto exposure on |
-| `depth_of_field` | bool | near or far DOF blur on (`CameraAttributesPractical`) |
+| `depth_of_field` | bool | the `BackdropBlur` the viewport renders with (its camera's, else its world's) is enabled |
 | `lightmap_gi`, `voxel_gi` | bool | a visible `LightmapGI` / `VoxelGI` node |
 | `reflection_probes`, `fog_volumes`, `decals` | int | visible nodes of that type |
 | `gpu_particles`, `gpu_particle_amount` | int | emitting `GPUParticles3D` nodes and their summed `amount` |
@@ -238,7 +243,8 @@ the list.
 ## Readability capture
 
 `ReadabilityCapture` deals the board for its seed, then renders it under
-four effect sets, `settle_frames` frames each, and saves the viewport:
+four effect sets, `settle_frames` frames each, and saves the mean of the
+next `average_frames` frames of the viewport:
 
 | File | Effects on |
 |---|---|
@@ -253,6 +259,10 @@ in `all_on.png`. A group the scene has off stays off in every capture.
 cells, frame excluded), `cell_px`, `kinds`, `seed`, every cell's `x`, `y`,
 `kind`, `shade` ((x + y) mod 2, the two tile shades) and screen `rect`,
 plus `features` and `device` as in the report.
+
+Glow is switched off by setting its intensity to 0, not by disabling
+it: on Compatibility, enabling glow also moves the 3D render to an HDR
+buffer, which changes specular highlights by itself and read as bloom.
 
 ## Readability checks
 

@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
 
 // Board view layout and camera framing tests. No Godot, no framework; run via ctest.
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -117,6 +118,25 @@ void test_fit_handles_straight_down_and_margin() {
     check(std::abs(layout::fit_distance(f) - expected) < 1e-6, "top-down fit matches the closed form");
     f.margin = 0.1;
     check(layout::fit_distance(f) > expected, "margin pushes the camera back");
+}
+
+void test_far_depth_is_the_far_board_edge() {
+    for (double aspect : {9.0 / 19.5, 1.0, 16.0 / 9.0}) {
+        for (double tilt : {0.0, feel::kCameraTiltDegrees, 40.0}) {
+            auto f = board_fit(aspect);
+            f.tilt_degrees = tilt;
+            const double d = layout::fit_distance(f);
+            const auto back = layout::camera_direction(tilt);
+            double deepest = 0.0;  // brute force over the corners at board level
+            for (double sx : {-1.0, 1.0}) {
+                for (double sz : {-1.0, 1.0}) {
+                    const double depth = d - (sx * f.half_width * back.x + sz * f.half_depth * back.z);
+                    deepest = std::max(deepest, depth);
+                }
+            }
+            check(std::abs(layout::far_depth(f, d) - deepest) < 1e-9, "far depth is the deepest board corner");
+        }
+    }
 }
 
 
@@ -466,6 +486,7 @@ int main() {
     test_fit_distance_is_tight();
     test_tall_screens_need_more_distance();
     test_fit_handles_straight_down_and_margin();
+    test_far_depth_is_the_far_board_edge();
     test_board_padding_measures_the_frame();
     test_plan_orders_phases_in_time();
     test_fall_timing_follows_gravity();
