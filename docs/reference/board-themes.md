@@ -271,11 +271,11 @@ The material's parameters:
 | `veil_height` | 0.25 m (0.05 to 0.4) | height above the tiles where the veil has thinned to nothing; the range stops under the score labels' bottom edge (about 0.5 m) |
 | `veil_scale`, `veil_coverage` | 12 m (2 to 24), (0.58, 0.78) | size of one tile of veil noise, and the noise values mapped to no veil and full veil: patches a few cells across with clear cells between them. Keep `wind` × 3600 s (Godot's `TIME` rollover) a whole number of `veil_scale` tiles, or the patches jump once an hour |
 | `veil_spread` | 1 m (0 to 2) | how far past the board edge the veil fades out |
+| `density_texture` | `NoiseTexture3D`, 64³, seed 51, frequency 0.08 | from `noise_textures_3d`, built by Godot at load |
 
 The veil scatters all the light it receives (it is not darkened by
 `base_shade`); where it overlaps a bank, the shade follows each one's
 share of the density. To retune it: [Tune the fog veil](../how-to/tune-the-fog-veil.md).
-| `density_texture` | `NoiseTexture3D`, 64³, seed 51, frequency 0.08 | from `noise_textures_3d`, built by Godot at load |
 
 The sun's `fog_energy` (7) makes up for Godot lighting the fog by single
 scattering only: mist this thick scatters light many times, and with
