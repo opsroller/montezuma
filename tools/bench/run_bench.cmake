@@ -21,6 +21,9 @@
 #   SECONDS      capture length (default 60)
 #   WARMUP       warm-up before the capture (default 10)
 #   OUT          where reports and captures go (default bench-out/)
+#   NATIVE=OFF   use the tier's render scale and upscaler (FSR 2, MetalFX);
+#                by default the 3D renders at SIZE with no upscaler
+#                (--quality-native), so the upscale costs nothing
 #   QUALITY_OFF  comma-separated feature ids to turn off for the runs
 #                (--quality-off), to measure what each costs; the feature
 #                check then fails for those rows
@@ -111,6 +114,9 @@ endfunction()
 set(quality "")
 if(TIER)
   set(quality "--quality=${TIER}")
+endif()
+if(NOT DEFINED NATIVE OR NATIVE)
+  list(APPEND quality --quality-native)
 endif()
 if(QUALITY_OFF)
   list(APPEND quality "--quality-off=${QUALITY_OFF}")

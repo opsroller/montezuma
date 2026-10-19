@@ -213,6 +213,8 @@ void QualityTiers::_ready() {
         }
         // `-- --quality-off=<id>[,<id>...]` turns features off for this run
         // (the benchmark uses it to measure what each one costs).
+        // `-- --quality-native` renders 3D at the output size, no upscaler.
+        if (arg == "--quality-native") native_ = true;
         if (arg.begins_with("--quality-off=")) {
             const PackedStringArray ids = arg.substr(14).split(",", false);
             for (const String& id : ids) {
@@ -332,7 +334,7 @@ void QualityTiers::apply_viewport() {
     if (!tree) return;
     Window* root = tree->get_root();
     const q::Profile& p = get_profile();
-    const q::ViewportPlan plan = q::viewport_plan(p, root->get_size().y);
+    const q::ViewportPlan plan = q::viewport_plan(p, root->get_size().y, native_);
     Viewport::Scaling3DMode mode = Viewport::SCALING_3D_MODE_BILINEAR;
     if (plan.scaling == q::Scaling::SpatialUpscale) mode = Viewport::SCALING_3D_MODE_FSR;
     if (plan.scaling == q::Scaling::TemporalUpscale) {

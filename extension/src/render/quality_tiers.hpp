@@ -129,6 +129,8 @@ private:
     // Features `-- --quality-off=ssao,glow` turns off for this run, on every
     // tier, so the cost of one effect can be measured against the rest.
     std::array<bool, quality::kFeatureCount> forced_off_{};
+    // `-- --quality-native`: 3D at the output size, no upscaler.
+    bool native_ = false;
     godot::String choice_ = "auto";
     godot::String settings_path_ = "user://quality.cfg";
     bool shadow_budget_pending_ = false;

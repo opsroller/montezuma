@@ -229,10 +229,16 @@ baseline runs (`gpu_ms` p50 2.049 and 2.048):
 - **WP-52 depth of field** (#72 branch at da752dc, same machine and
   run): Godot's box-bokeh depth of field is 0.19 ms of a 2.29 ms frame
   (8%); it runs at the 2560×1440 output, after FSR 2, so it shades four
-  times the pixels of the passes before it. On the Mac mini M4 it is
-  3.3 ms of 18.5 ms (main 15.5 ms; #72 without depth of field 15.2 ms).
-- **The M4 against this machine.** The same frame takes about 15 ms on
-  the M4 against 2.05 ms here, about 7 times as long. The frame is 21
+  times the pixels of the passes before it. On the Mac mini M4 it adds
+  3.3 ms: `frame_ms` p50 18.5 ms with it, 15.2 ms with it off, and
+  15.5 ms on `main` (`desktop-high`, 2560×1440, vsync off, baked
+  lightmaps, 2026-10-19). These runs sit below the 16.67 ms present floor
+  that the [Pieces out of GI](#pieces-out-of-gi) runs hit: those ran
+  without baked lightmaps, and the floor did not hold in these.
+- **The M4 against this machine.** `main` takes 14.9 to 15.5 ms
+  (`frame_ms` p50, vsync off, baked lightmaps, the runs above and one
+  `--gpu-profile` run at ba69956) on the M4 against 2.05 ms of GPU time
+  here, about 7 times as long. The frame is 21
   passes that each write their result to memory and read it back,
   Forward+'s design for desktop GPUs; the M4's 10-core GPU has about a
   twelfth of this card's arithmetic and a sixth of its memory bandwidth.
