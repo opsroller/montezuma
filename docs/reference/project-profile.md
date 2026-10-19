@@ -166,7 +166,7 @@ budgets, frame times and the look each tier must show are in
 
 A finding raised in two or more reviews is listed here as a rule.
 
-- Performance figures (#35, #75, #79, #80). An absolute figure links to
+- Performance figures (#35, #75, #79, #80, #86). An absolute figure links to
   its section of `docs/reference/benchmark-results.md` and names the row
   (machine, tier, date or run); that row gives the tier, Resolution,
   3D scaling and vsync or cap mode, and a capped row says why (for
@@ -180,18 +180,42 @@ A finding raised in two or more reviews is listed here as a rule.
   row waits on, needs, or shares owned files or numbers with is in its
   `Depends on` column. Mentions of finished work, and the bracketed reason
   of a `blocked` row, are not dependencies.
-- Draft PRs in the plan (#80, #86). A row whose PR is still a draft reads
-  `active (draft #N)`, not `review (#N)`, as the plan's status key says;
-  it moves to `review` when the PR is marked ready.
-- Reference pages left on the old value (#61, #86, #88). When a change
-  alters a value or a behaviour, every reference page that states it
-  changes in the same PR, including pages the diff does not touch: grep
-  `docs/` for the old value or name. A page can point to the source key
-  (for example a theme JSON key) instead of repeating its literal.
+- Plan status of an open PR (#61, #80, #86). A row whose PR is still a
+  draft reads `active (draft #N)`, not `review (#N)`, as the plan's status
+  key says; it moves to `review` when the PR is marked ready. It is set
+  to `done (#N)` only when landing, just before the squash merge, so a PR
+  under review never shows `done`. Check: each row's status against its
+  PR's draft flag and merge state.
+- Pages left on the old value (#61, #69, #75, #78, #86, #88). When a
+  change alters a value or a behaviour (a light's lumens, a shader's
+  sampler or sample count, an exposure scale, the tonemapper), every page
+  that states it changes in the same PR, including pages the diff does
+  not touch. That covers explanation pages: a past value there is worded
+  as history and points to the page that has the current one. Check:
+  grep `docs/` for the old value and the old name. A page can point to
+  the source key (for example a theme JSON key) instead of repeating its
+  literal.
 - Decisions without an explanation (#86, #88). A change that picks a
   value, a metric or a per-tier split gets its reason on an explanation
   page in the same PR (why this, why not the other tiers or options).
   A reference row or a code comment saying what it does is not enough.
+- Generated files in a cross-PR conflict (#61, #86). When two open PRs
+  change a generator's inputs (`tools/assets/gen_theme_scenes.py`, a theme
+  JSON), whichever lands second rebases and regenerates the output (for
+  example `PF_Environment.tscn`) with the generator instead of merging it
+  by hand, then re-runs the checks that measured the old output (the
+  desktop-high readability capture) and records the new numbers. Check:
+  re-run the generator at the head; the diff is empty.
+- PR body out of date (#61, #86). The body becomes the squash commit
+  body, so its facts match the head: no figure the head no longer
+  produces (a removed shader's cost, a vsync-locked p95), no stale
+  description of the code, and sizes and settings as committed (capture
+  resolution). Check: each figure and claim in the body against the head
+  and its `benchmark-results.md` row.
+- Owned paths (#83, #86). A plan row's `Owns` and a role-map row claim
+  only paths the role map gives that row's roles, and no two roles own
+  the same path. Check: each `Owns` path against the role map's `Owns`
+  column; a path of another role adds that role to the row.
 - Two open PRs changing the same plan row (#7, #13, #80). A PR edits only
   its own package's row. On rebase it keeps `main`'s text for every other
   row; a PR that edits another package's row drops that edit or moves it
