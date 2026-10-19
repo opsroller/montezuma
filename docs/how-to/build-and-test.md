@@ -125,14 +125,14 @@ venv's programs are in `.venv\Scripts\`.
 Needs the native extension built, the textures generated and the Godot
 editor from `tools/release/godot.env`, with a Vulkan driver. Without a GPU,
 install Mesa's lavapipe and a virtual display (`sudo apt install
-mesa-vulkan-drivers xvfb` on Debian or Ubuntu) and add `--xvfb`.
+mesa-vulkan-drivers xvfb` on Debian or Ubuntu) and add `-DXVFB=ON`.
 
 ```sh
-godot --headless --path game --import                  # once, in a fresh checkout
-tools/assets/bake_lightmaps.sh --godot "$(command -v godot)" --xvfb
+cmake -DGODOT="$(command -v godot)" -DXVFB=ON -P tools/assets/bake_lightmaps.cmake
 ```
 
-It skips themes whose bake inputs did not change, and prints
+It skips themes whose bake inputs did not change, imports the project
+before a bake, and prints
 `LIGHTMAP_BAKE ok res://assets/lookdev/LD_<Theme>_Bake.tscn …` for each
 bake. If the editor starts an import of its own during a bake, the bake
 fails, prints `LIGHTMAP_BAKE retry …` and runs once more. Without a bake
@@ -166,7 +166,7 @@ first level at 1280×720, saved as `title.png` and `board.png`):
 
 ```sh
 xvfb-run -a -s "-screen 0 1280x720x24" \
-  tools/release/smoke-test.sh dist/linux/montezuma-<version>-linux-x86_64.tar.gz /tmp/screens
+  cmake -DARCHIVE=dist/linux -DSCREENS=/tmp/screens -P tools/release/smoke-test.cmake
 ```
 
 ## Export a build

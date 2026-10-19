@@ -42,7 +42,7 @@ With a Blender install instead of `bpy`, run the mesh step as
    ([Build and test: bake the lightmaps](build-and-test.md#bake-the-lightmaps)):
 
    ```sh
-   tools/assets/bake_lightmaps.sh --godot "$(command -v godot)"
+   cmake -DGODOT="$(command -v godot)" -P tools/assets/bake_lightmaps.cmake
    ```
 
    The look-dev scenes have no baked light; the game and the benchmark do.
@@ -83,8 +83,8 @@ With a Blender install instead of `bpy`, run the mesh step as
    ```sh
    python3 tools/assets/gen_theme_textures.py
    godot --headless --path game --import
-   tools/bench/run_bench.sh --tier web --driver opengl3 --readability --seconds 5 --xvfb
-   tools/bench/run_bench.sh --tier desktop-high --driver vulkan --readability --seconds 5 --xvfb
+   cmake -DTIER=web -DDRIVER=opengl3 -DREADABILITY=ON -DSECONDS=5 -DXVFB=ON -P tools/bench/run_bench.cmake
+   cmake -DTIER=desktop-high -DDRIVER=vulkan -DREADABILITY=ON -DSECONDS=5 -DXVFB=ON -P tools/bench/run_bench.cmake
    ```
 
    Rules 4 and 6 must still pass. Look at `all_on.png` beside the
@@ -139,7 +139,7 @@ own: mobile and web never see the variant.
 3. Point the materials' texture paths at `res://assets/textures/<theme>/`,
    or reuse the temple's.
 4. Run the three generators with your file as the argument, then the
-   validator, then `tools/assets/bake_lightmaps.sh`. Your theme is added to
+   validator, then `cmake -P tools/assets/bake_lightmaps.cmake`. Your theme is added to
    `manifest.json` next to the others, and `LD_<Theme>_Bake.tscn` is
    written for its bake. Commit the new board and backdrop `.obj.import`
    files with `generate_lightmap_uv2=true` (Godot writes them on first

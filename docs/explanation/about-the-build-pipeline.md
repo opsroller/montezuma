@@ -19,6 +19,28 @@ trade-off is that the macOS and Windows packages are first run in the
 `smoke` jobs, after packaging. That is deliberate: the smoke test runs the
 package a player would download, not the source tree.
 
+## Build steps in CMake, with hard timeouts
+
+The steps around the compile (fetching Godot, exporting, packaging, the
+smoke test, the benchmark) are CMake scripts run with `cmake -P`, not
+shell scripts. CMake is already required to build the game, so it adds
+nothing to install, and its script mode runs the same on Linux, macOS and
+Windows: the Windows smoke job no longer needs Git Bash, and archives are
+unpacked and checksummed by CMake itself instead of by `tar`, `unzip`,
+`sha256sum` or PowerShell, whichever the machine has. Python stays for
+the helpers that do real work on files (packaging, notices, checks);
+CMake drives them.
+
+Every process a step starts has a hard timeout. Godot can wait forever:
+on a modal error dialog, on a GPU driver that never answers, or on an
+import that loops. Without a timeout such a run holds the job until
+GitHub cancels it after half an hour or more, and the log says nothing
+about which command hung. With one, the step fails within minutes and
+names the command and the limit. The limits are well above a normal
+run, so reaching one means something is wrong; raising a limit to make a
+run pass hides the problem. For the same reason there are no automatic
+retries: a download or run that fails is reported, not repeated.
+
 ## Release templates only
 
 The packages use `template_release` libraries and release export

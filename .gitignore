@@ -24,7 +24,7 @@ game/assets/textures/*/T_*.png
 game/assets/textures/*/hi/T_*.png
 game/assets/textures/*/grade/T_*.png
 game/assets/textures/*/.inputs
-# Lightmaps baked by tools/assets/bake_lightmaps.sh in the build (CI action
+# Lightmaps baked by tools/assets/bake_lightmaps.cmake in the build (CI action
 # .github/actions/lightmaps); never committed. Godot's UV2 unwrap cache too.
 game/assets/models/*/backdrop/*.lmbake
 game/assets/models/*/backdrop/*.exr

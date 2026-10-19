@@ -64,7 +64,7 @@ shows up on `main` after merge, and the next PR fixes it.
 - The **Compiler cache stats** step prints hits and misses for the run.
 - Caches written by a branch or PR are visible only to that branch or PR.
   Branches and PRs read the caches written on `main`.
-- Godot itself (one download of about 60 MB, a few seconds) is not cached. The job fetches the editor pinned in `tools/release/godot.env` with `tools/release/fetch-godot.sh`, the same script and checksum the build pipeline uses.
+- Godot itself (one download of about 60 MB, a few seconds) is not cached. The job fetches the editor pinned in `tools/release/godot.env` with `tools/release/fetch-godot.cmake`, the same step and checksum the build pipeline uses.
 
 - **Lightmaps.** The composite action `.github/actions/lightmaps` runs
   after the textures action. It restores each theme's
@@ -72,7 +72,7 @@ shows up on `main` after merge, and the next PR fixes it.
   stamp, keyed by a hash of the board and backdrop folders, the materials,
   the textures' `.inputs` stamps, the `LD_*_Bake.tscn` scenes, the bake
   driver `lightmap_baker.cpp`, `godot.env` and `project.godot`. Then
-  `tools/assets/bake_lightmaps.sh --check` compares the stamps; only when
+  `cmake -DCHECK=ON -P tools/assets/bake_lightmaps.cmake` compares the stamps; only when
   one is stale does the action install Mesa lavapipe and xvfb, build the
   native extension if the job has none (and delete it afterwards, so it
   never reaches a web or desktop export), import the project and bake

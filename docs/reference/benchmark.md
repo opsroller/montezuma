@@ -19,7 +19,7 @@ readability capture and checks that measure a build against the
 | `extension/src/bench/benchmark_runner.*` | `BenchmarkRunner` node |
 | `extension/src/bench/readability_capture.*` | `ReadabilityCapture` node |
 | `extension/src/bench/tests/` | `bench_tests` CTest test (planner, statistics, budget, render size) |
-| `tools/bench/run_bench.sh` | Runs both scenes and the checks on a desktop |
+| `tools/bench/run_bench.cmake` | Runs both scenes and the checks on a desktop (`cmake -D<OPTION>=<value>... -P tools/bench/run_bench.cmake`; options in its header); each Godot run stops after `SECONDS` + `WARMUP` + 300 s, the readability capture after 600 s |
 | `tools/bench/check_run.py` | Budget verdict, render size and replay of one report |
 | `tools/bench/check_features.py` | Feature list against one tier (`tiers.json`) |
 | `tools/bench/check_readability.py` | Readability rules 2, 4, 5 and 6 on the captures (Pillow) |
@@ -91,7 +91,7 @@ a slow device plays fewer beats in the same 60 s.
 
 ## Render size
 
-With `render_size` set (`--bench-size=WxH`, which `run_bench.sh` always
+With `render_size` set (`--bench-size=WxH`, which `run_bench.cmake` always
 passes), the runner locks the size before the warm-up: the window gets
 that size and may not be resized, and the root window's content scale
 mode is `viewport` at that size (aspect `ignore`), so the frame renders at
@@ -276,6 +276,6 @@ rule and exits 1 if any fails. Luma is 0-255 (8-bit captures).
 | 6 Bloom stays within a quarter cell | pixels where `glow_only` is at least 6 brighter than `all_off` (`--bloom-level`), outside a quarter cell of a pixel at luma 235 or more in `all_off` (`--emissive-level`) | at most 0.1% of the board (`--rule6-share`) |
 
 Rule 5 is meant for a capture at the smallest phone size (540×1170, as
-`run_bench.sh --readability` does). The thresholds are starting values for
+`run_bench.cmake` with `READABILITY=ON` does). The thresholds are starting values for
 the technical-artist to tune against reviewed captures; a change to one is
 a change to this table.
