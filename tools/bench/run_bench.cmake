@@ -30,6 +30,9 @@
 #   QUALITY_OFF  comma-separated feature ids to turn off for the runs
 #                (--quality-off), to measure what each costs; the feature
 #                check then fails for those rows
+#   GAME_ARGS    more user arguments for every Godot run, ;-separated,
+#                e.g. --rt-reflections for the optional ray-traced
+#                reflections (docs/reference/ray-traced-reflections.md)
 #   GPU_PROFILE=ON  print Godot's GPU time per render pass about once a
 #                second (--gpu-profile; zeros on Metal in Godot 4.7.2)
 #   READABILITY=ON  also capture at 540x1170 and check rules 2, 4, 5 and 6
@@ -130,6 +133,9 @@ if(NOT DEFINED NATIVE OR NATIVE)
 endif()
 if(QUALITY_OFF)
   list(APPEND quality "--quality-off=${QUALITY_OFF}")
+endif()
+if(GAME_ARGS)
+  list(APPEND quality ${GAME_ARGS})
 endif()
 set(engine "")
 if(GPU_PROFILE)

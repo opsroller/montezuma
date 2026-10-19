@@ -43,6 +43,16 @@ add_library(montezuma_extension SHARED
   src/bench/replay.cpp
 )
 target_include_directories(montezuma_extension PRIVATE src)
+
+# Hardware ray-traced reflections on the board's pieces (WP-54 spike). Off
+# by default and never needed by a quality tier: it uses Godot's
+# experimental RenderingDevice ray-tracing API, which only Vulkan has.
+# docs/reference/ray-traced-reflections.md
+option(MONTEZUMA_RAY_TRACING "Build the optional ray-traced reflections effect" OFF)
+if(MONTEZUMA_RAY_TRACING)
+  target_sources(montezuma_extension PRIVATE src/render/rt/rt_math.cpp src/render/rt/rt_reflections.cpp)
+  target_compile_definitions(montezuma_extension PRIVATE MONTEZUMA_RAY_TRACING=1)
+endif()
 target_link_libraries(montezuma_extension PRIVATE montezuma_core godot-cpp)
 montezuma_warnings(montezuma_extension)
 

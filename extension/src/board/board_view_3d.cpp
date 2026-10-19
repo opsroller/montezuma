@@ -368,6 +368,7 @@ void BoardView3D::rebuild() {
     slab_ = library_.make_board(grid_.width, grid_.height, grid_.cell);
     slab_->set_name("Slab");
     add_child(slab_);
+    slab_->add_to_group("ray_traced");  // pieces reflect the board when ray tracing runs
     // The theme's lightmap finds the slab's meshes by path, so it re-attaches
     // to each new slab; VoxelGI bakes from both once the tier wants it.
     attach_baked_lighting(environment_, this);
@@ -387,6 +388,9 @@ void BoardView3D::rebuild() {
         pieces_root_ = memnew(Node3D);
         pieces_root_->set_name("Pieces");
         add_child(pieces_root_);
+        // Pieces, their batches and the slab are what ray-traced reflections
+        // trace when that optional effect runs (docs/reference/ray-traced-reflections.md).
+        pieces_root_->add_to_group("ray_traced");
         fx_root_ = memnew(Node3D);
         fx_root_->set_name("Effects");
         add_child(fx_root_);
@@ -396,6 +400,7 @@ void BoardView3D::rebuild() {
         auto* batches = memnew(Node3D);
         batches->set_name("PieceBatches");
         add_child(batches);
+        batches->add_to_group("ray_traced");
         batcher_.attach(batches);
     }
     batcher_.clear();  // batches hold the old theme's meshes

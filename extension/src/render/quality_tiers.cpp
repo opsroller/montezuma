@@ -53,6 +53,9 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 #include "backdrop_blur.hpp"
+#ifdef MONTEZUMA_RAY_TRACING
+#include "rt/rt_reflections.hpp"
+#endif
 
 using namespace godot;
 
@@ -663,6 +666,11 @@ Ref<Compositor> QualityTiers::backdrop_blur(Ref<Compositor> compositor, const Re
         blur->set_enabled(wanted && get_profile().has(q::Feature::DepthOfField));
         if (blur->get_enabled()) blur->warm();
     }
+#ifdef MONTEZUMA_RAY_TRACING
+    // Optional ray-traced reflections on the pieces, asked for per run and
+    // in no tier (docs/reference/ray-traced-reflections.md).
+    compositor = RtReflections::attach(compositor);
+#endif
     return compositor;
 }
 
@@ -1000,7 +1008,9 @@ void QualityTiers::run_self_test() {
         auto* unblurred = memnew(WorldEnvironment);
         unblurred->set_camera_attributes(sharp);
         apply_node(unblurred);
-        check(unblurred->get_compositor().is_null(), get_tier(), "backdrop blur on a theme without far blur");
+        // (Another effect, such as optional ray tracing, may still bring a compositor.)
+        check(BackdropBlur::in(unblurred->get_compositor()).is_null(), get_tier(),
+              "backdrop blur on a theme without far blur");
         memdelete(unblurred);
     }
 
