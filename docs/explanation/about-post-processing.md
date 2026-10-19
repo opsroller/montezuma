@@ -83,9 +83,11 @@ such: the only renderer this package could run is software Vulkan and GL
    `BoardCamera3D` writes the far distance every time it refits: the view
    depth of the board's far edge plus that margin. The blur then never
    reaches the board at any aspect ratio, and the jungle floor two metres
-   below the platform softens. Medium blur quality on `desktop-high`,
-   low on `desktop-standard`, both jittered for the temporal pass; none
-   on mobile and web, as the target says.
+   below the platform softens. Low blur quality with a box bokeh on both
+   desktop tiers, jittered for the temporal pass; none on mobile and web,
+   as the target says. The blur only softens a backdrop, so its bokeh
+   shape and sample count never show, and the first M4 run (below) found
+   medium quality with the default hexagon bokeh far too expensive.
 5. **Readability captures average 64 frames, hold the fire lights and
    switch glow off by intensity.**
    With TAA or the temporal upscaler, every frame is jittered, and the
@@ -101,21 +103,31 @@ such: the only renderer this package could run is software Vulkan and GL
 
 ## Costs
 
-Estimated GPU cost on each tier's weakest device, from Godot 4.7's
-documentation (*Environment and post-processing*) and the WP-46 M4
-benchmark's share of post work; not measured.
+Measured on the Mac mini M4 (Godot 4.7.2, Metal, release extension),
+busiest-board benchmark seed 52, 10 s warm-up and 60 s capture, vsync
+off, this package against `main` with both sides run alternately
+(PR #72, first run):
 
-| Item | `desktop-high` (720 lines) | `desktop-standard` (0.77) | `mobile` | `web` |
-|---|---|---|---|---|
-| Glow, levels 2 and 3 | 0.2 | 0.3 | 0.4 | 0.6 |
-| LUT in the tonemap pass | under 0.1 | under 0.1 | 0.1 | 0.1 |
-| Far depth of field | 0.6 (medium) | 0.5 (low) | — | — |
-| **Total** | **about 0.9 ms** | **about 0.9 ms** | **about 0.5 ms** | **about 0.7 ms** |
+| `desktop-high`, 2560×1440 | `main` | this package, first version | delta |
+|---|---|---|---|
+| p50 frame time | 47.1 ms | 52.2 ms | +5.1 ms |
+| p95 frame time | 55.4 ms | 60.6 ms | +5.2 ms |
 
-The old glow sampled mip 5 too, so glow costs a little less than before;
-depth of field is new on the desktop tiers. No draw calls are added on
-any tier (all of it is full-screen passes). The M4 re-run after WP-47 and
-this package replaces these numbers.
+Draw calls (p95 about 274), video memory (1,482 MB) and CPU time did
+not change. The scene report differs only in the colour grade LUT and
+depth of field, and a LUT read in the tonemap pass is a fraction of a
+millisecond, so almost all of the 5 ms is depth of field. That first
+version used medium quality with the default hexagon bokeh, which Godot
+runs at the 1440p output size after the upscaler. It now uses low
+quality and a box bokeh, Godot's cheapest; the M4 re-run of this change
+replaces the row above. The target is under 1 ms for the whole package
+on `desktop-high`.
+
+`desktop-standard` at 1920×1080 measured p95 17.5 ms on `main` and
+17.4 ms with this package. Both sit on the 60 Hz floor, because the
+Metal driver stays display-synced with vsync off, so the cost there is
+below what this Mac resolves. Mobile and web add only glow and the LUT,
+no new passes. No draw calls are added on any tier.
 
 ## Options considered
 

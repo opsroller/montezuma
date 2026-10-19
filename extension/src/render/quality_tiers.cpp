@@ -314,6 +314,8 @@ void QualityTiers::apply_engine_settings() {
     rs->environment_set_ssr_half_size(p.ssr_half_size);
     rs->environment_set_volumetric_fog_volume_size(p.volumetric_fog_size, p.volumetric_fog_depth);
     rs->camera_attributes_set_dof_blur_quality(dof_quality(p.dof_quality), p.dof_jitter);
+    // Box is the cheapest bokeh; the blur only softens the backdrop, so its shape never shows.
+    rs->camera_attributes_set_dof_blur_bokeh_shape(RenderingServer::DOF_BOKEH_BOX);
 }
 
 void QualityTiers::apply_viewport() {

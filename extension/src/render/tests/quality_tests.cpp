@@ -119,8 +119,8 @@ void test_profiles_match_visual_target() {
     check(!high.batch_pieces && !standard.batch_pieces && mobile.batch_pieces && web.batch_pieces,
           "pieces batched on mobile and web only");
     check(standard.ssr_half_size && !high.ssr_half_size, "SSR half resolution on standard only");
-    check(high.dof_quality == DofQuality::Medium && standard.dof_quality == DofQuality::Low,
-          "depth of field medium on high, low on standard");
+    check(high.dof_quality == DofQuality::Low && standard.dof_quality == DofQuality::Low,
+          "depth of field low on both desktop tiers");
     check(high.dof_jitter == high.taa && standard.dof_jitter == (standard.scaling == Scaling::TemporalUpscale),
           "jittered depth of field only with a temporal pass");
     check(standard.scaling == Scaling::TemporalUpscale && standard.render_scale == 0.77f, "standard at 0.77");

@@ -171,7 +171,7 @@ switch. The root viewport re-applies on resize.
 | SSR half size | no | yes | — | — |
 | Volumetric fog froxels (size × depth) | 64 × 64 | 32 × 32 | — | — |
 | Subsurface scattering quality | high | medium | off | off |
-| Depth of field blur quality, jitter | medium, jittered | low, jittered | — | — |
+| Depth of field blur quality, jitter (box bokeh) | low, jittered | low, jittered | — | — |
 | Texture and material variant folder | `hi/` | `hi/` | base only | `lo/` |
 | Pieces batched (`batch_pieces`, [Board view](board-view.md#draw-calls)) | no | no | yes | yes |
 
