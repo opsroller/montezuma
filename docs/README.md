@@ -42,6 +42,7 @@ own folder.
 - [Benchmark and readability capture](reference/benchmark.md): the benchmark replay, its JSON report, feature keys and readability checks.
 - [Benchmark results](reference/benchmark-results.md): measured frame times, feature rows and readability per machine and tier.
 - [Operations](reference/operations.md): cost, flow and quality measures, operations-review findings and the review log.
+- [Style guide](../design/README.md): the visual identity's logo, colour, type, icon, band and imagery rules, approved contrast pairs, font sources and token files.
 - [History: Mexica art, 1502 to 1520](reference/history-mexica-art.md): the sourced reference set and artist brief for the temple's look (stone, codices, featherwork, greenstone, gold), with what is not used and why.
 
 ## Explanation
@@ -55,6 +56,7 @@ own folder.
 - [Export a desktop build](how-to/export-a-desktop-build.md): get or make the Windows, macOS and Linux packages.
 - [Export the web demo](how-to/export-a-web-build.md): get or make the web package and run it in a browser.
 - [Make a board theme](how-to/make-a-board-theme.md): change the temple look or add a new theme.
+- [Use the identity](how-to/use-the-identity.md): swap the game and site tokens, vendor the fonts, add the band, place the logo.
 - [Regenerate or add sounds](how-to/regenerate-or-add-sounds.md): rebuild the generated audio, add a cue.
 - [Play a sound from code](how-to/play-a-sound-from-code.md): call a cue from C++ or a scene, start and stop music.
 - [Run the balance simulator](how-to/run-the-balance-simulator.md): play levels with bots and check them against the targets.
@@ -73,6 +75,7 @@ own folder.
 - [About the board view](explanation/about-the-board-view.md): why the view never applies rules, and how the camera frames the board.
 - [About the game scene](explanation/about-the-game-scene.md): why the scene is a thin layer over the level session, and why a move is one animation.
 - [Art direction](explanation/art-direction.md): why the board looks the way it does, and the rules new art follows.
+- [About the visual identity](explanation/about-the-visual-identity.md): why the twin temple, blue north on the left, what was folded in from the other directions, and the open risks.
 - [About the visual target](explanation/about-the-visual-target.md): why a realistic high-end look, and what Godot can and cannot do with ray tracing.
 - [About the fire](explanation/about-the-fire.md): why a simulated flipbook with motion vectors, why our own simulation, how it stays off the board.
 - [About quality tiers](explanation/about-quality-tiers.md): how a tier is picked, why the renderer is fixed per platform, why tiers only switch effects off.
