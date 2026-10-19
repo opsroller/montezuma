@@ -87,6 +87,12 @@ public:
 
     const quality::Profile& get_profile() const { return quality::profile(tier_); }
 
+    // The tier's feature, unless this GPU cannot run it: volumetric fog
+    // needs atomic R32 storage images, which some virtual GPUs lack.
+    bool active(quality::Feature f) const {
+        return get_profile().has(f) && (f != quality::Feature::VolumetricFog || atomic_storage_);
+    }
+
 protected:
     static void _bind_methods();
 
@@ -113,6 +119,7 @@ private:
     static QualityTiers* singleton_;
 
     quality::Adapter adapter_;
+    bool atomic_storage_ = true;
     quality::Tier tier_ = quality::Tier::DesktopStandard;
     godot::String choice_ = "auto";
     godot::String settings_path_ = "user://quality.cfg";

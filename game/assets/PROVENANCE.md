@@ -15,6 +15,7 @@ GPL-2.0-or-later.
 | `game/assets/models/temple/backdrop/PF_Environment.{lmbake,exr}`, `game/assets/materials/temple/lo/`, `LD_Temple_Bake.tscn`, temple `.obj.import` files | Lighting written by `gen_theme_scenes.py` from `temple.json`; lightmap baked by Godot's `LightmapGI` through `tools/assets/bake_lightmaps.sh`, 2026-10-18 (WP-47) | Montezuma contributors (Claude) | GPL-2.0-or-later | Board theme `temple` lighting; record below |
 | `game/assets/textures/temple/grade/T_Grade_LUT.png` and its `.import`, the glow and depth of field of `PF_Environment.tscn` | Colour grade baked by `tools/assets/grade_lut.py` (through `gen_theme_textures.py`) and post-processing written by `gen_theme_scenes.py` from `temple.json`, 2026-10-18 (WP-52) | Montezuma contributors (Claude) | GPL-2.0-or-later | Board theme `temple` colour grade; record below |
 | `game/assets/textures/temple/fx/**` fire flipbooks (incl. `hi/`), `MI_Fire*`, `MI_Ember*`, `MI_HeatHaze`, `PF_BrazierFire.tscn`, `LD_Temple_Fire*.tscn`, `SH_Fire`, `SH_FireSmoke`, `SH_Ember`, `SH_EmberTrail`, `SH_HeatHaze` | Simulated and baked by `tools/assets/fx/gen_fire.py` (our own numpy gas simulation) from `tools/assets/fx/fire.json`; scenes and materials by `gen_theme_scenes.py`; shaders hand-written, 2026-10-18 (WP-49) | Montezuma contributors (Claude) | GPL-2.0-or-later | Board theme `temple` brazier fire; record below |
+| `MI_AtmosphereFog`, `MI_Dust`, `MI_LightShaft`, `SH_AtmosphereFog`, `SH_Dust`, `SH_LightShaft`, fog volume, dust and light-shaft nodes in `PF_Environment.tscn` | Written by `gen_theme_scenes.py` from `temple.json` (`lighting.atmosphere`); noise built by Godot at load; shaders hand-written, 2026-10-18 (WP-51) | Montezuma contributors (Claude) | GPL-2.0-or-later | Board theme `temple` atmosphere; record below |
 | `game/data/levels/e1/l01.json` | Written from `docs/reference/progression.md` (intro level), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
 | `game/data/levels/e1/l02.json` | Written from `docs/reference/progression.md` (Episode 1 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
 | `game/data/levels/e1/l03.json` | Written from `docs/reference/progression.md` (Episode 1 levels), 2026-10-18 | Montezuma contributors (Claude) | GPL-2.0-or-later | Our own level data; no data from the original game's files |
@@ -258,4 +259,36 @@ changes: "Replaces the environment's saturation adjustment (1.08) and the first 
 notes: >
   The CDL formula follows the ASC Color Decision List; the numbers are ours.
   Grade notes and the palette check: design/grade/temple.md.
+```
+
+## Board theme `temple`: atmosphere (WP-51)
+
+```yaml
+asset: themes.temple atmosphere (volumetric fog, dust, light-shaft cards)
+files:
+  - game/assets/models/temple/backdrop/PF_Environment.tscn   # fog settings, AtmosphereFog, Dust, LightShaftCards
+  - game/assets/materials/temple/MI_AtmosphereFog.tres
+  - game/assets/materials/temple/MI_Dust.tres
+  - game/assets/materials/temple/MI_LightShaft.tres
+  - game/assets/materials/shaders/SH_AtmosphereFog.gdshader
+  - game/assets/materials/shaders/SH_Dust.gdshader
+  - game/assets/materials/shaders/SH_LightShaft.gdshader
+origin: generated (scenes and materials committed; the 3D noise is a NoiseTexture3D Godot builds at load)
+authors: [technical-artist (Claude)]
+created: 2026-10-18
+source:
+  - tools/assets/gen_theme_scenes.py     # nodes, materials, card placement and the over-the-board check
+  - game/assets/materials/shaders/SH_AtmosphereFog.gdshader, SH_Dust.gdshader, SH_LightShaft.gdshader (hand-written)
+generator:
+  params: tools/assets/themes/temple.json (lighting.atmosphere, MI_AtmosphereFog, MI_Dust, MI_LightShaft)
+  seed: 51 (noise), theme seed + 51 (card placement)
+  version: the commit that last changed tools/assets/
+inputs: []                               # no textures, footage or third-party files
+license: GPL-2.0-or-later
+attribution: ""
+changes: ""
+notes: >
+  The fog's 3D noise is made by Godot 4.7.2's FastNoiseLite and NoiseTexture3D at load,
+  so an engine upgrade can change it. Regenerate with
+  .venv/bin/python tools/assets/gen_theme_scenes.py.
 ```

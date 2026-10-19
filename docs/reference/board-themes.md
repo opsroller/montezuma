@@ -196,12 +196,12 @@ the parameter file's `lighting` section:
 
 | Node | Type | Tiers | Parameters (`lighting.*`) | Temple |
 |---|---|---|---|---|
-| `WorldEnvironment` | sky, AgX tonemapper, SSAO, SSIL, optional height fog; glow and the grade LUT from [Post-processing](#post-processing) and [Colour grade](#colour-grade) | all (switches per [Quality tiers](quality-tiers.md)) | `sky_nits`, `agx_white`, `agx_contrast`, optional `fog` (`color`, `height`, `height_density`, `sky_affect`) | 15,000 nits; white 16, contrast 1.25; no fog (backdrop haze is WP-51's `FogVolume`s) |
+| `WorldEnvironment` | sky, AgX tonemapper, SSAO, SSIL, optional height fog; glow and the grade LUT from [Post-processing](#post-processing) and [Colour grade](#colour-grade) | all (switches per [Quality tiers](quality-tiers.md)) | `sky_nits`, `agx_white`, `agx_contrast`, optional `fog` (`color`, `height`, `height_density`, `sky_affect`) | 15,000 nits; white 16, contrast 1.25; no height fog. Volumetric fog on, with no density of its own: see [Atmosphere](#atmosphere) |
 | `camera` (`CameraAttributesPractical`) | exposure, on the environment, `LightmapGI` and `VoxelGI` | auto exposure on desktop only | `exposure` (`sensitivity`, `multiplier`, `auto_scale`, `auto_speed`, `auto_min_sensitivity`, `auto_max_sensitivity`) | ISO 440 (auto 300 to 640) |
 | `Sun` | `DirectionalLight3D`, shadows | all | `sun` (`lux`, `kelvin`, `color`, `angular_distance`) | 11,000 lux, 4500 K, 0.6° |
 | `Fire1`…`Fire4/Light` | `FlickerLight3D` in each brazier's `PF_BrazierFire` ([Fire](fire.md)), dual paraboloid shadows (seam flat above the board), group `quality_shadow_light` | all; shadows on the nearest 8 or 2 | `torch` (`lumens`, `kelvin`, `color`, `size`, `range`) | 60,000 lm, 1900 K, range 4.5 m |
 | `SkyFill` | `AreaLight3D` over the board, group `quality:area_light`, not baked | `desktop-high` | `sky_fill` (`transform`, `lumens`, `color`, `size`, `range`) | 20,000 lm, 10 × 10 m |
-| `ReflectionProbe` | box-projected probe; leaves out render layer 2 (fire effects, [Fire](fire.md#pf_brazierfire)) | all | `reflection_probe` (`position`, `size`) | 12 × 4 × 12 m |
+| `ReflectionProbe` | box-projected probe; leaves out render layer 2 (fire effects, [Fire](fire.md#pf_brazierfire), and the light-shaft cards) | all | `reflection_probe` (`position`, `size`) | 12 × 4 × 12 m |
 | `VoxelGI` | real-time bounce for the moving pieces, group `quality:voxel_gi`, baked at run time | `desktop-high` | `voxel_gi` (`position`, `size`, `subdiv`) | 14 × 4 × 14 m, 64 cells |
 | `Lightmap` | `LightmapGI` with probes | all | `lightmap` (`quality`, `bounces`, `texel_scale`, `max_texture_size`, `probes_subdiv`) | medium, 3 bounces |
 
@@ -282,6 +282,56 @@ Leave `depth_of_field` out for a theme without backdrop blur. Glow and
 blur are checked by readability rules 6 and 2 with the readability
 capture ([Benchmark](benchmark.md#readability-checks)).
 
+## Atmosphere
+
+Dusty, sunlit air around the temple: volumetric fog with sun shafts and
+dust on the desktop tiers, light-shaft cards in its place on mobile and web.
+Nothing of it is ever over the board (readability rule 2 in the
+[Visual target](visual-target.md#readability-rules-every-tier)). Why it is
+built this way: [About the atmosphere](../explanation/about-the-atmosphere.md).
+
+`gen_theme_scenes.py` writes it into `PF_Environment.tscn` from the
+parameter file's `lighting.atmosphere` section and the `MI_AtmosphereFog`,
+`MI_Dust` and `MI_LightShaft` materials:
+
+| Node | Type | Tiers | Parameters | Temple |
+|---|---|---|---|---|
+| `WorldEnvironment` | volumetric fog on, global density 0 | `desktop-high` (64 × 64 froxels), `desktop-standard` (32 × 32) | `atmosphere.fog` (`anisotropy`, `length`, `detail_spread`, `gi_inject`, `ambient_inject`, `temporal_amount`) | isotropic (the camera looks down, the sun comes from above); 40 m; GI 0.4, ambient 0.3 |
+| `AtmosphereFog` | box `FogVolume` around the temple, group `quality:volumetric_fog`; its material path in `metadata/fog_material_path` | desktop | `atmosphere.volumes` (`clearance`, `outer`, `bottom`); `MI_AtmosphereFog` (below) | 38 × 38 m, from 2.6 m below the board to the fog's `height_top` |
+| `Dust` | `GPUParticles3D`, ring around the platform, `MI_Dust`, group `quality:volumetric_fog` | desktop | `atmosphere.dust` (`amount`, `lifetime`, `inner_radius`, `outer_radius`, `bottom`, `top`, `size`, `speed`, `turbulence`) | 320 motes, 8.5 to 13 m from the centre, 5 cm, at most 5 cm/s |
+| `LightShaftCards` | `Node3D` holding one `MeshInstance3D` quad per card (`Card01`…), along the sun, `MI_LightShaft`, group `quality_fallback:volumetric_fog`; the cards are on render layer 2 so the reflection probe leaves them out | `mobile`, `web` | `atmosphere.shafts` (`count`, `inner_radius`, `outer_radius`, `length`, `width`, `ground`) | 12 cards, 3.5 to 5.5 m long, 12 draw calls |
+
+The fog volume covers the board too; its shader keeps it empty there.
+`SH_AtmosphereFog` gives zero density inside a square of half-side
+`clear_half` around the board centre (board plus `volumes.clearance`) and
+fades in over `fade` metres outside it. The material's parameters:
+
+| Parameter | Temple | Meaning |
+|---|---|---|
+| `density` | 0.4 | extinction per metre where the noise is full |
+| `albedo` | `#f2dcb0` | colour of the dust that scatters the light |
+| `clear_half` | 6.15 (set by the generator) | half the side of the fog-free square: board half-size 4.55 + clearance 1.6 |
+| `fade` | 1.2 m | ramp from no fog to full fog outside that square |
+| `height_top`, `top_fade` | 2.4 m, 2.4 m | the fog thins to nothing at `height_top`, over `top_fade` |
+| `noise_scale`, `wind` | 6 m, (0.12, 0, −0.05) m/s | size of one noise tile, and its drift |
+| `sun_direction` | set by the generator from `environment.sun` | the noise is stretched along it, so the air lines up into shafts |
+| `shaft_stretch` | 8 | how much longer the noise is along the sun than across |
+| `contrast` | (0.35, 0.75) | noise values mapped to no fog and full fog |
+| `density_texture` | `NoiseTexture3D`, 64³, seed 51, frequency 0.08 | from `noise_textures_3d`, built by Godot at load |
+
+The fog material is not in the scene as a resource. `QualityTiers` loads
+it from the volume's metadata on tiers with volumetric fog and clears it on
+the others, because the Compatibility renderer prints an error for any fog
+shader it is handed ([Quality tiers](quality-tiers.md#node-groups)).
+
+**Placement check.** The generator refuses to write the scene when any
+point of a shaft card (a 9 × 9 grid over each card), or of the ring a dust
+mote can reach (the inner radius less `lifetime` × top speed and
+`turbulence`), would draw over the board, seen from the game camera at 11,
+13 and 36 m (wide window to tall phone) with `board_clearance` (0.5 m) of
+margin, unless that point is inside the stone platform. Cards are placed at
+random (seed + 51) until they pass.
+
 ## Shaders
 
 | Shader | Used by | Render mode | Cost |
@@ -292,6 +342,9 @@ capture ([Benchmark](benchmark.md#readability-checks)).
 | `SH_HeatHaze` | heat haze (`MI_HeatHaze`), desktop | screen-texture distortion, drawn before the flame | 2 noise and 1 screen sample |
 | `SH_CellHighlight` | `cell_highlight` | unshaded, additive | one 1×1 quad; no texture samples |
 | `SH_Spark` | `fx_match` | unshaded, additive; fades by `INSTANCE_CUSTOM.y` | 16 tiny spheres per burst |
+| `SH_AtmosphereFog` | the temple's `FogVolume` (`MI_AtmosphereFog`), desktop | fog shader | 1 3D-noise sample per froxel in the volume |
+| `SH_Dust` | dust motes (`MI_Dust`), desktop | lit, additive, no depth write, camera-facing | no texture samples |
+| `SH_LightShaft` | light-shaft cards (`MI_LightShaft`), mobile and web | unshaded, additive, no depth write; fades out toward the ground in UV | no texture samples |
 | `SH_TriplanarPBR` | desktop stone (`hi/MI_Stone*`) | opaque, Burley diffuse, GGX; object-space triplanar PBR set; parallax occlusion on upward faces (`height_depth` metres, 8 to 24 layers by view angle) | 9 texture samples, plus up to 25 height samples on upward faces |
 | `SH_Gem` | desktop ruby and amethyst (`hi/MI_Ruby`, `hi/MI_Amethyst`) | transparent pass (reads the screen texture), depth write; refraction with `ior` and `dispersion`, absorption by the body colour over `thickness` | 9 texture samples, 3 screen and 3 depth samples |
 | `SH_Triplanar.gdshaderinc` | included by the two above | object-space triplanar sampling, normal-map blending, Y-face parallax | none of its own |
@@ -301,7 +354,9 @@ Compatibility (checked in Godot 4.4.1 on all three); the fire shaders on
 all three in Godot 4.7.2, except `SH_HeatHaze`, which only the desktop
 tiers show. `SH_TriplanarPBR` and
 `SH_Gem` serve the desktop tiers on Forward+ only (checked in Godot 4.7.2);
-mobile and web get the base materials.
+mobile and web get the base materials. `SH_Dust` and `SH_LightShaft`
+compile on all three renderers in Godot 4.7.2; `SH_AtmosphereFog` only
+on Forward+ and Mobile, so it is loaded only on tiers with volumetric fog.
 
 ## Budgets and the temple theme's numbers
 
@@ -358,6 +413,9 @@ look packages compare against these.
 | [temple-board-post-desktop-high.jpg](../images/lookdev/temple-board-post-desktop-high.jpg) | `readability.tscn`, 1280×720 | Forward+ (`desktop-high`) | WP-52 glow, grade and depth of field |
 | [temple-board-post-web.jpg](../images/lookdev/temple-board-post-web.jpg) | `readability.tscn`, 540×1170 | Compatibility (`web`) | WP-52 glow and grade |
 | [temple-board-post-mobile.jpg](../images/lookdev/temple-board-post-mobile.jpg) | `readability.tscn`, 540×1170 | Mobile (`mobile`) | WP-52 glow and grade |
+| [temple-atmosphere-desktop-high.jpg](../images/lookdev/temple-atmosphere-desktop-high.jpg) | `LD_Temple_Hi` | Forward+ (`desktop-high`) | WP-51 volumetric fog and dust, no lightmap |
+| [temple-atmosphere-mobile.jpg](../images/lookdev/temple-atmosphere-mobile.jpg) | `LD_Temple` | Mobile (`mobile`) | WP-51 light-shaft cards, no lightmap |
+| [temple-atmosphere-web.jpg](../images/lookdev/temple-atmosphere-web.jpg) | `LD_Temple` | Compatibility (`web`) | WP-51 light-shaft cards, no lightmap |
 
 ## Validator rules
 

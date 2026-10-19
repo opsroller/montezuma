@@ -100,6 +100,37 @@ numbers above include them. On this machine they fit `desktop-standard`
 so this is a miss on that tier's own hardware. The cost of the effects alone was not isolated: the benchmark
 has no switch to turn them off.
 
+## WP-51 atmosphere
+
+Cost of the volumetric haze, dust and light-shaft cards alone: `main` at
+83feede (WP-47 lighting) against the same plus the WP-51 commits
+(dc2ed98). Mac mini M4, Metal, Forward+, `desktop-high`, 2560×1440,
+vsync off, busiest-board replay seed 52, 10 s warm-up and 60 s capture
+with `tools/bench/run_bench.sh`, 2026-10-19. Textures and fire
+generated and lightmaps baked on both builds; the two builds ran
+alternately in one session, two runs each.
+
+| `frame_ms` | `main` run 1 | `main` run 2 | WP-51 run 1 | WP-51 run 2 | Change (mean of runs) |
+|---|---|---|---|---|---|
+| mean | 47.71 | 48.09 | 48.10 | 47.95 | +0.13 |
+| p50 | 46.71 | 47.23 | 47.13 | 46.91 | +0.05 |
+| p95 | 54.75 | 55.49 | 55.78 | 55.41 | +0.48 |
+| p99 | 56.74 | 57.09 | 57.82 | 57.33 | +0.66 |
+| Frames in 60 s | 1258 | 1248 | 1248 | 1252 | −0.2% |
+
+| Measure | `main` | WP-51 |
+|---|---|---|
+| Video memory max | 1482 MB | 1504 MB |
+| Draw calls p95 (scene pass) | 274 (97) | 275 (98) |
+| CPU p95 (ms) | 0.8 | 0.8 |
+| Scene report | `volumetric_fog` false, 0 fog volumes, 12 GPU particle systems (160 particles) | `volumetric_fog` true, 1 fog volume, 13 GPU particle systems (480 particles) |
+| Saturation, `all_on` readability capture at 2560×1440 (0 to 255) | 58.8 | 72.2 |
+| Mean luma, same capture | 133.3 | 131.1 |
+
+The two `main` runs differ by 0.5 ms at p50, so the p50 change is within
+run-to-run noise. With the haze, 14 of 17 `desktop-high` feature rows are
+met; volumetric fog is now one of them.
+
 ## Feature rows
 
 `check_features.py` on the same reports. Rows that fail are the

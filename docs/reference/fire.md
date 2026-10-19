@@ -225,9 +225,10 @@ tiers ([Quality tiers](quality-tiers.md)); the look-dev scene
 `LD_Temple_Fire_Hi` sets them directly. The web export strips `hi/`, so it
 never carries the 8×8 sheets.
 
-\*\* The light carries `light_volumetric_fog_energy` 2.0, but the temple
-environment does not enable volumetric fog yet, so nothing shows until it
-does.
+\*\* The light carries `light_volumetric_fog_energy` 2.0 and lights the
+temple's dusty air where it reaches it, outside the board
+([Board themes: Atmosphere](board-themes.md#atmosphere)); the air is
+empty over the board, so nothing glows there.
 
 ## Cost
 

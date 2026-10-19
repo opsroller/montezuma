@@ -19,6 +19,8 @@ With a Blender install instead of `bpy`, run the mesh step as
 1. Edit `tools/assets/themes/temple.json`: colours under `materials`, sky
    under `environment`, lights, exposure and fog under `lighting`
    (physical units: [Board themes: Lighting](../reference/board-themes.md#lighting)),
+   dusty air and shafts under `lighting.atmosphere`
+   ([Board themes: Atmosphere](../reference/board-themes.md#atmosphere)),
    the colour grade under `grade` and glow and depth of field under `post`,
    sizes under `board` and `artifacts`.
 2. Regenerate and check:
