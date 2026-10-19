@@ -1,0 +1,29 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1050 340" width="1050" height="340" role="img" aria-label="Montezuma's lockup">
+<title>Montezuma's lockup</title>
+<g transform="translate(330.0 20) scale(1.3)"><rect x="8" y="92" width="284" height="40" rx="3" fill="#e3a92b"/>
+<clipPath id="mat"><rect x="8" y="92" width="284" height="40" rx="3"/></clipPath>
+<path clip-path="url(#mat)" d="M-60 132L-20 92M-60 92L-20 132M-40 132L0 92M-40 92L0 132M-20 132L20 92M-20 92L20 132M0 132L40 92M0 92L40 132M20 132L60 92M20 92L60 132M40 132L80 92M40 92L80 132M60 132L100 92M60 92L100 132M80 132L120 92M80 92L120 132M100 132L140 92M100 92L140 132M120 132L160 92M120 92L160 132M140 132L180 92M140 92L180 132M160 132L200 92M160 92L200 132M180 132L220 92M180 92L220 132M200 132L240 92M200 92L240 132M220 132L260 92M220 92L260 132M240 132L280 92M240 92L280 132M260 132L300 92M260 92L300 132M280 132L320 92M280 92L320 132M300 132L340 92M300 92L340 132M320 132L360 92M320 92L360 132" stroke="#b97c16" stroke-width="4.2" fill="none"/>
+<rect x="8" y="92" width="284" height="40" rx="3" fill="none" stroke="#1c1a17" stroke-width="6.0"/>
+<circle cx="58" cy="66" r="38" fill="#3e8a5e" stroke="#1c1a17" stroke-width="6.0"/>
+<path d="M34 56A28 28 0 0 1 52 36A38 38 0 0 0 40 62Z" fill="#7fb98a"/>
+<circle cx="58" cy="66" r="9" fill="#1c1a17"/>
+<path d="M150 28C176 28 194 48 192 74C190 90 180 100 168 102H132C120 100 110 90 108 74C106 48 124 28 150 28Z" fill="#b0341f" stroke="#1c1a17" stroke-width="6.0" stroke-linejoin="round"/>
+<path d="M150 42V94M133 48L140 94M167 48L160 94" stroke="#1c1a17" stroke-width="3.6" stroke-linecap="round" fill="none"/>
+<path d="M128 102L122 114H178L172 102Z" fill="#f1d9c4" stroke="#1c1a17" stroke-width="4.8" stroke-linejoin="round"/>
+<path d="M232 40V30A8 8 0 0 1 248 30V40" fill="none" stroke="#1c1a17" stroke-width="7.2"/>
+<path d="M240 38C222 38 210 56 207 74C204 94 220 106 240 106C260 106 276 94 273 74C270 56 258 38 240 38Z" fill="#ecc85a" stroke="#1c1a17" stroke-width="6.0" stroke-linejoin="round"/>
+<path d="M218 74C219 62 225 52 233 48C227 58 225 66 225 78Z" fill="#f8e6a4"/>
+<ellipse cx="240" cy="105" rx="11" ry="5" fill="#1c1a17"/></g>
+<path transform="translate(40.00 210.00) scale(10)" d="M0 0H2.4L4.5 4.6L6.6 0H9V10H7V4.2L5.5 7.6H3.5L2 4.2V10H0Z" fill="#1c1a17" fill-rule="evenodd"/>
+<path transform="translate(144.00 210.00) scale(10)" d="M2.5 0H5.5L8 2.5V7.5L5.5 10H2.5L0 7.5V2.5Z M3 2L2 3V7L3 8H5L6 7V3L5 2Z" fill="#1c1a17" fill-rule="evenodd"/>
+<path transform="translate(238.00 210.00) scale(10)" d="M0 0H2.3L6 6.2V0H8V10H5.7L2 3.8V10H0Z" fill="#1c1a17" fill-rule="evenodd"/>
+<path transform="translate(332.00 210.00) scale(10)" d="M0 0H8V2H5V10H3V2H0Z" fill="#1c1a17" fill-rule="evenodd"/>
+<path transform="translate(426.00 210.00) scale(10)" d="M0 0H7V2H2V4H6V6H2V8H7V10H0Z" fill="#1c1a17" fill-rule="evenodd"/>
+<path transform="translate(510.00 210.00) scale(10)" d="M0 0H8V2L2.8 8H8V10H0V8L5.2 2H0Z" fill="#1c1a17" fill-rule="evenodd"/>
+<path transform="translate(604.00 210.00) scale(10)" d="M0 0H2V7L3 8H5L6 7V0H8V7.5L5.5 10H2.5L0 7.5Z" fill="#1c1a17" fill-rule="evenodd"/>
+<path transform="translate(698.00 210.00) scale(10)" d="M0 0H2.4L4.5 4.6L6.6 0H9V10H7V4.2L5.5 7.6H3.5L2 4.2V10H0Z" fill="#1c1a17" fill-rule="evenodd"/>
+<path transform="translate(802.00 210.00) scale(10)" d="M2.5 0H5.5L8 2.5V10H6V6.5H2V10H0V2.5Z M3 2L2 3V4.5H6V3L5 2Z" fill="#1c1a17" fill-rule="evenodd"/>
+<path transform="translate(896.00 210.00) scale(10)" d="M0 0H2V2.6L1.2 4.4H0Z" fill="#1c1a17" fill-rule="evenodd"/>
+<path transform="translate(930.00 210.00) scale(10)" d="M2.5 0H8V2H3L2 3V4H5.5L8 6.5V7.5L5.5 10H0V8H5L6 7V6H2.5L0 3.5V2.5Z" fill="#1c1a17" fill-rule="evenodd"/>
+</svg>

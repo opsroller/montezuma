@@ -1,0 +1,16 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="Montezuma's small-size icon">
+<title>Montezuma's small-size icon</title>
+<rect width="1024" height="1024" fill="#2a9db5"/>
+<g transform="translate(2 264) scale(3.4)"><rect x="8" y="96" width="284" height="34" rx="3" fill="#e3a92b"/>
+<rect x="8" y="96" width="284" height="34" rx="3" fill="none" stroke="#1c1a17" stroke-width="7.7"/>
+<circle cx="58" cy="66" r="38" fill="#3e8a5e" stroke="#1c1a17" stroke-width="14"/>
+<path d="M34 56A28 28 0 0 1 52 36A38 38 0 0 0 40 62Z" fill="#7fb98a"/>
+<circle cx="58" cy="66" r="11" fill="#1c1a17"/>
+<path d="M150 28C176 28 194 48 192 74C190 90 180 100 168 102H132C120 100 110 90 108 74C106 48 124 28 150 28Z" fill="#b0341f" stroke="#1c1a17" stroke-width="14" stroke-linejoin="round"/>
+<path d="M128 102L122 114H178L172 102Z" fill="#f1d9c4" stroke="#1c1a17" stroke-width="14.0" stroke-linejoin="round"/>
+<path d="M232 40V30A8 8 0 0 1 248 30V40" fill="none" stroke="#1c1a17" stroke-width="16.8"/>
+<path d="M240 38C222 38 210 56 207 74C204 94 220 106 240 106C260 106 276 94 273 74C270 56 258 38 240 38Z" fill="#ecc85a" stroke="#1c1a17" stroke-width="14" stroke-linejoin="round"/>
+<path d="M218 74C219 62 225 52 233 48C227 58 225 66 225 78Z" fill="#f8e6a4"/>
+<ellipse cx="240" cy="105" rx="13" ry="7" fill="#1c1a17"/></g>
+</svg>
