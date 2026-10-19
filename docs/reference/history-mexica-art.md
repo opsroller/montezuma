@@ -47,17 +47,21 @@ are used in the brief below. Every item lists its holder's own record.
    modern model). Not rainforest.
 2. **Twin temple.** One stepped platform with two parallel west-facing
    stairs to two shrines: Huitzilopochtli on the south, Tlaloc on the
-   north. Attested at Tenochtitlan (AR-01) and independently at
-   Tlatelolco (AR-07), and drawn in Florentine Codex XI f. 240v (AR-10).
-   The 1502 to 1520 building is Stage VII; almost nothing of it stands,
-   so its look is carried forward from Stages II to VI (AR-02) at about
-   80 m a side and about 45 m high.
-3. **Building materials.** Tezontle (red, violet or black porous scoria)
-   walls set in mud, basalt slab floors and stairs, lime stucco over
-   floors, walls and stairs (AR-04, AR-06). Palace and plaza courts are
-   paved with basalt slabs (AR-04, AR-06).
+   north. In the set this rests on a later witness, the Florentine Codex
+   XI f. 240v drawing (AR-10), and on the Tenochtitlan blue-north,
+   ochre-south paint coding (CO-01, CO-09). The surviving fabric at
+   Tenochtitlan and Tlatelolco that corroborates it is held out until
+   the owner decides on the site split (NU-14, NU-18). The 1502 to 1520
+   building is Stage VII; almost nothing of it stands above its
+   platform, so its look is inferred from the earlier stages. INAH gives
+   the final temple as about 150 ft (about 46 m) high (NU-15 fact); no
+   base dimension read on a holder page is offered.
+3. **Building materials.** Basalt slab floors, and talud walls that keep
+   traces of lime stucco (AR-06); stucco floors in houses (AR-13);
+   tezontle (porous scoria) walls set in mud (NU-16 fact). Courts are
+   paved with basalt slabs (AR-06; NU-16 fact).
 4. **Painted, not grey.** Living buildings and sculpture were stuccoed
-   and painted (AR-02, AR-03, CO-01, CO-09). Bare grey stone is how the
+   and painted (AR-03, CO-01, CO-09; NU-15 fact). Bare grey stone is how the
    ruins look now. Weathered stone can keep paint in carved recesses
    (inferred).
 5. **The stone palette has five colour families only:** hematite red
@@ -69,17 +73,24 @@ are used in the brief below. Every item lists its holder's own record.
 6. **Colour carries direction.** North and Tlaloc are blue (cold, rain);
    south and Huitzilopochtli are ochre (hot, sun) (CO-01 p. 103, CO-09).
    The board frame or chamber can use this blue/ochre duality.
-7. **Friezes run in repeated horizontal bands** of ochre, red, blue and
-   black (CO-03 p. 32, Casa de las Águilas), a sourced basis for frame
-   and border ornament. The step-fret (xicalcoliuhqui) is attested on
-   feather regalia (DR-10) and is right as a band or frame motif, not as
-   structure. Roof edges carry almenas such as the cut-shell form (AR-04).
-8. **The board chamber** may be invented, resting on: a bench along the
-   wall with relief on its face (AR-05), pilaster or column bases carrying
-   a flat roof (AR-04, AR-05), a stucco or basalt-slab floor (AR-04),
-   painted stucco walls with polychrome bands, braziers like OB-05 at the
-   corners, and daylight from a doorway or patio. Label it invention in
-   the art direction.
+7. **Bands and frames.** Repeated horizontal colour bands in the five
+   families are offered for frame and border ornament (inferred from
+   CO-01 and CO-03; the one surviving band sequence read is in the Casa
+   de las Águilas, which is held out, NU-17). The step-fret
+   (xicalcoliuhqui) is attested on feather regalia (DR-10) and is right
+   as a band or frame motif, not as structure. The cut-conch spiral is
+   attested as an ornament (OB-09); clay roof-edge almenas of that form
+   are known from the Calmécac, held out (NU-16), so roof crests are
+   inferred.
+8. **The board chamber** is invention, and is labelled so in the art
+   direction. It rests on: a basalt-slab or stucco floor (AR-06, AR-13),
+   white rooms with red door frames and reed mats round a patio (AR-09,
+   a colonial palace drawing), painted stucco walls in the five families
+   (CO-01), braziers like OB-05 at the corners, and daylight from a
+   doorway or patio. Benches along the wall and pilasters carrying a flat
+   roof are inferred; the surviving rooms that show them (the Calmécac
+   and the Casa de las Águilas) are held out and are not modelled
+   (NU-16, NU-17).
 9. **Precious materials are small and personal.** Gold, greenstone,
    turquoise, obsidian, shell and feathers belong to ornaments, insignia
    and offerings, never to wall cladding (DR-01, DR-02, OB-06 to OB-10,
@@ -102,8 +113,8 @@ are used in the brief below. Every item lists its holder's own record.
     roughness on burnished faces, base colour from pale gold to rich
     yellow.
 13. **Obsidian** is near-black glass, mirror-polished when ground
-    (OB-14, DR-05) and razor-edged and conchoidal when knapped (OB-18);
-    keep a grey-green translucent edge variant (OB-15, inferred).
+    (OB-14, DR-05) and razor-edged and conchoidal when knapped (inferred:
+    no dated Basin blade record was read); keep a grey-green translucent edge variant (OB-15, inferred).
 14. **Feathers** are iridescent quetzal green with turquoise cotinga,
     pink spoonbill and rufous squirrel-cuckoo accents, laid in overlapping
     scales and outlined in gold (DR-10, DR-11, NU-13 facts). Render an
@@ -111,12 +122,12 @@ are used in the brief below. Every item lists its holder's own record.
 15. **Everyday life is in the picture.** Black-on-Orange tripod ware with
     thin black linework (OB-19 to OB-23), spindle whorls (OB-24), reed
     mats drawn yellow with a diagonal weave (DR-12), lidded baskets and
-    women selling in the market (DR-15), obsidian blades (OB-18), flower
+    women selling in the market (DR-15), obsidian blades (inferred), flower
     and animal stamps (IC-02). Market or household props at the board edge
     bring in commoners and women.
 16. **Dress follows rank.** Men wear the maxtlatl and a tilmatli tied at
     one shoulder; women the cueitl skirt with a belt and the huipilli
-    blouse (DR-12, DR-14, DR-08). Commoners wear plain maguey or cotton
+    blouse (DR-12, DR-14, DR-15). Commoners wear plain maguey or cotton
     and wood or bone ornaments (DR-07); nobles add patterned cotton, gold,
     rock crystal or obsidian labrets and ear spools (DR-01 to DR-06).
     Ornaments are small against the face: labrets about 4 to 7 cm, spools
@@ -124,10 +135,10 @@ are used in the brief below. Every item lists its holder's own record.
 17. **Writing labels things.** A place or name glyph sits beside what it
     names (IC-01, IC-03, DR-12). Never invent glyphs or make ornament look
     like writing.
-18. **Label every pre-1502 element** with its stage and ruler (AR-01
-    Stage IVb, Axayacatl 1469 to 1481; AR-06 Stage VI, Ahuitzotl 1486 to
-    1502; AR-05 about 1430 to 1500). Only the Calmécac Stage VII floor
-    (AR-04) falls inside Moctezuma II's reign among the buildings.
+18. **Label every pre-1502 element** with its stage and ruler (for
+    example AR-06, Stage VI, Ahuitzotl 1486 to 1502). No building item
+    left in the set falls inside Moctezuma II's reign; the one that does,
+    the Calmécac Stage VII floor (1502 to 1519), is held out (NU-16).
 
 ### Piece materials: options for the seven kinds
 
@@ -151,9 +162,9 @@ keeps the rule that the seven kinds read apart by silhouette in greyscale.
 ### Do
 
 - Build stone as tezontle, basalt and andesite under lime stucco, and
-  paint it in the five families (AR-02, AR-04, CO-01).
+  paint it in the five families (AR-06, CO-01; NU-16 fact).
 - Give the twin temple two stairs, a blue north and an ochre south
-  (AR-01, AR-07, CO-01).
+  (AR-10, CO-01).
 - Use the Met temple models for a household-shrine silhouette (AR-08).
 - Use flat colour inside a black outline for UI and graphics, with the
   richer codex palette (cochineal crimson and pink, turquoise, greens,
@@ -170,7 +181,7 @@ keeps the rule that the seven kinds read apart by silhouette in greyscale.
 ### Avoid
 
 - Jungle: moss, vines, roots, rainforest mist, limestone-white ruins. The
-  Basin is a dry highland lake basin (scope; AR-01 to AR-14).
+  Basin is a dry highland lake basin (scope; every architecture item).
 - Maya forms: corbel vaults, roof combs, a single tall stair to one
   shrine, Puuc mosaic facades, Maya glyph blocks (scope).
 - Bare grey stone presented as the working temple (AR-03, CO-01).
@@ -182,17 +193,17 @@ keeps the rule that the seven kinds read apart by silhouette in greyscale.
 - The US Southwest turquoise trade told as fact (MA-01).
 - Codex colours painted 1:1 onto stone, and painted green or purple on
   monuments (CO-01 p. 95, CO-03 p. 17).
-- Teotihuacan (Red Temples) or Toltec revival (AR-05) as the normal
-  Mexica style (AR-02, AR-05).
+- Teotihuacan (Red Temples) or Toltec revival (Casa de las Águilas) as
+  the normal Mexica style (NU-15, NU-17 facts).
 - Building forms from the Nuremberg woodcut (AR-11).
 - Feather headdresses on everyone, Plains-style war bonnets, gold armour
   (DR-02, DR-10).
 - Sexualised costume: ordinary women wore the huipilli; the bare torso
-  of goddess sculpture is a sacred convention (DR-08).
+  of goddess sculpture is a sacred convention (NU-19 fact).
 - Colonial conventions taken as pre-conquest: Florentine shading and
   landscape, Spanish glosses (AR-10, DR-15).
 - Mixing Tlatelolco with Tenochtitlan, or earlier stages with Stage VII,
-  without a label (AR-07, essential 18).
+  without a label (NU-18, essential 18).
 - Skulls, blood, sacrificial knives, dismemberment and deity faces as
   decoration, pieces or totems (see Not used).
 - Neo-Aztec, Aztec-revival, nationalist and Hollywood imagery; the 1935
@@ -202,16 +213,16 @@ keeps the rule that the seven kinds read apart by silhouette in greyscale.
 
 | Gap | Inference offered | Grade | What would settle it |
 |---|---|---|---|
-| Stage VII elevations (1502 to 1520) | Carry the Stage IVb to VI form forward at about 80 m a side and 45 m high, with twin stairs, blue/ochre coding and almenas | inferred | Templo Mayor Project reports on Stage VII |
+| Stage VII elevations (1502 to 1520) | Carry the earlier-stage form forward at about 46 m high (NU-15 fact), with twin stairs, blue/ochre coding and roof crests; no base dimension is offered (the 80 m figure in the gathering notes came from an INAH site guide that was not read) | inferred | Templo Mayor Project reports on Stage VII |
 | Top shrines | Box-like painted shrines with doorways and roof crests (AR-08, AR-10). Flat, thatched or high roofs are contested between drawings and models | contested | Comparison of colonial drawings with models and excavated pillar bases |
 | Facade colour layout | White or red stucco fields, polychrome bands, fully painted sculpture in the five families. The brief's claim of blue-and-white and red-and-white shrine bands was not found in any source | inferred (bands: unknown) | A Templo Mayor Project paint survey |
-| Roofed interiors | Flat roof on wooden beams over pilasters, relief benches (AR-04, AR-05) | inferred | None stands to roof height |
+| Roofed interiors | Flat roof on wooden beams over pilasters, benches along the wall (the rooms that show them are held out: NU-16, NU-17) | inferred | None stands to roof height; the owner's decision on the site split |
 | Distant landscape (volcanoes, reed marsh, chinampas, pine and oak) | From geography and the scope brief; only a modern chinampa model was seen (AR-14) | inferred | The Uppsala map image (AR-12), Florentine Book XI landscapes, Lake Texcoco environmental history |
 | Everyday cloth colour | Undyed pale fawn-grey maguey for commoners; cream cotton with coloured brocade for nobles. No Basin commoner cloth survives | inferred | Textile finds; Florentine Book X dress chapters |
 | Cloak length by rank, sumptuary rules | Commoners to the knee, nobles longer (brief, from Durán and the Codex Mendoza) | unverified | Durán and Codex Mendoza at chapter and folio |
-| Tlatoani's turquoise cloak and diadem (xiuhtilmatli, xiuhuitzolli) | Turquoise-blue cotton cloak; pointed turquoise-mosaic diadem, from mosaic facts and painted rulers (DR-12, DR-13) | inferred | No original survives |
+| Tlatoani's turquoise cloak and diadem (xiuhtilmatli, xiuhuitzolli) | Turquoise-blue cotton cloak; pointed turquoise-mosaic diadem, from mosaic facts and painted rulers (DR-12) | inferred | No original survives |
 | Warrior suits (tlahuiztli), quilted cotton armour | Feathers on cloth for high grades, plain dyed cloth for lower ones (DR-12) | inferred | None survives |
-| Women's hair "horns" (married women) | Show both the codex two-tuft form and the wound form of DR-08, labelled | inferred | A holder-checked sculpture |
+| Women's hair "horns" (married women) | The codex two-tuft form (DR-12), labelled as a later depiction; a sculpture with a wound form is held out (NU-19) | inferred | A holder-checked sculpture |
 | Sandals, nose ornaments, children's dress | Codex conventions only | unknown | Holder records not found |
 | Metates and molcajetes from the Basin | Basalt three-legged metate with mano; ceramic tripod molcajete with a scored interior (OB-23) | inferred | A Basin, Late Postclassic holder record |
 | Rock crystal beyond DR-04, amethyst, carnelian, any purple | Treat rock crystal like greenstone (ground and polished); purple unknown | unknown | Melgar Tísoc 2024 (MA-07); Florentine Book XI stone chapter in the Anderson and Dibble translation |
@@ -224,7 +235,7 @@ keeps the rule that the seven kinds read apart by silhouette in greyscale.
 
 | Role | What this means |
 |---|---|
-| Art direction | Retire jungle and Maya references; set the city in a dry lake basin; paint the temple; label the board chamber as invention; record each departure (for example a purple piece) in a departures record |
+| Art direction | Retire jungle and Maya references; do not model the board chamber on the held sites (NU-14 to NU-18) until the owner decides; set the city in a dry lake basin; paint the temple; label the board chamber as invention; record each departure (for example a purple piece) in a departures record |
 | Technical art | Pieces from ground and polished materials (options table); PBR from essentials 10 to 14; stone albedo in five flat families with paint kept in recesses on worn stone; budgets per [Visual target](visual-target.md) |
 | UI and graphic design | Codex convention: black outline, flat fills, richer palette (CO-07); step-fret and repeated colour bands for frames (DR-10, CO-03); no pseudo-glyphs; day signs and deity faces wait on the owner (NU-11, NU-05, NU-08) |
 | Game design | Totems and power-ups carry no deity faces, skulls or calendar mechanics until the owner decides ([Power Totems](totems.md)) |
@@ -232,35 +243,7 @@ keeps the rule that the seven kinds read apart by silhouette in greyscale.
 
 ## Architecture and space
 
-The 1502 to 1520 temple (Stage VII) is almost entirely gone above its platform, so most building evidence is from earlier stages of the same city. Each item is labelled with its stage and ruler. Sites whose funerary deposits, sacrifice reliefs or memorial status are flagged keep only their building fabric here; the flagged parts are under [Not used, and why](#not-used-and-why).
-
-### AR-01: Templo Mayor, Stage IVb platform and west facade
-
-| Field | Entry |
-|---|---|
-| What | Templo Mayor, Stage IVb platform and west facade: twin stair, serpent heads at the stair foot (INAH says two keep their original colour), the Altar of Frogs on the Tlaloc half |
-| Holder and identifier | INAH, Zona Arqueológica Templo Mayor, Mexico City; Lugares INAH element page 1259 ('Punto 1. Etapa IVb'); <https://lugares.inah.gob.mx/en/pagina-de-elemento/1259> |
-| Date | Stage IVb, reign of Axayacatl, 1469-1481 (INAH). Earlier than Moctezuma II: label as an earlier phase of the same building |
-| Place | Sacred precinct, Tenochtitlan (Centro Histórico, Mexico City) |
-| Kind of evidence | surviving original |
-| Shows | Platform with a double stair to twin shrines: Huitzilopochtli on the south half, Tlaloc on the north. Four serpent heads flank the stairs. Use it for stair-base layout, serpent-head scale against the stair, and the north/south split |
-| Does not show | An inner stage that later stages covered. Exposed stone now looks grey because the stucco and most paint are lost. Gives nothing of the Stage VII height, top shrines or finish |
-| Rights | Reference only, not for reuse. INAH states CC BY-NC-ND 4.0 on the page (non-commercial, no derivatives), which is not on the project's allowed list |
-| Sensitivity | Sacred precinct. Its offerings include human remains; those, and the Coyolxauhqui disc set at the stair foot, are not used (see NU-02, NU-05). Building fabric only |
-
-### AR-02: Templo Mayor zone overview
-
-| Field | Entry |
-|---|---|
-| What | Templo Mayor zone overview: the seven construction stages, Stage II shrine pillars with mural paint, Buildings A-C, the Red Temples, the Stage VI patio |
-| Holder and identifier | INAH, Zona Arqueológica Templo Mayor; Lugares INAH node 4463 (with element 1265 for Stages IV-V); <https://lugares.inah.gob.mx/en/node/4463> |
-| Date | Stage II (1376-1427) to Stage VI (Ahuitzotl, 1486-1502); Buildings A-C about 1500 (INAH) |
-| Place | Sacred precinct, Tenochtitlan |
-| Kind of evidence | surviving original |
-| Shows | Seven enlargements, each encasing the last. INAH gives the final temple as about 150 ft high (about 46 m), which roughly agrees with the 45 m high, 80 m a side given in INAH's 2016 site guide no. 115 (figure taken from the gathering notes; guide URL not recorded, verify before citing). Building A keeps its stucco skin; the Stage II shrine pillars keep mural paint; the Red Temples carry murals on stucco. Use it to show that every surface was stuccoed and painted |
-| Does not show | Upper parts of every stage are destroyed. The Red Temples copy Teotihuacan style on purpose and are not the normal Mexica look. Nothing of Stage VII stands above its platform |
-| Rights | Reference only, not for reuse. INAH states CC BY-NC-ND 4.0 on the page (non-commercial, no derivatives), which is not on the project's allowed list |
-| Sensitivity | Stage II cremation urns, offerings with human and animal remains, the Stage II chacmool and the Tlaloc braziers are not used (NU-02, NU-08). Building fabric only |
+The 1502 to 1520 temple (Stage VII) is almost entirely gone above its platform, so most building evidence is from earlier stages of the same city. Each item is labelled with its stage and ruler. The Templo Mayor, Calmécac, Casa de las Águilas and Tlatelolco sites, whose fabric is bound up with funerary deposits, sacrifice reliefs or a living memorial, are held out whole until the owner records a decision (NU-14 to NU-18 under [Not used, and why](#not-used-and-why)); no item ids are reused for them.
 
 ### AR-03: Monumental Mexica serpent head with about 80 percent of its paint and stucco surviving (ochre, red, blue, black, white)
 
@@ -276,34 +259,6 @@ The 1502 to 1520 temple (Stage VII) is almost entirely gone above its platform, 
 | Rights | Reference only, not for reuse (INAH press bulletin; no open licence stated) |
 | Sensitivity | none known beyond the general sacred-precinct note |
 
-### AR-04: Calmécac remains (priests' school for noble youths): Stage VII basalt slab floor and the start of a stair; Stage VI room with stucco floor, pilaster bases and a bench; two clay almenas shaped like cut snail shells
-
-| Field | Entry |
-|---|---|
-| What | Calmécac remains (priests' school for noble youths): Stage VII basalt slab floor and the start of a stair; Stage VI room with stucco floor, pilaster bases and a bench; two clay almenas shaped like cut snail shells |
-| Holder and identifier | INAH, Ventana arqueológica Centro Cultural de España en México (site museum); Lugares INAH node 4778; <https://lugares.inah.gob.mx/en/node/4778> |
-| Date | Stage VII 1502-1519 (Moctecuhzoma Xocoyotzin); Stage VI 1486-1502 (Ahuitzotl), per INAH |
-| Place | North of the sacred precinct, Centro Histórico |
-| Kind of evidence | surviving original |
-| Shows | Fabric from the target reign itself. Basalt slab floors; pilasters carrying a roof; benches along the walls; tezontle walls set in mud; stucco floors. The cut-shell almenas are direct evidence for roof-edge ornament. Best basis for the board's interior room |
-| Does not show | Only floor and base levels survive: wall height, roof build-up and wall paint are not shown |
-| Rights | Reference only, not for reuse. INAH states CC BY-NC-ND 4.0 on the page (non-commercial, no derivatives), which is not on the project's allowed list |
-| Sensitivity | The engraved drain slabs show dismemberment and are not used (NU-03) |
-
-### AR-05: Casa de las Águilas (House of the Eagles)
-
-| Field | Entry |
-|---|---|
-| What | Casa de las Águilas (House of the Eagles): bench-lined rooms with processional relief on the benches and column bases of a portico |
-| Holder and identifier | INAH, Zona Arqueológica Templo Mayor; described on Lugares INAH node 4463; <https://lugares.inah.gob.mx/en/node/4463> |
-| Date | Built and enlarged three times between about 1430 and 1500; the stage on view about 1470 (Axayacatl) per node 4463; INAH's 2016 site guide says 'hacia 1480'. The two INAH texts differ |
-| Place | North side of the Templo Mayor, Tenochtitlan |
-| Kind of evidence | surviving original |
-| Shows | A roofed elite and ritual interior: benches, a columned portico, relief on the bench faces. The closest surviving model for a temple chamber where the board can sit |
-| Does not show | A deliberate Toltec (Tula) revival, so an archaism, not the everyday Mexica style. Roof and upper walls gone |
-| Rights | Reference only, not for reuse. INAH states CC BY-NC-ND 4.0 on the page (non-commercial, no derivatives), which is not on the project's allowed list |
-| Sensitivity | A ritual space used for private rites including sacrifice: show it as an empty space only (NU-03). Its life-size ceramic eagle figures are left out of the set: their holder record was not read and the dates gathered for them contradict each other |
-
 ### AR-06: Templo de Ehécatl-Quetzalcóatl (round-plan temple) and the ballcourt (teotlachtli)
 
 | Field | Entry |
@@ -317,20 +272,6 @@ The 1502 to 1520 temple (Stage VII) is almost entirely gone above its platform, 
 | Does not show | Only lower parts and the rear survive; no superstructure or paint described |
 | Rights | Reference only, not for reuse (INAH bulletin; no open licence stated) |
 | Sensitivity | A ritually 'killed' brazier offering lies in situ: do not show it as loot |
-
-### AR-07: Tlatelolco zone
-
-| Field | Entry |
-|---|---|
-| What | Tlatelolco zone: its own twin-shrine Templo Mayor with carved glyphs on the side and back facades, the Templo Calendárico with day-sign reliefs and a 1989 mural, and a round Ehecatl temple |
-| Holder and identifier | INAH, Zona Arqueológica de Tlatelolco; Lugares INAH node 4477; <https://lugares.inah.gob.mx/en/node/4477> |
-| Date | Mostly before 1473 and into Tenochca rule; INAH gives no stage dates for its Templo Mayor |
-| Place | Tlatelolco, twin city north of Tenochtitlan (under Tenochca rule from 1473) |
-| Kind of evidence | surviving original |
-| Shows | A second, independent example of the twin-temple form: four stepped bodies, Huitzilopochtli south and Tlaloc north, stairs facing west. The Templo Calendárico is a model for a modest painted shrine |
-| Does not show | Tlatelolco had its own builders and history: do not merge it silently with Tenochtitlan. Paint survives only in patches. Templo I in pink cantera is an exception |
-| Rights | Reference only, not for reuse. INAH states CC BY-NC-ND 4.0 on the page (non-commercial, no derivatives), which is not on the project's allowed list |
-| Sensitivity | Mass burials and child offerings at the Ehecatl temple are not used (NU-02). The site is also the memorial of the 1968 massacre: keep game marketing away from it (NU-04). The day-sign reliefs fall under NU-11 |
 
 ### AR-08: Two mould-made ceramic temple models
 
@@ -588,20 +529,6 @@ Portable objects of the court, the temple and the household. Deity images, sacri
 | Rights | Public domain: the Met's object page marks the image Public Domain (Open Access). May be placed in the project with a `game/assets/PROVENANCE.md` entry; none is placed by this page |
 | Sensitivity | Wind-god regalia: low |
 
-### OB-12: Seated Chalchiuhtlicue (basalt with lime mortar) and head of Chalchiuhtlicue (basalt)
-
-| Field | Entry |
-|---|---|
-| What | Seated Chalchiuhtlicue (basalt with lime mortar) and head of Chalchiuhtlicue (basalt) |
-| Holder and identifier | The Metropolitan Museum of Art, 00.5.70 and 00.5.44 (https://www.metmuseum.org/art/collection/search/307640); <https://www.metmuseum.org/art/collection/search/307650> |
-| Date | 15th to early 16th century (Met) |
-| Place | Mexico; Mexica |
-| Kind of evidence | surviving original |
-| Shows | Stone finish only: the Met says deity sculpture ranged from greenstone to ordinary volcanic rock; eye sockets held shell or obsidian inlay; lime mortar survives on 00.5.70, consistent with plaster over basalt |
-| Does not show | Inlays and paint lost |
-| Rights | Public domain: the Met's object page marks the image Public Domain (Open Access). May be placed in the project with a `game/assets/PROVENANCE.md` entry; none is placed by this page |
-| Sensitivity | A deity image of a once-living faith. Reference for stone and finish only: not a piece, totem or breakable target (see the consultation list) |
-
 ### OB-13: Ritual stone (pulidor), greenstone
 
 | Field | Entry |
@@ -669,20 +596,6 @@ Portable objects of the court, the temple and the household. Deity images, sacri
 | Kind of evidence | surviving original |
 | Shows | 14 cm polished obsidian vessel, almost 2 kg: obsidian at the top of the lapidary scale |
 | Does not show | Elite and unusual |
-| Rights | Reference only, not for reuse. INAH states CC BY-NC-ND 4.0 on the page (non-commercial, no derivatives), which is not on the project's allowed list |
-| Sensitivity | none known |
-
-### OB-18: Obsidian cores and prismatic-blade tools (display group)
-
-| Field | Entry |
-|---|---|
-| What | Obsidian cores and prismatic-blade tools (display group) |
-| Holder and identifier | Ex Convento de San Andrés Apóstol, Centro INAH Hidalgo; node 36141; <https://repositorio.inah.gob.mx/o-36141> |
-| Date | Not stated |
-| Place | Not stated (Hidalgo, an obsidian source region) |
-| Kind of evidence | surviving original |
-| Shows | What a polyhedral core with blade scars and prismatic blades look like: everyday obsidian |
-| Does not show | No date or findspot: form only. Production context from Parry 2001 (abstract read) |
 | Rights | Reference only, not for reuse. INAH states CC BY-NC-ND 4.0 on the page (non-commercial, no derivatives), which is not on the project's allowed list |
 | Sensitivity | none known |
 
@@ -872,34 +785,6 @@ Rank is the costume. Almost no cloth survives; the forms come from ornaments in 
 | Rights | CC0 (holder's object page) |
 | Sensitivity | none known |
 
-### DR-08: Kneeling female figure, stone with pigment (probably a deity image)
-
-| Field | Entry |
-|---|---|
-| What | Kneeling female figure, stone with pigment (probably a deity image) |
-| Holder and identifier | The Metropolitan Museum of Art, 00.5.16; <https://www.metmuseum.org/en/art/collection/search/307630> |
-| Date | 1325-1521 (Met) |
-| Place | Mexico; Mexica |
-| Kind of evidence | surviving original |
-| Shows | A wrap skirt held by a knotted belt, round ear ornaments, hair wound round the head in two strands tied at the top; the kneeling pose usual for Mexica female figures |
-| Does not show | A sacred image, not an everyday woman: the bare torso is a sculptural convention for deities; ordinary women wore the huipilli. Paint mostly lost |
-| Rights | Public domain: the Met's object page marks the image Public Domain (Open Access). May be placed in the project with a `game/assets/PROVENANCE.md` entry; none is placed by this page |
-| Sensitivity | Probably a goddess image: dress forms only, never a decorative idol, piece or totem |
-
-### DR-09: Kneeling Chalchiuhtlicue, basalt with surviving pigment
-
-| Field | Entry |
-|---|---|
-| What | Kneeling Chalchiuhtlicue, basalt with surviving pigment |
-| Holder and identifier | The Metropolitan Museum of Art, 00.5.72; <https://www.metmuseum.org/art/collection/search/307651> |
-| Date | 1325-1521 (Met) |
-| Place | Mexico; Mexica |
-| Kind of evidence | surviving original |
-| Shows | Noblewoman's dress in stone: a headband of wound bands with balls and tassels, a skirt and a tasseled quechquemitl or fringed cape; blocky basalt form with paint traces |
-| Does not show | A deity image; most paint lost; no findspot |
-| Rights | Public domain: the Met's object page marks the image Public Domain (Open Access). May be placed in the project with a `game/assets/PROVENANCE.md` entry; none is placed by this page |
-| Sensitivity | Sacred deity image: dress and stone finish only. Any use as a piece, totem face or mechanic waits on the owner's decision (consultation list) |
-
 ### DR-10: Feather shield 'Meander and Sun' (Federschild 'Mäander und Sonne')
 
 | Field | Entry |
@@ -941,20 +826,6 @@ Rank is the costume. Almost no cloth survives; the forms come from ornaments in 
 | Does not show | Colonial, about 20 years after 1521, for a Spanish reader; conventions, not literal garments. Folio-level readings are from the Visual Lexicon and need checking against the facsimile |
 | Rights | Reference only, not for reuse. CC BY-NC 4.0 (stated in the Bodleian IIIF manifest) |
 | Sensitivity | none known. The founding page, f. 2r, is not used (NU-12) |
-
-### DR-13: Florentine Codex, Book VIII
-
-| Field | Entry |
-|---|---|
-| What | Florentine Codex, Book VIII: Kings and Lords |
-| Holder and identifier | Biblioteca Medicea Laurenziana, Med. Palat. 218-220; Library of Congress / World Digital Library copy, LCCN 2021667853; <https://www.loc.gov/item/2021667853> |
-| Date | 1577 (LoC) |
-| Place | Tlatelolco and Mexico City; Sahagún with Nahua informants, scribes and painters |
-| Kind of evidence | later depiction |
-| Shows | Rulers' and lords' dress, insignia and regalia, from Nahua elders' testimony |
-| Does not show | About 55 years after 1521, Franciscan project, European-influenced painting. Chapters and folios on dress not opened; the item page itself could not be fetched |
-| Rights | Reference only, not for reuse until the rights statement on this item's own LoC page is read (the 'free to use' statement was read on other items of the collection) |
-| Sensitivity | none known |
 
 ### DR-14: Florentine Codex, Book X
 
@@ -1141,7 +1012,7 @@ Colour evidence is mostly conservation science on monuments. The studies are lis
 | Date | About 2005; objects Stage II to early 16th century |
 | Place | Sacred precinct |
 | Kind of evidence | modern analysis |
-| Shows | 'solamente hemos podido registrar la presencia del rojo, el ocre, el blanco, el negro y el azul' (p. 17), fewer than the codices, which add green, yellow and grey. Red hematite (p. 18); ochre goethite (p. 19); white imported calcite (p. 20); black pine soot (p. 22); blue Maya blue (p. 22). The Casa de las Águilas friezes repeat yellow, red, blue and black top to bottom (p. 32) |
+| Shows | 'solamente hemos podido registrar la presencia del rojo, el ocre, el blanco, el negro y el azul' (p. 17), fewer than the codices, which add green, yellow and grey. Red hematite (p. 18); ochre goethite (p. 19); white imported calcite (p. 20); black pine soot (p. 22); blue Maya blue (p. 22). The Casa de las Águilas friezes repeat yellow, red, blue and black top to bottom (p. 32); that building is held out (NU-17), so its band sequence is not copied |
 | Does not show | Sacred precinct only; volume and year unverified |
 | Rights | Reference only, not for reuse |
 | Sensitivity | none known beyond deity imagery |
@@ -1158,7 +1029,7 @@ Colour evidence is mostly conservation science on monuments. The studies are lis
 | Shows | Hematite red on mud plaster; goethite ochre with calcite on stucco; palygorskite blue of Maya-blue type; a manganese-oxide black on one sample. Paint straight on mud or on lime plaster, in several phases |
 | Does not show | One elite building; indigo not confirmed directly; blacks varied |
 | Rights | Reference only, not for reuse |
-| Sensitivity | none known |
+| Sensitivity | The building is held out (NU-17): pigment chemistry only, no likeness of its murals or rooms |
 
 ### CO-05: Painting technique of the Templo Mayor wall paintings
 
@@ -1298,25 +1169,34 @@ not to be depicted, modelled or used as pieces, totems, effects or
 marketing unless the project records permission (no permission is
 recorded as of 2026-10-19). Where the brief uses a fact from one (a
 pigment, an alloy, a technique), that fact is listed; no likeness is
-taken. For sites, the building fabric stays in the set (AR-01, AR-02,
-AR-04, AR-05, AR-07) and only the flagged parts are left out; the owner
-should confirm that split (consultation item 9).
+taken. The sites whose fabric is bound up with funerary deposits,
+sacrifice imagery or a living memorial (NU-14 to NU-18) are held out
+whole: no plan, layout, room or ornament is modelled on them. Only
+measured or material facts (a height, a stone, a pigment) are taken, as
+for every row here, until the owner records a decision on the site split
+(consultation item 9).
 
 | Id | What | Holder record | Why not used | Facts the brief takes, no likeness |
 |---|---|---|---|---|
 | NU-01 | Huei Tzompantli: skull-rack platform and tower of skulls | INAH, Lugares node 5907 <https://lugares.inah.gob.mx/en/node/5907>; Boletín 98 (2023) | Human remains of men, women and children; funerary and sensitive for descendants | None. Not even as a distant platform without a recorded decision |
-| NU-02 | Funerary deposits: Templo Mayor Stage II cremation urns and offerings with human remains (AR-01, AR-02); Tlatelolco Ehecatl mass burials and child offerings (AR-07); charred cotton cloth from the cremation burial of Offering V, Casa de las Águilas | INAH node 4463, node 4477; López Luján and Guilliem Arroyo 2017 (Mesoweb <https://www.mesoweb.com/es/articulos/sub/Textiles.pdf>) | Funerary | Cloth structure only (the brief's own heritage note): cotton, Z-spun ground, S-plied supplementary weft; basket and plain weave; brocades in cross, zigzag and step-fret; rhombic twill at Tlatelolco. The owner may strike this |
-| NU-03 | Sacrifice and dismemberment imagery and rites: the Calmécac drain slabs (AR-04); the rites of the Casa de las Águilas and its life-size ceramic eagle figures (AR-05) | INAH node 4778, node 4463 | Sacrifice imagery; ritual space. The eagle figures' holder record was also not read and their gathered dates contradict each other | None |
-| NU-04 | Tlatelolco as a place in marketing | INAH node 4477 | Site of the 1968 massacre, a living memorial | The architecture (AR-07) only |
+| NU-02 | Funerary deposits: Templo Mayor Stage II cremation urns and offerings with human remains (NU-14, NU-15); Tlatelolco Ehecatl mass burials and child offerings (NU-18); charred cotton cloth from the cremation burial of Offering V, Casa de las Águilas | INAH node 4463, node 4477; López Luján and Guilliem Arroyo 2017 (Mesoweb <https://www.mesoweb.com/es/articulos/sub/Textiles.pdf>) | Funerary | Cloth structure only (the brief's own heritage note): cotton, Z-spun ground, S-plied supplementary weft; basket and plain weave; brocades in cross, zigzag and step-fret; rhombic twill at Tlatelolco. The owner may strike this |
+| NU-03 | Sacrifice and dismemberment imagery and rites: the Calmécac drain slabs (NU-16); the rites of the Casa de las Águilas and its life-size ceramic eagle figures (NU-17) | INAH node 4778, node 4463 | Sacrifice imagery; ritual space. The eagle figures' holder record was also not read and their gathered dates contradict each other | None |
+| NU-04 | Tlatelolco as a place in marketing | INAH node 4477 | Site of the 1968 massacre, a living memorial | None (the site is held, NU-18) |
 | NU-05 | Deity images of a sacred narrative with bodily violence: Coatlicue; Coyolxauhqui disc and colossal head; Tlaltecuhtli monolith and the Met Tlaltecuhtli relief | Coatlicue, MNA (GA&C <https://artsandculture.google.com/asset/coatlicue-unknown/nAFqcycgNYK8_g>); Coyolxauhqui disc, Museo del Templo Mayor Sala 4 <https://www.templomayor.inah.gob.mx/salas-del-museo/sala-4-huitzilopochtli>; head, MNA (GA&C <https://artsandculture.google.com/asset/coyolxauhqui-unknown/pwGsMYS5_7vTNQ>); Met 00.5.36 <https://www.metmuseum.org/art/collection/search/307636> | Deity images; risk of gore and sensationalism | Pigments (CO-01, CO-06). The Coyolxauhqui disc, about 3 m across at the foot of Huitzilopochtli's stair (AR-14 guide), gives floor-relief scale. Only red and ochre traces were recorded on it (CO-01 p. 94): no reconstructed palette is offered |
 | NU-06 | Sun Stone (Piedra del Sol) | MNA, INAH (GA&C <https://artsandculture.google.com/asset/piedra-del-sol-unknown/9QF3u2yNtD8ufQ>); holder date 1250/1500, 'Posclásico Tardío, ca. 1500'. A later date in Moctezuma II's reign is a scholarly proposal not verified here | National symbol of Mexico and a cosmological image honoured by present-day Mexicayotl practitioners | That Mexica artists built circles from concentric bands and quadrants; no likeness, ring or disc derived from it |
 | NU-07 | Human remains as objects: skull masks; turquoise-and-lignite mosaic skull; Offering 141 painted skulls | INAH o-35443 <https://repositorio.inah.gob.mx/o-35443>; British Museum Am,St.401 <https://www.britishmuseum.org/collection/object/E_Am-St-401>; Offering 141 via CO-01, CO-02 | Human remains | None |
-| NU-08 | Tlaloc imagery: Olla Tláloc; Tlatelolco effigy brazier; Tlaloc braziers of Stage IVb; Stage II and MNA chacmools; Met rain god pendant | INAH o-35451 <https://repositorio.inah.gob.mx/o-35451>; MNA (GA&C <https://artsandculture.google.com/asset/brasero-efigie-de-tlatelolco-unknown/ewGq8d7BW-w3bQ>, <https://artsandculture.google.com/asset/chac-mool/ogFl8qHbQLKHmw>); INAH element 1261 <https://lugares.inah.gob.mx/en/pagina-de-elemento/1261>; Met 1979.206.1035 <https://www.metmuseum.org/art/collection/search/313228> | Tlaloc is still invoked in Nahua rain petitions | Blue for the north and Tlaloc side; braziers carry blue clouds, green greenstone discs and white feathers (AR-02 record) |
+| NU-08 | Tlaloc imagery: Olla Tláloc; Tlatelolco effigy brazier; Tlaloc braziers of Stage IVb; Stage II and MNA chacmools; Met rain god pendant | INAH o-35451 <https://repositorio.inah.gob.mx/o-35451>; MNA (GA&C <https://artsandculture.google.com/asset/brasero-efigie-de-tlatelolco-unknown/ewGq8d7BW-w3bQ>, <https://artsandculture.google.com/asset/chac-mool/ogFl8qHbQLKHmw>); INAH element 1261 <https://lugares.inah.gob.mx/en/pagina-de-elemento/1261>; Met 1979.206.1035 <https://www.metmuseum.org/art/collection/search/313228> | Tlaloc is still invoked in Nahua rain petitions | Blue for the north and Tlaloc side; braziers carry blue clouds, green greenstone discs and white feathers (NU-15 record) |
 | NU-09 | Teponaztli slit drums | Met 1979.206.361 <https://www.metmuseum.org/art/collection/search/312583>; Weltmuseum Wien 59894 <https://www.weltmuseumwien.at/en/objects/slit-drum-445809> | Still played in Nahua ceremonies | Carved wood with worn low relief and a dark handled patina; paint lost |
 | NU-10 | Offering deposits, sacrificial vessels and tomb material: the Templo Mayor gold assemblage and Offering 125; gold bells on a wolf and an eagle; the Offering 99 turquoise disk; the reused Teotihuacan mask of Offering 82; a Mezcala figure; cuauhxicalli vessels; tecpatl knives; Monte Albán Tomb 7 pectoral; LACMA eagle pendant; Templo Mayor museum urns | López Luján and Ruvalcaba Sil, 'Mexica Gold' (Mesoweb <https://www.mesoweb.com/es/articulos/sub/MexicaGold.pdf>); Met 760302; INAH o-35444; Met 1978.412.42; BM Am,+.6185, Weltmuseum 59896, NMAI 16/3405; Met 920507 (on loan; lender and accession not stated, and the page gives no findspot for these knives, only that tecpatls were generally placed in Templo Mayor offerings); Met 744283; LACMA M.71.73.249a; INAH node 5284 | Offering deposits with sacrificed animals, sacrificial vessels, objects regarded as living god-embodiments, tomb contexts | Gold: 267 pieces and 1,090 fragments, mostly hammered sheet, 27.7% cast; Au 30 to 95%, Ag 3 to 62%, Cu 0 to 35%; no Phase VII offering held gold; about 500 g in all. The Mexica collected and refitted older greenstone. The Offering 99 disk is also unverified (no INAH record; circulating image is a reconstruction) |
 | NU-11 | The sacred calendar: Codex Borbonicus; the 20 tonalpohualli day signs (Sun Stone, Tlatelolco Templo Calendárico); Codex Magliabechiano | Bibliothèque de l'Assemblée nationale, Paris <https://www2.assemblee-nationale.fr/decouvrir-l-assemblee/patrimoine/la-bibliotheque/le-fonds-ancien-de-la-bibliotheque/autres-tresors/codex-borbonicus-fin-xve-siecle> (holder: 'fin XVe siècle', date contested; '© Assemblée nationale, tous droits réservés'); Magliabechiano: no holder record found | A divinatory calendar still kept by some communities; contested cultural property. Its return status was not verified on any page read, so none is stated. Magliabechiano also frames sacrifice through colonial authors | The painted-book palette and method (CO-07) |
 | NU-12 | The eagle-on-nopal founding image: Teocalli de la Guerra Sagrada; Codex Mendoza f. 2r | Teocalli, MNA (GA&C <https://artsandculture.google.com/asset/teocalli-de-la-guerra-sagrada-unknown/wQEibbbI4U34AQ?hl=en>; holder date 1325/1521; INAH Boletín 316, 30 June 2025, gives about 1507 <https://www.inah.gob.mx/images/boletines/2025/316/Boletin%20316.pdf>); Bodleian MS. Arch. Selden. A. 1 | Mexico's national emblem, whose use is regulated by law; the Teocalli carries deity figures and is part of the 2025 commemoration of Tenochtitlan | That a sculptor of about 1507 rendered a temple as a stepped platform with a stair to a top shrine (Boletín 316) |
 | NU-13 | Featherwork and mosaics under return debate: the feather headdress ('Penacho', not provably Moctezuma's); feather shield with coyote; turquoise mosaics | Weltmuseum Wien 10402 <https://www.weltmuseumwien.at/en/digital/the-feather-headdress> and 43380 <https://www.weltmuseumwien.at/en/objects/feather-shield-with-coyote-531288>; British Museum Am1894,-.634 <https://www.britishmuseum.org/collection/object/E_Am1894-634> and Am,St.400 | Live restitution claim and national symbol (The Art Newspaper, 9 October 2026, reports the debate ongoing); heritage held abroad | Feathers: quetzal, cotinga, roseate spoonbill, squirrel cuckoo, kingfisher on nets, cane and paper with gold plates; restored 1878. Mosaic: cedro core, turquoise and red Spondylus set in pine resin and copal, white conch teeth, hematite-red resin, pyrite eyes |
+| NU-14 | Templo Mayor, Stage IVb platform and west facade: twin stair, serpent heads at the stair foot, Altar of Frogs | INAH, Lugares element 1259 <https://lugares.inah.gob.mx/en/pagina-de-elemento/1259>; Stage IVb, Axayacatl, 1469-1481 (INAH); CC BY-NC-ND 4.0 | Sacred precinct whose offerings include human remains (funerary); held until the owner decides on the site split | That the twin stair and north/south division survive in situ; INAH says two serpent heads keep their original colour |
+| NU-15 | Templo Mayor zone overview: seven stages, Stage II shrines, Buildings A-C, the Red Temples, the Stage VI patio | INAH, Lugares node 4463 <https://lugares.inah.gob.mx/en/node/4463> (with element 1265); Stage II 1376-1427 to Stage VI 1486-1502 (INAH); CC BY-NC-ND 4.0 | Stage II cremation urns and offerings with human remains (funerary); held | Seven enlargements, each encasing the last; the final temple about 150 ft (about 46 m) high; nothing of Stage VII stands above its platform; Building A keeps its stucco skin; Tlaloc braziers with blue clouds, green greenstone discs and white feathers; the Red Temples copy Teotihuacan style on purpose |
+| NU-16 | Calmécac remains: Stage VII basalt slab floor and stair start; Stage VI room with stucco floor, pilaster bases and a bench; two clay almenas in cut-snail-shell form | INAH, Lugares node 4778 <https://lugares.inah.gob.mx/en/node/4778>; Stage VII 1502-1519, Stage VI 1486-1502 (INAH); CC BY-NC-ND 4.0 | Engraved drain slabs show dismemberment (sacrifice imagery); held | Basalt slab floors; tezontle walls set in mud; stucco floors |
+| NU-17 | Casa de las Águilas (House of the Eagles): bench-lined rooms with processional relief, portico column bases, life-size ceramic eagle figures | INAH, Lugares node 4463 <https://lugares.inah.gob.mx/en/node/4463>; built and enlarged between about 1430 and 1500, stage on view about 1470 (node 4463); CC BY-NC-ND 4.0 | A ritual space used for private rites including sacrifice; the eagle figures' own record was not read; held | That it is a deliberate Toltec revival, not the everyday Mexica style. Pigment chemistry of its murals (CO-04) only; no room, bench, band sequence or figure is modelled on it |
+| NU-18 | Tlatelolco zone: its own twin-shrine Templo Mayor with glyphs on the side and back facades, the Templo Calendárico, a round Ehecatl temple | INAH, Lugares node 4477 <https://lugares.inah.gob.mx/en/node/4477>; mostly before 1473 (INAH gives no stage dates); CC BY-NC-ND 4.0 | Mass burials and child offerings (funerary); the 1968 massacre memorial (NU-04); day-sign reliefs (NU-11); held | That a second, independent twin-shrine temple stood at Tlatelolco; Tlatelolco had its own builders, so it is never silently merged with Tenochtitlan |
+| NU-19 | Deity images without violent narrative: kneeling female figure (probably a goddess); kneeling Chalchiuhtlicue; seated Chalchiuhtlicue and head of Chalchiuhtlicue | Met 00.5.16 <https://www.metmuseum.org/en/art/collection/search/307630>; Met 00.5.72 <https://www.metmuseum.org/art/collection/search/307651>; Met 00.5.70 <https://www.metmuseum.org/art/collection/search/307650> and 00.5.44 <https://www.metmuseum.org/art/collection/search/307640>; all public domain (Met Open Access) | Sacred images; Chalchiuhtlicue is a water deity of the same rain and water cult as Tlaloc (NU-08), still invoked in rain petitions. No decision on deity likeness is recorded | Deity sculpture ranged from greenstone to ordinary volcanic rock; eye sockets held shell or obsidian inlay; lime mortar survives on 00.5.70 (plaster over basalt); paint traces on 00.5.72; the bare torso of goddess sculpture is a sacred convention, not everyday dress |
 
 ### Left out because the holder record was not verified
 
@@ -1325,10 +1205,16 @@ from a blog post); the basalt courtyard of Axayacatl's palace (news report
 only); the Marquina precinct model in Zócalo Metro station (news report
 only); Codex Telleriano-Remensis (Gallica record did not load); Durán's
 *Historia* (Biblioteca Nacional de España record did not load); a general
-Florentine Codex entry (replaced by the folio items AR-10, DR-13 to DR-15,
-MA-03, MA-04, CO-08); FAMSI pages for ADEVA facsimiles (reposted copies);
-a shell vestment on loan to the Met (722354: no lender, date or
-inventory). Each can return once its holder's own record is read.
+Florentine Codex entry (replaced by the folio items AR-10, DR-14, DR-15,
+MA-03, MA-04, CO-08); Florentine Codex Book VIII (LoC 2021667853: the
+item page did not load, so its date, contents and rights were not read);
+FAMSI pages for ADEVA facsimiles (reposted copies); a shell vestment on
+loan to the Met (722354: no lender, date or inventory); obsidian cores
+and prismatic blades at the Centro INAH Hidalgo (INAH o-36141: the record
+gives no date or place, so nothing shows it is Mexica or from the Basin);
+INAH's Templo Mayor site guide no. 115 (not read; the base dimension and
+the 'hacia 1480' date attributed to it in the gathering notes are not
+used). Each can return once its holder's own record is read.
 
 ### Consultation and decisions for the owner
 
@@ -1340,8 +1226,8 @@ uses non-figural precious materials and plain ornament.
    Recommended: leave out entirely, which needs no consultation. If a
    distant precinct with a tzompantli is ever wanted, ask INAH's
    Programa de Arqueología Urbana and Nahua cultural institutions first.
-2. **Deity likeness on pieces, totems or effects (NU-05, NU-08, DR-08,
-   DR-09, OB-12).** Before any deity face or figure enters gameplay, ask
+2. **Deity likeness on pieces, totems or effects (NU-05, NU-08,
+   NU-19).** Before any deity face or figure enters gameplay, ask
    Nahua scholars and institutions, for example IDIEZ (Instituto de
    Docencia e Investigación Etnológica de Zacatecas) and the Seminario de
    Cultura Náhuatl at UNAM's Instituto de Investigaciones Históricas,
@@ -1364,8 +1250,13 @@ uses non-figural precious materials and plain ornament.
    it is shown, and if so as a respected instrument, never broken.
 8. **Tlatelolco in marketing (NU-04).** Keep game marketing away from the
    1968 memorial.
-9. **The site split.** Confirm that building fabric of sites with funerary
-   or sacrifice contexts may be used once those contexts are left out.
+9. **The site split (NU-14 to NU-18).** Decide whether the building
+   fabric of the Templo Mayor, the Calmécac, the Casa de las Águilas and
+   Tlatelolco may be used as reference once their funerary deposits,
+   sacrifice imagery and memorial are left out. Until a decision is
+   recorded here, they stay out of the set. If the answer may be yes,
+   consider asking INAH (the Museo del Templo Mayor and the Zona
+   Arqueológica de Tlatelolco) and Nahua cultural institutions first.
 10. **Credit.** Decide how the scholars this set depends on (the Templo
     Mayor Project team above all) are credited in `CREDITS.md`.
 
@@ -1373,16 +1264,16 @@ uses non-figural precious materials and plain ornament.
 
 | Claim | Grade | Sources | Notes |
 |---|---|---|---|
-| The Templo Mayor had twin west-facing stairs to two shrines, Huitzilopochtli south and Tlaloc north | attested | AR-01, AR-07, AR-10 | Two sites and a later drawing agree |
-| Stage VII (1502 to 1520) is almost entirely lost above the platform | attested | AR-02 | |
-| Final temple about 80 m a side and 45 m high | attested | AR-02 (150 ft); INAH guide 115 | Guide figure from gathering notes; verify the guide |
-| Buildings and sculpture were stuccoed and painted | attested | AR-02, AR-03, CO-01, CO-09 | |
+| The Templo Mayor had twin west-facing stairs to two shrines, Huitzilopochtli south and Tlaloc north | attested | AR-10; NU-14, NU-18 (held) | A later drawing in the set; the two sites agree but are held out |
+| Stage VII (1502 to 1520) is almost entirely lost above the platform | attested | NU-15 fact | |
+| Final temple about 150 ft (about 46 m) high | attested (one source) | NU-15 fact | A base dimension is unverified: the guide it came from (no. 115) was not read |
+| Buildings and sculpture were stuccoed and painted | attested | AR-03, CO-01, CO-09; NU-15 fact | |
 | Monument paint used only red, ochre, blue, white and black | attested | CO-01, CO-02, CO-03, CO-06 | Codices are richer (CO-07) |
 | Paint was flat, opaque and unshaded | attested | CO-02, CO-06, CO-09 | |
 | North and Tlaloc blue, south and Huitzilopochtli ochre | attested | CO-01 p. 103, CO-09 | Shrine colour bands: unknown |
 | Blue is Maya blue on sculpture and murals | attested | CO-03, CO-04, CO-05 | Offering 141 blue differs (CO-02) |
-| Floors and courts of basalt slabs; walls of tezontle in mud; stucco floors | attested | AR-04, AR-06 | |
-| Almenas in cut-shell form | attested | AR-04 | Other crest forms: from López Luján (gathering notes), not read here |
+| Floors and courts of basalt slabs; walls of tezontle in mud; stucco floors | attested | AR-06; NU-16 fact | |
+| Almenas in cut-shell form | attested | NU-16 (held) | Not modelled until the site split is decided; other crest forms from López Luján (gathering notes), not read here |
 | Greenstone mostly serpentine; jadeite rare and often heirloom | attested | MA-05, MA-06 | |
 | Mexica lapidaries did not facet stone | inferred | MA-05, MA-07 | No faceted piece in any record read |
 | Most Mexica turquoise was Mesoamerican, not from the US Southwest | attested | MA-01 | 43 samples |
@@ -1392,7 +1283,7 @@ uses non-figural precious materials and plain ornament.
 | Commoners wore wood or bone ornaments | attested (one holder) | DR-07 | Needs a second source |
 | Women wore cueitl and huipilli | attested (later witness) | DR-12, DR-14 | Colonial |
 | Black-on-Orange was the everyday household ware | attested | OB-19 | |
-| A board chamber of benches, pilasters and a flat roof | inferred | AR-04, AR-05 | Invention resting on evidence |
+| A board chamber of benches, pilasters and a flat roof | inferred | AR-06, AR-09, AR-13 | Invention; the rooms that show benches and pilasters are held out (NU-16, NU-17) |
 | Chinampas, reed marsh and volcanoes in view | inferred | AR-14 (model), scope | No period depiction seen |
 | A purple piece material | unknown | — | |
 | The Sun Stone's date | contested | NU-06 | Holder ca. 1500 |
@@ -1421,9 +1312,10 @@ Gathered on 2026-10-19 by six category passes, then checked item by item.
   latin-american-history. Chicago is used because the profile names no
   style.
 - INAH: Lugares element pages 1259, 1261, 1265 and nodes 4463, 4477,
-  4778, 5284, 5907; site guides 115 and 120; Boletines 98/2023,
+  4778, 5284, 5907; site guide 120 (guide 115 was not read); Boletines 98/2023,
   166/2025, 316/2025, 470/2022, 681/2023; Repositorio Institucional
-  records o-27968, o-28172, o-35437, o-35443, o-35444, o-35451, o-36141.
+  records o-27968, o-28172, o-35437, o-35443, o-35444, o-35451, o-36141
+  (no date or place; left out).
   Records that did not load: o-35425 (Coyolxauhqui), o-35429, o-35440
   (eagle warrior), several molcajete, whorl and blade records. Rejected
   as not Mexica: o-30357 (Toluca), o-33421 (Durango), o-37023, o-27711.
@@ -1447,6 +1339,11 @@ Gathered on 2026-10-19 by six category passes, then checked item by item.
   CO-07, MA-02, MA-05, MA-06, López Luján and Guilliem Arroyo 2017,
   López Luján and Ruvalcaba Sil. Abstracts only: MA-01, CO-04, CO-05,
   Parry 2001, Taube 1991, Melgar Tísoc and Solís Ciriaco 2014.
+- Revision on 2026-10-19 after an independent check: the Templo Mayor,
+  Calmécac, Casa de las Águilas and Tlatelolco site items moved to
+  NU-14 to NU-18 and the Met deity sculptures to NU-19, pending the
+  owner's decisions; Florentine Book VIII and INAH o-36141 left out as
+  unverified; the 80 m base figure dropped.
 - Press, as corroboration only: Quadratín 2017, La Jornada 21 March 2016,
   The Art Newspaper 9 October 2026, Archaeology Magazine 14 July 2020,
   Xataka México 2018.
