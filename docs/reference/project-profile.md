@@ -166,7 +166,7 @@ budgets, frame times and the look each tier must show are in
 
 A finding raised in two or more reviews is listed here as a rule.
 
-- Performance figures (#35, #75, #79, #80). An absolute figure links to
+- Performance figures (#35, #75, #79, #80, #88). An absolute figure links to
   its section of `docs/reference/benchmark-results.md` and names the row
   (machine, tier, date or run); that row gives the tier, Resolution,
   3D scaling and vsync or cap mode, and a capped row says why (for
@@ -188,3 +188,9 @@ A finding raised in two or more reviews is listed here as a rule.
   they belong (the plan's status key, `benchmark-results.md`), contradicts
   no rule already written down, and holds for the project's own existing
   rows.
+- Pages left describing the old behaviour (#61, #78, #86, #88). When a
+  change alters a value, metric, sampler, threshold or rule, every page
+  under `docs/` that states the old one changes in the same PR, including
+  pages and lines outside the diff (reference rows, explanation glosses,
+  how-to wording) and docstrings that repeat it. Figures from a replaced
+  measure that stay on a page are labelled as coming from that measure.
