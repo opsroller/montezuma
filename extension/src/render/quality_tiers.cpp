@@ -40,6 +40,7 @@
 #include <godot_cpp/classes/window.hpp>
 #include <godot_cpp/classes/world_environment.hpp>
 #include <godot_cpp/core/class_db.hpp>
+#include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/typed_array.hpp>
@@ -546,6 +547,13 @@ void QualityTiers::apply_environment(const Ref<Environment>& env) {
     e->set_volumetric_fog_enabled(p.has(q::Feature::VolumetricFog) &&
                                   authored(e, "volumetric_fog", e->is_volumetric_fog_enabled()));
     e->set_glow_enabled(p.has(q::Feature::Glow) && authored(e, "glow", e->is_glow_enabled()));
+    // A theme can give a tier its own glow threshold (glow_hdr_threshold_<tier
+    // id with underscores> metadata): the renderers put different values in
+    // the buffer glow reads, so one threshold blooms only lit stone on
+    // Forward+ and nothing at all on Mobile and Compatibility.
+    const double threshold = authored_number(e, "glow_hdr_threshold", e->get_glow_hdr_bleed_threshold());
+    const StringName key = "glow_hdr_threshold_" + to_godot(q::tier_id(p.tier)).replace("-", "_");
+    e->set_glow_hdr_bleed_threshold(static_cast<real_t>(e->has_meta(key) ? double(e->get_meta(key)) : threshold));
 }
 
 void QualityTiers::apply_camera_attributes(const Ref<CameraAttributes>& attributes) {
@@ -613,6 +621,8 @@ void QualityTiers::run_self_test() {
     env->set_sdfgi_enabled(false);  // a theme that picked VoxelGI leaves SDFGI off on every tier
     env->set_volumetric_fog_enabled(true);
     env->set_glow_enabled(true);
+    env->set_glow_hdr_bleed_threshold(8.0f);
+    env->set_meta("glow_hdr_threshold_web", 0.5);  // the other tiers keep the authored threshold
     Ref<CameraAttributesPractical> attrs;
     attrs.instantiate();
     attrs->set_auto_exposure_enabled(true);
@@ -706,6 +716,8 @@ void QualityTiers::run_self_test() {
         check(env->is_ssr_enabled() == p.has(q::Feature::Ssr), id, "SSR");
         check(!env->is_sdfgi_enabled(), id, "SDFGI turned on though the theme left it off");
         check(env->is_volumetric_fog_enabled() == p.has(q::Feature::VolumetricFog), id, "volumetric fog");
+        check(Math::is_equal_approx(env->get_glow_hdr_bleed_threshold(), id == "web" ? 0.5f : 8.0f), id,
+              "glow threshold per tier");
         check(env->is_glow_enabled() == p.has(q::Feature::Glow), id, "glow");
         check(attrs->is_auto_exposure_enabled() == p.has(q::Feature::AutoExposure), id, "auto exposure");
         check(attrs->is_dof_blur_far_enabled() == p.has(q::Feature::DepthOfField), id, "depth of field");

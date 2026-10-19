@@ -247,6 +247,7 @@ tier has no `glow` or `depth_of_field` ([Quality tiers](quality-tiers.md#feature
 | `glow.intensity`, `glow.strength`, `glow.bloom` | `glow_intensity`, `glow_strength`, `glow_bloom` | 0.5, 1.0, 0 |
 | `glow.blend` | `glow_blend_mode`: `additive`, `screen`, `softlight`, `replace` or `mix` | additive |
 | `glow.hdr_threshold`, `glow.hdr_scale`, `glow.hdr_luminance_cap` | the exposed scene value glow starts at (before tonemapping, Godot 4.6+), its gain, its cap | 8, 2, 12 |
+| `glow.hdr_threshold_by_tier` | tier id to its own threshold, written as `glow_hdr_threshold_<tier>` metadata (dashes as underscores) that `QualityTiers` applies; other tiers use `hdr_threshold` | `mobile` 0.6, `web` 0.6 |
 | `depth_of_field.beyond_board` | far blur start, metres past the board's far edge; written as `dof_blur_far_distance` and as the `dof_far_beyond_board` metadata `BoardCamera3D` reads ([Board view](board-view.md#camera-fit)) | 0.5 |
 | `depth_of_field.transition`, `depth_of_field.amount` | `dof_blur_far_transition`, `dof_blur_amount` | 2.0 m, 0.1 |
 

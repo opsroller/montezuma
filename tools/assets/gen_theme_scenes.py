@@ -406,6 +406,10 @@ def main():
         f"glow_hdr_threshold = {glow['hdr_threshold']}",
         f"glow_hdr_scale = {glow['hdr_scale']}",
         f"glow_hdr_luminance_cap = {glow['hdr_luminance_cap']}",
+        # Mobile and Compatibility put lower values in the buffer glow reads,
+        # so they get their own threshold (QualityTiers applies it).
+        *[f"metadata/glow_hdr_threshold_{tier.replace('-', '_')} = {v}"
+          for tier, v in sorted(glow.get("hdr_threshold_by_tier", {}).items())],
         # Optional height fog. The temple has none: in the game's board view
         # on Forward+ even height fog that starts below the platform left a
         # haze over the board (readability rule 2), so atmosphere is

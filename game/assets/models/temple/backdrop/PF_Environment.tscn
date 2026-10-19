@@ -67,6 +67,8 @@ glow_blend_mode = 0
 glow_hdr_threshold = 8.0
 glow_hdr_scale = 2.0
 glow_hdr_luminance_cap = 12.0
+metadata/glow_hdr_threshold_mobile = 0.6
+metadata/glow_hdr_threshold_web = 0.6
 adjustment_enabled = true
 adjustment_color_correction = ExtResource("12")
 

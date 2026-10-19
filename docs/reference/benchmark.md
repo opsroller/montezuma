@@ -254,6 +254,10 @@ cells, frame excluded), `cell_px`, `kinds`, `seed`, every cell's `x`, `y`,
 `kind`, `shade` ((x + y) mod 2, the two tile shades) and screen `rect`,
 plus `features` and `device` as in the report.
 
+Glow is switched off by setting its intensity to 0, not by disabling
+it: on Compatibility, enabling glow also moves the 3D render to an HDR
+buffer, which changes specular highlights by itself and read as bloom.
+
 ## Readability checks
 
 `check_readability.py DIR [--json REPORT]` prints a PASS or FAIL line per

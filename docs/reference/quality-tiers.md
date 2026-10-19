@@ -123,7 +123,7 @@ target names.
 | `fog_fire_light` | volumetric fog energy of lights in `quality_fog_light` | ✔ | — | — | — |
 | `auto_exposure` | `CameraAttributes.auto_exposure_enabled` | ✔ | ✔ | — | — |
 | `depth_of_field` | `CameraAttributesPractical` far and near blur (the board camera places the far blur behind the board, [Board view](board-view.md#camera-fit)) | ✔ | ✔ | — | — |
-| `glow` | `Environment.glow_enabled` | ✔ | ✔ | ✔ | ✔ |
+| `glow` | `Environment.glow_enabled`; the threshold comes from the environment's `glow_hdr_threshold_<tier>` metadata when it has one ([Board themes](board-themes.md#post-processing)) | ✔ | ✔ | ✔ | ✔ |
 | `subsurface_scattering` | nodes in `quality:subsurface_scattering`; SSS quality high, medium, off | ✔ | ✔ | — | — |
 | `parallax_occlusion` | nodes in `quality:parallax_occlusion` | ✔ | ✔ | — | — |
 | `gem_refraction` | nodes in `quality:gem_refraction` | ✔ | ✔ | — | — |

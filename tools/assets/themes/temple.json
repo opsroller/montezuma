@@ -483,6 +483,7 @@
       "bloom": 0.0,
       "blend": "additive",
       "hdr_threshold": 8.0,
+      "hdr_threshold_by_tier": {"mobile": 0.6, "web": 0.6},
       "hdr_scale": 2.0,
       "hdr_luminance_cap": 12.0
     },

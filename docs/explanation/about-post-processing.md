@@ -48,8 +48,11 @@ such: the only renderer this package could run is software Vulkan and GL
    levels 2 and 3 only (radius of a few pixels at the internal
    resolution), additive blend at intensity 0.5, no `glow_bloom` (which
    blooms everything). Additive suits a pre-tonemap glow: soft light and
-   screen assume values in 0 to 1. One setting serves every tier: it
-   passes rule 6 on Compatibility, Mobile and Forward+.
+   screen assume values in 0 to 1. Mobile and Compatibility put much lower
+   values in the buffer glow reads: at a threshold of 1.1 or more nothing
+   bloomed there at all. So `mobile` and `web` get their own threshold of
+   0.6 (environment metadata `QualityTiers` applies per tier), which
+   blooms the flames and gold glints and still passes rule 6.
 2. **The grade is a 3D LUT made from an ASC CDL.** The theme sets slope,
    offset and power per channel and a saturation; `grade_lut.py` bakes
    them into a 32³ table that `Environment.adjustment_color_correction`
@@ -79,13 +82,18 @@ such: the only renderer this package could run is software Vulkan and GL
    below the platform softens. Medium blur quality on `desktop-high`,
    low on `desktop-standard`, both jittered for the temporal pass; none
    on mobile and web, as the target says.
-5. **Readability captures average 64 frames, with the fire lights held.**
+5. **Readability captures average 64 frames, hold the fire lights and
+   switch glow off by intensity.**
    With TAA or the temporal upscaler, every frame is jittered, and the
    brazier lights flicker. Two single-frame captures of the same board on
    `desktop-high` differed by 6 or more luma at about 4,300 board pixels,
    which failed rule 2 with no atmosphere at all and counted noise as
    bloom in rule 6. The capture now holds `FlickerLight3D`s at their
-   authored energy and saves the mean of 64 frames per effect set.
+   authored energy and saves the mean of 64 frames per effect set. On
+   Compatibility, enabling glow also moves the 3D render to an HDR buffer,
+   which changes specular highlights by itself: with glow at intensity 0
+   the web capture still "bloomed" 0.21% of the board. The capture now
+   turns glow off by intensity 0 and keeps it enabled.
 
 ## Costs
 
@@ -111,7 +119,7 @@ this package replaces these numbers.
 |---|---|
 | Keep soft light glow and lower its intensity | Soft light on pre-tonemap values above 1 brightens all lit stone; rule 6 still failed at any visible intensity |
 | Raise only the threshold, keep mip 5 | Mip 5 spreads more than a quarter cell at phone size |
-| A separate glow per renderer | Not needed: one setting passes rule 6 on all three renderers |
+| One glow threshold for every tier | 8 blooms nothing on Mobile and Compatibility; 0.6 blooms all lit stone on Forward+ |
 | A LUT painted in an image editor | Not reviewable as a diff and not checkable against the palette; the CDL numbers are |
 | Grading with the environment's brightness, contrast and saturation only | No per-channel control, so no warm highlights or cool shadows |
 | A fixed depth-of-field distance | Blurs the board on portrait windows or misses the backdrop on wide ones |

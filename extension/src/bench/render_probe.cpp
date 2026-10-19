@@ -219,7 +219,7 @@ void EffectSwitch::capture(Node* root, Viewport* viewport) {
     env_ = environment_of(viewport);
     if (env_.is_valid()) {
         base_ = {env_->is_fog_enabled(), env_->is_volumetric_fog_enabled(), env_->is_glow_enabled(),
-                 env_->is_ssr_enabled(), env_->is_ssao_enabled(), env_->is_ssil_enabled(), env_->is_sdfgi_enabled()};
+                 env_->get_glow_intensity(), env_->is_ssr_enabled(), env_->is_ssao_enabled(), env_->is_ssil_enabled(), env_->is_sdfgi_enabled()};
     }
     const Ref<CameraAttributesPractical> practical = camera_attributes_of(viewport);
     if (practical.is_valid()) {
@@ -248,7 +248,7 @@ void EffectSwitch::apply(std::uint32_t on) {
     if (env_.is_valid()) {
         env_->set_fog_enabled(base_.fog && atmosphere);
         env_->set_volumetric_fog_enabled(base_.volumetric_fog && atmosphere);
-        env_->set_glow_enabled(base_.glow && glow);
+        env_->set_glow_intensity(static_cast<real_t>(glow ? base_.glow_intensity : 0.0));
         env_->set_ssr_enabled(base_.ssr && screen);
         env_->set_ssao_enabled(base_.ssao && screen);
         env_->set_ssil_enabled(base_.ssil && screen);
