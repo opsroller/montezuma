@@ -383,7 +383,7 @@
       }
     },
     "MI_AtmosphereFog": {
-      "_comment": "gen_theme_scenes.py sets clear_half from the board size and lighting.atmosphere.volumes.clearance. ground_y is the plaza floor (gen_theme_meshes.py: platform top -0.42 less three 0.5 m tiers).",
+      "_comment": "gen_theme_scenes.py sets board_half from the board size. ground_y is the plaza floor (gen_theme_meshes.py: platform top -0.42 less three 0.5 m tiers).",
       "shader": "res://assets/materials/shaders/SH_AtmosphereFog.gdshader",
       "noise_textures_3d": {
         "density_texture": {
@@ -395,7 +395,6 @@
       "params": {
         "density": 6.0,
         "albedo": "#ebedf0",
-        "fade": 1.2,
         "ground_y": -1.92,
         "bank_height": 1.4,
         "top_soft": 0.6,
@@ -407,7 +406,12 @@
         "wisp_amount": 0.35,
         "coverage": [0.56, 0.64],
         "wind": [0.12, 0.0, -0.05],
-        "base_shade": 0.75
+        "base_shade": 0.75,
+        "veil_density": 0.6,
+        "veil_height": 0.3,
+        "veil_scale": 4.0,
+        "veil_coverage": [0.48, 0.7],
+        "veil_spread": 1.0
       }
     },
     "MI_Dust": {
@@ -506,7 +510,7 @@
       "probes_subdiv": 2
     },
     "atmosphere": {
-      "_comment": "Volumetric fog, dust and light-shaft cards around the temple, never over the board (WP-51). Keys: docs/reference/board-themes.md#atmosphere.",
+      "_comment": "Volumetric fog around the temple with a thin veil over the board, dust and light-shaft cards around it (WP-51). Keys: docs/reference/board-themes.md#atmosphere.",
       "fog": {
         "anisotropy": 0.0,
         "length": 30.0,
@@ -516,10 +520,9 @@
         "temporal_amount": 0.9
       },
       "volumes": {
-        "clearance": 1.6,
         "outer": 19.0,
         "bottom": -2.6,
-        "top": 0.0
+        "top": 0.45
       },
       "dust": {
         "amount": 320,
