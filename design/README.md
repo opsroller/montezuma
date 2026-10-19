@@ -350,7 +350,7 @@ each file gets a row in `game/assets/PROVENANCE.md` and an entry in
 | | |
 |---|---|
 | Field | Maya blue 900 `#033842`, full bleed; holds on light grounds (12.7 : 1 against white) and on black (1.65 : 1, where the bright mark and band carry the tile) |
-| Mark | The keylined on-dark mark (`mark-on-dark.svg`), about 895 px wide with its keyline; the keyline stops just above the band, so nothing sits on the band |
+| Mark | The keylined on-dark mark (`mark-on-dark.svg`), about 895 px wide with its keyline; about 20 px of field separates the keyline from the band, so nothing sits on the band |
 | Foot | Step-fret band at 2x (144 px tall) |
 | Masks | None baked in: no corners, shadows or highlights. Stores and launchers mask it |
 | Small sizes | 48 px and up from the master; 16 and 32 px from `app-icon-16.svg` |
