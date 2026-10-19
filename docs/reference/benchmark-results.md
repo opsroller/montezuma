@@ -209,7 +209,7 @@ half as tall.
 Cost of the temple's water channel (WP-50, #61) against `main` without
 it, `desktop-high`, bench scene (busiest-board replay, seed 52), vsync
 off, on the Mac mini M4 (Metal, no GPU timestamps, so `frame_ms` is the
-GPU measure; CPU p95 stays under 1.5 ms on every row). Each row is one
+GPU measure; CPU p95 stays under 1.5 ms on every row except the 7513ba2 head at 2.06 ms). Each row is one
 version of the water; later versions replaced the earlier ones, whose
 rows stay as the record of why.
 
@@ -220,7 +220,7 @@ rows stay as the record of why.
 | a19d3d7: transparent, march removed | `main` 1d09592 | 2560×1440 | 2 each, alternated | 18.86 → 22.66 (+3.81) | 19.71 → 23.59 (+3.87) | 607 → 615 MB | superseded: the march was 0.1 ms of it |
 | e9baff1: transparent, unshaded | `main` 1d09592 | 2560×1440 | 3 each, alternated | 18.0 → 21.2 (+3.2) | 18.6 → 21.7 (+3.1) | | superseded: the screen and depth copies, not the shading, were the cost; replaced by the opaque water in c91c03a |
 | 38f1b84: opaque traced channel | `main` ba0e7c6 | 5120×2880 native, no upscaler | 1 each, one after the other | 113.6 → 116.3 (+2.7) | 114.9 → 117.4 (+2.5) | 2106.3 → 2106.3 MB | superseded by 7513ba2; noise about 0.5 ms |
-| 7513ba2: opaque, cheaper stone sampling and slab hash (head) | `main` | 5120×2880 native, no upscaler | pending | | | | to be measured on the M4 once #72 has landed |
+| 7513ba2: opaque, cheaper stone sampling and slab hash (head, measured at c2e600f, docs-only after it) | `main` ba0e7c6 | 5120×2880 native, no upscaler | 1 each, one after the other | 113.9 → 116.5 (+2.6) | 115.6 → 119.4 (+3.8) | 2106.4 → 2163.7 MB | current; budget is `SH_Water` ≤ 0.5 ms (set at 2560×1440), so +2.6 ms p50 at 5120×2880 is over it as measured; single 10 s runs, earlier noise about 0.5 ms; CPU p95 1.44 → 2.06 ms |
 
 The 5120×2880 rows render at native size through a local, uncommitted
 `--native-render` patch in `quality_tiers.cpp`, applied to both builds;
