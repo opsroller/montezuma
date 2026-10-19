@@ -353,6 +353,10 @@ look packages compare against these.
 | [temple-lineup-desktop.jpg](../images/lookdev/temple-lineup-desktop.jpg) | `LD_Temple_LineUp_Hi` | Forward+ | desktop `hi/` |
 | [temple-board-lit-web.jpg](../images/lookdev/temple-board-lit-web.jpg) | game, benchmark board | Compatibility (`web`) | WP-47 lighting, lightmap baked |
 | [temple-board-lit-desktop-high.jpg](../images/lookdev/temple-board-lit-desktop-high.jpg) | game, benchmark board | Forward+ (`desktop-high`) | WP-47 lighting, lightmap and `VoxelGI` |
+| [temple-board-before-wp52-desktop-high.jpg](../images/lookdev/temple-board-before-wp52-desktop-high.jpg) | `readability.tscn`, 540×1170 | Forward+ (`desktop-high`) | WP-47 lighting, old glow (before WP-52) |
+| [temple-board-post-desktop-high.jpg](../images/lookdev/temple-board-post-desktop-high.jpg) | `readability.tscn`, 1280×720 | Forward+ (`desktop-high`) | WP-52 glow, grade and depth of field |
+| [temple-board-post-web.jpg](../images/lookdev/temple-board-post-web.jpg) | `readability.tscn`, 540×1170 | Compatibility (`web`) | WP-52 glow and grade |
+| [temple-board-post-mobile.jpg](../images/lookdev/temple-board-post-mobile.jpg) | `readability.tscn`, 540×1170 | Mobile (`mobile`) | WP-52 glow and grade |
 
 ## Validator rules
 

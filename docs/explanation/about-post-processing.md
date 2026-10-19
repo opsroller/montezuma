@@ -139,3 +139,7 @@ this package replaces these numbers.
   every tier, before and after this package: the grade moves it by less
   than 0.5. It is a piece design question (silhouettes and values), not a
   post-processing one.
+- `desktop-high`'s rule 6 is judged at desktop size (1280×720). At phone
+  size its capture keeps a noise floor of about 0.09% from the FSR 2
+  jitter at 540 internal lines, just under the 0.1% limit, so a real
+  bloom regression there would hide in the noise.
