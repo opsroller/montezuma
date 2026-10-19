@@ -91,7 +91,7 @@ cell · — absent
 | Flame: flipbook from our own fluid sim on GPU particles | ✔ 8×8 flipbook, motion vectors | ✔ | ✔ 4×4 | ✔ 4×4 |
 | Smoke and embers with turbulence | ✔ trails, SDF collision | ✔ | ✔ trails | ◐ no trails |
 | Heat haze (screen distortion) above flames | ✔ | ✔ | — | — |
-| Fire lights its smoke and the fog | ✔ (volumetric fog) | — | — | — |
+| Fire lights its smoke and the fog | — (the temple has no volumetric fog) | — | — | — |
 | Water (channels or pool around the platform): normals, refraction, depth colour, caustics | ✔ | ✔ | ◐ no refraction | ◐ no refraction |
 | Match, power-up and totem effects on GPU particles | ✔ | ✔ | ✔ | ✔ (no trails) |
 
@@ -99,7 +99,7 @@ cell · — absent
 
 | Feature | `desktop-high` | `desktop-standard` | `mobile` | `web` |
 |---|---|---|---|---|
-| Volumetric fog with sun shafts and dust (`FogVolume`s outside the board) | ✔ | ◐ low resolution, no fire contribution | ◐ light-shaft cards | ◐ light-shaft cards |
+| Dust and sun shafts outside the board (no volumetric fog: a `FogVolume` did not read as fog from the game camera) | ◐ dust | ◐ dust | ◐ light-shaft cards | ◐ light-shaft cards |
 | Depth and height fog | ◐ only where the readability capture passes on every tier; the temple has none (see [About lighting](../explanation/about-lighting.md)) | ◐ same | ◐ same | ◐ same |
 | Glow (bloom), before tonemapping | ✔ | ✔ | ✔ | ✔ |
 | Colour grade (LUT) | ✔ | ✔ | ✔ | ✔ |

@@ -90,17 +90,10 @@ def shader_material(spec, theme, hi):
                    f"frequency = {n['frequency']}", "",
                    f'[sub_resource type="NoiseTexture2D" id="{key}"]', f"width = {n['size']}", f"height = {n['size']}",
                    "seamless = true", f'noise = SubResource("{key}_noise")', ""]
-    # 3D noise (the atmosphere fog's density), also built at load time.
-    for key, n in spec.get("noise_textures_3d", {}).items():
-        r.body += [f'[sub_resource type="FastNoiseLite" id="{key}_noise"]', f"seed = {n['seed']}",
-                   f"frequency = {n['frequency']}", "fractal_octaves = 4", "",
-                   f'[sub_resource type="NoiseTexture3D" id="{key}"]', f"width = {n['size']}", f"height = {n['size']}",
-                   f"depth = {n['size']}", "seamless = true", "normalize = true",
-                   f'noise = SubResource("{key}_noise")', ""]
     r.body += ["[resource]", f"shader = {shader}"]
     if "render_priority" in spec:
         r.body.append(f"render_priority = {spec['render_priority']}")
-    for key in [*spec.get("noise_textures", {}), *spec.get("noise_textures_3d", {})]:
+    for key in spec.get("noise_textures", {}):
         r.body.append(f'shader_parameter/{key} = SubResource("{key}")')
     # Build-output textures (fire flipbooks) by path under textures/<theme>/;
     # the desktop variant of a material takes the file's hi/ variant.
@@ -120,8 +113,6 @@ def shader_material(spec, theme, hi):
         r.body.append(f"shader_parameter/specular = {specular_from_ior(spec['ior'])}")
     for key, value in spec.get("params", {}).items():
         v = color(value) if isinstance(value, str) else value
-        if isinstance(value, list):
-            v = f"Vector{len(value)}({', '.join(map(str, value))})"
         if key == "emission_energy":  # SH_Gem's EMISSION, scaled like StandardMaterial emission
             v = round(value * EMISSION_NITS["scale"], 3)
         r.body.append(f"shader_parameter/{key} = {v}")
@@ -359,25 +350,19 @@ def sun_toward(transform_text):
 
 
 def atmosphere(r, p, models):
-    """Volumetric fog volume, dust and light-shaft cards for the theme's environment scene.
+    """Dust and light-shaft cards for the theme's environment scene.
 
-    Fog and dust need volumetric fog (desktop tiers); the cards stand in for
-    both where it is missing (mobile, web). Nothing may draw over the board: the fog shader
-    has zero density over it, and dust and card positions are checked against
-    every game camera here.
+    Dust shows on the desktop tiers, the cards on mobile and web. Nothing may
+    draw over the board: dust and card positions are checked against every
+    game camera here.
     """
     theme = p["theme"]
     a = p["lighting"]["atmosphere"]
-    vol, dust, shafts = a["volumes"], a["dust"], a["shafts"]
+    dust, shafts = a["dust"], a["shafts"]
     half = p["board"]["width"] * p["cell_size"] / 2 + p["board"]["frame_width"]
     keep_out = half + a["board_clearance"]
-    top = p["materials"]["MI_AtmosphereFog"]["params"]["height_top"]
-    # By path, not as a resource: QualityTiers loads it only on tiers with volumetric
-    # fog, since Compatibility errors on any fog shader it is handed.
-    fog_mat = f'"res://assets/materials/{theme}/MI_AtmosphereFog.tres"'
     dust_mat = r.ext_id("Material", f"res://assets/materials/{theme}/MI_Dust.tres")
     shaft_mat = r.ext_id("Material", f"res://assets/materials/{theme}/MI_LightShaft.tres")
-    size = 2 * vol["outer"]
     subs = ['[sub_resource type="ParticleProcessMaterial" id="dust_process"]', "emission_shape = 6",
             f"emission_ring_axis = {vec3(0, 1, 0)}", f"emission_ring_height = {dust['top'] - dust['bottom']}",
             f"emission_ring_radius = {dust['outer_radius']}", f"emission_ring_inner_radius = {dust['inner_radius']}",
@@ -431,10 +416,7 @@ def atmosphere(r, p, models):
             if over_board(c, keep_out) and not inside_platform(c, p):
                 raise SystemExit(f"{theme}: dust can drift over the board (inner radius {dust['inner_radius']})")
 
-    body = ["", '[node name="AtmosphereFog" type="FogVolume" parent="." groups=["quality:volumetric_fog"]]',
-            f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, {round((vol['bottom'] + top) / 2, 3)}, 0)",
-            f"size = {vec3(size, round(top - vol['bottom'], 3), size)}", "shape = 3", f"metadata/fog_material_path = {fog_mat}",
-            "", '[node name="Dust" type="GPUParticles3D" parent="." groups=["quality:volumetric_fog"]]',
+    body = ["", '[node name="Dust" type="GPUParticles3D" parent="." groups=["quality:volumetric_fog"]]',
             f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, {round((dust['bottom'] + dust['top']) / 2, 3)}, 0)",
             "cast_shadow = 0", f"amount = {dust['amount']}", f"lifetime = {dust['lifetime']}",
             f"preprocess = {dust['lifetime']}",
@@ -465,12 +447,6 @@ def main():
     theme = p["theme"]
     TEXTURE_SETS.update(p["textures"]["sets"])
     EMISSION_NITS["scale"] = 3072007.0 / p["lighting"]["exposure"]["sensitivity"]
-    if "atmosphere" in p["lighting"]:
-        # The fog's clear square follows the board, so it is derived, not authored.
-        board_half = p["board"]["width"] * p["cell_size"] / 2 + p["board"]["frame_width"]
-        fog_params = p["materials"]["MI_AtmosphereFog"]["params"]
-        fog_params["clear_half"] = round(board_half + p["lighting"]["atmosphere"]["volumes"]["clearance"], 3)
-        fog_params["sun_direction"] = [round(v, 5) for v in sun_toward(p["environment"]["sun"]["transform"])]
     assets = ROOT / "game/assets"
     models = f"res://assets/models/{theme}"
     entry = {}
@@ -501,7 +477,6 @@ def main():
     env = p["environment"]
     light = p["lighting"]
     exposure, fog = light["exposure"], light.get("fog")
-    fog3 = light.get("atmosphere", {}).get("fog")
     sky = [
         "[sub_resource type=\"ProceduralSkyMaterial\" id=\"sky_mat\"]",
         f"sky_top_color = {color(env['sky_top'])}",
@@ -544,8 +519,8 @@ def main():
         "glow_hdr_threshold = 1.1",
         # Optional height fog. The temple has none: in the game's board view
         # on Forward+ even height fog that starts below the platform left a
-        # haze over the board (readability rule 2), so atmosphere is
-        # FogVolumes kept off the board (WP-51).
+        # haze over the board (readability rule 2), so the temple's air is
+        # dust and light-shaft cards kept off the board (WP-51).
         *([
             "fog_enabled = true",
             f"fog_light_color = {color(fog['color'])}",
@@ -554,25 +529,11 @@ def main():
             f"fog_height_density = {fog['height_density']}",
             f"fog_sky_affect = {fog['sky_affect']}",
         ] if fog else []),
-        # Volumetric fog with no density of its own: only the theme's FogVolume
-        # adds any, outside the board (WP-51). The tier turns it off where it
-        # has none; the froxel grid size is the tier's.
-        *([
-            "volumetric_fog_enabled = true",
-            "volumetric_fog_density = 0.0",
-            f"volumetric_fog_anisotropy = {fog3['anisotropy']}",
-            f"volumetric_fog_length = {fog3['length']}",
-            f"volumetric_fog_detail_spread = {fog3['detail_spread']}",
-            f"volumetric_fog_gi_inject = {fog3['gi_inject']}",
-            f"volumetric_fog_ambient_inject = {fog3['ambient_inject']}",
-            "volumetric_fog_sky_affect = 0.0",
-            f"volumetric_fog_temporal_reprojection_amount = {fog3['temporal_amount']}",
-        ] if fog3 else []),
         "adjustment_enabled = true",
         f"adjustment_saturation = {env['saturation']}",
         "",
     ]
-    atmo_subs, atmo_body = atmosphere(r, p, models) if fog3 else ([], [])
+    atmo_subs, atmo_body = atmosphere(r, p, models) if "atmosphere" in light else ([], [])
     r.body = sky + atmo_subs + r.body
     sun = light["sun"]
     r.body += ["", '[node name="WorldEnvironment" type="WorldEnvironment" parent="."]', 'environment = SubResource("env")',

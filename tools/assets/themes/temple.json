@@ -382,28 +382,6 @@
         "intensity": 4.0
       }
     },
-    "MI_AtmosphereFog": {
-      "_comment": "gen_theme_scenes.py sets clear_half from the board size and lighting.atmosphere.volumes.clearance, and sun_direction from environment.sun.",
-      "shader": "res://assets/materials/shaders/SH_AtmosphereFog.gdshader",
-      "noise_textures_3d": {
-        "density_texture": {
-          "seed": 51,
-          "frequency": 0.08,
-          "size": 64
-        }
-      },
-      "params": {
-        "density": 0.4,
-        "albedo": "#f2dcb0",
-        "fade": 1.2,
-        "height_top": 2.4,
-        "top_fade": 2.4,
-        "noise_scale": 6.0,
-        "shaft_stretch": 8.0,
-        "contrast": [0.35, 0.75],
-        "wind": [0.12, 0.0, -0.05]
-      }
-    },
     "MI_Dust": {
       "shader": "res://assets/materials/shaders/SH_Dust.gdshader",
       "params": {
@@ -499,20 +477,7 @@
       "probes_subdiv": 2
     },
     "atmosphere": {
-      "_comment": "Volumetric fog, dust and light-shaft cards around the temple, never over the board (WP-51). Keys: docs/reference/board-themes.md#atmosphere.",
-      "fog": {
-        "anisotropy": 0.0,
-        "length": 40.0,
-        "detail_spread": 2.0,
-        "gi_inject": 0.4,
-        "ambient_inject": 0.3,
-        "temporal_amount": 0.9
-      },
-      "volumes": {
-        "clearance": 1.6,
-        "outer": 19.0,
-        "bottom": -2.6
-      },
+      "_comment": "Dust on desktop and light-shaft cards on mobile and web around the temple, never over the board (WP-51). Keys: docs/reference/board-themes.md#atmosphere.",
       "dust": {
         "amount": 320,
         "lifetime": 12.0,

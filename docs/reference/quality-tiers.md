@@ -142,7 +142,6 @@ target names.
 | `quality_fallback:<feature id>` | any node with `visible` | shown only where the tier lacks it (light-shaft cards, cube-map gems, 4×4 flipbooks) |
 | `quality_shadow_light` | `Light3D` | the nearest N to the active camera keep the shadow the scene gave them, the rest lose it |
 | `quality_fog_light` | `Light3D` | keeps its authored volumetric fog energy only with `fog_fire_light` |
-| (metadata) `fog_material_path` | `FogVolume` | its material is loaded from this path only with `volumetric_fog`, and cleared without it: Compatibility prints an error for any fog shader it loads |
 
 A group naming an unknown feature id logs a warning and is ignored.
 

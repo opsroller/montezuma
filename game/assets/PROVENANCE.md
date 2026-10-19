@@ -263,4 +263,8 @@ notes: >
   The fog's 3D noise is made by Godot 4.7.2's FastNoiseLite and NoiseTexture3D at load,
   so an engine upgrade can change it. Regenerate with
   .venv/bin/python tools/assets/gen_theme_scenes.py.
+removed: >
+  2026-10-19: the volumetric fog (AtmosphereFog node, the environment's volumetric fog
+  settings, MI_AtmosphereFog.tres and SH_AtmosphereFog.gdshader) was taken out; the
+  dust and light-shaft cards remain.
 ```

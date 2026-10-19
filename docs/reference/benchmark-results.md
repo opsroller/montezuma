@@ -131,6 +131,10 @@ The two `main` runs differ by 0.5 ms at p50, so the p50 change is within
 run-to-run noise. With the haze, 14 of 17 `desktop-high` feature rows are
 met; volumetric fog is now one of them.
 
+The volumetric fog has since been removed (dust and the cards remain), so
+these numbers are an upper bound for the atmosphere that is left, and
+`volumetric_fog` is false again in the scene report.
+
 ## Feature rows
 
 `check_features.py` on the same reports. Rows that fail are the

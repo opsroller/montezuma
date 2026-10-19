@@ -18,9 +18,9 @@ The node is hidden on `mobile` and `web` and shown on the desktop tiers.
 ## Add the cheaper stand-in
 
 Put the substitute next to it in the group `quality_fallback:<id>`. For
-sun shafts: the `FogVolume`s stay as they are (volumetric fog is
-switched in the environment), and the light-shaft cards go in
-`quality_fallback:volumetric_fog`, so they show only where fog is off.
+sun shafts: the temple's light-shaft cards go in
+`quality_fallback:volumetric_fog`, so they show only where the tier has
+no volumetric fog.
 
 ## Limit fire-light shadows
 
