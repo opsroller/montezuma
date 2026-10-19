@@ -16,6 +16,7 @@
 namespace godot {
 class Environment;
 class CameraAttributes;
+class Compositor;
 class Light3D;
 class GeometryInstance3D;
 }  // namespace godot
@@ -106,6 +107,11 @@ private:
     void apply_node(godot::Node* node);
     void apply_environment(const godot::Ref<godot::Environment>& env);
     void apply_camera_attributes(const godot::Ref<godot::CameraAttributes>& attributes);
+    // `compositor` with a BackdropBlur bound to `attributes`, made or
+    // switched for the tier; `own_attributes` marks a camera's own.
+    godot::Ref<godot::Compositor> backdrop_blur(godot::Ref<godot::Compositor> compositor,
+                                                const godot::Ref<godot::CameraAttributes>& attributes,
+                                                bool own_attributes);
     void apply_materials(godot::GeometryInstance3D* geometry);
     godot::Ref<godot::Material> variant_of(const godot::Ref<godot::Material>& material);
     static godot::Ref<godot::Material> shared_mesh_material(godot::GeometryInstance3D* geometry);

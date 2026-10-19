@@ -67,9 +67,8 @@ private:
     };
     godot::Ref<godot::Environment> env_;
     Env base_;
-    godot::ObjectID camera_attributes_;
-    bool dof_far_ = false;
-    bool dof_near_ = false;
+    godot::ObjectID blur_;  // the BackdropBlur drawing depth of field
+    bool dof_ = false;
     std::vector<Visible> atmosphere_nodes_;
 };
 

@@ -92,10 +92,6 @@ enum class SoftShadows { Hard, VeryLow, Low, Medium, High };
 
 enum class SubsurfaceQuality { Disabled, Low, Medium, High };
 
-// Depth-of-field blur quality (sample count); jittered samples need a
-// temporal pass (TAA or the temporal upscaler) to resolve.
-enum class DofQuality { VeryLow, Low, Medium, High };
-
 struct Profile {
     Tier tier = Tier::DesktopStandard;
     std::array<bool, kFeatureCount> features{};
@@ -123,8 +119,6 @@ struct Profile {
     int volumetric_fog_size = 64;  // froxel grid width and height
     int volumetric_fog_depth = 64;
     SubsurfaceQuality subsurface = SubsurfaceQuality::Disabled;
-    DofQuality dof_quality = DofQuality::VeryLow;  // only where the tier has depth_of_field
-    bool dof_jitter = false;
 
     // Draw the board's pieces and their markers as one multimesh per mesh
     // and material instead of one draw each (the draw-call budget).
