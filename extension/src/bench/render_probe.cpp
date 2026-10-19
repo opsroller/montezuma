@@ -27,6 +27,9 @@
 
 #include "frame_stats.hpp"
 #include "render/backdrop_blur.hpp"
+#ifdef MONTEZUMA_RAY_TRACING
+#include "render/rt/rt_reflections.hpp"
+#endif
 
 using namespace godot;
 
@@ -158,6 +161,11 @@ Dictionary active_features(Viewport* viewport) {
     f["auto_exposure"] = attrs.is_valid() && attrs->is_auto_exposure_enabled();
     const Ref<BackdropBlur> blur = BackdropBlur::drawing(viewport);
     f["depth_of_field"] = blur.is_valid() && blur->get_enabled();
+#ifdef MONTEZUMA_RAY_TRACING
+    f["rt_reflections"] = RtReflections::tracing();
+#else
+    f["rt_reflections"] = false;
+#endif
 
     f["lightmap_gi"] = c.lightmap_gi > 0;
     f["voxel_gi"] = c.voxel_gi > 0;

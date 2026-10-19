@@ -39,6 +39,7 @@ own folder.
 - [Match3Game](reference/match3-game.md): the game scene's controller, its signals, cues and self-test.
 - [Visual target](reference/visual-target.md): the look per quality tier, frame budgets and acceptance tests.
 - [Fire](reference/fire.md): the brazier fire's simulation, flipbooks, scene, shaders, flickering light and per-tier behaviour.
+- [Ray-traced reflections](reference/ray-traced-reflections.md): the optional hardware ray-traced reflections on the pieces, their build option, flags, defaults and cost.
 - [Quality tiers](reference/quality-tiers.md): the `QualityTiers` autoload, settings key, feature ids, node groups and render settings per tier.
 - [Water](reference/water.md): the temple water channel, its two shaders, parameters, tiers and cost.
 - [Benchmark and readability capture](reference/benchmark.md): the benchmark replay, its JSON report, feature keys and readability checks.
@@ -79,6 +80,7 @@ own folder.
 - [Art direction](explanation/art-direction.md): why the board looks the way it does, and the rules new art follows.
 - [About the visual target](explanation/about-the-visual-target.md): why a realistic high-end look, and what Godot can and cannot do with ray tracing.
 - [About the fire](explanation/about-the-fire.md): why a simulated flipbook with motion vectors, why our own simulation, how it stays off the board.
+- [About ray tracing](explanation/about-ray-tracing.md): what the hardware ray-tracing spike tried, what it showed and why it stays off.
 - [About quality tiers](explanation/about-quality-tiers.md): how a tier is picked, why the renderer is fixed per platform, why tiers only switch effects off.
 - [About lighting](explanation/about-lighting.md): baked and real-time GI per tier, why VoxelGI over SDFGI, physical units, height fog and the lighting costs.
 - [About post-processing and the colour grade](explanation/about-post-processing.md): glow before tonemapping, the CDL grade as a LUT and its palette check, backdrop depth of field that follows the camera, and their costs.

@@ -223,6 +223,7 @@ attributes and the visible nodes of the scene tree.
 | `color_grade_lut` | bool | adjustments on with a colour-correction texture |
 | `auto_exposure` | bool | the camera attributes have auto exposure on |
 | `depth_of_field` | bool | the `BackdropBlur` the viewport renders with (its camera's, else its world's) is enabled |
+| `rt_reflections` | bool | an [`RtReflections`](ray-traced-reflections.md) traced in one of the last three frames; `false` in builds without `MONTEZUMA_RAY_TRACING` |
 | `lightmap_gi`, `voxel_gi` | bool | a visible `LightmapGI` / `VoxelGI` node |
 | `reflection_probes`, `fog_volumes`, `decals` | int | visible nodes of that type |
 | `gpu_particles`, `gpu_particle_amount` | int | emitting `GPUParticles3D` nodes and their summed `amount` |

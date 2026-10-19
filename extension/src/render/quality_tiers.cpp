@@ -53,6 +53,9 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 #include "backdrop_blur.hpp"
+#ifdef MONTEZUMA_RAY_TRACING
+#include "rt/rt_reflections.hpp"
+#endif
 
 using namespace godot;
 
@@ -644,7 +647,12 @@ void QualityTiers::apply_camera_attributes(const Ref<CameraAttributes>& attribut
 Ref<Compositor> QualityTiers::backdrop_blur(Ref<Compositor> compositor, const Ref<CameraAttributes>& attributes,
                                              bool own_attributes) {
     // Compositor effects need a RenderingDevice; Compatibility has none.
-    if (!RenderingServer::get_singleton()->get_rendering_device()) return compositor;
+    if (!RenderingServer::get_singleton()->get_rendering_device()) {
+#ifdef MONTEZUMA_RAY_TRACING
+        RtReflections::attach(compositor);  // only warns (and fails --rt-selftest) here
+#endif
+        return compositor;
+    }
     const Ref<CameraAttributesPractical> practical = attributes;
     const bool wanted =
         practical.is_valid() && authored(practical.ptr(), "dof_far", practical->is_dof_blur_far_enabled());
@@ -663,6 +671,11 @@ Ref<Compositor> QualityTiers::backdrop_blur(Ref<Compositor> compositor, const Re
         blur->set_enabled(wanted && get_profile().has(q::Feature::DepthOfField));
         if (blur->get_enabled()) blur->warm();
     }
+#ifdef MONTEZUMA_RAY_TRACING
+    // Optional ray-traced reflections on the pieces, asked for per run and
+    // in no tier (docs/reference/ray-traced-reflections.md).
+    compositor = RtReflections::attach(compositor);
+#endif
     return compositor;
 }
 
@@ -1000,7 +1013,14 @@ void QualityTiers::run_self_test() {
         auto* unblurred = memnew(WorldEnvironment);
         unblurred->set_camera_attributes(sharp);
         apply_node(unblurred);
-        check(unblurred->get_compositor().is_null(), get_tier(), "backdrop blur on a theme without far blur");
+#ifdef MONTEZUMA_RAY_TRACING
+        // Optional ray tracing, when asked for, brings its own compositor.
+        const bool bare = RtReflections::options().enabled ? BackdropBlur::in(unblurred->get_compositor()).is_null()
+                                                           : unblurred->get_compositor().is_null();
+#else
+        const bool bare = unblurred->get_compositor().is_null();
+#endif
+        check(bare, get_tier(), "backdrop blur on a theme without far blur");
         memdelete(unblurred);
     }
 
