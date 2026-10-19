@@ -204,6 +204,27 @@ The mist adds about 0.07 ms of GPU time at native 4K (under 1%). It
 samples its 3D noise twice per froxel instead of once, over a fog volume
 half as tall.
 
+## Mac mini M4 at native 5K
+
+WP-52's colour grade, pre-tonemap glow and backdrop depth of field
+against their merge base with `main` (db718de). Mac mini M4, Metal,
+Forward+, `desktop-high`, full screen at native 5120×2880 with 3D at
+1.0 and no upscaler (a local, uncommitted patch in both builds, since
+this branch has no native switch; TAA off), vsync off, busiest-board
+replay seed 52, 5 s warm-up and one 10 s capture per build, run back to
+back with no other Godot process, 2026-10-19. Textures and fire
+generated and lightmaps baked in both builds.
+
+| Build | `frame_ms` p50 | p95 | p99 | Frames in 10 s | `cpu_ms` p95 | Draw calls p95 | Video memory max |
+|---|---|---|---|---|---|---|---|
+| Merge base db718de | 113.9 | 115.1 | 116.4 | 88 | 1.81 | 276 | 2107 MB |
+| WP-52 a9f9bbd | 114.8 | 115.9 | 121.2 | 88 | 2.14 | 274 | 2135 MB |
+
+Every frame rendered at 5120×2880 and the replay matched its plan in
+both runs; the WP-52 run reports the colour-grade LUT and depth of field
+on. WP-52 adds about 0.9 ms at p50 and 0.8 ms at p95 at native 5K
+(under 1%), and 28 MB of video memory.
+
 ## Feature rows
 
 `check_features.py` on the same reports. Rows that fail are the
