@@ -169,3 +169,33 @@ notes: >
   blackbody colour uses a published 1985 rational fit of the Planckian locus.
   Regenerate with the commands in docs/how-to/tune-the-fire.md.
 ```
+
+## Board theme `temple`: weathered stone and plaza ground
+
+```yaml
+asset: themes.temple T_Stone_01 and T_Ground_01 texture sets, weathering pass
+files:
+  - game/assets/textures/temple/T_Stone_01_{BC,N,ORM,H}.png
+  - game/assets/textures/temple/hi/T_Stone_01_{BC,N,ORM,H}.png
+  - game/assets/textures/temple/T_Ground_01_{BC,N,ORM}.png
+origin: generated (at build time, not committed)
+authors: [technical-artist (Claude)]
+created: 2026-10-19
+source:
+  - tools/assets/gen_theme_textures.py   # numpy + Pillow; recipes stone and ground, helpers warp and leaves
+generator:
+  params: tools/assets/themes/temple.json
+  seed: 1517 (set i uses seed [1517, i] in sorted set order)
+  version: the commit that last changed tools/assets/
+inputs: []                               # no scans, photos, material libraries or third-party files
+license: GPL-2.0-or-later
+attribution: ""
+changes: "Replaces the stone and ground recipes of the WP-48 record above; every other set is byte-identical."
+notes: >
+  Weathering features (pores, solution pits, run-off, biofilm, lichen,
+  pigment traces, moss, leaf litter, damp) are drawn from noise, Voronoi
+  cells, domain warping and stamped shapes computed by the script. Real
+  sites and museum objects were looked at for which weathering to model
+  (docs/explanation/art-direction.md, Material references); no image was
+  copied, traced, sampled or shipped.
+```

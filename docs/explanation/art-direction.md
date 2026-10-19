@@ -54,7 +54,10 @@ light so the edge stays crisp against any tile.
 
 ## The board is a stage, not a picture
 
-The board is warm sandstone in a soft light and dark checker. The checker
+The board is weathered limestone under a warm buff tint, in a soft light
+and dark checker. The texture carries the stone's weathering and stays
+near-neutral; the tile tints carry the warmth on purpose, because warm
+tiles sit well against the green jungle and the cool gems. The checker
 helps the eye count cells; its contrast stays below the pieces' so it never
 competes. A raised frame with a step-fret relief and four gold studs frames
 the play area, and the temple platform, stairs and braziers sit outside it,
@@ -65,8 +68,8 @@ under a piece.
 
 | Role | Value | Use |
 |---|---|---|
-| Sandstone light | `#d2b688` | light tiles |
-| Sandstone dark | `#9a8364` | dark tiles |
+| Stone light (warm tint) | `#d2b688` | light tiles |
+| Stone dark (warm tint) | `#9a8364` | dark tiles |
 | Frame stone | `#a38a66` | frame, platform |
 | Shadow stone | `#5c5246` | base, pillars, rocks |
 | Gold | `#ffcc4d` | sun disc, studs |
@@ -74,9 +77,47 @@ under a piece.
 | Torch | `#ff9a3c` | brazier light |
 | Glow | `#ffd36b` | selection |
 
+The tile tints keep their `sandstone-light` and `sandstone-dark` token
+names in the theme parameters, which other files already read.
+
 Piece colours are in [`design/tokens/temple-board.json`](../../design/tokens/temple-board.json)
 so the HUD's quota icons match the board. That file is generated from the
 theme parameters, so the 3D pieces and the 2D swatches have one source.
+
+## Material references
+
+The stone and the plaza floor are generated, but what the generator draws
+comes from looking at real places. No reference image is copied, traced or
+shipped; each one only told us which weathering to model.
+
+- **The original game** ([sources](../reference/rules-sources.md): S2
+  StrategyWiki, S3 MobyGames) frames play in a 1935 museum in Cancún, on a
+  stone tablet among Aztec totems. So the board is one carved stone
+  surface, not a grid of loose tiles, and the theme keeps that tablet.
+- **Aztec sculpture** was carved mostly in basalt and andesite and was
+  originally painted in strong colours, of which mostly traces survive
+  ([World History Encyclopedia, Aztec Art](https://www.worldhistory.org/Aztec_Art/)).
+  The board stone therefore carries faint red-ochre pigment only in its
+  hollows, where paint would outlast weather.
+- **Maya limestone and stucco in the jungle**, as at Palenque ([Texas Tech
+  University archive photographs](https://exhibits.lib.ttu.edu/s/openarch/item/36937)), show how such stone ages under rain and
+  shade: dark biofilm in the hollows, crustose lichen on exposed faces,
+  vertical run-off stains, dissolution pores along the softer beds, and
+  moss rooted in every joint. Those are the board stone's layers, and the
+  plaza floor's: irregular flags settled at different depths, chipped at the
+  edges, soil in the joints, moss spilling from the damp joints while dry
+  ones stay bare, leaf litter and damp patches.
+- **Mexica turquoise, shell and greenstone mosaics** (Smarthistory) inform
+  the gem sets; they are unchanged in this round.
+
+Two scale rules follow from how the textures are used. The board maps about
+one stone tile per cell, so the stone avoids any large blotch: it would
+repeat on every cell and read as a pattern. Its weathering comes as many
+small colonies and fine streaks instead, and its average stays near-neutral
+so the light and dark tile materials can tint it. The plaza floor repeats
+every few metres around the board, so it is darker (base colour about 0.35
+against the stone's 0.65) and lower in contrast, and the board stays in
+front.
 
 ## Light
 
