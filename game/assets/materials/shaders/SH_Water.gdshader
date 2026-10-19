@@ -1,26 +1,25 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
 
-// Temple water for desktop (Forward+): the channel floor seen through the
-// surface, bent by the ripples (refraction) and fading to the water's own
-// colour with depth (absorption over the true path length, from the depth
-// texture), caustic lines on that floor, and the sky and sun reflected.
-// Unshaded: the water lights itself from a copy of the scene's sky and sun
-// (written by the theme generator), so the engine's per-pixel lights,
-// shadows and GI do not run a second time over the floor already lit
-// under it. No screen-space reflection march. Mobile and web use
-// SH_WaterSimple (no refraction). Cost per pixel: 2 depth and 1 screen
-// sample; 3 noise octaves, and 2 caustic layers where they can show; no
-// material textures.
+// Temple water for desktop (Forward+), drawn opaque. The channel is a known
+// box (floor, inner and outer walls, the causeway's sides; the theme
+// generator writes its size), so the shader follows the refracted view ray
+// to the stone it reaches, samples that stone's colour there, and lets the
+// water's own colour take over with the true path length (Beer-Lambert
+// absorption). Caustic lines brighten the shallow floor. The engine lights
+// the result and adds the reflections (sky, reflection probe and, where the
+// tier has it, screen-space reflection) through a smooth dielectric
+// specular. No screen or depth texture: on the benchmark Mac their copies
+// cost several times the water's budget, and an opaque surface hides the
+// floor under it instead of shading it twice. Mobile and web use
+// SH_WaterSimple. Cost per pixel: 1 texture sample, 3 noise octaves, and
+// 2 caustic layers where they can show.
 shader_type spatial;
-render_mode blend_mix, depth_draw_always, cull_back, unshaded;
+render_mode depth_draw_opaque, cull_back, diffuse_burley, specular_schlick_ggx;
 
 #include "res://assets/materials/shaders/SH_Water.gdshaderinc"
 
-uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_linear;
-uniform sampler2D depth_texture : hint_depth_texture, repeat_disable, filter_nearest;
-
-// Colour the water scatters back where it is deep, lit by the scene.
+// Colour the water scatters back where it is deep.
 uniform vec4 water_color : source_color = vec4(0.114, 0.29, 0.251, 1.0);
 // Light lost per metre of water, red, green, blue, 0 to 4 (negative counts
 // as 0): red goes first, so deep water turns green-teal.
@@ -30,21 +29,23 @@ uniform float wave_strength : hint_range(0.0, 1.0, 0.01) = 0.18;
 // Drift of the ripples, metres per second.
 uniform float flow_speed : hint_range(0.0, 0.5, 0.001) = 0.05;
 uniform float roughness : hint_range(0.0, 0.3, 0.001) = 0.04;
-// Screen-space bend of the floor seen through the surface, per metre of depth.
-uniform float refraction_strength : hint_range(0.0, 0.15, 0.001) = 0.04;
 uniform float caustic_strength : hint_range(0.0, 4.0, 0.01) = 2.2;
 uniform float caustic_scale : hint_range(0.2, 4.0, 0.01) = 1.3;
 // Width of the soft line where the water meets stone, metres of water.
 uniform float edge_softness : hint_range(0.0, 0.3, 0.001) = 0.08;
-// The scene's light, copied from its environment: the sky's zenith and
-// horizon colours, the direction towards the sun (world), its colour and
-// energy, and the energy of the sky's ambient light.
-uniform vec3 sky_top : source_color = vec3(0.141, 0.337, 0.431);
-uniform vec3 sky_horizon : source_color = vec3(0.718, 0.682, 0.525);
-uniform vec3 sun_direction = vec3(-0.426, 0.669, 0.609);
-uniform vec3 sun_color : source_color = vec3(1.0, 0.863, 0.682);
-uniform float sun_energy : hint_range(0.0, 8.0, 0.01) = 1.15;
-uniform float ambient_energy : hint_range(0.0, 4.0, 0.01) = 0.4;
+// The channel's stone (MI_StoneDark): its base colour map, tint and
+// triplanar scale. Clamped sampler, wrapped by hand (see the Metal note in
+// SH_Triplanar.gdshaderinc).
+uniform sampler2D texture_albedo : source_color, filter_linear_mipmap_anisotropic, repeat_disable;
+uniform vec4 floor_tint : source_color = vec4(0.361, 0.322, 0.275, 1.0);
+uniform float floor_scale = 0.9;
+// The channel in world metres: a square ring between the half-widths
+// channel_inner and channel_outer round the origin, floor at floor_height,
+// and the causeway (|x| < causeway_half on the far side, -Z) across it.
+uniform float channel_inner = 10.0;
+uniform float channel_outer = 12.0;
+uniform float floor_height = -2.5;
+uniform float causeway_half = 1.5;
 
 varying vec3 w_pos;
 
@@ -52,69 +53,88 @@ void vertex() {
 	w_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 }
 
-vec3 view_pos(vec2 uv, float depth, mat4 inv_proj) {
-	vec4 v = inv_proj * vec4(uv * 2.0 - 1.0, depth, 1.0);
-	return v.xyz / v.w;
+// Distance along d from p to the wall at |coordinate| = edge, with a side
+// value s = coordinate and a direction value v = d's component; huge when
+// the ray moves away from that wall.
+float wall_t(float s, float v, float edge, bool outward) {
+	float m = sign(s) * v;
+	if (outward ? m <= 0.0 : m >= 0.0) {
+		return 1e6;
+	}
+	return (edge - abs(s)) / m;
 }
 
 void fragment() {
 	vec2 slope = wt_slope(w_pos.xz, TIME, wave_scale, wave_strength, flow_speed, 3);
 	vec3 n_w = wt_normal(slope);
 	vec3 n = normalize((VIEW_MATRIX * vec4(n_w, 0.0)).xyz);
-	float ndv = clamp(dot(n, VIEW), 0.0, 1.0);
-	float fresnel = wt_fresnel(ndv);
-	vec3 to_sun = normalize(sun_direction);
-	vec3 sun = sun_color * sun_energy;
+	float fresnel = wt_fresnel(clamp(dot(n, VIEW), 0.0, 1.0));
 
-	// Floor behind the surface. Reversed Z: a smaller depth is farther.
-	float d0 = textureLod(depth_texture, SCREEN_UV, 0.0).r;
-	vec3 floor0 = view_pos(SCREEN_UV, d0, INV_PROJECTION_MATRIX);
-	float len0 = length(floor0 - VERTEX);
-	// Bend by the ripples only, not by the camera's tilt over a flat surface.
-	vec3 bend = n - normalize((VIEW_MATRIX * vec4(0.0, 1.0, 0.0, 0.0)).xyz);
-	vec2 uv = SCREEN_UV + vec2(bend.x, -bend.y) * refraction_strength * clamp(len0, 0.0, 1.5);
-	uv = clamp(uv, vec2(0.0), vec2(1.0));
-	float d = textureLod(depth_texture, uv, 0.0).r;
-	if (d >= FRAGCOORD.z) {
-		// The bent ray found something in front of the water: use the straight one.
-		uv = SCREEN_UV;
-		d = d0;
+	// The view ray bent into the water (IOR 1.33), then the first stone it
+	// meets: the floor, a channel wall or a causeway side.
+	vec3 d = normalize(w_pos - CAMERA_POSITION_WORLD);
+	vec3 rd = refract(d, n_w, 0.75);
+	rd = rd.y < -0.05 ? rd : normalize(vec3(d.x, min(d.y, -0.05), d.z));
+	float t = (floor_height - w_pos.y) / rd.y;
+	int face = 1;  // 0: wall across X, 1: floor, 2: wall across Z
+	float tx = 1e6;
+	float tz = 1e6;
+	if (abs(w_pos.x) >= channel_inner) {
+		// East and west: walls across X, and the outer wall across Z at the corners.
+		tx = wall_t(w_pos.x, rd.x, channel_outer, true);
+		float ti = wall_t(w_pos.x, rd.x, channel_inner, false);
+		// The inner wall stops at the corners, where the channel turns.
+		if (abs(w_pos.z + rd.z * ti) < channel_inner) {
+			tx = min(tx, ti);
+		}
+		tz = wall_t(w_pos.z, rd.z, channel_outer, true);
+	} else {
+		// Near and far: walls across Z, and the causeway's sides across X.
+		tz = wall_t(w_pos.z, rd.z, channel_outer, true);
+		float ti = wall_t(w_pos.z, rd.z, channel_inner, false);
+		if (abs(w_pos.x + rd.x * ti) < channel_inner) {
+			tz = min(tz, ti);
+		}
+		if (w_pos.z < 0.0) {
+			tx = wall_t(w_pos.x, rd.x, causeway_half, false);
+		}
 	}
-	vec3 floor_v = view_pos(uv, d, INV_PROJECTION_MATRIX);
-	float len = length(floor_v - VERTEX);
-	vec3 floor_w = (INV_VIEW_MATRIX * vec4(floor_v, 1.0)).xyz;
-	vec3 seen = textureLod(screen_texture, uv, 0.0).rgb;
+	if (tx < t) {
+		t = tx;
+		face = 0;
+	}
+	if (tz < t) {
+		t = tz;
+		face = 2;
+	}
+	t = max(t, 0.0);
+	vec3 hit = w_pos + rd * t;
+
+	// The stone there, mapped like SH_TriplanarPBR's projection for that face.
+	vec2 uv = face == 1 ? hit.xz : (face == 0 ? vec2(hit.z * sign(rd.x), -hit.y) : vec2(-hit.x * sign(rd.z), -hit.y));
+	uv *= floor_scale;
+	vec3 stone = floor_tint.rgb * textureGrad(texture_albedo, fract(uv), dFdx(uv), dFdy(uv)).rgb;
 
 	// Caustics: brighter where the floor lies a little under the surface,
 	// fading in from the edge and out with depth.
-	float below = max(w_pos.y - floor_w.y, 0.0);
+	float below = max(w_pos.y - hit.y, 0.0);
 	float fade = smoothstep(0.02, 0.2, below) * exp(-1.2 * below);
 	float caustic = 0.0;
 	if (fade * caustic_strength > 0.01) {
-		caustic = wt_caustics(floor_w.xz, TIME, caustic_scale, 2);
+		caustic = wt_caustics(hit.xz, TIME, caustic_scale, 2);
 	}
-	seen *= 1.0 + caustic_strength * caustic * fade;
+	stone *= 1.0 + caustic_strength * caustic * fade;
 
-	vec3 trans = wt_transmittance(absorption, len);
-	vec3 transmitted = seen * trans * (1.0 - fresnel);
-	float edge = 1.0 - smoothstep(0.0, max(edge_softness, 0.001), len);
+	vec3 trans = wt_transmittance(absorption, t);
+	float edge = 1.0 - smoothstep(0.0, max(edge_softness, 0.001), t);
+	vec3 water = stone * trans + water_color.rgb * (1.0 - dot(trans, vec3(0.3333))) + vec3(0.35) * edge * caustic;
 
-	// Light the water scatters back: its colour under the sun and the
-	// sky's ambient light, more of it the deeper the water.
-	vec3 ambient = mix(sky_horizon, sky_top, 0.5) * ambient_energy;
-	vec3 lit = sun * max(to_sun.y, 0.0) + ambient;
-	vec3 scatter = (water_color.rgb * (1.0 - dot(trans, vec3(0.3333))) + vec3(0.35) * edge * caustic) * lit;
-
-	// The sky in the reflected direction, and the sun's highlight: a
-	// normalized Blinn-Phong lobe as wide as the roughness, kept finite.
-	vec3 dir = normalize(w_pos - CAMERA_POSITION_WORLD);
-	vec3 r = reflect(dir, n_w);
-	vec3 sky = mix(sky_horizon, sky_top, sqrt(clamp(r.y, 0.0, 1.0)));
-	float a2 = max(roughness * roughness, 0.0004);
-	float shine = 2.0 / a2 - 2.0;
-	vec3 h = normalize(to_sun - dir);
-	float glint = min(pow(max(dot(n_w, h), 0.0), shine) * (shine + 2.0) / 8.0, 64.0);
-	vec3 reflected = (sky + sun * glint * max(to_sun.y, 0.0)) * fresnel;
-
-	ALBEDO = transmitted + scatter + reflected;
+	// What the surface reflects is the engine's specular, so the light that
+	// goes in is what it does not reflect.
+	ALBEDO = min(water * (1.0 - fresnel), vec3(1.0));
+	ROUGHNESS = roughness;
+	METALLIC = 0.0;
+	// F0 0.02 is Godot's specular 0.354.
+	SPECULAR = 0.354;
+	NORMAL = n;
 }

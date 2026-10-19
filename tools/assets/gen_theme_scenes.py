@@ -72,7 +72,7 @@ def water_channel(p):
     ground = -0.42 - 0.5 * tiers
     inner = base_half + w["inset"]
     return {"inner": inner, "outer": inner + w["width"], "ground": ground, "level": ground - w["level"],
-            "floor": ground - w["depth"]}
+            "floor": ground - w["depth"], "causeway": w["causeway_width"]}
 
 
 def look_at(eye, target):
@@ -157,6 +157,14 @@ def shader_material(spec, theme, hi):
     params = dict(spec.get("params", {}))
     if spec.get("water") and WATER and spec["shader"].endswith("SH_WaterSimple.gdshader"):
         params["floor_height"] = round(WATER["floor"], 4)
+    if spec.get("water") and WATER and spec["shader"].endswith("SH_Water.gdshader"):
+        # The channel the desktop shader traces its refracted ray through, and
+        # its stone (gen_theme_meshes.py builds it from MI_StoneDark).
+        stone = WATER["stone"]
+        params |= {"channel_inner": round(WATER["inner"], 4), "channel_outer": round(WATER["outer"], 4),
+                   "floor_height": round(WATER["floor"], 4), "causeway_half": round(WATER["causeway"] / 2, 4),
+                   "floor_tint": stone.get("albedo_tint", stone["albedo"]), "floor_scale": stone.get("triplanar_scale", 1.0)}
+        r.body.append(f"shader_parameter/texture_albedo = {r.ext_id('Texture2D', texture_path(theme, stone['set'], 'BC', hi))}")
     for key, value in params.items():
         v = color(value) if isinstance(value, str) else value
         if isinstance(value, list):
@@ -514,7 +522,7 @@ def main():
         fog_params["clear_half"] = round(board_half + p["lighting"]["atmosphere"]["volumes"]["clearance"], 3)
         fog_params["sun_direction"] = [round(v, 5) for v in sun_toward(p["environment"]["sun"]["transform"])]
     if "water" in p:
-        WATER.update(water_channel(p))
+        WATER.update(water_channel(p), stone=p["materials"]["MI_StoneDark"])
     assets = ROOT / "game/assets"
     models = f"res://assets/models/{theme}"
     entry = {}
