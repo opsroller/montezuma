@@ -8,7 +8,7 @@ They are not ours and keep their own licenses; do not edit them.
 
 | File | Source |
 |---|---|
-| `godot/LICENSE.txt` | https://github.com/godotengine/godot/blob/4.7.2-stable/LICENSE.txt |
-| `godot/COPYRIGHT.txt` | https://github.com/godotengine/godot/blob/4.7.2-stable/COPYRIGHT.txt |
+| `godot/LICENSE.txt` | https://github.com/godotengine/godot/blob/4d10419cacd6d3009976e8f9fd3abd970fd58018/LICENSE.txt (4.8 beta 1) |
+| `godot/COPYRIGHT.txt` | https://github.com/godotengine/godot/blob/4d10419cacd6d3009976e8f9fd3abd970fd58018/COPYRIGHT.txt (4.8 beta 1) |
 
 Update both when the Godot pin in `tools/release/godot.env` changes.

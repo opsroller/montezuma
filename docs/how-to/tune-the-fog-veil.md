@@ -6,7 +6,7 @@ sparser and check that it still passes readability rule 2 (see-through,
 never the whole board). Every parameter is listed in
 [Board themes: Atmosphere](../reference/board-themes.md#atmosphere). Needs
 Python 3 with the pinned Pillow
-([Check the assets](build-and-test.md#check-the-assets)) and Godot 4.7.2
+([Check the assets](build-and-test.md#check-the-assets)) and Godot 4.8 beta 1
 with the extension built and the lightmaps baked
 ([Build and test](build-and-test.md)), on a machine with a GPU.
 

@@ -23,7 +23,7 @@ told apart at a glance.
 
 | Item | Value |
 |---|---|
-| Engine for the target | Godot **4.7** stable (upgrade from 4.4.1 in WP-44) |
+| Engine for the target | Godot **4.8 beta 1** (4.4.1 to 4.7 in WP-44; 4.7.2 to 4.8 beta 1 for Metal performance, see [About the engine version](../explanation/about-the-engine-version.md)) |
 | Ray tracing in stock Godot 4.7 | Low-level, experimental `RenderingDevice` API only (acceleration structures, ray-tracing pipelines; ray queries are declared but 4.7.2 never enables them), **Vulkan only**, not on macOS or iOS, not on web. No built-in ray-traced GI, reflections or shadows |
 | Ray tracing in forks | NVIDIA's RTX fork of Godot (path tracing, RTX GPUs, tracks development snapshots). Not used: not shippable to our mobile, web or macOS targets and not a stable base |
 | Ray-traced lighting we do use | `LightmapGI` bakes static lighting with a GPU path tracer, so static stone gets path-traced bounce light on every tier; dynamic light uses real-time GI below |

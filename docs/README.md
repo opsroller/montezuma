@@ -93,6 +93,7 @@ own folder.
 - [About the episode 4 levels](explanation/about-the-episode-4-levels.md): how the one ward is taught, the chain shapes, and why `random` has no target from episode 4.
 - [About the episode 5 levels](explanation/about-the-episode-5-levels.md): how the final episode gets harder through goals and obstacles alone, its new chain shapes, and what the simulator cannot see there.
 - [About the build pipeline](explanation/about-the-build-pipeline.md): why builds compile natively and export once, and how the web demo is built.
+- [About the engine version](explanation/about-the-engine-version.md): why the game builds with a Godot 4.8 beta, what that costs and what stays the same.
 - [Sound direction](explanation/sound-direction.md): why the game sounds the way it does.
 - [About the website](explanation/about-the-website.md): why the front page is the playable intro level and how it hands off to downloads.
 

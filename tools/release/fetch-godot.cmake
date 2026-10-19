@@ -17,7 +17,7 @@ montezuma_load_env()
 montezuma_require(DIR)
 montezuma_abspath(DIR)
 file(MAKE_DIRECTORY "${DIR}")
-set(base "https://github.com/godotengine/godot/releases/download/${GODOT_TAG}")
+set(base "${GODOT_RELEASES_URL}/${GODOT_TAG}")
 
 function(fetch file sum)
   set(path "${DIR}/${file}")
