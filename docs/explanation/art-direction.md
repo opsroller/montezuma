@@ -214,12 +214,15 @@ Choices behind the [reference](../reference/water.md):
   so they sit on the stone and move with it, not with the surface.
 - **Sky reflections only.** Box reflection probes per strip, and then a
   screen-space reflection march in the desktop shader, were both tried to
-  reflect the temple into the water. On the benchmark Mac each cost many
-  times the water's 0.5 ms budget (the probes kept re-rendering; the
-  march's chain of depth reads added 3.9 ms at 1440p), and from the game
-  camera the strips sit at the edge of the frame, so the water reflects
-  through the engine's own specular: the sky, plus on desktop the scene's
-  reflection probe and, where the tier has it, screen-space reflection.
+  reflect the temple into the water. The probes kept re-rendering and
+  doubled video memory. The march turned out to cost only about 0.1 ms:
+  most of the transparent water's 3.2 to 3.9 ms at 1440p on the benchmark
+  Mac came from reading the screen and depth textures, which make a
+  tile-based GPU copy the frame and resolve the depth. So the desktop water
+  is opaque and traces its refraction through the known channel instead,
+  and from the game camera the strips sit at the edge of the frame, so the
+  water reflects through the engine's own specular: the sky, plus on
+  desktop the scene's reflection probe.
 
 ## Why a theme, not a scene
 
