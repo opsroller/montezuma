@@ -166,9 +166,11 @@ builds without baked lightmaps):
 | `main` at b67b96a | 50.0 | 59.4 | 1503 MB | over budget |
 | Pieces out of GI (a83326a) | 17.5 | 18.4 | 747 MB | over budget: p95 0.7 to 1.3 ms above the 17.5 ms limit |
 
-The M4 presents paced to the display even with vsync off, so no frame
-there is shorter than 16.67 ms; the p95 miss is against that floor, and
-the budget is unchanged.
+`desktop-high` p95 on the M4 is 18.4 ms against the 17.5 ms limit: still
+a miss. The M4 presents paced to the display even with vsync off, so no
+frame there is shorter than 16.67 ms and p50 sits near that floor; the
+miss is in the tail. The follow-up is the M4's p95 tail (hitches and
+frames that miss a present), not the mean cost. The budget is unchanged.
 
 ## Feature rows
 

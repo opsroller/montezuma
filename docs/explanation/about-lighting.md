@@ -247,6 +247,9 @@ is captured on load.
   too, so its cost does not grow with the number of things on screen.
 - A theme whose emissive material is new needs its `lo/` copy (the scene
   generator writes it).
-- The M4 benchmark re-run after this package confirms or moves the
-  `desktop-high` internal height and the switches above.
+- The M4 re-run with the pieces out of GI keeps the 720-line internal
+  height and the switches above: p50 17.5 ms, but p95 18.4 ms against the
+  17.5 ms limit, still a miss. The follow-up is the M4's p95 tail
+  (hitches and frames that miss a present), not the mean cost
+  ([numbers](../reference/benchmark-results.md#pieces-out-of-gi)).
 - Without a bake the board view logs a warning naming the missing file.
