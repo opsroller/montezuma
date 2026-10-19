@@ -289,5 +289,9 @@ and a link to the tag's source.
 - Linux arm64 and Windows arm64 packages.
 - Version numbers inside the binaries (Windows file version, macOS
   bundle version).
+- Build provenance and an SBOM for release files (for example
+  `actions/attest-build-provenance`); releases carry only SHA-256 sums.
+- A tag ruleset limiting who may create, move or delete `v*` tags; until
+  then anyone with write access can start a release.
 - Bit-for-bit reproducibility across runners: archives are stable, but
   two runners have not yet been compared.
