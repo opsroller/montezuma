@@ -188,3 +188,8 @@ A finding raised in two or more reviews is listed here as a rule.
   they belong (the plan's status key, `benchmark-results.md`), contradicts
   no rule already written down, and holds for the project's own existing
   rows.
+- Engine pin changes (#110). A change to the Godot pin runs every smoke
+  job, web and macOS included, before review, and checks that every
+  engine method the extension calls is still bound in each platform's
+  templates: a release extension calls a missing method through a null
+  pointer.

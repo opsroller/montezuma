@@ -53,7 +53,7 @@ long, so the project moved to the first beta.
   measurements are in
   [Benchmark results](../reference/benchmark-results.md#godot-48-beta-1-against-472).
 
-- **Two engine changes needed workarounds.**
+- **Three engine changes needed workarounds.**
   - 4.8 binds `RenderingServer.get_rendering_device`,
     `get_video_adapter_type` and `get_video_adapter_api_version` only in
     builds with a RenderingDevice, so not in the web templates, and a
@@ -66,6 +66,11 @@ long, so the project moved to the first beta.
     `fetch-godot.cmake` swaps the two variants' names in the installed
     template (`GODOT_MACOS_SWAP_TEMPLATE_VARIANTS` in `godot.env`); set
     it to 0 for a Godot release that fixes the exporter.
+  - 4.8's Metal driver syncs with barriers by default, which needs
+    placement heaps; the paravirtual GPU of GitHub's macOS runners cannot
+    make them, and the game crashed there. The macOS smoke test sets
+    `GODOT_MTL_SYNC_MODE=none` (the older hazard tracking) on GitHub
+    runners only; real Macs keep the default.
 
 ## Going back
 

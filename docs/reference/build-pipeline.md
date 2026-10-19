@@ -181,7 +181,7 @@ stamps `game/project.godot`, `run_bench.cmake` writes
 | `game-files.py stage <gamedir>` | Copies `CREDITS.md` and `LICENSE` into the Godot project and runs `notices.py` there |
 | `game-files.py check <gamedir> <export>` | Exits 1 unless every staged file's bytes are inside the exported game (a file or a `.app` folder) |
 | `notices/` | Verbatim upstream notice texts (Godot 4.8 beta 1 `LICENSE.txt`, `COPYRIGHT.txt`) |
-| `smoke-test.cmake` (`ARCHIVE`, `SCREENS`) | Verifies, unpacks and runs a package on its own platform; `ARCHIVE` may be a folder holding one package; with `SCREENS`, also saves `title.png` and `board.png` there |
+| `smoke-test.cmake` (`ARCHIVE`, `SCREENS`) | Verifies, unpacks and runs a package on its own platform; `ARCHIVE` may be a folder holding one package; with `SCREENS`, also saves `title.png` and `board.png` there; on GitHub's macOS runners it sets `GODOT_MTL_SYNC_MODE=none`, since their paravirtual GPU cannot run Godot 4.8's default Metal barrier sync |
 | `web-fetch-emsdk.cmake` (`DIR`) | Installs and activates the pinned Emscripten (`EMSDK_VERSION` in `godot.env`) in `DIR` |
 | `web-export.cmake` (`OUT`, `VERSION`, `GODOT`) | Exports the `Web` preset, checks the download budget and writes the zip and `.sha256` |
 | `web-smoke.py <archive> [browser...]` | Verifies and serves a web package, starts it the way the site does and checks the hand-off events |
