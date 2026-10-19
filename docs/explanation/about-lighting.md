@@ -89,7 +89,8 @@ benchmark on the reference Mac mini M4 replaces them.
    every tier. Measured afterwards at 1280 × 720 (software rendering, so
    look only, not speed), with the WP-49 braziers in: on `web` rule 2
    passes (mean change 0.003) and rule 4 passes (0.9%); on `desktop-high`
-   rule 2 passes (mean 0.72, p99 4) and rule 4 passes for the atmosphere
+   rule 2 passes under the luma-difference check of the time (mean 0.72,
+   p99 4) and rule 4 passes for the atmosphere
    alone (0.4%), but fails at 12.5% with glow on too, because glow blooms
    the fire and the gold. Glow, and with it rule 6, belongs to WP-52;
    rule 5 to WP-48.

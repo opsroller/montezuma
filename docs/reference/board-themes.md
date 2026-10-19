@@ -233,7 +233,8 @@ theme's sensitivity); each emissive material also gets a `lo/` copy at
 
 Ground mist and dust around the temple: volumetric fog lying in banks on
 the plaza, cut by the shadows of the temple and ferns, and dust on the desktop tiers, light-shaft cards in its place on mobile and web.
-Nothing of it is ever over the board (readability rule 2 in the
+Over the board lies only a thin, patchy veil of the mist that the tiles
+and pieces read through (readability rule 2 in the
 [Visual target](visual-target.md#readability-rules-every-tier)). Why it is
 built this way: [About the atmosphere](../explanation/about-the-atmosphere.md).
 

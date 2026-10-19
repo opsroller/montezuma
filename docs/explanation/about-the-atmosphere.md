@@ -50,6 +50,43 @@ seen from a camera nearly straight above, rays to the board's edge pass
 over the platform at a height that grows with distance from the board;
 low air beside the platform is never in their way.
 
+## How rule 2 is measured
+
+Rule 2 used to ask for zero fog over the board, and its check compared
+the luma of the board with and without the atmosphere. Once a veil is
+allowed, a luma difference no longer separates what the rule allows from
+what it forbids. The plaza mist brightens the frame and auto exposure
+answers by shifting the whole board by about 7 levels, cell by cell
+alike, with no fog over the board at all; a thin even haze over every
+cell shifts it by about as much. One is fine and the other is what the
+rule forbids.
+
+What fog does to a cell that exposure does not is take away its contrast:
+the tile, its edge and the piece on it move toward the colour of the
+mist. So the check takes each cell's luma standard deviation with every
+effect off and with the atmosphere alone, and measures the share of it
+the atmosphere removes. On the `main` capture before the veil every cell
+lost between −3% and 3%; under an even 15% blend toward grey every cell
+loses 15%.
+
+The thresholds rest on those captures and on what the eye still reads:
+
+- **0.40, the most any cell may lose.** With the veil at its shipped
+  values the worst cell loses 33 to 34% on the 4K and phone captures,
+  and the gems in it stay plainly readable in colour; at 1.5 extinction
+  per metre the worst cell lost 61% and pieces in it looked washed out.
+- **0.05, what counts as clear.** About twice the largest loss on `main`,
+  so run-to-run noise does not make a clear cell look fogged.
+- **0.25, the share of cells that must stay clear.** The veil leaves 36
+  to 38% clear; a veil whose patches are too small to leave clear cells
+  (the first try, at a 4 m noise tile) left 12%, and an even haze none.
+  A quarter of the board is clear enough that the board is never covered
+  as a whole.
+
+Rule 4 still guards each kind's contrast against its tile across the
+whole board, so a veil that passes rule 2 cell by cell cannot wash out
+one kind everywhere.
+
 ## Why the first pass looked like dirty glass
 
 The first pass (WP-51) filled the plaza with an even layer of cream air,
