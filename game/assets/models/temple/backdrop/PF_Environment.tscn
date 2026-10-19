@@ -29,9 +29,9 @@ sky_material = SubResource("sky_mat")
 
 [sub_resource type="CameraAttributesPractical" id="camera"]
 exposure_sensitivity = 440
-exposure_multiplier = 0.7
+exposure_multiplier = 1.0
 auto_exposure_enabled = true
-auto_exposure_scale = 0.45
+auto_exposure_scale = 0.32
 auto_exposure_speed = 0.5
 auto_exposure_min_sensitivity = 300
 auto_exposure_max_sensitivity = 640

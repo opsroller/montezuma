@@ -98,6 +98,7 @@ void test_profiles_match_visual_target() {
     check(high.has(Feature::VoxelGi) && !standard.has(Feature::VoxelGi), "VoxelGI on desktop-high only");
     check(high.has(Feature::AreaLight) && !standard.has(Feature::AreaLight), "area light on desktop-high only");
     check(high.has(Feature::FogFireLight) && !standard.has(Feature::FogFireLight), "fire lights fog on high only");
+    check(high.debanding && standard.debanding && !mobile.debanding && !web.debanding, "debanding on desktop tiers only");
     for (Feature f : {Feature::Ssao, Feature::Ssil, Feature::Ssr, Feature::VolumetricFog, Feature::DepthOfField,
                       Feature::HeatHaze, Feature::SubsurfaceScattering, Feature::GemRefraction,
                       Feature::WaterRefraction, Feature::AutoExposure, Feature::FireFlipbook8x8}) {

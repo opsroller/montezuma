@@ -617,7 +617,10 @@ def main():
     r.body += ["", '[node name="Lightmap" type="LightmapGI" parent="."]', f"quality = {lm['quality']}",
                f"bounces = {lm['bounces']}", f"texel_scale = {lm['texel_scale']}",
                f"max_texture_size = {lm['max_texture_size']}", f"generate_probes_subdiv = {lm['probes_subdiv']}",
-               *([f"environment_mode = 2", 'environment_custom_sky = SubResource("sky")',
+               # Bake a dimmed copy of the sky: lightmapped surfaces get their indirect
+               # light only from the bake, so ambient_energy does not reach them
+               # (docs/explanation/about-lighting.md, WP-60).
+               *(["environment_mode = 2", 'environment_custom_sky = SubResource("sky")',
                   f"environment_custom_energy = {lm['sky_energy']}"] if "sky_energy" in lm else []),
                # Bake at the theme's exposure: with physical light units the raw
                # lux values would otherwise overflow the lightmap's range.

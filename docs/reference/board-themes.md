@@ -190,7 +190,7 @@ the parameter file's `lighting` section:
 | Node | Type | Tiers | Parameters (`lighting.*`) | Temple |
 |---|---|---|---|---|
 | `WorldEnvironment` | sky, AgX tonemapper, SSAO, SSIL, glow, optional height fog | all (switches per [Quality tiers](quality-tiers.md)) | `sky_nits`, `agx_white`, `agx_contrast`, `ssao` (`intensity`, `power`, `light_affect`), optional `fog` (`color`, `height`, `height_density`, `sky_affect`) | 15,000 nits; white 16, contrast 1.25; SSAO intensity 3, power 1.5, light affect 0.3; no height fog. Volumetric fog on, with no density of its own: see [Atmosphere](#atmosphere) |
-| `camera` (`CameraAttributesPractical`) | exposure, on the environment, `LightmapGI` and `VoxelGI` | auto exposure on desktop only | `exposure` (`sensitivity`, `multiplier`, `auto_scale`, `auto_speed`, `auto_min_sensitivity`, `auto_max_sensitivity`) | ISO 440 (auto 300 to 640), multiplier 0.7, `auto_scale` 0.45 (raised from 0.4 so the bright mist does not pull the board darker; auto exposure and the fog are both desktop-only) |
+| `camera` (`CameraAttributesPractical`) | exposure, on the environment, `LightmapGI` and `VoxelGI` | auto exposure on desktop only | `exposure` (`sensitivity`, `multiplier`, `auto_scale`, `auto_speed`, `auto_min_sensitivity`, `auto_max_sensitivity`) | ISO 440 (auto 300 to 640), `auto_scale` 0.32 (desktop only, since only desktop has auto exposure: darker sunlit stone, WP-60) |
 | `Sun` | `DirectionalLight3D`, shadows | all | `sun` (`lux`, `kelvin`, `color`, `angular_distance`, optional `fog_energy` → `light_volumetric_fog_energy`) | 11,000 lux, 4500 K, 0.6°, fog energy 7 (see [Atmosphere](#atmosphere)) |
 | `Fire1`…`Fire4/Light` | `FlickerLight3D` in each brazier's `PF_BrazierFire` ([Fire](fire.md)), dual paraboloid shadows (seam flat above the board), group `quality_shadow_light` | all; shadows on the nearest 8 or 2 | `torch` (`lumens`, `kelvin`, `color`, `size`, `range`) | 90,000 lm, 1900 K, range 4.5 m |
 | `SkyFill` | `AreaLight3D` over the board, group `quality:area_light`, not baked | `desktop-high` | `sky_fill` (`transform`, `lumens`, `color`, `size`, `range`) | 6,000 lm, 10 × 10 m |
@@ -368,6 +368,12 @@ look packages compare against these.
 | [temple-atmosphere-desktop-high.jpg](../images/lookdev/temple-atmosphere-desktop-high.jpg) | game, benchmark board | Forward+ (`desktop-high`), RTX 4080 SUPER | ground mist in banks and dust, lightmap and `VoxelGI` |
 | [temple-atmosphere-mobile.jpg](../images/lookdev/temple-atmosphere-mobile.jpg) | `LD_Temple` | Mobile (`mobile`) | WP-51 light-shaft cards, no lightmap |
 | [temple-atmosphere-web.jpg](../images/lookdev/temple-atmosphere-web.jpg) | `LD_Temple` | Compatibility (`web`) | WP-51 light-shaft cards, no lightmap |
+| [temple-board-contrast-before-desktop-high.jpg](../images/lookdev/temple-board-contrast-before-desktop-high.jpg) | game, first level | Forward+ (`desktop-high`), RTX 4080 SUPER | before WP-60: `main` with the ground mist |
+| [temple-board-contrast-desktop-high.jpg](../images/lookdev/temple-board-contrast-desktop-high.jpg) | game, first level | Forward+ (`desktop-high`), RTX 4080 SUPER | WP-60 lighting: darker shadows, 90,000 lm braziers, SSAO 3 |
+| [temple-board-contrast-before-mobile.jpg](../images/lookdev/temple-board-contrast-before-mobile.jpg) | game, first level | Mobile (`mobile`), RTX 4080 SUPER | before WP-60: `main` with the ground mist |
+| [temple-board-contrast-mobile.jpg](../images/lookdev/temple-board-contrast-mobile.jpg) | game, first level | Mobile (`mobile`), RTX 4080 SUPER | WP-60 lighting: darker shadows, 90,000 lm braziers, SSAO 3 |
+| [temple-board-contrast-before-web.jpg](../images/lookdev/temple-board-contrast-before-web.jpg) | game, first level | Compatibility (`web`), RTX 4080 SUPER | before WP-60: `main` with the ground mist |
+| [temple-board-contrast-web.jpg](../images/lookdev/temple-board-contrast-web.jpg) | game, first level | Compatibility (`web`), RTX 4080 SUPER | WP-60 lighting: darker shadows, 90,000 lm braziers, SSAO 3 |
 
 ## Validator rules
 

@@ -449,8 +449,8 @@
     },
     "exposure": {
       "sensitivity": 440,
-      "multiplier": 0.7,
-      "auto_scale": 0.45,
+      "multiplier": 1.0,
+      "auto_scale": 0.32,
       "auto_speed": 0.5,
       "auto_min_sensitivity": 300,
       "auto_max_sensitivity": 640
