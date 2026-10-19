@@ -41,7 +41,10 @@ e4-l10, so the spike and the finale ask more than the first test.
 A chain pattern above the bottom row only holds at the start: chained
 pieces fall like any other (`OBS-05`). Levels whose lesson needs the
 pattern to last keep their chains on the bottom rows; e4-l07 and e4-l10
-use the drift on purpose. Neither the simulator nor balance.md measures
+use the drift on purpose. Since chains hold (WP-59), a pattern also
+lasts longer than it did: a run through a link breaks the chain but
+leaves the piece in place, so a wall such as e4-l06's columns needs two
+hits per link to open. Neither the simulator nor balance.md measures
 how long a pattern lasts, so that is a playtest question.
 
 ## Why random has no target
@@ -76,3 +79,5 @@ light (0.02) so that its twist is no harder than the level before it:
 
 The human first-try rates in the briefs carry the sawtooth the
 simulator cannot show, and they are provisional until a playtest.
+Episode 5 builds on this episode; its reasoning is in
+[about the episode 5 levels](about-the-episode-5-levels.md).

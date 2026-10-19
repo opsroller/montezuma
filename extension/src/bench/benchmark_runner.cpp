@@ -173,7 +173,7 @@ void BenchmarkRunner::_ready() {
     ERR_FAIL_COND_MSG(replay_.actions.empty(), "BenchmarkRunner: the replay has no beats.");
 
     const std::size_t frames = static_cast<std::size_t>(std::max(1.0, measure_seconds_)) * kReservedFramesPerSecond;
-    for (auto* samples : {&process_ms_, &render_cpu_ms_, &cpu_ms_, &gpu_ms_, &frame_ms_, &draw_calls_, &primitives_}) samples->reserve(frames);
+    for (auto* samples : {&process_ms_, &render_cpu_ms_, &cpu_ms_, &gpu_ms_, &frame_ms_, &draw_calls_, &scene_draw_calls_, &shadow_draw_calls_, &canvas_draw_calls_, &primitives_}) samples->reserve(frames);
 
     RenderingServer::get_singleton()->viewport_set_measure_render_time(get_viewport()->get_viewport_rid(), true);
     bench::hide_ui_overlays(get_tree()->get_root());
@@ -279,6 +279,12 @@ void BenchmarkRunner::sample_frame() {
     window_sizes_.add({window.x, window.y});
     gpu_ms_.push_back(rs->viewport_get_measured_render_time_gpu(vp));
     draw_calls_.push_back(perf->get_monitor(Performance::RENDER_TOTAL_DRAW_CALLS_IN_FRAME));
+    const auto draws_in = [&](RenderingServer::ViewportRenderInfoType type) {
+        return double(rs->viewport_get_render_info(vp, type, RenderingServer::VIEWPORT_RENDER_INFO_DRAW_CALLS_IN_FRAME));
+    };
+    scene_draw_calls_.push_back(draws_in(RenderingServer::VIEWPORT_RENDER_INFO_TYPE_VISIBLE));
+    shadow_draw_calls_.push_back(draws_in(RenderingServer::VIEWPORT_RENDER_INFO_TYPE_SHADOW));
+    canvas_draw_calls_.push_back(draws_in(RenderingServer::VIEWPORT_RENDER_INFO_TYPE_CANVAS));
     primitives_.push_back(perf->get_monitor(Performance::RENDER_TOTAL_PRIMITIVES_IN_FRAME));
     video_mem_max_ = std::max(video_mem_max_, perf->get_monitor(Performance::RENDER_VIDEO_MEM_USED));
 }
@@ -347,6 +353,13 @@ void BenchmarkRunner::finish() {
     Dictionary render;
     render["draw_calls_p95"] = draws.p95;
     render["draw_calls_max"] = draws.max;
+    Dictionary passes;
+    passes["scene_p95"] = bench::summarize(scene_draw_calls_, 0.0).p95;
+    passes["shadow_p95"] = bench::summarize(shadow_draw_calls_, 0.0).p95;
+    passes["canvas_p95"] = bench::summarize(canvas_draw_calls_, 0.0).p95;
+    render["draw_calls_by_pass"] = passes;
+    // How the board drew its pieces at the end (batching: board-view.md).
+    if (const BoardView3D* v = view()) render["piece_draws"] = v->get_piece_draws();
     render["primitives_p95"] = prims.p95;
     render["primitives_max"] = prims.max;
     render["video_mem_max_mb"] = video_mem_max_ / (1024.0 * 1024.0);

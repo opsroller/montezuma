@@ -219,9 +219,12 @@ variants up to 2048² ([Visual target](visual-target.md#content-budgets-per-tier
 | Backdrop (platform, braziers, ground, ferns, rocks) | 4,220 |
 
 A full 8×8 board of pieces averages about 260 triangles each (~17k), so
-the whole scene stays near 31k triangles. Draw calls: one per piece (64),
-6 board parts, 6 backdrop parts, the brazier fires (11 draw calls), plus shadow passes; pieces share 7
-materials. Textures: seven base sets at 1024² (`Stone_01` with `_H`;
+the whole scene stays near 31k triangles. Draw calls on desktop: one per
+piece (64), 6 board parts, 6 backdrop parts, the brazier fires (11 draw
+calls), plus shadow passes; pieces share 7 materials. On `mobile` and
+`web` the pieces and markers are batched to one draw per piece kind and
+marker ([Board view](board-view.md#draw-calls)), and `web` draws its sun
+shadow in one cascade. Textures: seven base sets at 1024² (`Stone_01` with `_H`;
 22 PNGs, 15 MB generated) and 2048² `hi/` sets for the hero surfaces
 `Stone_01` and `Gold_01` (7 PNGs, 23 MB generated); all are VRAM-compressed
 on import ([Import settings](#import-settings)). In VRAM on desktop

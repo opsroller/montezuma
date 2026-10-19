@@ -226,6 +226,38 @@ class CheckRunTest(unittest.TestCase):
         code, out = run(r)
         self.assertEqual(code, 2, out)
 
+    def test_draw_calls_within_the_cap_pass(self):
+        r = copy.deepcopy(GOOD)
+        r["render"] = {"draw_calls_p95": 137, "draw_calls_max": 192,
+                       "draw_calls_by_pass": {"scene_p95": 100, "shadow_p95": 37, "canvas_p95": 0}}
+        code, out = run(r)
+        self.assertEqual(code, 0, out)
+        self.assertIn("PASS draw calls: p95 137, max 192 (scene 100, shadow 37, canvas 0); cap 1000", out)
+
+    def test_draw_calls_over_the_web_cap_fail_even_without_budget(self):
+        r = copy.deepcopy(GOOD)
+        r["tier"] = "web"
+        r["render"] = {"draw_calls_p95": 268, "draw_calls_max": 300}
+        code, out = run(r, "--no-budget")
+        self.assertNotEqual(code, 0, out)
+        self.assertIn("FAIL draw calls: p95 268 is over the web cap of 200", out)
+
+    def test_draw_calls_are_judged_on_a_software_renderer(self):
+        r = copy.deepcopy(GOOD)
+        r["tier"] = "web"
+        r["device"].update(adapter="llvmpipe (LLVM 20.1.2, 256 bits)", software=True)
+        r["render"] = {"draw_calls_p95": 74, "draw_calls_max": 116}
+        code, out = run(r, "--no-budget")
+        self.assertEqual(code, 0, out)
+        self.assertIn("PASS draw calls", out)
+
+    def test_headless_run_skips_draw_calls(self):
+        r = copy.deepcopy(GOOD)
+        r["device"].update(headless=True)
+        r["render"] = {"draw_calls_p95": 0, "draw_calls_max": 0}
+        code, out = run(r, "--no-budget")
+        self.assertIn("SKIP draw calls", out)
+
     def test_bad_size_argument(self):
         with self.assertRaises(SystemExit):
             run(GOOD, "--size", "big")

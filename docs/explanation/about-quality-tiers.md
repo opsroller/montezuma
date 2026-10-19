@@ -77,6 +77,16 @@ measured on our scenes:
 | `mobile` (Pixel 7a) | sun shadow 1, 2× MSAA resolved on-tile 0.5: about 1.5 ms | 16.6 ms |
 | `web` (UHD 620) | sun shadow 0.6, 2× MSAA 1: about 1.6 ms | 33.3 ms p95 |
 
+Draw calls are budgeted per tier too (web 200). On the Compatibility
+renderer the sun's four shadow cascades drew every caster four times and
+each piece was its own draw, so the busiest board took 324 draws at its
+p95 with the fire. The `web` tier now draws one orthogonal cascade, which
+covers the whole board at the 1024 atlas with only the shadow edges
+changing, and `mobile` and `web` batch the pieces and their markers into
+one multimesh per mesh and material: 74 draws at p95. Desktop keeps four
+cascades and per-piece draws: it is far under its caps (129 to 137 of
+1000 and 2000), and per-piece sorting matters for the refracting gems.
+
 The rest of each budget is the board, backdrop, particles and the game's
 own CPU work. Measured p50 and p95 from the WP-46 benchmark are in
 [Benchmark results](../reference/benchmark-results.md); WP-41 moves any

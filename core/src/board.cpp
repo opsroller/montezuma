@@ -222,6 +222,11 @@ void Board::clear_step(std::set<int> matched, CascadeStep step, MoveResult& resu
         for (Cell c : hooks->extend_clear(*this, so_far, index_of_step))
             if (in_bounds(c.x, c.y) && at(c.x, c.y) != kEmpty) matched.insert(index(c.x, c.y));
     }
+    if (hooks && hooks->keep) {
+        const int index_of_step = static_cast<int>(result.cascades.size());
+        for (Cell c : hooks->keep(*this, index_of_step))
+            if (in_bounds(c.x, c.y)) matched.erase(index(c.x, c.y));
+    }
     std::map<int, int> counts;
     // std::set iterates indices in ascending order, which is row-major.
     for (int idx : matched) {

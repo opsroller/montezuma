@@ -104,7 +104,7 @@ one entry (phones, web).
 | Argument (after `--`) | Effect |
 |---|---|
 | `--quality=<tier id or auto>` | Uses that tier for this run without saving it (benchmark captures) |
-| `--quality-selftest` | Switches through every available tier on scratch nodes, checks each switch (environment, groups, shadow budget and material variants of `MI_Gold` and `MI_Lapis`, also after a node leaves and re-enters the tree), prints `QualityTiers self-test: N checks, F failures` |
+| `--quality-selftest` | Switches through every available tier on scratch nodes, checks each switch (environment, groups, shadow budget, sun shadow cascades and material variants of `MI_Gold` and `MI_Lapis`, also after a node leaves and re-enters the tree), prints `QualityTiers self-test: N checks, F failures` |
 
 ## Feature ids
 
@@ -164,6 +164,7 @@ switch. The root viewport re-applies on resize.
 | Anisotropic filtering | 16× | 8× | 4× | 2× |
 | Mesh LOD threshold (px) | 1.0 | 1.0 | 2.0 | 2.0 |
 | Sun shadow atlas | 4096 | 2048 | 2048 | 1024 |
+| Sun shadow cascades (most) | 4 | 4 | 4 | 1 (orthogonal) |
 | Soft shadow filter (sun and positional) | soft high | soft low | soft very low | hard |
 | Positional shadow atlas | 4096 | 2048 | 0 (off) | 0 (off) |
 | Shadow-casting lights (`quality_shadow_light`) | 8 | 2 | 0 | 0 |
@@ -171,6 +172,13 @@ switch. The root viewport re-applies on resize.
 | Volumetric fog froxels (size × depth) | 64 × 64 | 32 × 32 | — | — |
 | Subsurface scattering quality | high | medium | off | off |
 | Texture variant folder | `hi/` | `hi/` | base only | `lo/` |
+| Pieces batched (`batch_pieces`, [Board view](board-view.md#draw-calls)) | no | no | yes | yes |
+
+Sun shadow cascades apply to every `DirectionalLight3D` as it enters the
+tree: the light uses the fewer of the cascades its scene authored and the
+tier's count (1 orthogonal, 2 or 4 parallel splits), and gets its authored
+mode back on a tier that allows it (`_quality_authored` metadata). Each
+cascade draws every shadow caster again.
 
 FSR 1 and FSR 2.2 run only on Forward+ in Godot 4.7, so the Mobile
 renderer has no upscaler. Frame-time costs behind these numbers are

@@ -47,10 +47,10 @@ which come with the store packages, not here.
 ## Desktop on every push to main
 
 Every push to `main` builds all three packages, so `main` always has
-downloadable builds. Pull requests build them whenever they change
-anything that goes into a package (the pipeline, the C++ code, the Godot
-project, godot-cpp), so a change that breaks an export is caught before
-it reaches `main`. Docs-only changes skip it.
+downloadable builds. Every push to another branch builds the Linux and
+macOS packages, so a change that breaks an export is caught on the commit
+that broke it, before it reaches `main`
+([About CI on every push](about-ci-on-every-push.md)).
 
 ## The web demo
 
