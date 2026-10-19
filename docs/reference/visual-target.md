@@ -13,7 +13,7 @@ gap is listed in [Work packages](work-packages.md#wave-v-high-end-visual-target)
 A sunlit Aztec temple that looks real on current hardware: physically
 based stone, gold and gemstone that hold up close, braziers with real
 flame, smoke and embers that light the stone around them, light that
-bounces (warm sandstone tints the shadows), reflections in polished
+bounces (warm-tinted limestone tints the shadows), reflections in polished
 stone and water, shafts of sun through dusty air, and a filmic colour
 grade. The camera, the board layout and how fast the board reads stay
 exactly as in the original: nearly top-down, every cell visible, pieces

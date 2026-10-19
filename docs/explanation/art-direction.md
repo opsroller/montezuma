@@ -54,7 +54,10 @@ light so the edge stays crisp against any tile.
 
 ## The board is a stage, not a picture
 
-The board is warm sandstone in a soft light and dark checker. The checker
+The board is weathered limestone under a warm buff tint, in a soft light
+and dark checker. The texture carries the stone's weathering and stays
+near-neutral; the tile tints carry the warmth on purpose, because warm
+tiles sit well against the green jungle and the cool gems. The checker
 helps the eye count cells; its contrast stays below the pieces' so it never
 competes. A raised frame with a step-fret relief and four gold studs frames
 the play area, and the temple platform, stairs and braziers sit outside it,
@@ -65,14 +68,17 @@ under a piece.
 
 | Role | Value | Use |
 |---|---|---|
-| Sandstone light | `#d2b688` | light tiles |
-| Sandstone dark | `#9a8364` | dark tiles |
+| Stone light (warm tint) | `#d2b688` | light tiles |
+| Stone dark (warm tint) | `#9a8364` | dark tiles |
 | Frame stone | `#a38a66` | frame, platform |
 | Shadow stone | `#5c5246` | base, pillars, rocks |
 | Gold | `#ffcc4d` | sun disc, studs |
 | Jungle | `#24521f` | foliage |
 | Torch | `#ff9a3c` | brazier light |
 | Glow | `#ffd36b` | selection |
+
+The tile tints keep their `sandstone-light` and `sandstone-dark` token
+names in the theme parameters, which other files already read.
 
 Piece colours are in [`design/tokens/temple-board.json`](../../design/tokens/temple-board.json)
 so the HUD's quota icons match the board. That file is generated from the
@@ -93,8 +99,8 @@ shipped; each one only told us which weathering to model.
   ([World History Encyclopedia, Aztec Art](https://www.worldhistory.org/Aztec_Art/)).
   The board stone therefore carries faint red-ochre pigment only in its
   hollows, where paint would outlast weather.
-- **Maya limestone and stucco in the jungle**, as at Palenque (Texas Tech
-  University archive photographs), show how such stone ages under rain and
+- **Maya limestone and stucco in the jungle**, as at Palenque ([Texas Tech
+  University archive photographs](https://exhibits.lib.ttu.edu/s/openarch/item/36937)), show how such stone ages under rain and
   shade: dark biofilm in the hollows, crustose lichen on exposed faces,
   vertical run-off stains, dissolution pores along the softer beds, and
   moss rooted in every joint. Those are the board stone's layers, and the
