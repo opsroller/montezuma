@@ -438,6 +438,66 @@ both runs; the WP-52 run reports the colour-grade LUT and depth of field
 on. WP-52 adds about 0.9 ms at p50 and 0.8 ms at p95 at native 5K
 (under 1%), and 28 MB of video memory.
 
+## Fog veil over the board
+
+Cost of replacing the ground mist's clear square over the board with a
+thin veil (`SH_AtmosphereFog`, `MI_AtmosphereFog`, `PF_Environment.tscn`)
+against `main` at dbaa1fc, `desktop-high`, bench scene, 2026-10-19.
+
+**RTX 4080 SUPER** (Vulkan, Forward+, NixOS, live GNOME desktop, render
+size locked at 3840×2160, vsync off, 6 s warm-up and 20 s capture, two
+rounds alternating `main` and the veil, lightmaps rebaked for each; the
+3D view rendered through `desktop-high`'s FSR 2, as on `main`):
+
+| Build | `frame_ms` p50 | p95 | `gpu_ms` p50 | p95 | Video memory max |
+|---|---|---|---|---|---|
+| `main`, round 1 | 5.03 | 7.05 | 4.16 | 6.11 | 1151 MB |
+| Veil, round 1 | 4.98 | 7.04 | 4.15 | 6.10 | 1151 MB |
+| `main`, round 2 | 5.00 | 7.06 | 4.15 | 6.11 | 1151 MB |
+| Veil, round 2 | 5.00 | 7.05 | 4.15 | 6.10 | 1151 MB |
+
+The veil's third noise sample per froxel costs nothing measurable: the
+fog grid's size, not the shader, sets the fog's cost. The runs used an earlier
+tuning of the veil (1.5 per metre, 0.3 m, 14 m tiles); its parameters do
+not change the work per froxel.
+
+**Mac mini M4** (Metal, Forward+, full screen at native 5120×2880 with
+3D at 1.0 and no upscaler, through a local, uncommitted patch in both
+builds since this branch has no native switch, TAA off; vsync off, seed
+52, 5 s warm-up and one 10 s capture per build, back to back with no
+other Godot process, textures and fire generated and lightmaps baked in
+both, 2026-10-19), against the merge base with `main` (c0f387e):
+
+| Build | `frame_ms` p50 | p95 | p99 | Frames in 10 s | `cpu_ms` p95 | Video memory max |
+|---|---|---|---|---|---|---|
+| Merge base c0f387e | 113.9 | 116.0 | 117.6 | 88 | 2.01 | 2107 MB |
+| Veil f8dd0d1 | 114.0 | 116.5 | 117.9 | 88 | 1.81 | 2107 MB |
+
+Every frame rendered at 5120×2880 and the replay matched its plan in
+both runs. At native 5K the veil costs nothing measurable either (0.1 ms
+at p50, 0.5 ms at p95, inside the spread of one 10 s run).
+
+Readability on the same machine, `readability.tscn`, shipped veil values:
+
+| Capture | Rule 2 (worst cell contrast loss, clear cells; pass ≤ 40%, ≥ 25%) | Rule 4 (worst change; pass ≤ 10%) |
+|---|---|---|
+| `main`, `desktop-high`, 3840×2160 | PASS: 3%, 100% | FAIL: 15.2% |
+| Veil, `desktop-high`, 540×1170 | PASS: 23%, 56% | PASS: 7.7% |
+| Veil, `desktop-high`, 3840×2160 | PASS: 26%, 53% | FAIL: 11.8% |
+| Veil, `desktop-standard`, 540×1170 | PASS: 18%, 34% | PASS: 7.9% |
+| Veil, `desktop-standard`, 3840×2160 | PASS: 23%, 38% | FAIL: 10.3% |
+
+Earlier veil settings that set the rule 2 thresholds, same check,
+`desktop-high`, 540×1170: 1.5 per metre, 0.3 m, 14 m tiles lost 61% in
+its worst cell (14% clear); a 4 m noise tile at 0.6 per metre left 12% of
+cells clear at 3840×2160.
+
+Rule 4's worst group at 4K is the same on both builds: kind 2 on the
+light tile, whose contrast rises with glow (+5.7% alone) and with auto
+exposure's response to the plaza mist (+6.5% alone on `main`). The veil
+lowers it there, which is why the veil's 4K figures are below `main`'s
+([About the atmosphere](../explanation/about-the-atmosphere.md#how-rule-2-is-measured)).
+
 ## Feature rows
 
 `check_features.py` on the same reports. Rows that fail are the
@@ -450,13 +510,15 @@ lighting, reflection and atmosphere work in WP-47 to WP-53, still to do.
 
 ## Readability
 
-Captured at 540×1170 with each tier's settings; default thresholds from
-[Readability checks](benchmark.md#readability-checks). Both tiers fail
-the same four rules.
+Captured at 540×1170 with each tier's settings; the thresholds then in
+[Readability checks](benchmark.md#readability-checks). Rule 2 was then a
+luma-difference check, since replaced by per-cell contrast loss (current
+figures: [Fog veil over the board](#fog-veil-over-the-board)). Both tiers
+fail the same four rules.
 
 | Rule | `desktop-high` | `desktop-standard` | Pass |
 |---|---|---|---|
-| 2 Persistent effects leave the board alone | FAIL: mean 12.56, p99 30 | FAIL: mean 12.66, p99 29 | mean ≤ 1.0, p99 ≤ 4 |
+| 2 Persistent effects leave the board alone (old luma-difference check) | FAIL: mean 12.56, p99 30 | FAIL: mean 12.66, p99 29 | mean ≤ 1.0, p99 ≤ 4 (old) |
 | 4 Piece-to-tile contrast holds | FAIL: worst change 21.6% | FAIL: worst change 21.2% | ≤ 10% |
 | 5 Kinds tell apart (closest pair, shade 0 / shade 1) | FAIL: greyscale 10.34 / 6.18, protanopia 14.86 / 11.40, deuteranopia 14.84 / 11.78, tritanopia 17.59 / 16.27 | FAIL: greyscale 9.96 / 5.90, protanopia 14.40 / 11.19, deuteranopia 15.04 / 11.16, tritanopia 17.53 / 15.81 | ≥ 12 and ≥ 1.5 × the in-kind spread |
 | 6 Bloom stays within a quarter cell | FAIL: 5946 px, 4.18% of the board | FAIL: 4220 px, 2.97% of the board | ≤ 0.1% |

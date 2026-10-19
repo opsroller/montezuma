@@ -45,7 +45,7 @@ art (WP-47 to 53) one way to say "this node is desktop only".
    `desktop-high` environment and content; each tier switches off what it
    lacks and shows the named substitute instead. A tier never turns on an
    effect the theme left off, so a theme that does not use SDFGI or fog
-   never gets it, and readability rule 2 (no atmosphere over the board)
+   never gets it, and readability rule 2 (atmosphere over the board only thin, patchy and see-through)
    stays the theme's to keep.
 4. **Content opts in by group, not code.** Nodes join `quality:<id>` or
    `quality_fallback:<id>`; brazier lights join `quality_shadow_light`.

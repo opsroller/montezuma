@@ -17,7 +17,7 @@ import json
 import sys
 from pathlib import Path
 
-from PIL import Image, ImageChops, ImageFilter
+from PIL import Image, ImageChops, ImageFilter, ImageStat
 
 # Colour-vision deficiency at full severity, in linear RGB: Machado, Oliveira
 # and Fernandes, "A Physiologically-based Model for Simulation of Color
@@ -65,15 +65,26 @@ def luma8(img):
 # ---------------------------------------------------------------- rule 2
 
 
-def rule_2(off, atmosphere, board, args):
-    """Persistent effects (fog, haze, shafts, DOF, dust) leave the board
-    rectangle as it is with every effect off."""
-    diff = ImageChops.difference(luma8(atmosphere.crop(board)), luma8(off.crop(board)))
-    values = list(diff.get_flattened_data())
-    mean = sum(values) / len(values)
-    p99 = percentile(values, 99)
-    ok = mean <= args.rule2_mean and p99 <= args.rule2_p99
-    return ok, {"mean_diff": round(mean, 3), "p99_diff": p99, "max_mean": args.rule2_mean, "max_p99": args.rule2_p99}
+def rule_2(off, atmosphere, layout, args):
+    """Persistent effects (fog, haze, shafts, DOF, dust) stay see-through
+    over the board and never cover all of it. Measured per cell as the share
+    of its luma contrast (standard deviation) they take away. An exposure
+    shift by a constant leaves it at 0, a scale up reads as a gain (clear)
+    and a scale down as loss in proportion. No cell may lose more
+    than rule2_cell_max, and at least rule2_clear_share of the cells must
+    lose no more than rule2_clear."""
+    a, o = luma8(atmosphere), luma8(off)
+    losses = []
+    for cell in layout["cells"]:
+        r = box(cell["rect"])
+        base = ImageStat.Stat(o.crop(r)).stddev[0]
+        losses.append(1.0 - ImageStat.Stat(a.crop(r)).stddev[0] / base if base > 0 else 0.0)
+    worst = max(losses)
+    clear = sum(1 for v in losses if v <= args.rule2_clear) / len(losses)
+    ok = worst <= args.rule2_cell_max and clear >= args.rule2_clear_share
+    return ok, {"worst_cell_loss": round(worst, 3), "max_cell_loss": args.rule2_cell_max,
+                "clear_share": round(clear, 3), "min_clear_share": args.rule2_clear_share,
+                "clear_loss": args.rule2_clear}
 
 
 # ---------------------------------------------------------------- rule 4
@@ -249,8 +260,12 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("capture_dir", type=Path)
     ap.add_argument("--json", type=Path, help="also write the full report here")
-    ap.add_argument("--rule2-mean", type=float, default=1.0, help="max mean luma difference, 0-255 (default 1.0)")
-    ap.add_argument("--rule2-p99", type=float, default=4, help="max 99th-percentile luma difference (default 4)")
+    ap.add_argument("--rule2-cell-max", type=float, default=0.40,
+                    help="max share of a cell's luma contrast taken away: see-through (default 0.40)")
+    ap.add_argument("--rule2-clear", type=float, default=0.05,
+                    help="contrast loss up to which a cell counts as clear (default 0.05)")
+    ap.add_argument("--rule2-clear-share", type=float, default=0.25,
+                    help="min share of cells that stay clear (default 0.25)")
     ap.add_argument("--rule4-change", type=float, default=0.10, help="max relative contrast change (default 0.10)")
     ap.add_argument("--rule5-distance", type=float, default=12.0,
                     help="min mean per-pixel difference between two kinds, 0-255 (default 12)")
@@ -278,13 +293,14 @@ def main(argv=None):
     board = box(layout["board_rect"])
 
     results = {
-        "rule_2": rule_2(img["all_off"], img["atmosphere_only"], board, args),
+        "rule_2": rule_2(img["all_off"], img["atmosphere_only"], layout, args),
         "rule_4": rule_4(img["all_on"], img["all_off"], layout, args),
         "rule_5": rule_5(img["all_on"], layout, args),
         "rule_6": rule_6(img["all_off"], img["glow_only"], board, layout["cell_px"], args),
     }
     summary = {
-        "rule_2": lambda d: f"mean diff {d['mean_diff']} (max {d['max_mean']}), p99 {d['p99_diff']} (max {d['max_p99']})",
+        "rule_2": lambda d: (f"worst cell contrast loss {d['worst_cell_loss']:.0%} (max {d['max_cell_loss']:.0%}), "
+                             f"clear cells {d['clear_share']:.0%} (min {d['min_clear_share']:.0%})"),
         "rule_4": lambda d: f"worst contrast change {d['worst_change']:.1%} (max {d['max_change']:.0%})",
         "rule_5": lambda d: "; ".join(
             f"shade {sh}: " + ", ".join(f"{k} {v['distance']}/{v['needed']}" for k, v in sims.items())

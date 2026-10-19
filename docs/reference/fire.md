@@ -226,9 +226,9 @@ tiers ([Quality tiers](quality-tiers.md)); the look-dev scene
 never carries the 8×8 sheets.
 
 \*\* The light carries `light_volumetric_fog_energy` 2.0 and lights the
-temple's dusty air where it reaches it, outside the board
-([Board themes: Atmosphere](board-themes.md#atmosphere)); the air is
-empty over the board, so nothing glows there.
+temple's dusty air where it reaches it
+([Board themes: Atmosphere](board-themes.md#atmosphere)), including the
+thin veil over the board.
 
 ## Cost
 
@@ -251,7 +251,8 @@ web smoke test fails on any browser console warning).
 The braziers stand outside the board (brazier centres 5.5 m from the
 middle, board edge 4.55 m) and every effect stays above them. The
 readability capture gives the same numbers with and without the fire:
-on `web` with llvmpipe, rule 2 mean difference 19.36 against 19.36 on
+on `web` with llvmpipe, rule 2 mean difference (the luma-difference check of the time) 19.36
+against 19.36 on
 `main`, rule 4 23.3 % against 23.3 %, rule 6 15 px against 14 px. Rules
 2, 4 and 5 fail on `main` already (depth fog and the lapis and amethyst
 pair; WP-47, WP-51, WP-52).

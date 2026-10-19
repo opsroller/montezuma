@@ -417,9 +417,9 @@ def atmosphere(r, p, models):
     """Volumetric fog volume, dust and light-shaft cards for the theme's environment scene.
 
     Fog and dust need volumetric fog (desktop tiers); the cards stand in for
-    both where it is missing (mobile, web). Nothing may draw over the board: the fog shader
-    has zero density over it, and dust and card positions are checked against
-    every game camera here.
+    both where it is missing (mobile, web). The fog shader keeps only a thin,
+    patchy veil over the board; dust and card positions are kept off the board
+    from every game camera here.
     """
     theme = p["theme"]
     a = p["lighting"]["atmosphere"]
@@ -521,10 +521,9 @@ def main():
     TEXTURE_SETS.update(p["textures"]["sets"])
     EMISSION_NITS["scale"] = 3072007.0 / p["lighting"]["exposure"]["sensitivity"]
     if "atmosphere" in p["lighting"]:
-        # The fog's clear square follows the board, so it is derived, not authored.
+        # The fog's veil follows the board, so its extent is derived, not authored.
         board_half = p["board"]["width"] * p["cell_size"] / 2 + p["board"]["frame_width"]
-        fog_params = p["materials"]["MI_AtmosphereFog"]["params"]
-        fog_params["clear_half"] = round(board_half + p["lighting"]["atmosphere"]["volumes"]["clearance"], 3)
+        p["materials"]["MI_AtmosphereFog"]["params"]["board_half"] = round(board_half, 3)
     if "water" in p:
         WATER.update(water_channel(p), stone=p["materials"]["MI_StoneDark"],
                      sun=sun_toward(p["environment"]["sun"]["transform"]))
@@ -638,7 +637,7 @@ def main():
         # Optional height fog. The temple has none: in the game's board view
         # on Forward+ even height fog that starts below the platform left a
         # haze over the board (readability rule 2), so atmosphere is
-        # FogVolumes kept off the board (WP-51).
+        # FogVolumes, with only a thin veil over the board (WP-51).
         *([
             "fog_enabled = true",
             f"fog_light_color = {color(fog['color'])}",

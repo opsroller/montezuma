@@ -289,7 +289,8 @@ capture ([Benchmark](benchmark.md#readability-checks)).
 
 Ground mist and dust around the temple: volumetric fog lying in banks on
 the plaza, cut by the shadows of the temple and ferns, and dust on the desktop tiers, light-shaft cards in its place on mobile and web.
-Nothing of it is ever over the board (readability rule 2 in the
+Over the board lies only a thin, patchy veil of the mist that the tiles
+and pieces read through (readability rule 2 in the
 [Visual target](visual-target.md#readability-rules-every-tier)). Why it is
 built this way: [About the atmosphere](../explanation/about-the-atmosphere.md).
 
@@ -300,29 +301,37 @@ parameter file's `lighting.atmosphere` section and the `MI_AtmosphereFog`,
 | Node | Type | Tiers | Parameters | Temple |
 |---|---|---|---|---|
 | `WorldEnvironment` | volumetric fog on, global density 0 | `desktop-high` (64 × 64 froxels), `desktop-standard` (32 × 32) | `atmosphere.fog` (`anisotropy`, `length`, `detail_spread`, `gi_inject`, `ambient_inject`, `temporal_amount`) | isotropic; 30 m, detail spread 1 (even slices, so the low mist far below the camera is as finely sliced as the air near it); GI 0.05, ambient 0.2 (mist in shade is dim and lit by the sky, not glowing) |
-| `AtmosphereFog` | box `FogVolume` around the temple, group `quality:volumetric_fog`; its material path in `metadata/fog_material_path` | desktop | `atmosphere.volumes` (`clearance`, `outer`, `bottom`, `top`); `MI_AtmosphereFog` (below) | 38 × 38 m, from 2.6 m below the board to the board's height |
+| `AtmosphereFog` | box `FogVolume` around the temple, group `quality:volumetric_fog`; its material path in `metadata/fog_material_path` | desktop | `atmosphere.volumes` (`outer`, `bottom`, `top`); `MI_AtmosphereFog` (below) | 38 × 38 m, from 2.6 m below the board to 0.45 m above it |
 | `Dust` | `GPUParticles3D`, ring around the platform, `MI_Dust`, group `quality:volumetric_fog` | desktop | `atmosphere.dust` (`amount`, `lifetime`, `inner_radius`, `outer_radius`, `bottom`, `top`, `size`, `speed`, `turbulence`) | 320 motes, 8.5 to 13 m from the centre, 5 cm, at most 5 cm/s |
 | `LightShaftCards` | `Node3D` holding one `MeshInstance3D` quad per card (`Card01`…), along the sun, `MI_LightShaft`, group `quality_fallback:volumetric_fog`; the cards are on render layer 2 so the reflection probe leaves them out | `mobile`, `web` | `atmosphere.shafts` (`count`, `inner_radius`, `outer_radius`, `length`, `width`, `ground`) | 12 cards, 3.5 to 5.5 m long, 12 draw calls |
 
-The fog volume covers the board too; its shader keeps it empty there.
-`SH_AtmosphereFog` gives zero density inside a square of half-side
-`clear_half` around the board centre (board plus `volumes.clearance`) and
-fades in over `fade` metres outside it. The material's parameters:
+The fog volume covers the board too. Over it `SH_AtmosphereFog` lays only
+a thin veil: drifting patches on the tile tops (y = 0) that thin to nothing
+by `veil_height`, below the floating score labels (0.8 cell and up), with
+clear tiles between them. The banks lie on the plaza around the platform.
+The material's parameters:
 
 | Parameter | Temple | Meaning |
 |---|---|---|
-| `density` | 6 | extinction per metre in the core of a bank: the floor all but disappears under one |
+| `density` | 6 (0 to 8) | extinction per metre in the core of a bank: the floor all but disappears under one |
 | `albedo` | `#ebedf0` | scattering colour; mist is water and scatters every colour alike, so it is near white and the light gives it its colour |
-| `clear_half` | 6.15 (set by the generator) | half the side of the fog-free square: board half-size 4.55 + clearance 1.6 |
-| `fade` | 1.2 m | ramp from no fog to full fog outside that square |
+| `board_half` | 4.55 (set by the generator) | half the side of the board, frame included; the veil lies inside it and the banks thicken with distance outside it |
 | `ground_y` | −1.92 m | the plaza floor the mist lies on (platform top −0.42 m less three 0.5 m tiers) |
-| `bank_height`, `top_soft` | 1.4 m, 0.6 m | tallest a bank gets above the floor, and how far its top fades out |
-| `thicken_over`, `near_amount` | 7 m, 0.5 | banks next to the platform are `near_amount` as tall as those `thicken_over` metres out: more mist further away |
-| `bank_scale`, `coverage` | 9 m, (0.56, 0.64) | size of one tile of bank noise, and the noise values mapped to no bank and a full bank; the narrow range leaves clear floor between banks |
-| `wisp_scale`, `wisp_stretch`, `wisp_amount` | 4 m, 3, 0.35 | finer noise drawn out along the wind that breaks up the banks' tops and edges |
+| `bank_height`, `top_soft` | 1.4 m, 0.6 m (0.05 to 2) | tallest a bank gets above the floor, and how far its top fades out |
+| `thicken_over`, `near_amount` | 7 m, 0.5 (0 to 1) | banks next to the platform are `near_amount` as tall as those `thicken_over` metres out: more mist further away |
+| `bank_scale`, `coverage` | 9 m (1 to 40), (0.56, 0.64) | size of one tile of bank noise, and the noise values mapped to no bank and a full bank; the narrow range leaves clear floor between banks |
+| `wisp_scale`, `wisp_stretch`, `wisp_amount` | 4 m (0.5 to 20), 3 (1 to 8), 0.35 (0 to 1) | finer noise drawn out along the wind that breaks up the banks' tops and edges |
 | `wind` | (0.12, 0, −0.05) m/s | drift of the banks (the wisps drift 1.6 times faster) |
-| `base_shade` | 0.75 | share of the light the bottom of a bank scatters against its top; Godot's fog does not shadow itself, so this gives the banks lit tops |
+| `base_shade` | 0.75 (0 to 1) | share of the light the bottom of a bank scatters against its top; Godot's fog does not shadow itself, so this gives the banks lit tops |
+| `veil_density` | 1.0 (0 to 2) | extinction per metre on the tiles in the core of a patch: thin enough to read the tiles and pieces through |
+| `veil_height` | 0.25 m (0.05 to 0.4) | height above the tiles where the veil has thinned to nothing; the range stops under the score labels' bottom edge (about 0.5 m) |
+| `veil_scale`, `veil_coverage` | 12 m (2 to 24), (0.58, 0.78) | size of one tile of veil noise, and the noise values mapped to no veil and full veil: patches a few cells across with clear cells between them. Keep `wind` × 3600 s (Godot's `TIME` rollover) a whole number of `veil_scale` tiles, or the patches jump once an hour: with the temple's wind, (432, −180) m, that is 2, 3, 4, 6, 9, 12 or 18 m. The wisps that shade the veil still shift a little at the rollover |
+| `veil_spread` | 1 m (0 to 2) | how far past the board edge the veil fades out |
 | `density_texture` | `NoiseTexture3D`, 64³, seed 51, frequency 0.08 | from `noise_textures_3d`, built by Godot at load |
+
+The veil scatters all the light it receives (it is not darkened by
+`base_shade`); where it overlaps a bank, the shade follows each one's
+share of the density. To retune it: [Tune the fog veil](../how-to/tune-the-fog-veil.md).
 
 The sun's `fog_energy` (7) makes up for Godot lighting the fog by single
 scattering only: mist this thick scatters light many times, and with
@@ -353,7 +362,7 @@ random (seed + 51) until they pass.
 | `SH_HeatHaze` | heat haze (`MI_HeatHaze`), desktop | screen-texture distortion, drawn before the flame | 2 noise and 1 screen sample |
 | `SH_CellHighlight` | `cell_highlight` | unshaded, additive | one 1×1 quad; no texture samples |
 | `SH_Spark` | `fx_match` | unshaded, additive; fades by `INSTANCE_CUSTOM.y` | 16 tiny spheres per burst |
-| `SH_AtmosphereFog` | the temple's `FogVolume` (`MI_AtmosphereFog`), desktop | fog shader | 1 3D-noise sample per froxel in the volume |
+| `SH_AtmosphereFog` | the temple's `FogVolume` (`MI_AtmosphereFog`), desktop (64 × 64 froxels on `desktop-high`, 32 × 32 on `desktop-standard`); mobile and web show the light-shaft cards and no veil | fog shader; no static switches, 1 variant | 3 3D-noise samples per froxel in the volume (banks, wisps, veil); no measurable cost against the clear-square version ([Benchmark results](benchmark-results.md#fog-veil-over-the-board)) |
 | `SH_Dust` | dust motes (`MI_Dust`), desktop | lit, additive, no depth write, camera-facing | no texture samples |
 | `SH_LightShaft` | light-shaft cards (`MI_LightShaft`), mobile and web | unshaded, additive, no depth write; fades out toward the ground in UV | no texture samples |
 | `SH_TriplanarPBR` | desktop stone (`hi/MI_Stone*`) | opaque, Burley diffuse, GGX; object-space triplanar PBR set; parallax occlusion on upward faces (`height_depth` metres, 8 to 24 layers by view angle) | 3 texture samples where one projection carries the surface (most pixels; projections under 2% weight are skipped), up to 9 on edges, plus up to 25 height samples on upward faces |

@@ -99,7 +99,7 @@ cell · — absent
 
 | Feature | `desktop-high` | `desktop-standard` | `mobile` | `web` |
 |---|---|---|---|---|
-| Volumetric fog with sun shafts and dust (`FogVolume`s outside the board) | ✔ | ◐ low resolution, no fire contribution | ◐ light-shaft cards | ◐ light-shaft cards |
+| Volumetric fog with sun shafts and dust (`FogVolume`s; a thin veil over the board) | ✔ | ◐ low resolution, no fire contribution | ◐ light-shaft cards | ◐ light-shaft cards |
 | Depth and height fog | ◐ only where the readability capture passes on every tier; the temple has none (see [About lighting](../explanation/about-lighting.md)) | ◐ same | ◐ same | ◐ same |
 | Glow (bloom), before tonemapping | ✔ | ✔ | ✔ | ✔ |
 | Colour grade (LUT) | ✔ | ✔ | ✔ | ✔ |
@@ -115,7 +115,9 @@ Readability beats realism. These are acceptance criteria, not taste:
 1. The camera, its angle and the board framing are those in
    [Board view](board-view.md); no effect moves them.
 2. Persistent effects (fog, haze, light shafts, depth-of-field blur, dust)
-   have zero density or blur inside the board rectangle.
+   may lie over the board only thin enough to see the tiles and pieces
+   through, never over the whole board at once, and always under the HUD
+   and any text (score labels, counters, dialogs).
 3. Transient effects (match bursts, power-ups, totems) cover a cell for no
    longer than the animation step they belong to in
    [MoveResult events](move-result.md).
