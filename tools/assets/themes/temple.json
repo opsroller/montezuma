@@ -388,19 +388,78 @@
     "sky_horizon": "#b7ae86",
     "ground_bottom": "#1d2a16",
     "ambient_energy": 0.4,
-    "exposure": 0.95,
-    "fog": "#7f946c",
-    "fog_density": 0.003,
     "saturation": 1.08,
     "sun": {
-      "transform": "Transform3D(0.819152, 0.383798, -0.426250, 0.000000, 0.743145, 0.669131, 0.573576, -0.548120, 0.608749, 0, 8, 0)",
-      "color": "#ffdcae",
-      "energy": 1.15
+      "transform": "Transform3D(0.819152, 0.383798, -0.426250, 0.000000, 0.743145, 0.669131, 0.573576, -0.548120, 0.608749, 0, 8, 0)"
+    }
+  },
+  "lighting": {
+    "_comment": "Physical light units (lux, lumens, nits, Kelvin, ISO). Lights, GI and exposure: docs/reference/board-themes.md#lighting; per-tier behaviour: docs/reference/quality-tiers.md.",
+    "sky_nits": 15000,
+    "agx_white": 16.0,
+    "agx_contrast": 1.25,
+    "exposure": {
+      "sensitivity": 440,
+      "multiplier": 1.0,
+      "auto_scale": 0.4,
+      "auto_speed": 0.5,
+      "auto_min_sensitivity": 300,
+      "auto_max_sensitivity": 640
+    },
+    "sun": {
+      "lux": 11000,
+      "kelvin": 4500,
+      "color": "#ffffff",
+      "angular_distance": 0.6
     },
     "torch": {
-      "color": "#ff9a3c",
-      "energy": 1.6,
+      "lumens": 60000,
+      "kelvin": 1900,
+      "color": "#ffffff",
+      "size": 0.12,
       "range": 4.5
+    },
+    "sky_fill": {
+      "transform": "Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 6, 0)",
+      "lumens": 20000,
+      "color": "#b8d4ff",
+      "size": [
+        10.0,
+        10.0
+      ],
+      "range": 12.0
+    },
+    "reflection_probe": {
+      "position": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "size": [
+        12.0,
+        4.0,
+        12.0
+      ]
+    },
+    "voxel_gi": {
+      "position": [
+        0,
+        0.5,
+        0
+      ],
+      "size": [
+        14,
+        4,
+        14
+      ],
+      "subdiv": 0
+    },
+    "lightmap": {
+      "quality": 1,
+      "bounces": 3,
+      "texel_scale": 1.0,
+      "max_texture_size": 2048,
+      "probes_subdiv": 2
     }
   },
   "lookdev": {

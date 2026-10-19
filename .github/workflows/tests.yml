@@ -120,6 +120,11 @@ jobs:
         run: |
           cmake -DDIR=$HOME/godot-dl -P tools/release/fetch-godot.cmake
           ln -sf ~/godot-dl/godot godot
+      - name: Bake lightmaps
+        if: runner.os == 'Linux'
+        uses: ./.github/actions/lightmaps
+        with:
+          godot: ./godot
       - name: Load the game headless
         if: runner.os == 'Linux'
         run: |

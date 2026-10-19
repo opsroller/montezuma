@@ -122,6 +122,10 @@ jobs:
           cmake -DDIR=$HOME/godot-dl
           "-DTEMPLATES=linux_release.x86_64;windows_release_x86_64.exe;windows_release_x86_64_console.exe;macos.zip"
           -P tools/release/fetch-godot.cmake
+      - name: Bake lightmaps
+        uses: ./.github/actions/lightmaps
+        with:
+          godot: /home/runner/godot-dl/godot
       - name: Export
         env:
           GODOT: /home/runner/godot-dl/godot
