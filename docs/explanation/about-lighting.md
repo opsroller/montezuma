@@ -34,6 +34,27 @@ benchmark on the reference Mac mini M4 replaces them.
   only, baked, re-lit every frame), SDFGI (Forward+ only, real-time,
   cascaded) and SSIL (screen space, Forward+ only).
 
+## Sun and sky balance
+
+Daylight reads as daylight when the sun is much brighter than the sky
+light in shade, which gives dark, hard-edged shadows, and when the two
+differ in colour: white-warm sun, cool blue shade. The temple's first
+setup had an 11,000 lux, 4500 K sun under a tan sky, plus a warm colour
+grade that also pulled the shadows down. The sun was too weak against the
+sky to give real shadows, so the scene looked flat, and the tan sky, the
+low sun temperature and the grade turned the stone and the mist brown and
+the whole frame dark.
+
+The temple now has a 30,000 lux, 5800 K sun; a sky that is blue overhead
+and pale blue-grey at the horizon, which lights the shade and the mist;
+a lightmap bake that takes that sky at 0.5 of its 15,000 nits; AgX white
+8 and contrast 1.5; exposure × 0.8, since the auto range (ISO 400 to 480)
+is too narrow to absorb the brighter sun; and a near-neutral grade. With
+the light setting the colour, the mist renders white-grey and the water
+blue. Check any change to these with before-and-after captures of the
+game itself, at the size people play it: the balance shows on the plaza,
+the water and the mist around the board, not in a close look-dev frame.
+
 ## Decision
 
 1. **Physical light units and AgX on every tier.** Lux for the sun,

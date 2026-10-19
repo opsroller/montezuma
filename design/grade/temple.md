@@ -8,9 +8,15 @@ this way is in
 
 ## Intent
 
-A gentle primary grade that warms the sunlit limestone and keeps the
-shadows a touch cool, so the board reads as late afternoon in a jungle
-clearing without tinting the pieces.
+A near-neutral grade: slope 1.02, 1.01, 1.0, no offset, power 1,
+saturation 1.04. The light gives the scene its colour (a 5800 K sun and
+a pale blue sky, [About lighting](../../docs/explanation/about-lighting.md#sun-and-sky-balance)).
+The first grade, below, warmed the highlights and pulled the shadows down
+on top of a 4500 K sun and a tan sky; together they turned the stone and
+the mist brown and the scene dark, so it was replaced in the lighting fix
+of 19 October 2026.
+
+First grade (replaced):
 
 | CDL term | Red | Green | Blue | Effect |
 |---|---|---|---|---|
@@ -36,6 +42,16 @@ follows, without loosening any check.
 | Glow intensity | 0.6 | 0.5 (unchanged) | 0.6 raised `web`'s rule 6 at 4K from 2.8% to 6.1%; on Forward+ it changes nothing at threshold 8 |
 | Glow threshold | 1.6 | 8 (Forward+); 0.6 on mobile and web | at 8 only flames, gem highlights and gold glints bloom |
 | Auto exposure range | — | ISO 400 to 480 (was 300 to 640) | the plaza mist pulled the exposure: rules 2 and 4 failed at 4K |
+
+## Lighting fix, 19 October 2026
+
+The lighting fix set AgX contrast to 1.5 and the grade above to near
+neutral. Readability on dropkick (RTX 4080 SUPER, 2560 × 1440 for
+`desktop-high`): rule 4 passes at 4.5% on `desktop-high`, `mobile` and
+`web` (main before the fix: 8.6% on `desktop-high`), rule 6 at 0.000%,
+rule 2 at 27 to 30% worst cell contrast loss. Rule 5 fails on main and
+still fails, but every closest pair moved apart: on `desktop-high`,
+greyscale 7.04 to 9.63 (shade 0) and 4.84 to 9.24 (shade 1).
 
 ## Palette check
 

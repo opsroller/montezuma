@@ -440,13 +440,13 @@
         }
       },
       "params": {
-        "density": 6.0,
+        "density": 3.5,
         "albedo": "#ebedf0",
         "ground_y": -1.92,
         "bank_height": 1.4,
         "top_soft": 0.6,
         "thicken_over": 7.0,
-        "near_amount": 0.5,
+        "near_amount": 0.3,
         "bank_scale": 9.0,
         "wisp_scale": 4.0,
         "wisp_stretch": 3.0,
@@ -478,11 +478,11 @@
     }
   },
   "environment": {
-    "sky_top": "#24566e",
-    "sky_horizon": "#b7ae86",
+    "sky_top": "#3a78b8",
+    "sky_horizon": "#b4c6d6",
     "ground_bottom": "#1d2a16",
     "ambient_energy": 0.15,
-    "saturation": 1.08,
+    "saturation": 1.12,
     "sun": {
       "transform": "Transform3D(0.819152, 0.383798, -0.426250, 0.000000, 0.743145, 0.669131, 0.573576, -0.548120, 0.608749, 0, 8, 0)"
     }
@@ -490,8 +490,8 @@
   "lighting": {
     "_comment": "Physical light units (lux, lumens, nits, Kelvin, ISO). Lights, GI and exposure: docs/reference/board-themes.md#lighting; per-tier behaviour: docs/reference/quality-tiers.md.",
     "sky_nits": 15000,
-    "agx_white": 16.0,
-    "agx_contrast": 1.25,
+    "agx_white": 8.0,
+    "agx_contrast": 1.5,
     "ssao": {
       "_comment": "Ambient occlusion strength in the creases: intensity, power and how much it darkens direct light.",
       "intensity": 3.0,
@@ -500,18 +500,18 @@
     },
     "exposure": {
       "sensitivity": 440,
-      "multiplier": 1.0,
+      "multiplier": 0.8,
       "auto_scale": 0.32,
       "auto_speed": 0.5,
       "auto_min_sensitivity": 400,
       "auto_max_sensitivity": 480
     },
     "sun": {
-      "lux": 11000,
-      "kelvin": 4500,
+      "lux": 30000,
+      "kelvin": 5800,
       "color": "#ffffff",
       "angular_distance": 0.6,
-      "fog_energy": 7.0
+      "fog_energy": 3.0
     },
     "torch": {
       "lumens": 90000,
@@ -561,7 +561,7 @@
       "texel_scale": 1.0,
       "max_texture_size": 2048,
       "probes_subdiv": 2,
-      "sky_energy": 0.3
+      "sky_energy": 0.5
     },
     "atmosphere": {
       "_comment": "Volumetric fog around the temple with a thin veil over the board, dust and light-shaft cards around it (WP-51). Keys: docs/reference/board-themes.md#atmosphere.",
@@ -570,7 +570,7 @@
         "length": 30.0,
         "detail_spread": 1.0,
         "gi_inject": 0.05,
-        "ambient_inject": 0.2,
+        "ambient_inject": 0.5,
         "temporal_amount": 0.9
       },
       "volumes": {
@@ -612,8 +612,8 @@
   "grade": {
     "_comment": "Colour grade as an ASC CDL in display space, baked into a 3D LUT by gen_theme_textures.py; check limits for validate_assets.py. docs/reference/board-themes.md#colour-grade.",
     "lut_size": 32,
-    "slope": [1.0712, 1.04, 0.9984],
-    "offset": [-0.02, -0.02, -0.0096],
+    "slope": [1.02, 1.01, 1.0],
+    "offset": [0.0, 0.0, 0.0],
     "power": [1.0, 1.0, 1.0],
     "saturation": 1.04,
     "check": {

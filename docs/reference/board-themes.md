@@ -198,14 +198,14 @@ the parameter file's `lighting` section:
 
 | Node | Type | Tiers | Parameters (`lighting.*`) | Temple |
 |---|---|---|---|---|
-| `WorldEnvironment` | sky, AgX tonemapper, SSAO, SSIL, optional height fog; glow and the grade LUT from [Post-processing](#post-processing) and [Colour grade](#colour-grade) | all (switches per [Quality tiers](quality-tiers.md)) | `sky_nits`, `agx_white`, `agx_contrast`, `ssao` (`intensity`, `power`, `light_affect`), optional `fog` (`color`, `height`, `height_density`, `sky_affect`) | 15,000 nits; white 16, contrast 1.25; SSAO intensity 3, power 1.5, light affect 0.3; no height fog. Volumetric fog on, with no density of its own: see [Atmosphere](#atmosphere) |
-| `camera` (`CameraAttributesPractical`) | exposure, on the environment, `LightmapGI` and `VoxelGI` | auto exposure on desktop only | `exposure` (`sensitivity`, `multiplier`, `auto_scale`, `auto_speed`, `auto_min_sensitivity`, `auto_max_sensitivity`) | ISO 440 (auto 400 to 480), `auto_scale` 0.32 (darker sunlit stone, WP-60). The narrow auto range keeps the plaza mist from moving the board's exposure: from 300 to 640 it failed readability rules 2 and 4 at 4K ([`design/grade/temple.md`](../../design/grade/temple.md)). Auto exposure and the fog are both desktop-only |
-| `Sun` | `DirectionalLight3D`, shadows | all | `sun` (`lux`, `kelvin`, `color`, `angular_distance`, optional `fog_energy` → `light_volumetric_fog_energy`) | 11,000 lux, 4500 K, 0.6°, fog energy 7 (see [Atmosphere](#atmosphere)) |
+| `WorldEnvironment` | sky, AgX tonemapper, SSAO, SSIL, optional height fog; glow and the grade LUT from [Post-processing](#post-processing) and [Colour grade](#colour-grade) | all (switches per [Quality tiers](quality-tiers.md)) | `sky_nits`, `agx_white`, `agx_contrast`, `ssao` (`intensity`, `power`, `light_affect`), optional `fog` (`color`, `height`, `height_density`, `sky_affect`) | 15,000 nits, blue overhead (`#3a78b8`) and pale blue-grey at the horizon (`#b4c6d6`); white 8, contrast 1.5; SSAO intensity 3, power 1.5, light affect 0.3; no height fog. Volumetric fog on, with no density of its own: see [Atmosphere](#atmosphere) |
+| `camera` (`CameraAttributesPractical`) | exposure, on the environment, `LightmapGI` and `VoxelGI` | auto exposure on desktop only | `exposure` (`sensitivity`, `multiplier`, `auto_scale`, `auto_speed`, `auto_min_sensitivity`, `auto_max_sensitivity`) | ISO 440 (auto 400 to 480), multiplier 0.8 (the brighter sun is not left to the narrow auto range), `auto_scale` 0.32 (darker sunlit stone, WP-60). The narrow auto range keeps the plaza mist from moving the board's exposure: from 300 to 640 it failed readability rules 2 and 4 at 4K ([`design/grade/temple.md`](../../design/grade/temple.md)). Auto exposure and the fog are both desktop-only |
+| `Sun` | `DirectionalLight3D`, shadows | all | `sun` (`lux`, `kelvin`, `color`, `angular_distance`, optional `fog_energy` → `light_volumetric_fog_energy`) | 30,000 lux, 5800 K, 0.6°, fog energy 3 (see [Atmosphere](#atmosphere) and [About lighting](../explanation/about-lighting.md#sun-and-sky-balance)) |
 | `Fire1`…`Fire4/Light` | `FlickerLight3D` in each brazier's `PF_BrazierFire` ([Fire](fire.md)), dual paraboloid shadows (seam flat above the board), group `quality_shadow_light` | all; shadows on the nearest 8 or 2 | `torch` (`lumens`, `kelvin`, `color`, `size`, `range`) | 90,000 lm, 1900 K, range 4.5 m |
 | `SkyFill` | `AreaLight3D` over the board, group `quality:area_light`, not baked | `desktop-high` | `sky_fill` (`transform`, `lumens`, `color`, `size`, `range`) | 6,000 lm, 10 × 10 m |
 | `ReflectionProbe` | box-projected probe; leaves out render layer 2 (fire effects, [Fire](fire.md#pf_brazierfire), and the light-shaft cards) | all | `reflection_probe` (`position`, `size`) | 12 × 4 × 12 m |
 | `VoxelGI` | real-time bounce received by the moving pieces, group `quality:voxel_gi`, baked at run time | `desktop-high` | `voxel_gi` (`position`, `size`, `subdiv`) | 14 × 4 × 14 m, 64 cells |
-| `Lightmap` | `LightmapGI` with probes | all | `lightmap` (`quality`, `bounces`, `texel_scale`, `max_texture_size`, `probes_subdiv`, optional `sky_energy`: bake the theme's sky at this energy instead of the scene's) | medium, 3 bounces, sky 0.3 |
+| `Lightmap` | `LightmapGI` with probes | all | `lightmap` (`quality`, `bounces`, `texel_scale`, `max_texture_size`, `probes_subdiv`, optional `sky_energy`: bake the theme's sky at this energy instead of the scene's) | medium, 3 bounces, sky 0.5 |
 
 Static meshes (board and backdrop) bake into the lightmap: their
 `.obj.import` files set `generate_lightmap_uv2=true` and are committed.
@@ -255,7 +255,7 @@ Why a CDL and a LUT: [About post-processing](../explanation/about-post-processin
 | Key (`grade.*`) | Meaning | Temple |
 |---|---|---|
 | `lut_size` | texels per axis | 32 (a 1024 × 32 PNG, 96 KB in memory) |
-| `slope`, `offset`, `power` | CDL per channel, sRGB-encoded values in 0 to 1 | slope 1.0712, 1.04, 0.9984; offset −0.02, −0.02, −0.0096; power 1 (the warm grade below a contrast of 1.04 around 0.5) |
+| `slope`, `offset`, `power` | CDL per channel, sRGB-encoded values in 0 to 1 | slope 1.02, 1.01, 1.0; offset 0; power 1 (a near-neutral grade: the light, not the grade, sets the colour; see [`design/grade/temple.md`](../../design/grade/temple.md)) |
 | `saturation` | CDL saturation, 1 keeps it | 1.04 |
 | `check.max_shift_pieces`, `check.max_shift_surfaces` | most a piece colour (`materials.<kind>.albedo`) or palette colour (`surface_tokens`, `extra_tokens`) may move, OKLab distance | 0.04, 0.05 |
 | `check.max_separation_drop` | most the closest pair of piece colours may come closer, OKLab distance, in normal vision, greyscale, protanopia, deuteranopia and tritanopia (Machado et al. 2009, severity 1) | 0.005 |
@@ -300,7 +300,7 @@ parameter file's `lighting.atmosphere` section and the `MI_AtmosphereFog`,
 
 | Node | Type | Tiers | Parameters | Temple |
 |---|---|---|---|---|
-| `WorldEnvironment` | volumetric fog on, global density 0 | `desktop-high` (64 × 64 froxels), `desktop-standard` (32 × 32) | `atmosphere.fog` (`anisotropy`, `length`, `detail_spread`, `gi_inject`, `ambient_inject`, `temporal_amount`) | isotropic; 30 m, detail spread 1 (even slices, so the low mist far below the camera is as finely sliced as the air near it); GI 0.05, ambient 0.2 (mist in shade is dim and lit by the sky, not glowing) |
+| `WorldEnvironment` | volumetric fog on, global density 0 | `desktop-high` (64 × 64 froxels), `desktop-standard` (32 × 32) | `atmosphere.fog` (`anisotropy`, `length`, `detail_spread`, `gi_inject`, `ambient_inject`, `temporal_amount`) | isotropic; 30 m, detail spread 1 (even slices, so the low mist far below the camera is as finely sliced as the air near it); GI 0.05, ambient 0.5 (mist in shade takes the cool sky light, so it reads white-grey, not glowing and not tan) |
 | `AtmosphereFog` | box `FogVolume` around the temple, group `quality:volumetric_fog`; its material path in `metadata/fog_material_path` | desktop | `atmosphere.volumes` (`outer`, `bottom`, `top`); `MI_AtmosphereFog` (below) | 38 × 38 m, from 2.6 m below the board to 0.45 m above it |
 | `Dust` | `GPUParticles3D`, ring around the platform, `MI_Dust`, group `quality:volumetric_fog` | desktop | `atmosphere.dust` (`amount`, `lifetime`, `inner_radius`, `outer_radius`, `bottom`, `top`, `size`, `speed`, `turbulence`) | 320 motes, 8.5 to 13 m from the centre, 5 cm, at most 5 cm/s |
 | `LightShaftCards` | `Node3D` holding one `MeshInstance3D` quad per card (`Card01`…), along the sun, `MI_LightShaft`, group `quality_fallback:volumetric_fog`; the cards are on render layer 2 so the reflection probe leaves them out | `mobile`, `web` | `atmosphere.shafts` (`count`, `inner_radius`, `outer_radius`, `length`, `width`, `ground`) | 12 cards, 3.5 to 5.5 m long, 12 draw calls |
@@ -313,12 +313,12 @@ The material's parameters:
 
 | Parameter | Temple | Meaning |
 |---|---|---|
-| `density` | 6 (0 to 8) | extinction per metre in the core of a bank: the floor all but disappears under one |
+| `density` | 3.5 (0 to 8) | extinction per metre in the core of a bank: the paving shows faintly through one |
 | `albedo` | `#ebedf0` | scattering colour; mist is water and scatters every colour alike, so it is near white and the light gives it its colour |
 | `board_half` | 4.55 (set by the generator) | half the side of the board, frame included; the veil lies inside it and the banks thicken with distance outside it |
 | `ground_y` | −1.92 m | the plaza floor the mist lies on (platform top −0.42 m less three 0.5 m tiers) |
 | `bank_height`, `top_soft` | 1.4 m, 0.6 m (0.05 to 2) | tallest a bank gets above the floor, and how far its top fades out |
-| `thicken_over`, `near_amount` | 7 m, 0.5 (0 to 1) | banks next to the platform are `near_amount` as tall as those `thicken_over` metres out: more mist further away |
+| `thicken_over`, `near_amount` | 7 m, 0.3 (0 to 1) | banks next to the platform are `near_amount` as tall as those `thicken_over` metres out: more mist further away |
 | `bank_scale`, `coverage` | 9 m (1 to 40), (0.56, 0.64) | size of one tile of bank noise, and the noise values mapped to no bank and a full bank; the narrow range leaves clear floor between banks |
 | `wisp_scale`, `wisp_stretch`, `wisp_amount` | 4 m (0.5 to 20), 3 (1 to 8), 0.35 (0 to 1) | finer noise drawn out along the wind that breaks up the banks' tops and edges |
 | `wind` | (0.12, 0, −0.05) m/s | drift of the banks (the wisps drift 1.6 times faster) |
@@ -333,7 +333,7 @@ The veil scatters all the light it receives (it is not darkened by
 `base_shade`); where it overlaps a bank, the shade follows each one's
 share of the density. To retune it: [Tune the fog veil](../how-to/tune-the-fog-veil.md).
 
-The sun's `fog_energy` (7) makes up for Godot lighting the fog by single
+The sun's `fog_energy` (3) makes up for Godot lighting the fog by single
 scattering only: mist this thick scatters light many times, and with
 single scattering alone it renders darker than the floor under it, a grey
 veil instead of white mist. Scaling the shader's albedo above 1 does not
