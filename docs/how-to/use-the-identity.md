@@ -97,7 +97,8 @@ sha256; it never copies them into the repository. Offline, add
 
    Every variable the old file had is kept, in the light block and the
    `prefers-color-scheme: dark` block.
-2. Note the changed value: `--radius` is 0.25 rem (was 0.5).
+2. Note what changes: every colour value moves to the identity's palette,
+   and `--radius` is 0.25 rem (was 0.5).
 3. Use the new variables where they help: `--color-link`,
    `--color-danger`, `--color-success`, `--color-warning`,
    `--color-info`, `--text-*`, `--band-height`.
@@ -137,13 +138,15 @@ sha256; it never copies them into the repository. Offline, add
    - light ground: the plain files; dark ground: `-reversed` lockups or
      `mark-on-dark.svg`;
    - one colour only: `mark-mono.svg` (soot) or `mark-reversed.svg` (lime);
-   - under 40 px wide: `mark-small.svg` at 32 px, or at 16 px where 32
-     does not fit.
+   - under 40 px wide on a light ground: `mark-small.svg` at 32 px, or at
+     16 px where 32 does not fit; on a dark ground use `app-icon-16.svg`,
+     which carries its own field.
 2. Size it at or above the minimum in the style guide's
    [clear space and minimum size](../../design/README.md#clear-space-and-minimum-size)
    table.
-3. Work out the clear space: x = 0.24 x the mark's width (for a lockup,
-   x = 0.048 x the horizontal lockup's width). Keep 1 x empty on every
+3. Work out the clear space: x = 0.24 x the mark's width (in either lockup,
+   x = 0.24 x the width of the mark inside it; for the horizontal lockup
+   that is 0.048 x the lockup's width). Keep 1 x empty on every
    side.
 4. Check the ground: the soot outline (light grounds) or the lime keyline
    (dark grounds) must reach 3 : 1 against it. Test a colour with:

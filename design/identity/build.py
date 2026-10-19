@@ -593,8 +593,8 @@ def pixel_mark(field=None, ink=None):
 def mark_small_svg():
     body = pixel_mark()
     return (SVG_HEAD + '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" '
-            'shape-rendering="crispEdges" role="img" aria-label="Montezuma\'s mark, small (16 to 32 px)">\n'
-            "  <title>Montezuma's mark, small (16 to 31 px)</title>\n  " + "\n  ".join(body) + "\n</svg>\n")
+            'shape-rendering="crispEdges" role="img" aria-label="Montezuma\'s mark, small (16 or 32 px)">\n'
+            "  <title>Montezuma's mark, small (16 or 32 px)</title>\n  " + "\n  ".join(body) + "\n</svg>\n")
 
 
 # =====================================================================
