@@ -84,8 +84,11 @@ lower part of each bank scatters three quarters of the light its top
 does, which gives the banks lit tops.
 
 The phase function stays isotropic. The sun is behind and above the
-camera, so a forward-scattering phase function would send the light away
-from the camera and darken the mist.
+camera: light that reaches the camera from the mist has turned through
+about 144 degrees. A single-scattering forward lobe (real droplets have
+one) would send that light away from the camera and darken the mist, but
+in mist this thick the many scatterings even the lobe out, so isotropic is
+the closer match to what the eye sees.
 
 Auto exposure, which only the desktop tiers have, as they alone have the
 fog, still meters the brighter frame. The theme's `auto_scale` goes from
@@ -138,7 +141,8 @@ frame's saturation rises from 58.8 to 72.2 and its mean luma falls from
 [Benchmark results](../reference/benchmark-results.md#wp-51-atmosphere).
 
 The ground mist rework (banks on the floor, a volume that stops at the
-board's height) costs the same: on an RTX 4080 SUPER the GPU time per
-frame at `desktop-high`, 2560×1440, is 3.09 to 3.10 ms with and without
-it, and video memory is unchanged
+board's height) costs next to nothing: on the reference Mac at native 5K
+with no upscaler the median frame is 139.9 ms against 140.3 ms before, and
+on an RTX 4080 SUPER at native 4K, full screen and uncapped, the GPU time
+per frame goes from 9.78 to 9.85 ms; video memory is unchanged on both
 ([Benchmark results](../reference/benchmark-results.md#ground-mist-rework)).

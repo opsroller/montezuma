@@ -135,13 +135,18 @@ haze look like, and so what the fog has to do:
   [International Journal of Optics, fog optical properties](https://doaj.org/article/30d6ef1c005c417c8cb7aabd8744f863)).
   The fog's albedo is therefore neutral, and its ambient light is low and
   cool, so mist in shadow is dim rather than glowing.
-- **It scatters forward.** Droplets that size send most light on in
-  roughly the direction it was travelling (asymmetry around 0.8). Mist
-  glows when you look across the light, and a shadow falling through it
-  stays dark. From the game camera the sun's rays cross the view at
-  about 48 degrees, inside that forward lobe, so sunlit mist brightens
-  and the shadows of the pillars, steps and ferns cut dark lanes through
-  it. Those lanes are what make it read as air with light in it.
+- **It scatters forward, but thick mist looks diffuse.** A single
+  droplet that size sends most light on in roughly the direction it was
+  travelling (asymmetry around 0.8), which is why a thin haze glows when
+  you look toward the sun. Mist thick enough to hide the ground scatters
+  each ray many times, and the light leaving it comes out nearly evenly
+  in every direction: a bank looks white from any side, even with the sun
+  behind you. That is the temple's case: the sun is behind and above the
+  game camera (light reaches the camera after turning through about 144
+  degrees), so the fog is lit as diffuse mist, not as forward-scattering
+  haze ([About the atmosphere](about-the-atmosphere.md#lit-like-mist-not-like-dust)).
+  Shadows of the pillars, steps and ferns falling through it stay dark,
+  and those lanes are what make it read as air with light in it.
 - **It pools and breaks up.** Dawn mist in the Maya plazas of Tikal and
   Palenque forms in still, damp air on the ground and lies in the low
   places, with a soft top and the ruins rising out of it; as it lifts it
