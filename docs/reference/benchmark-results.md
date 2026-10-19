@@ -191,7 +191,8 @@ builds.
 Every frame rendered at 5120×2880 and the replay matched its plan in
 both runs. The merge base's run is slow for its code: c0f387e, whose
 only difference from db718de is documentation, ran p50 113.9 and p95
-114.7 the same way minutes earlier. So the 4.8 ms gap is run-to-run
+114.7 the same way minutes earlier, and db718de itself ran p50 113.9
+and p95 115.1 in a later run. So the 4.8 ms gap is run-to-run
 spread, not a saving; within that spread WP-60 costs nothing
 measurable at 5K.
 
