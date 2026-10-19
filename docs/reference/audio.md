@@ -20,7 +20,7 @@ synthesis; there are no recordings, samples or presets. The scripts are
 the source, so only the rendered delivery files are committed beside
 them. `tools/audio/synth.py` holds the shared instruments and the
 physical models behind the contact sounds (`impact`, `friction`,
-`debris`, `stone_room`).
+`debris`, `stone_room`, `fit`, `soft_limit`).
 
 ## Levels
 
@@ -90,7 +90,7 @@ Measured values from `tools/audio/reports/sfx_loudness.json`.
 | `ui_back` | `ui_back.wav` | frequent | 0.12 | -24.2 | -10.1 |
 | `trophy` | `trophy.wav` | stinger | 3.19 | -16.0 | -4.7 |
 
-51 files, 6.8 MB as WAV on disk; Godot's QOA import stores them at
+51 files, 7.0 MB as WAV on disk; Godot's QOA import stores them at
 roughly a fifth of that.
 
 Totem and power-up cues use the ids WP-03 settled (`totem_fire_<id>` for
