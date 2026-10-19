@@ -179,7 +179,10 @@ A finding raised in two or more reviews is listed here as a rule.
   its own package's row. On rebase it keeps `main`'s text for every other
   row; a PR that edits another package's row drops that edit or moves it
   to the owning PR.
-- Docs rules (#80, #81). A new rule uses only terms the docs define where
-  they belong (the plan's status key, `benchmark-results.md`), contradicts
-  no rule already written down, and holds for the project's own existing
-  rows.
+- Docs rules (#80, #81, #83). A new rule uses only terms the docs define
+  where they belong (the plan's status key, `benchmark-results.md`, a
+  heading that exists), contradicts no rule already written down, and
+  holds for the project's own existing rows. A rule or role-map row that
+  does change something already written down (Product, another role's
+  page) links the owner's dated decision and updates every page it
+  contradicts in the same PR.
