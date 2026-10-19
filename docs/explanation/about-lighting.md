@@ -29,7 +29,9 @@ benchmark on the reference Mac mini M4 replaces them.
   p50 23 ms / p95 25.1 ms on `desktop-high` at 1440p (native with TAA)
   against 16.6 ms, and found the depth fog fails readability rules 2
   and 4.
-- Godot 4.7.2 has no hardware ray tracing. Its GI options are
+- Godot 4.7.2 has no built-in hardware ray-traced lighting (its
+  `RenderingDevice` ray-tracing API is plumbing for our own effects; see
+  [About ray tracing](about-ray-tracing.md)). Its GI options are
   `LightmapGI` (baked in the editor, all renderers), `VoxelGI` (Forward+
   only, baked, re-lit every frame), SDFGI (Forward+ only, real-time,
   cascaded) and SSIL (screen space, Forward+ only).

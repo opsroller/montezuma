@@ -498,6 +498,23 @@ exposure's response to the plaza mist (+6.5% alone on `main`). The veil
 lowers it there, which is why the veil's 4K figures are below `main`'s
 ([About the atmosphere](../explanation/about-the-atmosphere.md#how-rule-2-is-measured)).
 
+## Ray-traced reflections (WP-54)
+
+**RTX 4080 SUPER** (Vulkan, Forward+, NixOS, live GNOME desktop),
+`desktop-high`, exclusive full screen 3840×2160 with no upscaler, vsync
+off, 60 s replay after 10 s warm-up, 2026-10-19, extension built with
+`MONTEZUMA_RAY_TRACING=ON`; the second run adds
+`-DGAME_ARGS=--rt-reflections`
+([Ray-traced reflections](ray-traced-reflections.md)).
+
+| Run | GPU p50 | GPU p95 | CPU p50 | Frame p50 | Frame p95 |
+|---|---|---|---|---|---|
+| Off | 8.94 | 9.26 | 0.31 | 9.47 | 10.47 |
+| On | 9.61 | 9.97 | 0.41 | 10.15 | 11.97 |
+
+Both runs: 16 of 17 feature rows (screen-space reflections reads off on
+this branch's base with or without the effect).
+
 ## Feature rows
 
 `check_features.py` on the same reports. Rows that fail are the

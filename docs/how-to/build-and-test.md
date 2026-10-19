@@ -121,6 +121,45 @@ print an error or a leak at exit:
 godot --headless --path game --quit-after 600 -- --start-level=e1-l01 --quit-after-frames=60
 ```
 
+## Build with ray-traced reflections
+
+The optional ray-traced reflections on the pieces
+([Ray-traced reflections](../reference/ray-traced-reflections.md)) need
+a Vulkan GPU with ray-tracing pipelines (on Linux or Windows) and a
+window; they do not run headless or on macOS.
+
+1. Configure the extension with the option on, and build:
+
+   ```sh
+   cmake -S . -B build-ext -G Ninja -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON -DMONTEZUMA_RAY_TRACING=ON
+   cmake --build build-ext
+   ctest --test-dir build-ext --output-on-failure
+   ```
+
+2. Run the self-test. It prints six `ok` lines and
+   `RtReflections self-test passed`:
+
+   ```sh
+   godot --path game -- --start-level=e1-l01 --rt-selftest
+   ```
+
+3. Play with the effect on, or see what it traces:
+
+   ```sh
+   godot --path game -- --start-level=e1-l01 --rt-reflections
+   godot --path game -- --start-level=e1-l01 --rt-debug
+   ```
+
+   `--rt-debug` paints pieces it traced from blue, and reflections that
+   hit something green (shown on screen) or red (hidden).
+
+4. Measure it against the same run without it, as in
+   [Run the benchmark](run-the-benchmark.md#check-what-one-effect-or-edit-costs-with-a-short-run), with
+   `-DGAME_ARGS=--rt-reflections`.
+
+Configure with `-DMONTEZUMA_RAY_TRACING=OFF` (the default) to build
+without it again; the flags are then ignored.
+
 ## Build and test on Windows
 
 Needs Visual Studio 2022 with the C++ workload, CMake 3.22+ and Ninja

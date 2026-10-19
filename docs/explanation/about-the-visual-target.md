@@ -70,7 +70,8 @@ plainly where Godot stands in October 2026:
   queries. It works only on the Vulkan driver, and not on macOS or iOS
   even on capable hardware, and never on the web. Anything built on it is
   our own renderer code, written in C++ in the extension as a compositor
-  effect.
+  effect. Godot 4.7.2 never enables the ray queries, so only the
+  pipelines work ([About ray tracing](about-ray-tracing.md)).
 - **NVIDIA's RTX fork of Godot** (shown at GDC 2026) adds path tracing for
   RTX GPUs. It tracks development snapshots, needs NVIDIA-class hardware
   and would fork our engine away from the mobile, web and macOS builds. We

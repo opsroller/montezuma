@@ -107,6 +107,10 @@ whole frame. Add `-DQUALITY_OFF=glow` (any
 and compare `gpu_ms` p50 with a run without it to get that effect's cost;
 the feature check then fails for those rows, which is expected. Run the
 two back to back: run-to-run spread is a few tenths of a millisecond.
+An effect that is off unless asked for, such as the optional
+[ray-traced reflections](../reference/ray-traced-reflections.md), is
+measured the other way round: add `-DGAME_ARGS=--rt-reflections` (any
+user arguments, `;`-separated) to the second run.
 
 Compare `gpu_ms` with vsync off: with vsync on the GPU clocks down
 between frames. With `-DVSYNC=off` the script also asks for mailbox
