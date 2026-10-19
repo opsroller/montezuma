@@ -3,6 +3,8 @@
 
 #include "rt_reflections.hpp"
 
+#include "../rendering_device_access.hpp"
+
 #include <algorithm>
 #include <cstring>
 #include <memory>
@@ -624,7 +626,7 @@ const rt::Options& RtReflections::options() {
 
 bool RtReflections::is_supported() {
     RenderingServer* rs = RenderingServer::get_singleton();
-    RenderingDevice* rd = rs ? rs->get_rendering_device() : nullptr;
+    RenderingDevice* rd = rs ? main_rendering_device() : nullptr;
     // Vulkan only, as decided, even should another driver gain the feature.
     return rd && rs->get_current_rendering_method() == "forward_plus" &&
            rs->get_current_rendering_driver_name() == "vulkan" &&
@@ -696,7 +698,7 @@ void RtReflections::compile_on_render_thread() { ensure_pipelines(); }
 bool RtReflections::ensure_pipelines() {
     if (failed_) return false;  // a failed step turns it off for good
     if (rt::may_trace(trace_pipeline_.is_valid(), failed_)) return true;
-    RenderingDevice* rd = RenderingServer::get_singleton()->get_rendering_device();
+    RenderingDevice* rd = main_rendering_device();
     if (!rd) return false;
     const String common(kTraceCommon);
     trace_shader_ = compile(rd,
@@ -744,7 +746,7 @@ bool RtReflections::ensure_pipelines() {
 }
 
 bool RtReflections::upload_meshes() {
-    RenderingDevice* rd = RenderingServer::get_singleton()->get_rendering_device();
+    RenderingDevice* rd = main_rendering_device();
     std::vector<std::pair<uint64_t, std::shared_ptr<const MeshCpu>>> missing;
     std::vector<uint64_t> gone;
     {
@@ -827,7 +829,7 @@ void RtReflections::_render_callback(int32_t p_effect_callback_type, RenderData*
     Ref<RenderSceneBuffersRD> buffers = p_render_data->get_render_scene_buffers();
     RenderSceneData* scene = p_render_data->get_render_scene_data();
     if (buffers.is_null() || !scene) return;
-    RenderingDevice* rd = RenderingServer::get_singleton()->get_rendering_device();
+    RenderingDevice* rd = main_rendering_device();
 
     std::vector<InstanceCpu> instances;
     uint64_t frame = 0;
@@ -944,7 +946,7 @@ void RtReflections::_render_callback(int32_t p_effect_callback_type, RenderData*
 
 void RtReflections::free_all() {
     RenderingServer* rs = RenderingServer::get_singleton();
-    RenderingDevice* rd = rs ? rs->get_rendering_device() : nullptr;
+    RenderingDevice* rd = rs ? main_rendering_device() : nullptr;
     if (!rd) return;
     // The TLAS depends on every BLAS, which depend on their buffers: free in that order.
     if (tlas_.is_valid()) rd->free_rid(tlas_);

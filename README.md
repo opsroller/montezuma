@@ -29,7 +29,8 @@ different graphics and rule variants on the same core.
 ## Building and testing
 
 You need CMake 3.22 or newer, Ninja, a C++20 compiler (GCC, Clang or MSVC),
-Python 3 (godot-cpp generates its bindings with it) and Godot 4.7.2.
+Python 3 (godot-cpp generates its bindings with it) and Godot 4.8 beta 1
+(the pinned engine; Godot 4.7 or later loads the extension).
 
 ```sh
 git submodule update --init --recursive

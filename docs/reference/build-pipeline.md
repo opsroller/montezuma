@@ -119,7 +119,7 @@ console), the smoke job fails. The board shot passes
 
 | Input | Pin | Where |
 |---|---|---|
-| Godot editor and export templates | 4.7.2-stable, SHA-512 verified | `tools/release/godot.env` |
+| Godot editor and export templates | 4.8-beta1, SHA-512 verified, downloaded from `godotengine/godot-builds` (`GODOT_RELEASES_URL`, where Godot publishes its pre-releases) | `tools/release/godot.env` |
 | godot-cpp | Submodule commit (10.0.0-stable), API version 4.7 | `thirdparty/godot-cpp`, `extension/CMakeLists.txt` |
 | GitHub Actions | Full commit SHA, version in a comment | `build.yml` |
 | Runner images | Named versions (`ubuntu-22.04`, `windows-2022`, `macos-14`, `ubuntu-24.04`), not `-latest` | `build.yml` |
@@ -172,15 +172,16 @@ stamps `game/project.godot`, `run_bench.cmake` writes
 |---|---|
 | `godot.env` | Godot version, file names and SHA-512 checksums |
 | `steps.cmake` | Helpers the steps share: running a command with a timeout, the version, checksums |
-| `fetch-godot.cmake` (`DIR`, `TEMPLATES`) | Downloads and verifies the editor and templates, installs the named templates (a `;`-separated list) |
+| `fetch-godot.cmake` (`DIR`, `TEMPLATES`) | Downloads and verifies the editor and templates, installs the named templates (a `;`-separated list); with `GODOT_MACOS_SWAP_TEMPLATE_VARIANTS=1` in `godot.env`, runs `macos-template-swap.py` on an installed `macos.zip` |
+| `macos-template-swap.py <macos.zip>` | Swaps the release and debug binary names in a macOS template, working around Godot 4.8 beta 1's universal export picking the wrong variant ([About the engine version](../explanation/about-the-engine-version.md)) |
 | `version.cmake` | Prints the version, as above |
 | `export-desktop.cmake` (`PLATFORM` = `linux`, `windows` or `macos`, `OUT`, `VERSION`, `GODOT`) | Exports one preset and writes the archive and `.sha256` |
 | `package.py <tar.gz\|zip> <root> <name> <archive>` | Packs a folder with stable bytes; refuses symlinks |
 | `notices.py <outdir>` | Writes `THIRD-PARTY-NOTICES.txt` and `SOURCE.txt`; add a row to its `COMPONENTS` for every library linked into the game |
 | `game-files.py stage <gamedir>` | Copies `CREDITS.md` and `LICENSE` into the Godot project and runs `notices.py` there |
 | `game-files.py check <gamedir> <export>` | Exits 1 unless every staged file's bytes are inside the exported game (a file or a `.app` folder) |
-| `notices/` | Verbatim upstream notice texts (Godot 4.7.2 `LICENSE.txt`, `COPYRIGHT.txt`) |
-| `smoke-test.cmake` (`ARCHIVE`, `SCREENS`) | Verifies, unpacks and runs a package on its own platform; `ARCHIVE` may be a folder holding one package; with `SCREENS`, also saves `title.png` and `board.png` there |
+| `notices/` | Verbatim upstream notice texts (Godot 4.8 beta 1 `LICENSE.txt`, `COPYRIGHT.txt`) |
+| `smoke-test.cmake` (`ARCHIVE`, `SCREENS`) | Verifies, unpacks and runs a package on its own platform; `ARCHIVE` may be a folder holding one package; with `SCREENS`, also saves `title.png` and `board.png` there; on GitHub's macOS runners it sets `GODOT_MTL_SYNC_MODE=none`, since their paravirtual GPU cannot run Godot 4.8's default Metal barrier sync |
 | `web-fetch-emsdk.cmake` (`DIR`) | Installs and activates the pinned Emscripten (`EMSDK_VERSION` in `godot.env`) in `DIR` |
 | `web-export.cmake` (`OUT`, `VERSION`, `GODOT`) | Exports the `Web` preset, checks the download budget and writes the zip and `.sha256` |
 | `web-smoke.py <archive> [browser...]` | Verifies and serves a web package, starts it the way the site does and checks the hand-off events |
@@ -212,7 +213,7 @@ WebAssembly. It never deploys; the package is the run's artifact.
 |---|---|
 | Triggers | Push to any branch (every time); pull requests from forks touching `web.yml`, `tools/release/`, `CMakeLists.txt`, `core/`, `extension/`, `game/` or `thirdparty/`; manual; called by `release.yml` for a release tag |
 | Runner | `ubuntu-24.04`, one job `web` |
-| Emscripten | 4.0.20 (`EMSDK_VERSION` in `godot.env`, the version Godot 4.7.2's official web templates are built with), cached under `emsdk-<hash of godot.env>` |
+| Emscripten | 6.0.12 (`EMSDK_VERSION` in `godot.env`, the version Godot 4.8 beta 1's official web templates are built with: `Dockerfile.web` on the main branch of `godotengine/build-containers`, which 4.8 betas build from), cached under `emsdk-<hash of godot.env>` |
 | Extension build | `cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=~/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON -DMONTEZUMA_BUILD_TESTS=OFF -DMONTEZUMA_WERROR=ON -DGODOTCPP_TARGET=template_release -DGODOTCPP_THREADS=OFF` with `EM_CONFIG=~/emsdk/.emscripten`, through ccache (`EM_COMPILER_WRAPPER=ccache`, key prefix `build-web-extension`) |
 | Library | `game/bin/libmontezuma.web.template_release.wasm32.nothreads.wasm` (`web.release.wasm32` in `game/montezuma.gdextension`) |
 | Template | `web_dlink_nothreads_release.zip` from the pinned templates archive |

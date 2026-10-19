@@ -64,6 +64,13 @@ elseif(name MATCHES "-macos-")
   # there is Apple's software renderer (several seconds a frame): keep the
   # frame counts low.
   set(drivers metal opengl3)
+  # Godot 4.8's Metal driver defaults to barrier sync, which needs placement
+  # heaps; the paravirtual GPU of GitHub's macOS runners cannot make them
+  # ("Unable to create placement heap", then a crash). Use the older
+  # hazard-tracking mode there; real Macs keep the default.
+  if(DEFINED ENV{GITHUB_ACTIONS} AND NOT DEFINED ENV{GODOT_MTL_SYNC_MODE})
+    set(ENV{GODOT_MTL_SYNC_MODE} none)
+  endif()
 else()
   montezuma_fail("unknown platform in ${name}")
 endif()
