@@ -69,8 +69,12 @@ Each prints a line like
 `PASS rule 2: worst cell contrast loss 23% (max 40%), clear cells 34% (min 25%)`.
 If the worst cell loses too much, lower `veil_density`. If too few cells
 stay clear, raise `veil_coverage`. Then repeat from step 2. Rule 4 is in
-the same output: a veil that passes rule 2 rarely moves it, but check it
-did not get worse.
+the same output. At 540×1170 it passes; at 4K it fails on `main` too
+(glow and exposure raise one kind's contrast), and the veil lowers it a
+little, so the 4K check exits 1 and that is expected. Compare its rule 4
+figure with the recorded one for that tier and size in
+[Benchmark results](../reference/benchmark-results.md#fog-veil-over-the-board):
+new values must not make it worse.
 
 Record the new values and figures in
 [Benchmark results](../reference/benchmark-results.md#fog-veil-over-the-board)
