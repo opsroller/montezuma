@@ -153,6 +153,13 @@ budgets, frame times and the look each tier must show are in
   core, and CI builds it on Windows (on pushes to `main`).
 - Every CI job configures CMake with the options it needs
   (`MONTEZUMA_BUILD_EXTENSION`, `MONTEZUMA_BUILD_TESTS`, `MONTEZUMA_WERROR`).
+- A rule or check in the docs that uses a term no page defines, or that
+  contradicts a rule already written down (#80: `blocked` used before the
+  plan's key defined it; #81: "matched-baseline" undefined, an "uncapped"
+  check the display-paced M4 rows cannot meet, and a `Depends on` check
+  that clashed with the `blocked` rule). Check: each term is defined where
+  it belongs (the plan's key, `benchmark-results.md`), and the new rule
+  passes on the project's own existing rows.
 - Docs: the right Diataxis kind in the right folder, updated with the
   change.
 - Every PR title is a Conventional Commit (it becomes the squash commit).
