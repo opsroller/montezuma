@@ -66,6 +66,7 @@ own folder.
 - [Capture the effects showcase](how-to/capture-the-effects-showcase.md): record every totem and power-up effect to frames.
 - [Run the benchmark](how-to/run-the-benchmark.md): measure frame time and check readability on a desktop or a phone.
 - [Tune the fire](how-to/tune-the-fire.md): change the brazier fire's simulation, colour or particles and check it.
+- [Tune the fog veil](how-to/tune-the-fog-veil.md): make the mist over the board thicker, thinner or sparser and check it against readability rule 2.
 
 ## Explanation
 
