@@ -20,7 +20,7 @@
 [ext_resource type="Texture2D" path="res://textures/paving_orm.png" id="po"]
 [ext_resource type="Texture2D" path="res://textures/sky_golden.png" id="sky"]
 [ext_resource type="Mesh" path="res://meshes/temple_small.obj" id="ts"]
-[ext_resource type="Mesh" path="res://meshes/palace.obj" id="pa"]
+[ext_resource type="Mesh" path="res://meshes/palace.obj" id="pal"]
 [ext_resource type="Mesh" path="res://meshes/wall.obj" id="wa"]
 [ext_resource type="Texture2D" path="res://textures/precinct_albedo.png" id="pra"]
 [ext_resource type="Texture2D" path="res://textures/precinct_normal.png" id="prn"]
@@ -100,12 +100,12 @@ surface_material_override/0 = SubResource("m_precinct")
 
 [node name="PalaceSouth" type="MeshInstance3D" parent="Precinct"]
 transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, 70.000, 0.000, 40.000)
-mesh = ExtResource("pa")
+mesh = ExtResource("pal")
 surface_material_override/0 = SubResource("m_precinct")
 
 [node name="PalaceNorth" type="MeshInstance3D" parent="Precinct"]
 transform = Transform3D(-1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, -1.00000, -74.000, 0.000, 10.000)
-mesh = ExtResource("pa")
+mesh = ExtResource("pal")
 surface_material_override/0 = SubResource("m_precinct")
 
 [node name="WallEast0" type="MeshInstance3D" parent="Precinct"]

@@ -105,13 +105,13 @@ def banner(out):
             vs.append((r * np.cos(a_), y1, r * np.sin(a_))); vt.append((i / seg, 1))
         for i in range(seg):
             a = b + 2 * i + 1
-            fs.append(('pole', (a, a + 2, a + 3, a + 1)))
+            fs.append(('pole', (a, a + 1, a + 3, a + 2)))
     # crossbar
     b = len(vs)
     for (x, y, z) in ((0, 9.62, -0.03), (0.6, 9.62, -0.03), (0.6, 9.68, -0.03), (0, 9.68, -0.03),
                       (0, 9.62, 0.03), (0.6, 9.62, 0.03), (0.6, 9.68, 0.03), (0, 9.68, 0.03)):
         vs.append((x, y, z)); vt.append((0, 0))
-    for q in ((0, 1, 2, 3), (4, 5, 6, 7), (0, 1, 5, 4), (3, 2, 6, 7)):
+    for q in ((3, 2, 1, 0), (4, 5, 6, 7), (0, 1, 5, 4), (7, 6, 2, 3)):
         fs.append(('pole', tuple(b + 1 + i for i in q)))
     with open(out + '/meshes/banner.obj', 'w') as f:
         f.write(HDR + '# Paper banner on a pole (streamer hung from a crossbar), 10 m pole; surface 0 strip, 1 pole\n')

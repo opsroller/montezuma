@@ -1,7 +1,7 @@
 ; SPDX-License-Identifier: GPL-2.0-or-later
 ; Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
 ; Loads the game's extension from game/bin (build it first, docs/how-to/build-and-test.md)
-; only for its lightmap baker (--bake-lightmaps=...). The stills render without it.
+; only for its lightmap baker (--bake-lightmaps=...), which writes the .lmbake files the stage scenes need.
 [configuration]
 
 entry_symbol = "montezuma_library_init"

@@ -318,8 +318,8 @@ and green as the only difference between two states.
 
 ### Approved pairs
 
-Measured by `design/identity/check_contrast.py` (WCAG 2.2; ratios not
-rounded). The script checks 107 pairs, including the game keys, the
+Measured by `design/identity/check_contrast.py` (WCAG 2.2; ratios
+truncated, not rounded up; scrim pairs are measured on 8-bit composites). The script checks 107 pairs, including the game keys, the
 site's CSS in both schemes, Godot's hovered button, and the scrim
 over the brightest board; run it with `--markdown` for the full table.
 

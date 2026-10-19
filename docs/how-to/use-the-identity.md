@@ -172,7 +172,7 @@ You need:
 - Python 3 with numpy and Pillow: the project venv from
   [Build and test: Check the assets](build-and-test.md#check-the-assets),
   activated (`. .venv/bin/activate`) so `python3` finds them.
-- Godot 4.7.2 (`tools/release/godot.env`) with a Vulkan GPU and a
+- The Godot version pinned in `tools/release/godot.env` (4.7 or later) with a Vulkan GPU and a
   display: the bake opens the editor and the render opens a window.
 - The game's native extension built first
   ([Build and test: Build the extension](build-and-test.md#build-the-extension-and-load-the-game)).

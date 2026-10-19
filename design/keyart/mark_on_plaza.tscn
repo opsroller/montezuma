@@ -21,7 +21,7 @@
 [ext_resource type="Texture2D" path="res://textures/paving_orm.png" id="po"]
 [ext_resource type="Texture2D" path="res://textures/sky_golden.png" id="sky"]
 [ext_resource type="Mesh" path="res://meshes/temple_small.obj" id="ts"]
-[ext_resource type="Mesh" path="res://meshes/palace.obj" id="pa"]
+[ext_resource type="Mesh" path="res://meshes/palace.obj" id="pal"]
 [ext_resource type="Mesh" path="res://meshes/wall.obj" id="wa"]
 [ext_resource type="Texture2D" path="res://textures/precinct_albedo.png" id="pra"]
 [ext_resource type="Texture2D" path="res://textures/precinct_normal.png" id="prn"]
@@ -257,49 +257,49 @@ surface_material_override/0 = SubResource("m_precinct")
 [node name="CityPalace0" type="MeshInstance3D" parent="City"]
 transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, -90.000, 0.000, -110.000)
 gi_mode = 2
-mesh = ExtResource("pa")
+mesh = ExtResource("pal")
 surface_material_override/0 = SubResource("m_precinct")
 
 [node name="CityPalace1" type="MeshInstance3D" parent="City"]
 transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, 90.000, 0.000, -95.000)
 gi_mode = 2
-mesh = ExtResource("pa")
+mesh = ExtResource("pal")
 surface_material_override/0 = SubResource("m_precinct")
 
 [node name="CityPalace2" type="MeshInstance3D" parent="City"]
 transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, 20.000, 0.000, -180.000)
 gi_mode = 2
-mesh = ExtResource("pa")
+mesh = ExtResource("pal")
 surface_material_override/0 = SubResource("m_precinct")
 
 [node name="CityPalace3" type="MeshInstance3D" parent="City"]
 transform = Transform3D(0.00000, 0, 1.00000, 0, 1.00000, 0, -1.00000, 0, 0.00000, -200.000, 0.000, -180.000)
 gi_mode = 2
-mesh = ExtResource("pa")
+mesh = ExtResource("pal")
 surface_material_override/0 = SubResource("m_precinct")
 
 [node name="CityPalace4" type="MeshInstance3D" parent="City"]
 transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, 230.000, 0.000, -230.000)
 gi_mode = 2
-mesh = ExtResource("pa")
+mesh = ExtResource("pal")
 surface_material_override/0 = SubResource("m_precinct")
 
 [node name="CityPalace5" type="MeshInstance3D" parent="City"]
 transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, -120.000, 0.000, -380.000)
 gi_mode = 2
-mesh = ExtResource("pa")
+mesh = ExtResource("pal")
 surface_material_override/0 = SubResource("m_precinct")
 
 [node name="CityPalace6" type="MeshInstance3D" parent="City"]
 transform = Transform3D(0.00000, 0, 1.00000, 0, 1.00000, 0, -1.00000, 0, 0.00000, 160.000, 0.000, -300.000)
 gi_mode = 2
-mesh = ExtResource("pa")
+mesh = ExtResource("pal")
 surface_material_override/0 = SubResource("m_precinct")
 
 [node name="CityPalace7" type="MeshInstance3D" parent="City"]
 transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, -330.000, 0.000, -400.000)
 gi_mode = 2
-mesh = ExtResource("pa")
+mesh = ExtResource("pal")
 surface_material_override/0 = SubResource("m_precinct")
 
 [node name="Skyline" type="MeshInstance3D" parent="."]
