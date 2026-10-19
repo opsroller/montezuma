@@ -178,8 +178,10 @@ Where the GPU time of one frame goes, and what each effect costs alone,
 the way players see the game. Machine: RTX 4080 SUPER, Ryzen 9 7950X3D,
 NixOS, GNOME on Wayland (the live desktop, not headless), Vulkan,
 Forward+, Godot 4.7.2 from nixpkgs, extension built `Release`.
-`desktop-high` exclusive full screen at the screen's native 3840×2160
-(`--bench-fullscreen --quality-native`: 3D at 1.0, no upscaler, TAA),
+`desktop-high` exclusive full screen at the screen's native size
+(`--bench-fullscreen --quality-native`: 3D at 1.0, no upscaler, TAA):
+a 4K monitor the desktop had in portrait, so 2160×3840, the same
+8.3 million pixels as 3840×2160,
 vsync off with mailbox presentation (`override.cfg`, since GNOME keeps
 FIFO otherwise), busiest-board replay seed 52, 3 s warm-up and 6 s
 capture, every run alone on the GPU, 2026-10-19, at this change.
@@ -212,19 +214,18 @@ two baseline runs (`gpu_ms` p50 11.36 and 11.39):
 |---|---|---|
 | `ssil` | 9.74 | 1.6 |
 | `voxel_gi` | 9.77 | 1.6 |
-| `glow` | 10.34 | 1.0 |
 | `area_light` | 10.12 | 1.2 |
+| `glow` | 10.34 | 1.0 |
 | `auto_exposure` | 11.00 | 0.4 |
 | `ssao` | 11.18 | 0.2 |
 | `ssr`, `volumetric_fog`, `subsurface_scattering`, `gem_refraction`, `heat_haze`, `decals`, `parallax_occlusion`, `fog_fire_light` | 11.30 to 11.43 | none measurable |
 
 `ssr` saves nothing because the temple's environment leaves SSR off.
-Turning an effect off is a measurement, not a fix: VoxelGI or SSIL off
-changes the frame (mean pixel difference 3.65 and 2.79 of 255 against
-0.32 between two runs of one build). Soft shadows in the opaque pass
-cost 1.3 ms for the sun and 1.0 ms for the four fire lights at `high`
-(measured by switching each filter to hard); lowering them changes the
-look too.
+With VoxelGI or SSIL off the frame differs by a mean of 3.65 and 2.79
+of 255 against 0.32 between two runs of one build. Soft shadows in the
+opaque pass cost 1.3 ms for the sun and 1.0 ms for the four fire lights
+at `high` (measured by switching each filter to hard). Why none of these
+is turned off: [About quality tiers](../explanation/about-quality-tiers.md#cutting-cost-without-changing-the-look).
 
 **Triplanar sampling.** The stone shader sampled all three triplanar
 projections (9 to 12 anisotropic fetches) on every pixel, in the depth

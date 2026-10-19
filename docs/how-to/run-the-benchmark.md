@@ -85,7 +85,7 @@ godot --path game res://scenes/bench/bench.tscn -- --quality=desktop-high --benc
 python3 tools/bench/check_run.py /tmp/bench.json --size 2560x1440
 ```
 
-### Check what one effect or edit costs, in seconds
+### Check what one effect or edit costs with a short run
 
 Run the way players see the game: full screen, at the screen's own
 resolution, with no render-scale cut or upscaler. The script does that
@@ -109,9 +109,10 @@ the feature check then fails for those rows, which is expected. Run the
 two back to back: run-to-run spread is a few tenths of a millisecond.
 
 Compare `gpu_ms` with vsync off: with vsync on the GPU clocks down
-between frames. GNOME keeps vsync on when Godot asks for it off; put
-`display/window/vsync/vsync_mode=3` (mailbox) under `[display]` in
-`game/override.cfg` for the run, and remove it afterwards.
+between frames. With `-DVSYNC=off` the script also asks for mailbox
+presentation, because some compositors (GNOME) keep vsync on otherwise;
+`display.vsync` in the report then reads `disabled` and frames are not
+held to the display's rate.
 
 On Metal, Godot 4.7.2 returns no GPU timestamps, so the profile prints
 zeros there: judge by `frame_ms` or use Apple's Metal tools.
@@ -121,10 +122,26 @@ shaders compiled inside the timed window; `draw` above 0 means frames
 stalled on a compile.
 
 To check that a change leaves the picture alone, capture the same frame
-before and after (`godot --write-movie <dir>/f.png --fixed-fps 30
---quit-after 82` on the benchmark scene) and compare the images pixel by
-pixel against two captures of one build, which differ a little on their
-own.
+of the replay before and after the change, and once more before it:
+
+```sh
+godot --path game --resolution 1920x1080 --write-movie /tmp/before/f.png --fixed-fps 30 --quit-after 82 res://scenes/bench/bench.tscn -- --quality=desktop-high --quality-native --bench-size=1920x1080 --bench-seconds=100 --bench-warmup=1
+```
+
+Compare `f00000080.png` from each pair with any image tool that reports
+the mean absolute difference per channel, for example in Python with
+Pillow and NumPy:
+
+```sh
+python3 -c "import sys,numpy as n;from PIL import Image as I;a,b=(n.asarray(I.open(f).convert('RGB'),float) for f in sys.argv[1:]);print(abs(a-b).mean())" /tmp/before/f00000080.png /tmp/after/f00000080.png
+```
+
+Two captures of one build differ a little on their own (about 0.3 of
+255 on this scene); a change that keeps the look stays at that level.
+The measured costs per pass and per effect are in
+[Benchmark results](../reference/benchmark-results.md#gpu-time-per-pass-and-per-effect),
+and why cost is cut this way in
+[About quality tiers](../explanation/about-quality-tiers.md#cutting-cost-without-changing-the-look).
 
 ## On an Android or iOS phone
 

@@ -107,12 +107,13 @@ own and hides what the scene costs.
 
 The first cut of this kind sampled the triplanar stone textures only
 along the projections that carry weight: the same image, 1.4 ms less
-GPU time a frame at native 4K on an RTX 4080. The tries that would have
+GPU time a frame at native 4K (2160×3840) on an RTX 4080. The tries that would have
 saved more (medium soft shadows, VoxelGI or SSIL off) all changed the
-frame and were dropped. The numbers are in
+frame and were dropped: turning an effect off with `--quality-off` is a
+way to measure what it costs, not a fix. The numbers are in
 [Benchmark results](../reference/benchmark-results.md#gpu-time-per-pass-and-per-effect);
 how to measure a change this way is in
-[Run the benchmark](../how-to/run-the-benchmark.md#check-what-one-effect-or-edit-costs-in-seconds).
+[Run the benchmark](../how-to/run-the-benchmark.md#check-what-one-effect-or-edit-costs-with-a-short-run).
 
 ## Consequences
 

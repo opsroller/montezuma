@@ -15,7 +15,8 @@
 #   SIZE         render size for the benchmark, WxH (default 1920x1080); the
 #                runner locks it and the run fails if it does not hold
 #   VSYNC=off    turn vsync off, so frame time is the work, not the
-#                display's pace (default: the project's vsync)
+#                display's pace (default: the project's vsync); also asks
+#                for mailbox presentation in override.cfg
 #   TOLERANCE    how far over a whole 60 Hz period a percentile may sit
 #                (default 0.05)
 #   SECONDS      capture length (default 60)
@@ -84,9 +85,16 @@ function(restore_override)
   endif()
 endfunction()
 set(MONTEZUMA_ON_FAIL restore_override)
+# With VSYNC=off the window also asks for mailbox presentation: some
+# compositors (GNOME) keep vsync on when Godot asks for it off, and
+# mailbox never waits for the display.
 function(window size)
   string(REGEX MATCH "^([0-9]+)x([0-9]+)$" _ "${size}")
-  file(WRITE "${cfg}" "[display]\nwindow/size/window_width_override=${CMAKE_MATCH_1}\nwindow/size/window_height_override=${CMAKE_MATCH_2}\n")
+  set(present "")
+  if(VSYNC STREQUAL "off")
+    set(present "window/vsync/vsync_mode=3\n")
+  endif()
+  file(WRITE "${cfg}" "[display]\nwindow/size/window_width_override=${CMAKE_MATCH_1}\nwindow/size/window_height_override=${CMAKE_MATCH_2}\n${present}")
 endfunction()
 
 # run_godot(<timeout> <result var> <arg>...)

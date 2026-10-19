@@ -173,7 +173,7 @@ reach):
 | `schema` | 2 (1 had no `budget`, `resolution`, `display`, `timing`, `process_ms`, `render_cpu_ms`) |
 | `tier`, `budget_ms` | as resolved above; `budget_ms` is the p95 budget before the tolerance |
 | `budget` | `metric` (`frame_ms`), `target_hz` (60), `period_ms`, `tolerance`, `limits` (each `percentile`, `budget_ms`, `limit_ms`, `value_ms`, `pass`), `pass`, `reason` (empty on a pass) |
-| `resolution` | `requested` [w, h] or null (null with `--fullscreen`: the screen sets the size and `--bench-size` is ignored), `locked`, `fullscreen`, `render` (first frame), `min`, `max`, `mismatched_frames`, `window` (`first`, `min`, `max`, `changed_frames`), `pass` |
+| `resolution` | `requested` [w, h] or null (null with `--bench-fullscreen`: the screen sets the size and `--bench-size` is ignored), `locked`, `fullscreen`, `render` (first frame), `min`, `max`, `mismatched_frames`, `window` (`first`, `min`, `max`, `changed_frames`), `pass` |
 | `display` | `refresh_hz` (-1 when unknown), `vsync` (`disabled`, `enabled`, `adaptive`, `mailbox`) |
 | `timing` | `gpu` (as `gpu_timing`), `gpu_note` (why, when false), `gpu_frames` (frames with a GPU timestamp), `render_cpu_includes_display_wait` (true on Metal) |
 | `warmup_seconds`, `measure_seconds` | as run |
