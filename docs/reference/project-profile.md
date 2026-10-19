@@ -166,7 +166,7 @@ budgets, frame times and the look each tier must show are in
 
 A finding raised in two or more reviews is listed here as a rule.
 
-- Performance figures (#35, #75, #79, #80). An absolute figure links to
+- Performance figures (#35, #75, #79, #80, #86). An absolute figure links to
   its section of `docs/reference/benchmark-results.md` and names the row
   (machine, tier, date or run); that row gives the tier, Resolution,
   3D scaling and vsync or cap mode, and a capped row says why (for
@@ -175,7 +175,7 @@ A finding raised in two or more reviews is listed here as a rule.
   Resolution, 3D scaling and cap settings, uncapped where the driver
   allows it. Frame-time numbers come from the benchmark the plan names as
   their owner (today WP-46's), not from the row's own package.
-- Plan dependencies (#35, #80). In the plan
+- Plan dependencies (#35, #80, #86). In the plan
   (`docs/reference/work-packages.md`), every package a `todo` or `active`
   row waits on, needs, or shares owned files or numbers with is in its
   `Depends on` column. Mentions of finished work, and the bracketed reason
@@ -188,3 +188,14 @@ A finding raised in two or more reviews is listed here as a rule.
   they belong (the plan's status key, `benchmark-results.md`), contradicts
   no rule already written down, and holds for the project's own existing
   rows.
+- Stale facts after a value change (#61, #69, #75, #78, #86). A PR that
+  changes a value (a light's lumens, a shader's sample count, a tier's
+  budget state, the tonemapper) changes every page that states it, in
+  the same PR. Check: grep `docs/` for the old value and the old name.
+- Plan status of a draft PR (#80, #86). The status key says a draft PR
+  is `active`, so a row reads `review (#N)` only once #N is ready for
+  review. Check: each row's status against its PR's draft flag.
+- Owned paths (#83, #86). A plan row's `Owns` and a role-map row claim
+  only paths the role map gives that row's roles, and no two roles own
+  the same path. Check: each `Owns` path against the role map's `Owns`
+  column; a path of another role adds that role to the row.
