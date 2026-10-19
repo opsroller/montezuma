@@ -189,7 +189,7 @@ Cost of reworking the WP-51 fog into ground mist (`SH_AtmosphereFog`,
 **RTX 4080 SUPER** (Vulkan, Forward+, NixOS, GNOME on Wayland, live
 desktop, exclusive full screen at native 3840×2160 with no upscaler,
 uncapped with the mailbox `override.cfg`, 6 s warm-up and 20 s capture,
-one run each under the shared GPU lock). `desktop-high` normally hands
+one run each with no other GPU work running). `desktop-high` normally hands
 anything above 720 lines to FSR 2; for these runs both builds used the
 same local, uncommitted build with `kHighInternalHeight` raised to 2160,
 so the 3D view rendered at native resolution. The `main` build is `main`
