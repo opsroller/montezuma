@@ -95,6 +95,25 @@ per item in [About lighting](about-lighting.md#costs); WP-47 capped
 `desktop-high` at 720 internal lines with the temporal upscaler above
 that, after the M4 measured p95 25.1 ms at native 1440p.
 
+## Cutting cost without changing the look
+
+A tier's look is the target, so frame time is cut by doing the same
+work more cheaply, never by lowering a setting. Lowering one (softer
+shadow filtering, fewer shadowed lights, an effect turned off) changes
+what the player sees, even when the change is small. Benchmarks run the
+way players see the game: full screen, at the screen's resolution, with
+no render-scale cut or upscaler, because an upscale costs frames of its
+own and hides what the scene costs.
+
+The first cut of this kind sampled the triplanar stone textures only
+along the projections that carry weight: the same image, 1.4 ms less
+GPU time a frame at native 4K on an RTX 4080. The tries that would have
+saved more (medium soft shadows, VoxelGI or SSIL off) all changed the
+frame and were dropped. The numbers are in
+[Benchmark results](../reference/benchmark-results.md#gpu-time-per-pass-and-per-effect);
+how to measure a change this way is in
+[Run the benchmark](../how-to/run-the-benchmark.md#check-what-one-effect-or-edit-costs-in-seconds).
+
 ## Consequences
 
 - WP-47 to 53 tag their nodes with the groups above and author their

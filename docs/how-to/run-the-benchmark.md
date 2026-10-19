@@ -87,21 +87,31 @@ python3 tools/bench/check_run.py /tmp/bench.json --size 2560x1440
 
 ### Check what one effect or edit costs, in seconds
 
-To see where GPU time goes, or what a small change did, run a short
-capture with Godot's per-pass profile instead of the full minute:
+Run the way players see the game: full screen, at the screen's own
+resolution, with no render-scale cut or upscaler. The script does that
+by default (`NATIVE`, `--quality-native`); `-DFULLSCREEN=ON` makes the
+window exclusive full screen at the screen's size and ignores `SIZE`.
+For a quick look at where GPU time goes, or what a small change did,
+run a short capture with Godot's per-pass profile instead of the full
+minute:
 
 ```sh
-cmake -DTIER=desktop-high -DSIZE=2560x1440 -DVSYNC=off -DSECONDS=3 -DWARMUP=3 -DGPU_PROFILE=ON -P tools/bench/run_bench.cmake
+cmake -DTIER=desktop-high -DFULLSCREEN=ON -DVSYNC=off -DSECONDS=6 -DWARMUP=3 -DGPU_PROFILE=ON -P tools/bench/run_bench.cmake
 ```
 
-The run takes about 10 s. Each `GPU PROFILE` block it prints gives the
+The run takes about 15 s. Each `GPU PROFILE` block it prints gives the
 GPU time of every render pass in one frame (depth pre-pass, opaque pass,
-SSAO, glow, FSR2 and so on), and `gpu_ms` in `benchmark.json` gives the
+SSAO, glow, TAA and so on), and `gpu_ms` in `benchmark.json` gives the
 whole frame. Add `-DQUALITY_OFF=glow` (any
 [feature ids](../reference/quality-tiers.md#feature-ids), comma-separated)
 and compare `gpu_ms` p50 with a run without it to get that effect's cost;
-the feature check then fails for those rows, which is expected. Compare
-`gpu_ms` with vsync off: with vsync on the GPU clocks down between frames.
+the feature check then fails for those rows, which is expected. Run the
+two back to back: run-to-run spread is a few tenths of a millisecond.
+
+Compare `gpu_ms` with vsync off: with vsync on the GPU clocks down
+between frames. GNOME keeps vsync on when Godot asks for it off; put
+`display/window/vsync/vsync_mode=3` (mailbox) under `[display]` in
+`game/override.cfg` for the run, and remove it afterwards.
 
 On Metal, Godot 4.7.2 returns no GPU timestamps, so the profile prints
 zeros there: judge by `frame_ms` or use Apple's Metal tools.
@@ -109,6 +119,12 @@ zeros there: judge by `frame_ms` or use Apple's Metal tools.
 `render.pipeline_compilations.during_capture` in the report counts
 shaders compiled inside the timed window; `draw` above 0 means frames
 stalled on a compile.
+
+To check that a change leaves the picture alone, capture the same frame
+before and after (`godot --write-movie <dir>/f.png --fixed-fps 30
+--quit-after 82` on the benchmark scene) and compare the images pixel by
+pixel against two captures of one build, which differ a little on their
+own.
 
 ## On an Android or iOS phone
 

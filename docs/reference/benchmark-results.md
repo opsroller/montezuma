@@ -174,78 +174,100 @@ frames that miss a present), not the mean cost. The budget is unchanged.
 
 ## GPU time per pass and per effect
 
-Where the GPU time of one frame goes, and what each effect costs alone.
-Machine: RTX 4080 SUPER, Vulkan, Forward+, Godot 4.7.2 from nixpkgs,
-`desktop-high` at 2560×1440 (FSR 2 at 0.5, so 3D renders at 1280×720),
-vsync off under a headless gamescope at 240 Hz, busiest-board replay seed
-52, 3 s warm-up and 3 s capture, 2026-10-19, `main` at 791a680 plus this
-change. Per-pass times are one `--gpu-profile` frame; they move by
-under 0.01 ms between frames.
+Where the GPU time of one frame goes, and what each effect costs alone,
+the way players see the game. Machine: RTX 4080 SUPER, Ryzen 9 7950X3D,
+NixOS, GNOME on Wayland (the live desktop, not headless), Vulkan,
+Forward+, Godot 4.7.2 from nixpkgs, extension built `Release`.
+`desktop-high` exclusive full screen at the screen's native 3840×2160
+(`--bench-fullscreen --quality-native`: 3D at 1.0, no upscaler, TAA),
+vsync off with mailbox presentation (`override.cfg`, since GNOME keeps
+FIFO otherwise), busiest-board replay seed 52, 3 s warm-up and 6 s
+capture, every run alone on the GPU, 2026-10-19, at this change.
+Per-pass times are one `--gpu-profile` frame; they move by a few
+hundredths of a millisecond between frames.
 
 | Pass | GPU ms |
 |---|---|
-| Render opaque pass | 0.70 |
-| FSR2 | 0.36 |
-| Render depth pre-pass | 0.16 |
-| Render GI + directional and omni shadows | 0.14 |
-| Render 3D transparent pass | 0.12 |
-| Glow | 0.10 |
-| Tonemap | 0.08 |
-| Process SSIL | 0.07 |
-| Render VoxelGI (relighting) | 0.05 |
-| Render motion pass | 0.05 |
-| Render, filter and integrate fog | 0.04 |
-| Process SSAO | 0.03 |
-| Update GPU particles, setup shadows, sub-surface scattering, merge specular, copy screen texture, copy final framebuffer, auto exposure | 0.02 or less each |
-| Frame (`gpu_ms` p50) | 2.05 |
+| Render opaque pass | 4.74 |
+| Render GI + directional and omni shadows | 0.88 |
+| TAA | 0.70 |
+| Process SSIL | 0.56 |
+| Render 3D transparent pass | 0.55 |
+| Copy final framebuffer (SSIL/SSR) | 0.47 |
+| Glow | 0.43 |
+| Render sky | 0.39 |
+| Render depth pre-pass | 0.39 |
+| Sub-surface scattering | 0.22 |
+| Copy screen texture | 0.20 |
+| Process SSAO, tonemap | 0.19 each |
+| Auto exposure, merge specular, copy depth texture | 0.12 to 0.13 each |
+| Fog volumes, fog, cluster, VoxelGI relight, GPU particles, shadow setup | 0.06 or less each |
+| Frame (`gpu_ms` p50) | 11.36 |
 
-Each effect turned off alone with `--quality-off`, against two
-baseline runs (`gpu_ms` p50 2.049 and 2.048):
+`frame_ms` p50 11.99, p95 12.45 ms; CPU p50 0.32 ms, so the frame is
+GPU-bound. Each effect turned off alone with `--quality-off`, against
+two baseline runs (`gpu_ms` p50 11.36 and 11.39):
 
 | Feature off | `gpu_ms` p50 | Saved |
 |---|---|---|
-| `glow` | 1.890 | 0.16 |
-| `voxel_gi` | 1.900 | 0.15 |
-| `area_light` | 1.906 | 0.14 |
-| `ssil` | 1.955 | 0.09 |
-| `volumetric_fog` | 1.982 | 0.07 |
-| `ssao` | 2.018 | 0.03 |
-| `auto_exposure` | 2.028 | 0.02 |
-| `ssr`, `subsurface_scattering`, `gem_refraction`, `heat_haze`, `decals`, `parallax_occlusion`, `fog_fire_light` | 2.046 to 2.055 | none measurable |
+| `ssil` | 9.74 | 1.6 |
+| `voxel_gi` | 9.77 | 1.6 |
+| `glow` | 10.34 | 1.0 |
+| `area_light` | 10.12 | 1.2 |
+| `auto_exposure` | 11.00 | 0.4 |
+| `ssao` | 11.18 | 0.2 |
+| `ssr`, `volumetric_fog`, `subsurface_scattering`, `gem_refraction`, `heat_haze`, `decals`, `parallax_occlusion`, `fog_fire_light` | 11.30 to 11.43 | none measurable |
 
 `ssr` saves nothing because the temple's environment leaves SSR off.
+Turning an effect off is a measurement, not a fix: VoxelGI or SSIL off
+changes the frame (mean pixel difference 3.65 and 2.79 of 255 against
+0.32 between two runs of one build). Soft shadows in the opaque pass
+cost 1.3 ms for the sun and 1.0 ms for the four fire lights at `high`
+(measured by switching each filter to hard); lowering them changes the
+look too.
+
+**Triplanar sampling.** The stone shader sampled all three triplanar
+projections (9 to 12 anisotropic fetches) on every pixel, in the depth
+pre-pass and again in the opaque pass. It now drops projections under
+2% weight and skips their fetches. Measured back to back:
+
+| Build | `frame_ms` p50 | p95 | `gpu_ms` p50 | Depth pre-pass | Opaque pass |
+|---|---|---|---|---|---|
+| `main` at 791a680 shaders | 13.00 | 13.32 | 12.77 | 0.93 | 4.97 |
+| This change | 11.97 | 12.65 | 11.37 | 0.39 | 4.61 |
+
+A capture of the same frame (1920×1080, frame 80) differs from
+`main`'s by 0.29 of 255 on average, the same as two runs of one build.
+
+Other findings:
 
 - **Nothing redrawn needlessly every frame except VoxelGI.** The
   brazier's `FlickerLight3D` changes its light energy every frame, and
   Godot re-lights the `VoxelGI` grid whenever a dynamic light inside
-  it changes: 0.05 to 0.06 ms here. With the flicker stopped, the pass
-  is gone and nothing else changes; shadow passes cost the same either
-  way.
+  it changes: 0.05 to 0.06 ms. With the flicker stopped, the pass is
+  gone and nothing else changes.
 - **No shader compiles stall a frame.** Godot compiled 139 surface and
-  85 specialization pipelines before the capture and 11 surface and 4
+  71 specialization pipelines before the capture and 11 surface and 5
   specialization pipelines during it (effects the replay shows for the
   first time), and none at draw time, so an ubershader drew while each
   compiled (`render.pipeline_compilations`, [Benchmark](benchmark.md#report)).
-- **WP-52 depth of field** (#72 branch at da752dc, same machine and
-  run): Godot's box-bokeh depth of field is 0.19 ms of a 2.29 ms frame
-  (8%); it runs at the 2560×1440 output, after FSR 2, so it shades four
-  times the pixels of the passes before it. On the Mac mini M4 it adds
-  3.3 ms: `frame_ms` p50 18.5 ms with it, 15.2 ms with it off, and
-  15.5 ms on `main` (`desktop-high`, 2560×1440, vsync off, baked
-  lightmaps, 2026-10-19). These runs sit below the 16.67 ms present floor
-  that the [Pieces out of GI](#pieces-out-of-gi) runs hit: those ran
-  without baked lightmaps, and the floor did not hold in these.
-- **The M4 against this machine.** `main` takes 14.9 to 15.5 ms
-  (`frame_ms` p50, vsync off, baked lightmaps, the runs above and one
-  `--gpu-profile` run at ba69956) on the M4 against 2.05 ms of GPU time
-  here, about 7 times as long. The frame is 21
-  passes that each write their result to memory and read it back,
-  Forward+'s design for desktop GPUs; the M4's 10-core GPU has about a
-  twelfth of this card's arithmetic and a sixth of its memory bandwidth.
+- **WP-52 depth of field** on the Mac mini M4 adds 3.3 ms: `frame_ms`
+  p50 18.5 ms with it, 15.2 ms with it off, and 15.5 ms on `main`
+  (`desktop-high` at 2560×1440 with MetalFX at 0.5, vsync off, baked
+  lightmaps, 2026-10-19). Godot's depth of field runs at the output size,
+  after the upscaler, so it shades four times the pixels of the passes
+  before it. These runs sit below the 16.67 ms present floor that the
+  [Pieces out of GI](#pieces-out-of-gi) runs hit: those ran without
+  baked lightmaps.
+- **The M4 at native 5K.** An exported release build of `main` (ba0e7c6)
+  full screen at 5120×2880, 3D at 1.0 with no upscaler, vsync off, takes
+  `frame_ms` p50 112.8 ms with 0.75 ms of CPU work a frame (from the M4
+  benchmark queue, 2026-10-19), so it is GPU-bound. That is about 5.6
+  times this machine's 11.4 ms scaled to 5K's 1.78 times the pixels.
   Godot 4.7.2's Metal driver returns no GPU timestamps
-  (`timestamp_query_pool_get_results` clears the buffer), so `--gpu-profile`
-  prints a total of 0 there and the M4 cannot be split per pass from
-  Godot.
+  (`timestamp_query_pool_get_results` clears the buffer), so
+  `--gpu-profile` prints a total of 0 there and the M4 cannot be split
+  per pass from Godot.
 
 ## Feature rows
 
