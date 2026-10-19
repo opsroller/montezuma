@@ -166,15 +166,19 @@ budgets, frame times and the look each tier must show are in
 
 A finding raised in two or more reviews is listed here as a rule.
 
-- Performance figures (#35, #75, #79, #80). An absolute figure links to
-  its section of `docs/reference/benchmark-results.md` and names the row
+- Performance figures (#35, #61, #72, #75, #79, #80). An absolute
+  figure links to its section of `docs/reference/benchmark-results.md` and names the row
   (machine, tier, date or run); that row gives the tier, Resolution,
   3D scaling and vsync or cap mode, and a capped row says why (for
   example, Metal display sync). A before/after or "costs X ms" claim also
   compares against a run of the merge base on the same machine, tier,
   Resolution, 3D scaling and cap settings, uncapped where the driver
   allows it. Frame-time numbers come from the benchmark the plan names as
-  their owner (today WP-46's), not from the row's own package.
+  their owner (today WP-46's), not from the row's own package. A PR
+  that changes a tier's cost lands with its measured rows: "pending",
+  an estimate, or a per-pass GPU time from another machine (such as
+  the RTX 4080 standing in for the M4) is not the figure the budget is
+  judged on.
 - Plan dependencies (#35, #80). In the plan
   (`docs/reference/work-packages.md`), every package a `todo` or `active`
   row waits on, needs, or shares owned files or numbers with is in its
@@ -184,6 +188,13 @@ A finding raised in two or more reviews is listed here as a rule.
   its own package's row. On rebase it keeps `main`'s text for every other
   row; a PR that edits another package's row drops that edit or moves it
   to the owning PR.
+- Look-dev reference frames (#60, #72, #86). A PR that changes the look
+  on any tier commits look-dev frames captured from its own head, adds
+  or updates their rows in the frame table
+  (`docs/reference/board-themes.md#look-dev-reference-frames`), and puts
+  the side-by-side against the previous frames in the PR body. A frame
+  whose row names the package is recaptured after every later change to
+  that package's look.
 - Docs rules (#80, #81). A new rule uses only terms the docs define where
   they belong (the plan's status key, `benchmark-results.md`), contradicts
   no rule already written down, and holds for the project's own existing
