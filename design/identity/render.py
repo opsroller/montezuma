@@ -317,7 +317,7 @@ def app_menu(fonts):
     panel = (f'<div style="position:absolute;right:96px;top:50%;transform:translateY(-50%);width:400px;'
              f'{GLASS}border-radius:14px;padding:30px 34px 30px;display:grid;gap:12px">'
              f'{button("Play", True)}{button("Level map", focus=True)}{button("Settings")}{button("Credits")}'
-             f'<div style="{ff};font-size:15px;color:#cbbda6;text-align:center;margin-top:8px">'
+             f'<div style="{ff};font-size:16px;color:#c9c1b6;text-align:center;margin-top:8px">'
              f'Inspired by The Treasures of Montezuma (Visual Shape, Alawar)</div></div>')
     title = (f'<img src="{ka("title-wordmark.png")}" style="position:absolute;left:60px;bottom:52px;width:660px;{GOLD}">')
     return (f'<div style="width:1280px;height:720px;position:relative;overflow:hidden;'

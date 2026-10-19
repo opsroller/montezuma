@@ -2,8 +2,9 @@
 # About the visual identity
 
 *Explanation. Why Montezuma's looks the way it does outside the 3D
-board: why the twin temple is the mark, what it rests on, what was
-rejected and what is still open. The rules themselves are in the
+board: why the twin temple is the mark, what it rests on, why the
+identity is now led by realistic rendered art, what was rejected and
+what is still open. The rules themselves are in the
 [style guide](../../design/README.md); the steps to apply them are in
 [Use the identity](../how-to/use-the-identity.md); the brief they answer
 is [`design/identity/brief.md`](../../design/identity/brief.md).*
@@ -81,13 +82,56 @@ The exploration's twin temple had four problems, each fixed here:
   the logo.
 - **The icon field was pale lime**, which vanished on light wallpapers.
   It is now deep Maya blue, which holds on light screens and stays a
-  coloured tile on black, with the temple standing on the band.
+  coloured tile on black. The keylined temple sits above the band with
+  about 34 px of field between them, so nothing sits on the band. (This
+  is now the flat fallback icon; the master is the 3D icon described
+  below.)
 - **The one-colour mark lost its doorways.** Doorways are now cut into
   the shrine shapes, so the soot and lime one-colour versions keep them
   as knockouts, along with the stairs and roofs.
 - **The UI ochre sat near the yellow piece.** It is now a deeper ochre
   `#d8901e`, at least CIEDE2000 15 from both the yellow and the orange
   pieces, checked by script.
+
+## From the painted book to rendered art
+
+The first identity drew everything the painted-book way: a soot outline
+and flat colour inside it, no gradients or bevels. It was correct to its
+sources and worked at every size, but beside the game it pulled the
+wrong way. The board is a lit 3D scene, and a flat mark on the title
+screen and the store page set a lower target than the game itself. The
+design direction is that the identity leads the product's look upward:
+the identity sets the realism bar, and the game follows it.
+
+So the primary identity is now the realistic 3D key art in
+[`design/keyart/`](../../design/keyart/): the same twin temple, built in
+3D as lit, painted and aged stucco architecture, with the drawn wordmark
+cast as a bevelled pale-gold solid. The applications follow: a rendered
+app icon, glass UI panels over the key art, and a photographic site
+hero.
+
+This does not break with the sources. The codex convention of flat
+colour inside a black outline (CO-07) is a fact about how painted books
+were drawn, not a requirement for an interface. The buildings
+themselves were solid, painted lime stucco under highland sun, and the
+reference's facts about them (AR-06, the pigment families, blue north
+and ochre south) hold in a render exactly as in a drawing. The same
+facts set the render's limits: golden-hour light, honest wear on
+painted stucco, a dry basin rather than jungle, and nothing from the
+reference's Avoid list. The gold is the one material not taken from the
+building: it is the title, set apart as metal, and it keeps to the
+pale, silver-rich gold of the Basin rather than the reddish tumbaga the
+reference warns against.
+
+A render cannot do everything. At 16 to 47 px its light and texture
+turn to noise, a one-colour job cannot hold shading, and an embossed or
+engraved surface needs an outline. The flat marks stay for those: the
+favicon and anything below 48 px, one-colour and knocked-out versions,
+embossing, and the HUD, where small shapes sit over the moving
+board. Because both are the same geometry in the same orientation and
+colours, the flat mark reads as the small form of the rendered one,
+not as a second logo. The palette, type, tokens and the step-fret band
+(now a secondary ornament) serve both.
 
 ## What was folded in, and what was left
 
@@ -153,6 +197,15 @@ For the project manager. These are flagged, not ruled on.
   facade colours are inferred or contested in the reference. If later
   sources settle them differently, the mark is a stylisation and need
   not change, but the explanation above should be updated.
+- **The game's look must catch up.** The key art now sets a higher
+  realism bar than the board. Until the game's own lighting and
+  materials reach it, store art built from the key art promises more
+  than the screenshots show; the store-art batch (WP-38) should pair the
+  two honestly.
+- **Glass values are not tokens yet.** The glass panel values live in
+  the style guide and `design/identity/render.py`, not in the token
+  files, so the game and site must copy them by hand until they are
+  added.
 - **Fonts not yet vendored.** Until the ui-developer and web developer
   add the fonts, the game and site fall back to system fonts and the
   type scale only approximates the design.

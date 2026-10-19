@@ -456,7 +456,13 @@ SHRINE_TOP = 28
 DOOR_W, DOOR_TOP = 6, 36        # doorway width; it runs down to the shrine floor
 ROOFS = [(24.75, 45.25), (50.75, 71.25)]
 ROOF_TOP = 22
-MARK_BOX = (6 - SW / 2, ROOF_TOP - SW / 2, 90 + SW / 2, BASE + SW / 2)  # tight bounds incl. outline
+# The outer base corners are mitred (interior angle about 79 degrees), so
+# the stroke's tip reaches past the vertex by (half the stroke) x cot(angle/2)
+# sideways, not by half the stroke. MITER_X is that factor (about 1.2).
+_BASE_ANGLE = math.atan2(TIERS[0][1] - TIERS[0][0], TIERS[0][4] - TIERS[0][2])
+MITER_X = 1 / math.tan(_BASE_ANGLE / 2)
+MARK_BOX = (6 - SW / 2 * MITER_X, ROOF_TOP - SW / 2,
+            90 + SW / 2 * MITER_X, BASE + SW / 2)  # tight bounds incl. the mitred outline
 MONO_GAP = 1.5                  # knockout line between tiers in one colour
 SHRINE_UNIT = SHRINES[0][1] - SHRINES[0][0] + SW   # "x": the clear-space unit (21)
 
@@ -540,8 +546,10 @@ def mark_elements(style="colour", soot=None, halo=None):
 
 
 def mark_box(pad=0.0):
+    """MARK_BOX grown by a stroke widened by `pad` each side (the on-dark
+    keyline): sideways the mitred base corners grow by pad x MITER_X."""
     x0, y0, x1, y1 = MARK_BOX
-    return x0 - pad, y0 - pad, x1 + pad, y1 + pad
+    return x0 - pad * MITER_X, y0 - pad, x1 + pad * MITER_X, y1 + pad
 
 
 def svg_doc(view, w, h, title, body, desc=None):
