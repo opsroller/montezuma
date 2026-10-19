@@ -174,7 +174,10 @@ A finding raised in two or more reviews is listed here as a rule.
   compares against a run of the merge base on the same machine, tier,
   Resolution, 3D scaling and cap settings, uncapped where the driver
   allows it. Frame-time numbers come from the benchmark the plan names as
-  their owner (today WP-46's), not from the row's own package.
+  their owner (today WP-46's), not from the row's own package. The row
+  is on `main`: a figure whose row exists only on an open PR's branch is
+  not quoted until that PR merges, and a pointer to a merged PR is
+  replaced by the current `main` row it produced.
 - Plan dependencies (#35, #80, #101). In the plan
   (`docs/reference/work-packages.md`), every package a `todo` or `active`
   row waits on, needs, or shares owned files or numbers with is in its
@@ -184,9 +187,10 @@ A finding raised in two or more reviews is listed here as a rule.
   its own package's row. On rebase it keeps `main`'s text for every other
   row; a PR that edits another package's row drops that edit or moves it
   to the owning PR.
-- Docs rules (#80, #81). A new rule uses only terms the docs define where
+- Docs rules (#80, #81, #101). A new rule uses only terms the docs define where
   they belong (the plan's status key, `benchmark-results.md`), contradicts
-  no rule already written down, and holds for the project's own existing
+  no rule already written down (for example, which package owns a gate
+  the build already enforces), and holds for the project's own existing
   rows.
 - Plan status words (#80, #101). A Status cell uses only the five words
   of the plan's status key; a wait outside `Depends on` is
