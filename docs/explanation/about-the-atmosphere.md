@@ -88,7 +88,15 @@ fog.
 The fog grid's cost is set by the tier (64 froxels across and 64 deep on
 `desktop-high`, 32 and 32 on `desktop-standard`), not by the volumes in
 it; the temple's one volume adds one 3D noise sample per froxel. The
-dust is one particle system of 320 quads and one draw call. Neither has
-been measured on real hardware yet: the numbers in this repository come
-from a software renderer, and the next benchmark run on the reference
-Mac measures them (see [Benchmark results](../reference/benchmark-results.md)).
+dust is one particle system of 320 quads and one draw call.
+
+On the reference Mac (Mac mini M4, Godot 4.7.2 on Metal) at
+`desktop-high`, 2560×1440 with vsync off, lightmaps baked and the
+busiest-board replay, the atmosphere adds about 0.05 ms to the median
+frame, 0.13 ms to the mean, 0.48 ms at p95 and 0.66 ms at p99. Two runs
+of the same build differ by 0.5 ms at the median, so the median change is
+within run-to-run noise. It adds 22 MB of video memory and one draw call,
+and leaves CPU time unchanged. The haze does not wash the board out: the
+frame's saturation rises from 58.8 to 72.2 and its mean luma falls from
+133.3 to 131.1. The runs and their conditions are in
+[Benchmark results](../reference/benchmark-results.md#wp-51-atmosphere).
