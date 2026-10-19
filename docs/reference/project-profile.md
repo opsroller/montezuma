@@ -175,11 +175,23 @@ A finding raised in two or more reviews is listed here as a rule.
   Resolution, 3D scaling and cap settings, uncapped where the driver
   allows it. Frame-time numbers come from the benchmark the plan names as
   their owner (today WP-46's), not from the row's own package.
-- Plan dependencies (#35, #80). In the plan
+- Plan dependencies (#35, #80, #86). In the plan
   (`docs/reference/work-packages.md`), every package a `todo` or `active`
   row waits on, needs, or shares owned files or numbers with is in its
   `Depends on` column. Mentions of finished work, and the bracketed reason
   of a `blocked` row, are not dependencies.
+- Draft PRs in the plan (#80, #86). A row whose PR is still a draft reads
+  `active (draft #N)`, not `review (#N)`, as the plan's status key says;
+  it moves to `review` when the PR is marked ready.
+- Reference pages left on the old value (#61, #86, #88). When a change
+  alters a value or a behaviour, every reference page that states it
+  changes in the same PR, including pages the diff does not touch: grep
+  `docs/` for the old value or name. A page can point to the source key
+  (for example a theme JSON key) instead of repeating its literal.
+- Decisions without an explanation (#86, #88). A change that picks a
+  value, a metric or a per-tier split gets its reason on an explanation
+  page in the same PR (why this, why not the other tiers or options).
+  A reference row or a code comment saying what it does is not enough.
 - Two open PRs changing the same plan row (#7, #13, #80). A PR edits only
   its own package's row. On rebase it keeps `main`'s text for every other
   row; a PR that edits another package's row drops that edit or moves it
