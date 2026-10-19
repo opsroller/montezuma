@@ -394,8 +394,8 @@ def backdrop_parts(p, rng):
 
 def water_channel(p):
     """Where the moat lies, in metres: inner and outer edge (half-widths of the
-    square ring), ground, water and floor heights. gen_theme_scenes.py places
-    the reflection probes and the water's floor height from the same numbers."""
+    square ring), ground, water and floor heights. gen_theme_scenes.py sets
+    the water's floor height from the same numbers."""
     w = p["water"]
     cs = p["cell_size"]
     half = p["board"]["width"] * cs / 2 + p["board"]["frame_width"]
@@ -410,8 +410,7 @@ def water_channel(p):
 
 def channel_parts(w, ground, stone, stone_dark, gs, ground_z):
     """Ground ring, channel floor, walls, coping and causeway into the given
-    meshes; returns the water surface as four strips (one reflection probe
-    each), keyed by part name."""
+    meshes; returns the water surface as four strips, keyed by part name."""
     ci, co, fl = w["inner"], w["outer"], w["floor"]
     wall = 0.3
     cw = w["causeway"]

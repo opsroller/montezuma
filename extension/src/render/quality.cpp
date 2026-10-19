@@ -14,7 +14,6 @@ constexpr std::array<std::string_view, kFeatureCount> kFeatureIds{
     "volumetric_fog", "fog_fire_light", "auto_exposure", "depth_of_field",  "glow",
     "subsurface_scattering", "parallax_occlusion", "gem_refraction", "water_refraction", "heat_haze",
     "decals",         "area_light",    "particle_trails", "fire_flipbook_8x8",
-    "reflection_probes",
 };
 
 std::array<bool, kFeatureCount> features(std::initializer_list<Feature> on) {
@@ -41,7 +40,7 @@ Profile make_desktop_high() {
                            Feature::DepthOfField, Feature::Glow, Feature::SubsurfaceScattering,
                            Feature::ParallaxOcclusion, Feature::GemRefraction, Feature::WaterRefraction,
                            Feature::HeatHaze, Feature::Decals, Feature::AreaLight, Feature::ParticleTrails,
-                           Feature::FireFlipbook8x8, Feature::ReflectionProbes});
+                           Feature::FireFlipbook8x8});
     p.scaling = Scaling::Bilinear;
     p.render_scale = 1.0f;
     p.taa = true;
@@ -64,7 +63,7 @@ Profile make_desktop_standard() {
                            Feature::AutoExposure, Feature::DepthOfField, Feature::Glow,
                            Feature::SubsurfaceScattering, Feature::ParallaxOcclusion, Feature::GemRefraction,
                            Feature::WaterRefraction, Feature::HeatHaze, Feature::Decals,
-                           Feature::ParticleTrails, Feature::FireFlipbook8x8, Feature::ReflectionProbes});
+                           Feature::ParticleTrails, Feature::FireFlipbook8x8});
     p.scaling = Scaling::TemporalUpscale;
     p.render_scale = 0.77f;
     p.anisotropy = 8;
@@ -83,7 +82,7 @@ Profile make_desktop_standard() {
 Profile make_mobile() {
     Profile p;
     p.tier = Tier::Mobile;
-    p.features = features({Feature::Glow, Feature::Decals, Feature::ParticleTrails, Feature::ReflectionProbes});
+    p.features = features({Feature::Glow, Feature::Decals, Feature::ParticleTrails});
     // FSR 1 runs only on Forward+ in Godot 4.7, so the Mobile renderer
     // scales bilinearly; the target's 0.75 to 1.0 range starts at the top.
     p.scaling = Scaling::Bilinear;

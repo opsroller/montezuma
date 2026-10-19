@@ -5,8 +5,8 @@
 // blended over the real channel floor, no refraction and no screen or
 // depth texture. The path through the water comes from the known floor
 // height (floor_height, set by the theme generator), so depth colour and
-// caustics need no depth buffer; reflections are the reflection probes and
-// sky through the engine's own specular. Desktop uses SH_Water. Cost per
+// caustics need no depth buffer; reflections are the sky through the
+// engine's own specular. Desktop uses SH_Water. Cost per
 // pixel: 2 noise octaves, 1 caustic layer where it can show, no texture
 // samples.
 shader_type spatial;

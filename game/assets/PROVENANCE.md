@@ -178,7 +178,7 @@ authors: [technical-artist (Claude)]
 created: 2026-10-18
 source:
   - tools/assets/gen_theme_meshes.py     # water_channel(), channel_parts()
-  - tools/assets/gen_theme_scenes.py     # water nodes, reflection probes, MI_Water, look-dev close-up
+  - tools/assets/gen_theme_scenes.py     # water nodes, MI_Water, look-dev close-up
   - game/assets/materials/shaders/SH_Water*.gdshader* (hand-written)
 generator:
   params: tools/assets/themes/temple.json (water block, materials.MI_Water)

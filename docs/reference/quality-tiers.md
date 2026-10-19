@@ -133,7 +133,6 @@ target names.
 | `area_light` | nodes in `quality:area_light` | ✔ | — | — | — |
 | `particle_trails` | nodes in `quality:particle_trails`; on a `GPUParticles3D` in that group it also sets `trail_enabled` and, where trails are on, makes `metadata/trail_mesh` its first draw pass. Author trails off and the trail mesh in that metadata: the Compatibility renderer warns about any particle system with trails or a trail mesh, hidden or not | ✔ | ✔ | ✔ | — |
 | `fire_flipbook_8x8` | nodes in `quality:fire_flipbook_8x8` (4×4 in the fallback group) | ✔ | ✔ | — | — |
-| `reflection_probes` | nodes in `quality:reflection_probes` (the water's probes, [Water](water.md#tiers)); the web build's WebKit run of the demo failed with them in the Compatibility renderer | ✔ | ✔ | ✔ | — |
 
 ## Node groups
 

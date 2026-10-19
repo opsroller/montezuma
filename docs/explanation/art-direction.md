@@ -113,17 +113,17 @@ Choices behind the [reference](../reference/water.md):
   shader refracts the screen and measures the true depth from the depth
   buffer; that forces Godot's transparent pass, where its own screen-space
   reflections do not run, so the shader marches its own reflection rays
-  and falls back to the reflection probe and sky. Mobile and web blend a
+  and falls back to the sky. Mobile and web blend a
   cheaper surface over the real floor and take the path length from the
   known floor height, which is exact for a flat channel.
 - **Caustics belong to the floor point.** Both shaders find the floor
   point the eye sees through the water and draw the caustic lines there,
   so they sit on the stone and move with it, not with the surface.
-- **One probe per strip.** A box probe over each strip reflects the
-  temple and jungle into the water only; one big probe would have changed
-  how the board's gold and gems reflect. The web tier leaves the probes
-  out: the demo's WebKit run failed with them in the Compatibility
-  renderer, and from the game camera the sky reflection reads the same.
+- **No reflection probes.** A box probe per strip was tried first, to
+  reflect the temple into the water on every tier. In this scene they
+  kept re-rendering, and on the benchmark Mac they cost far more than the
+  whole water budget, so the temple's reflection comes from the
+  desktop ray march alone and the other tiers reflect the sky.
 
 ## Why a theme, not a scene
 

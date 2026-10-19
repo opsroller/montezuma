@@ -6,8 +6,8 @@
 // colour with depth (absorption over the true path length, from the depth
 // texture), caustic lines on that floor, and reflections: an in-shader
 // screen-space ray march (Godot's SSR skips the transparent pass this
-// material draws in), with the reflection probes and sky through the
-// engine's own specular wherever the march misses. Mobile and web use
+// material draws in), with the sky through the engine's own specular
+// wherever the march misses. Mobile and web use
 // SH_WaterSimple (no refraction, no march). Cost per pixel: 2 depth and 1
 // screen sample, then up to ssr_steps + 3 depth and 1 screen sample for the
 // reflection; 3 noise octaves, and 2 caustic layers where they can show;
@@ -97,7 +97,7 @@ void fragment() {
 	float edge = 1.0 - smoothstep(0.0, max(edge_softness, 0.001), len);
 
 	// Reflection ray march in view space, growing steps, then a short
-	// bisection on the hit. hit = 0 leaves the probes and sky alone.
+	// bisection on the hit. hit = 0 leaves the sky reflection alone.
 	vec3 rd = reflect(normalize(VERTEX), n);
 	float hit = 0.0;
 	vec3 reflected = vec3(0.0);
@@ -143,7 +143,7 @@ void fragment() {
 	ROUGHNESS = roughness;
 	METALLIC = 0.0;
 	// F0 0.02 is Godot's specular 0.354; scaled down where the march hit, so
-	// the probe and sky reflection gives way to the screen-space one.
+	// the sky reflection gives way to the screen-space one.
 	SPECULAR = 0.354 * (1.0 - hit);
 	NORMAL = n;
 	EMISSION = (transmitted + reflected * fresnel * hit) * EXPOSURE;

@@ -93,7 +93,7 @@ sets fit the web texture budget.
 | Ruby, amethyst | `ORMMaterial3D`, `Gem_01` tinted, opaque, Fresnel from the real index of refraction, rim | `SH_Gem`: refraction of the scene behind with dispersion and absorption by the body colour |
 | Carnelian, jade, moonstone | `ORMMaterial3D` with backlight for cheap translucency | sub-surface scattering with a transmittance colour; moonstone adds a stronger clearcoat |
 | Lapis | `ORMMaterial3D`, `Lapis_01` (blue, calcite, metallic pyrite flecks) | none; the base is used everywhere |
-| Water (`MI_Water`) | `SH_WaterSimple`: blended, absorption to the flat floor height, caustics, probe reflections | `SH_Water`: refraction of the screen, depth from the depth buffer, caustics, in-shader screen-space reflections ([Water](water.md)) |
+| Water (`MI_Water`) | `SH_WaterSimple`: blended, absorption to the flat floor height, caustics, sky reflections | `SH_Water`: refraction of the screen, depth from the depth buffer, caustics, in-shader screen-space reflections ([Water](water.md)) |
 
 Texture filtering: the `ORMMaterial3D` set uses Godot's default trilinear
 filter with repeat. `SH_TriplanarPBR` and `SH_Gem` filter anisotropically
