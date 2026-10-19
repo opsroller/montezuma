@@ -19,7 +19,7 @@ with the extension built and the lightmaps baked
    |---|---|
    | a thicker or thinner veil | raise or lower `veil_density` (0 to 2) |
    | mist that rises higher round the pieces | raise `veil_height` (at most 0.4 m, under the score labels) |
-   | larger or smaller patches | raise or lower `veil_scale`; keep `wind` × 3600 a whole number of `veil_scale` tiles (12 m with the temple's wind) |
+   | larger or smaller patches | raise or lower `veil_scale`; keep `wind` × 3600 a whole number of `veil_scale` tiles (with the temple's wind: 2, 3, 4, 6, 9, 12 or 18 m) |
    | more clear cells between patches | raise both values of `veil_coverage` |
 
 2. Regenerate the material and scene:
@@ -32,7 +32,8 @@ with the extension built and the lightmaps baked
    full screen at 4K:
 
    ```sh
-   godot --path game --resolution 3840x2160 -- --start-level=e1-l01
+   godot --path game --resolution 3840x2160 -- --start-level=e1-l01 --quality=desktop-high
+   godot --path game --resolution 3840x2160 -- --start-level=e1-l01 --quality=desktop-standard
    ```
 
    The patches drift; watch for a minute rather than judging one frame.
@@ -47,6 +48,14 @@ and checks on both:
 ```sh
 cmake -DTIER=desktop-high -DREADABILITY=ON -DOUT=bench-out/high -P tools/bench/run_bench.cmake
 cmake -DTIER=desktop-standard -DREADABILITY=ON -DOUT=bench-out/standard -P tools/bench/run_bench.cmake
+```
+
+These capture at 540×1170. To check at 4K as well, capture the
+readability scene at that size and run the check on it, for each tier:
+
+```sh
+godot --path game --resolution 3840x2160 res://scenes/bench/readability.tscn -- --capture-out=bench-out/high-4k --quality=desktop-high
+python3 tools/bench/check_readability.py bench-out/high-4k
 ```
 
 Each prints a line like

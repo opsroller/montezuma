@@ -51,7 +51,8 @@ bank and the veil overlap, the shading follows each one's share of the
 density, so a bank reaching into the veil has no seam where one gives way
 to the other.
 
-The fog stays low (it thins to nothing 2.4 m above the board), because
+The banks stay low (their tops at most 1.4 m above the plaza floor,
+below the platform's top), because
 seen from a camera nearly straight above, rays to the board's edge pass
 over the platform at a height that grows with distance from the board;
 low air beside the platform is never in their way.
@@ -73,9 +74,12 @@ mist. So the check takes each cell's luma standard deviation with every
 effect off and with the atmosphere alone, and measures the share of it
 the atmosphere removes. On the `main` capture before the veil every cell
 lost between −3% and 3%; under an even 15% blend toward grey every cell
-loses 15%. A cell that gains contrast counts as clear: fog only ever
-pulls a cell toward the mist's colour, so a gain comes from something
-else, such as exposure scaling the board up. The thresholds and options
+loses 15%. A cell that gains contrast counts as clear: an even layer
+of fog only pulls a cell toward the mist's colour, and the veil's patches
+are a few cells across, so a gain inside one cell comes mostly from
+something else, such as exposure scaling the board up; a patch edge
+crossing a cell can add a little variance, too little to matter against
+the thresholds below. The thresholds and options
 are in [Readability checks](../reference/benchmark.md#readability-checks).
 
 The thresholds rest on those captures and on what the eye still reads:
@@ -101,6 +105,13 @@ The thresholds rest on those captures and on what the eye still reads:
 Rule 4 still guards each kind's contrast against its tile across the
 whole board, so a veil that passes rule 2 cell by cell cannot wash out
 one kind everywhere.
+
+On the 4K captures rule 4 fails on `main` and less so with the veil: one
+kind's contrast against the light tile rises with glow and with auto
+exposure's response to the plaza mist, and the veil lowers contrast where
+it lies, so it takes back part of that rise. The rest belongs to the glow
+and exposure settings, not the fog. Retuning the veil while keeping these
+checks passing: [Tune the fog veil](../how-to/tune-the-fog-veil.md).
 
 ## Why the first pass looked like dirty glass
 
