@@ -342,6 +342,41 @@ The mist adds about 0.07 ms of GPU time at native 4K (under 1%). It
 samples its 3D noise twice per froxel instead of once, over a fog volume
 half as tall.
 
+## Fog veil over the board
+
+Cost of replacing the ground mist's clear square over the board with a
+thin veil (`SH_AtmosphereFog`, `MI_AtmosphereFog`, `PF_Environment.tscn`)
+against `main` at dbaa1fc, `desktop-high`, bench scene, 2026-10-19.
+
+**RTX 4080 SUPER** (Vulkan, Forward+, NixOS, live GNOME desktop, render
+size locked at 3840×2160, vsync off, 6 s warm-up and 20 s capture, two
+rounds alternating `main` and the veil, lightmaps rebaked for each; the
+3D view rendered through `desktop-high`'s FSR 2, as on `main`):
+
+| Build | `frame_ms` p50 | p95 | `gpu_ms` p50 | p95 | Video memory max |
+|---|---|---|---|---|---|
+| `main`, round 1 | 5.03 | 7.05 | 4.16 | 6.11 | 1151 MB |
+| Veil, round 1 | 4.98 | 7.04 | 4.15 | 6.10 | 1151 MB |
+| `main`, round 2 | 5.00 | 7.06 | 4.15 | 6.11 | 1151 MB |
+| Veil, round 2 | 5.00 | 7.05 | 4.15 | 6.10 | 1151 MB |
+
+The veil's third noise sample per froxel costs nothing measurable: the
+fog grid's size, not the shader, sets the fog's cost.
+
+Readability on the same machine, `desktop-high`, `readability.tscn`:
+
+| Capture | Rule 2 (worst cell contrast loss, clear cells) | Rule 4 (worst change) |
+|---|---|---|
+| `main`, 3840×2160 | 3%, 100% | 15.2% |
+| Veil, 540×1170 | 34%, 36% | 7.8 to 8.1% |
+| Veil, 3840×2160 | 33%, 36 to 38% | 11.0 to 12.0% |
+
+Rule 4's worst group at 4K is the same on both builds: kind 2 on the
+light tile, whose contrast rises with glow (+5.7% alone) and with auto
+exposure's response to the plaza mist (+6.5% alone on `main`). The veil
+lowers contrast where it lies, so it takes back part of that rise; the
+rest belongs to the glow and exposure settings, not the fog.
+
 ## Feature rows
 
 `check_features.py` on the same reports. Rows that fail are the

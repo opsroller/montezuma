@@ -407,10 +407,10 @@
         "coverage": [0.56, 0.64],
         "wind": [0.12, 0.0, -0.05],
         "base_shade": 0.75,
-        "veil_density": 1.5,
-        "veil_height": 0.3,
+        "veil_density": 0.9,
+        "veil_height": 0.25,
         "veil_scale": 14.0,
-        "veil_coverage": [0.45, 0.65],
+        "veil_coverage": [0.5, 0.72],
         "veil_spread": 1.0
       }
     },

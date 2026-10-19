@@ -84,7 +84,7 @@ benchmark on the reference Mac mini M4 replaces them.
    in the board view on Forward+ it still left a haze over the board (rule
    2: mean change 11 against a limit of 1 on `desktop-high`). So the
    temple's environment has no fog, and haze in the backdrop comes from
-   WP-51's `FogVolume`s, which are kept off the board. A theme can still
+   WP-51's `FogVolume`s, which leave only a thin, patchy veil over the board. A theme can still
    set `lighting.fog` for height fog if its readability capture passes on
    every tier. Measured afterwards at 1280 × 720 (software rendering, so
    look only, not speed), with the WP-49 braziers in: on `web` rule 2
@@ -227,7 +227,7 @@ is captured on load.
   flat above the pieces (`Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, …)`).
 - Every emissive material gets a `lo/` copy at 1 nit (the scene generator
   writes it); emission is authored in nits for the other tiers.
-- No environment fog over the board; backdrop haze is `FogVolume`s outside it (WP-51).
+- No environment fog over the board; haze is `FogVolume`s, thin and patchy over the board (WP-51).
 
 ## Open questions
 

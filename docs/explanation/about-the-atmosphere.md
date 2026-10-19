@@ -1,23 +1,24 @@
 <!-- SPDX-License-Identifier: GPL-2.0-or-later -->
 # About the atmosphere
 
-*Explanation. Why the temple's mist is one fog volume that is empty over
-the board, why it lies in banks on the plaza and is lit as brightly as it
-is, and why mobile and web get cards. The parameters are in
+*Explanation. Why the temple's mist is one fog volume with only a thin
+veil over the board, why it lies in banks on the plaza and is lit as
+brightly as it is, and why mobile and web get cards. The parameters are in
 [Board themes: Atmosphere](../reference/board-themes.md#atmosphere).*
 
 ## What it has to do
 
 The [visual target](../reference/visual-target.md) asks for "shafts of sun
 through dusty air" on desktop and light-shaft cards in their place on
-mobile and web, and readability rule 2 asks for zero fog, haze or dust
-over the board. The first lighting pass (WP-47) found that even height
-fog starting below the platform left a haze over the board on Forward+,
-so the temple has no environment fog at all
-([About lighting](about-lighting.md)). Whatever adds air has to add it
-only where the board is not.
+mobile and web. Readability rule 2 lets fog lie over the board as long as
+the tiles and pieces read through it, it never covers the whole board and
+it stays under the HUD and all text. The first lighting pass (WP-47) found
+that height fog starting below the platform left an even haze over the
+whole board on Forward+, which rule 2 still rules out, so the temple has
+no environment fog at all ([About lighting](about-lighting.md)). The air
+over the board has to come in patches.
 
-## One volume, empty in the middle
+## One volume, thin over the board
 
 Godot's volumetric fog sums the density of every `FogVolume` into a grid
 of froxels (frustum-shaped cells) in front of the camera and lights them
@@ -26,14 +27,23 @@ platform would keep the board clear, but where two boxes meet, each
 fades out at its edge and a thin seam of clear air shows between them.
 
 So the temple has a single box over the whole scene, and its fog shader
-decides the density from the world position: zero inside a square around
-the board centre, ramping up over 1.2 m outside it. The rule is written
-in metres in world space, so it holds for every camera, window shape and
-tier, and nothing can drift onto the board. The square is the board plus
-1.6 m. That margin covers what a froxel smears sideways: at 64 froxels
-across a 1440p screen a froxel is about 25 cm wide where the board is,
-and the fog's blur and temporal reprojection spread it by a few froxels
-at most.
+decides the density from the world position. Over the board it lays a
+veil: patches from noise a few cells across, drifting with the banks,
+lying on the tiles and thinning to nothing 0.25 m up. Between the patches
+the tiles are clear, so the board is never covered as a whole, and in a
+patch the mist is thin enough that the tiles and gems read through it,
+softened rather than hidden. It sits on the board the way morning mist
+lies on a paved court. The first version of the ground mist kept a square
+of clear air over the board instead; from above, a hard-edged hole in the
+mist read as a frame around the board, not as mist that happened to be
+thin there.
+
+The veil stays under all text. The HUD and dialogs are 2D and drawn after
+the 3D scene, so fog cannot reach them. The floating score labels are 3D,
+and Godot fogs a 3D surface by the fog between the camera and that
+surface; they start 0.8 cell above the tiles, their lowest edge about
+0.5 m up, and the veil is gone by 0.25 m, so the rays from the camera to a
+label never pass through it. Keep `veil_height` under that edge.
 
 The fog stays low (it thins to nothing 2.4 m above the board), because
 seen from a camera nearly straight above, rays to the board's edge pass
@@ -65,8 +75,8 @@ edges. Density is full at the floor and fades out over the top of each
 bank. Banks next to the platform are half as tall as those 7 m out, so
 the mist deepens away from the temple, which from above reads as depth.
 
-The fog volume now stops at the board's height. Nothing above the plaza
-needs fog any more, and the smaller volume leaves fewer froxels for the
+The fog volume stops 0.45 m above the board, just over the veil. Nothing
+higher needs fog, and the shallow volume leaves fewer froxels for the
 shader to fill.
 
 ## Lit like mist, not like dust
@@ -115,7 +125,8 @@ Metal backend, which runs the Compatibility renderer on macOS, abort on
 the virtual Mac GPU the release smoke test runs on. The generator checks
 every point of every card against the game camera at the distances it
 uses from a wide window to a tall phone, and places them again until none
-draws over the board.
+draws over the board. Without volumetric fog there is no veil either: on
+mobile and web the board is clear.
 
 The fog shader itself cannot even load on Compatibility (Godot prints an
 error for any fog shader there), so the fog volume names its material by
@@ -126,7 +137,7 @@ fog.
 
 The fog grid's cost is set by the tier (64 froxels across and 64 deep on
 `desktop-high`, 32 and 32 on `desktop-standard`), not by the volumes in
-it; the temple's one volume adds one 3D noise sample per froxel. The
+it; the temple's one volume adds three 3D noise samples per froxel (banks, wisps and the veil). The
 dust is one particle system of 320 quads and one draw call.
 
 On the reference Mac (Mac mini M4, Godot 4.7.2 on Metal) at

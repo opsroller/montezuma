@@ -55,10 +55,10 @@ uniform float base_shade : hint_range(0.0, 1.0) = 0.55;
 // one tile of its noise (its patches are a few tiles across, with clear
 // tiles between them) and the noise values mapped to no veil and full veil.
 // It spreads veil_spread metres past the board edge, where it meets the banks.
-uniform float veil_density : hint_range(0.0, 4.0, 0.001) = 1.5;
-uniform float veil_height = 0.3;
+uniform float veil_density : hint_range(0.0, 4.0, 0.001) = 0.9;
+uniform float veil_height = 0.25;
 uniform float veil_scale = 14.0;
-uniform vec2 veil_coverage = vec2(0.45, 0.65);
+uniform vec2 veil_coverage = vec2(0.5, 0.72);
 uniform float veil_spread = 1.0;
 
 void fog() {
