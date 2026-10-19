@@ -182,8 +182,8 @@ reach):
 | `display` | `refresh_hz` (-1 when unknown), `vsync` (`disabled`, `enabled`, `adaptive`, `mailbox`) |
 | `timing` | `gpu` (as `gpu_timing`), `gpu_note` (why, when false), `gpu_frames` (frames with a GPU timestamp), `render_cpu_includes_display_wait` (true on Metal) |
 | `warmup_seconds`, `measure_seconds` | as run |
-| `device` | `os`, `model`, `godot`, `rendering_method` (`forward_plus`, `mobile`, `gl_compatibility`), `rendering_driver`, `adapter`, `vendor`, `api_version`, `resolution` [w, h], `headless`, `software` (a CPU rasteriser adapter) |
-| `gpu_timing` | false when no frame had a GPU timestamp (headless, or a driver without timer queries: Metal in Godot 4.7.2); then `gpu_ms` is null and no verdict uses GPU time |
+| `device` | `os`, `model`, `godot`, `rendering_method` (`forward_plus`, `mobile`, `gl_compatibility`), `rendering_driver`, `adapter`, `vendor`, `api_version` (empty where Godot has no RenderingDevice, such as the web), `resolution` [w, h], `headless`, `software` (a CPU rasteriser adapter) |
+| `gpu_timing` | false when no frame had a GPU timestamp (headless, or a driver without timer queries: Metal in Godot 4.7.2; 4.8 has them); then `gpu_ms` is null and no verdict uses GPU time |
 | `process_ms`, `render_cpu_ms`, `cpu_ms`, `gpu_ms`, `frame_ms` | each `{frames, mean, p50, p95, p99, max, over_budget}`; `over_budget` counts frames over the p95 limit |
 | `render` | `draw_calls_p95`, `draw_calls_max`, `draw_calls_by_pass` (`scene_p95`, `shadow_p95`, `canvas_p95`), `piece_draws` (the board view's `get_piece_draws()` at the end of the run), `primitives_p95`, `primitives_max`, `video_mem_max_mb`, `pipeline_compilations` (`before_capture` and `during_capture`, each `canvas`, `mesh`, `surface`, `draw`, `specialization`: the render pipelines Godot compiled in that window, from `RenderingServer.get_rendering_info`; `draw` ones stalled the frame that needed them, the others compiled in the background while an ubershader drew) |
 | `replay` | `scenario` (`busiest-board`), `seed`, `beats`, `loops`, `deep_cascades` (beats of 4+ steps played), `max_cascade_steps`, `diverged` |

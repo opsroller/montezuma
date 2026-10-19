@@ -27,6 +27,7 @@
 
 #include "frame_stats.hpp"
 #include "render/backdrop_blur.hpp"
+#include "render/rendering_device_access.hpp"
 #ifdef MONTEZUMA_RAY_TRACING
 #include "render/rt/rt_reflections.hpp"
 #endif
@@ -200,7 +201,7 @@ Dictionary device_info(Viewport* viewport) {
     d["rendering_driver"] = rs->get_current_rendering_driver_name();
     d["adapter"] = rs->get_video_adapter_name();
     d["vendor"] = rs->get_video_adapter_vendor();
-    d["api_version"] = rs->get_video_adapter_api_version();
+    d["api_version"] = rendering_server_has("get_video_adapter_api_version") ? rs->get_video_adapter_api_version() : String();
     // Frames from either are no measurement (docs/reference/benchmark.md#budget).
     d["headless"] = DisplayServer::get_singleton()->get_name() == "headless";
     d["software"] = software_adapter(rs->get_video_adapter_name().utf8().get_data());

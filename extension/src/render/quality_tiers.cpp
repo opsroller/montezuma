@@ -53,6 +53,7 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 #include "backdrop_blur.hpp"
+#include "rendering_device_access.hpp"
 #ifdef MONTEZUMA_RAY_TRACING
 #include "rt/rt_reflections.hpp"
 #endif
@@ -205,10 +206,12 @@ void QualityTiers::_ready() {
     if (Engine::get_singleton()->is_editor_hint()) return;
     RenderingServer* rs = RenderingServer::get_singleton();
     adapter_.rendering_method = to_std(rs->get_current_rendering_method());
-    adapter_.type = adapter_type(rs->get_video_adapter_type());
+    if (rendering_server_has("get_video_adapter_type")) {
+        adapter_.type = adapter_type(rs->get_video_adapter_type());
+    }
     adapter_.name = to_std(rs->get_video_adapter_name());
     adapter_.vendor = to_std(rs->get_video_adapter_vendor());
-    if (RenderingDevice* rd = rs->get_rendering_device()) {
+    if (RenderingDevice* rd = main_rendering_device()) {
         atomic_storage_ = rd->texture_is_format_supported_for_usage(
             RenderingDevice::DATA_FORMAT_R32_UINT,
             RenderingDevice::TEXTURE_USAGE_STORAGE_BIT | RenderingDevice::TEXTURE_USAGE_STORAGE_ATOMIC_BIT);
@@ -647,7 +650,7 @@ void QualityTiers::apply_camera_attributes(const Ref<CameraAttributes>& attribut
 Ref<Compositor> QualityTiers::backdrop_blur(Ref<Compositor> compositor, const Ref<CameraAttributes>& attributes,
                                              bool own_attributes) {
     // Compositor effects need a RenderingDevice; Compatibility has none.
-    if (!RenderingServer::get_singleton()->get_rendering_device()) {
+    if (!main_rendering_device()) {
 #ifdef MONTEZUMA_RAY_TRACING
         RtReflections::attach(compositor);  // only warns (and fails --rt-selftest) here
 #endif
@@ -839,7 +842,7 @@ void QualityTiers::run_self_test() {
         check(attrs->is_auto_exposure_enabled() == p.has(q::Feature::AutoExposure), id, "auto exposure");
         check(!attrs->is_dof_blur_far_enabled() && !attrs->is_dof_blur_near_enabled(), id, "Godot's depth of field on");
         const Ref<BackdropBlur> blur = BackdropBlur::in(world->get_compositor());
-        if (RenderingServer::get_singleton()->get_rendering_device()) {
+        if (main_rendering_device()) {
             check(blur.is_valid() && blur->get_camera_attributes() == attrs, id, "no backdrop blur on the attributes");
             check(blur.is_valid() && blur->get_enabled() == p.has(q::Feature::DepthOfField), id, "depth of field");
         } else {
@@ -948,7 +951,7 @@ void QualityTiers::run_self_test() {
         const TypedArray<CompositorEffect> effects = compositor->get_compositor_effects();
         for (int64_t i = 0; i < effects.size(); ++i) blurs += Ref<BackdropBlur>(effects[i]).is_valid() ? 1 : 0;
     }
-    const bool device = RenderingServer::get_singleton()->get_rendering_device() != nullptr;
+    const bool device = main_rendering_device() != nullptr;
     check(blurs == (device ? 1 : 0), get_tier(), "backdrop blur added twice on re-entry");
     // A camera's own attributes and compositor win over the world's, so the
     // camera carries the blur, bound to the attributes it renders with.
