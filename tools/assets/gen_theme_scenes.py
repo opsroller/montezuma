@@ -163,7 +163,8 @@ def shader_material(spec, theme, hi):
         stone = WATER["stone"]
         params |= {"channel_inner": round(WATER["inner"], 4), "channel_outer": round(WATER["outer"], 4),
                    "floor_height": round(WATER["floor"], 4), "causeway_half": round(WATER["causeway"] / 2, 4),
-                   "floor_tint": stone.get("albedo_tint", stone["albedo"]), "floor_scale": stone.get("triplanar_scale", 1.0)}
+                   "floor_tint": stone.get("albedo_tint", stone["albedo"]), "floor_scale": stone.get("triplanar_scale", 1.0),
+                   "channel_top": round(WATER["ground"], 4), "sun_direction": [round(v, 5) for v in WATER["sun"]]}
         r.body.append(f"shader_parameter/texture_albedo = {r.ext_id('Texture2D', texture_path(theme, stone['set'], 'BC', hi))}")
     for key, value in params.items():
         v = color(value) if isinstance(value, str) else value
@@ -522,7 +523,8 @@ def main():
         fog_params["clear_half"] = round(board_half + p["lighting"]["atmosphere"]["volumes"]["clearance"], 3)
         fog_params["sun_direction"] = [round(v, 5) for v in sun_toward(p["environment"]["sun"]["transform"])]
     if "water" in p:
-        WATER.update(water_channel(p), stone=p["materials"]["MI_StoneDark"])
+        WATER.update(water_channel(p), stone=p["materials"]["MI_StoneDark"],
+                     sun=sun_toward(p["environment"]["sun"]["transform"]))
     assets = ROOT / "game/assets"
     models = f"res://assets/models/{theme}"
     entry = {}

@@ -23,3 +23,5 @@ shader_parameter/floor_height = -2.52
 shader_parameter/causeway_half = 1.5
 shader_parameter/floor_tint = Color(0.3608, 0.3216, 0.2745, 1.0000)
 shader_parameter/floor_scale = 0.9
+shader_parameter/channel_top = -1.92
+shader_parameter/sun_direction = Vector3(-0.42625, 0.66913, 0.60875)

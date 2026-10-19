@@ -46,6 +46,12 @@ uniform float channel_inner = 10.0;
 uniform float channel_outer = 12.0;
 uniform float floor_height = -2.5;
 uniform float causeway_half = 1.5;
+// Height of the channel's rim (the ground), and the direction towards the
+// sun: the stone under the water is in shadow where the walls stand between.
+uniform float channel_top = -2.42;
+uniform vec3 sun_direction = vec3(-0.426, 0.669, 0.609);
+// How bright stone the sun does not reach is, against sunlit floor.
+uniform float shade_level : hint_range(0.0, 1.0, 0.01) = 0.4;
 
 varying vec3 w_pos;
 
@@ -62,6 +68,17 @@ float wall_t(float s, float v, float edge, bool outward) {
 		return 1e6;
 	}
 	return (edge - abs(s)) / m;
+}
+
+// How far point p lies inside the channel's square ring (negative outside),
+// metres; the causeway's sides count as walls.
+float in_channel(vec3 p) {
+	float r = max(abs(p.x), abs(p.z));
+	float m = min(r - channel_inner, channel_outer - r);
+	if (p.z < 0.0 && -p.z >= abs(p.x)) {
+		m = min(m, abs(p.x) - causeway_half);
+	}
+	return m;
 }
 
 void fragment() {
@@ -125,6 +142,18 @@ void fragment() {
 	}
 	stone *= 1.0 + caustic_strength * caustic * fade;
 
+	// Light on that stone: the sun reaches it only where its path clears the
+	// walls' tops, and falls on a wall at the wall's own angle (relative to
+	// the floor, which the engine lights through the surface); stone in a
+	// corner gets less sky.
+	vec3 to_sun = normalize(sun_direction);
+	vec3 face_n = face == 1 ? vec3(0.0, 1.0, 0.0) : (face == 0 ? vec3(-sign(rd.x), 0.0, 0.0) : vec3(0.0, 0.0, -sign(rd.z)));
+	float direct = min(max(dot(face_n, to_sun), 0.0) / max(to_sun.y, 0.1), 1.5);
+	vec3 rim = hit + to_sun * (max(channel_top - hit.y, 0.0) / max(to_sun.y, 0.05));
+	direct *= smoothstep(-0.04, 0.04, in_channel(rim));
+	float corner = face == 1 ? in_channel(hit) : hit.y - floor_height;
+	stone *= mix(shade_level, 1.0, direct) * mix(0.6, 1.0, smoothstep(0.0, 0.35, corner));
+
 	vec3 trans = wt_transmittance(absorption, t);
 	float edge = 1.0 - smoothstep(0.0, max(edge_softness, 0.001), t);
 	vec3 water = stone * trans + water_color.rgb * (1.0 - dot(trans, vec3(0.3333))) + vec3(0.35) * edge * caustic;
@@ -132,7 +161,11 @@ void fragment() {
 	// What the surface reflects is the engine's specular, so the light that
 	// goes in is what it does not reflect.
 	ALBEDO = min(water * (1.0 - fresnel), vec3(1.0));
-	ROUGHNESS = roughness;
+	// Widen the highlight where the ripples change faster than a pixel, so the
+	// sun's glints do not alias into sparkles.
+	vec3 dn = fwidth(n_w);
+	float a2 = pow(roughness, 4.0) + min(2.0 * dot(dn, dn), 0.18);
+	ROUGHNESS = pow(a2, 0.25);
 	METALLIC = 0.0;
 	// F0 0.02 is Godot's specular 0.354.
 	SPECULAR = 0.354;
