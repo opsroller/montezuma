@@ -59,7 +59,11 @@ such: the only renderer this package could run is software Vulkan and GL
    applies after tonemapping, in display (sRGB-encoded) space. Godot
    applies it there on every renderer (checked by rendering a square-root
    table on Compatibility: the result matched a display-space model to 1.5
-   levels and a linear one to 3.5). The CDL is the colourists' standard
+   levels and a linear one to 3.5). Godot samples the table with
+   `textureLod` and no half-texel remap, so the generator writes the grade
+   at texel centres, `(i + 0.5) / 32`; a table with its points at
+   `i / 31` would darken an input of 0.1 to about 0.087 even as an
+   identity. The CDL is the colourists' standard
    for a primary grade, so a theme author can read and adjust it, and
    the LUT keeps the cost at one texture read on every tier. The temple
    grade is gentle: warm highlights (red slope 1.03, blue 0.96), a slight

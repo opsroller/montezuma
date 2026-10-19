@@ -55,7 +55,6 @@ private:
     struct Env {
         bool fog = false;
         bool volumetric_fog = false;
-        bool glow = false;
         double glow_intensity = 0.0;
         bool ssr = false;
         bool ssao = false;

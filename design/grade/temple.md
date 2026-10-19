@@ -40,13 +40,13 @@ a surface colour by 0.05, and the closest piece pair may come at most
 | View | Closest piece pair before | After |
 |---|---|---|
 | Normal | 0.155 | 0.169 |
-| Greyscale | 0.002 | 0.015 |
-| Protanopia | 0.008 | 0.005 |
-| Deuteranopia | 0.040 | 0.048 |
-| Tritanopia | 0.123 | 0.118 |
+| Greyscale | 0.002 | 0.014 |
+| Protanopia | 0.008 | 0.007 |
+| Deuteranopia | 0.040 | 0.046 |
+| Tritanopia | 0.123 | 0.119 |
 
 The grade separates the pieces slightly in normal vision, greyscale and
-deuteranopia, and brings them at most 0.005 closer under protanopia and
+deuteranopia, and brings them at most 0.004 closer under protanopia and
 tritanopia, within the limit. The greyscale pair near zero (ruby, lapis
 and amethyst share a value) is by design: silhouettes separate them.
 

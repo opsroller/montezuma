@@ -12,7 +12,10 @@ colours and an identity table changes nothing.
 Writes game/assets/textures/<theme>/grade/T_Grade_LUT.png: size x size
 slices of size x size laid side by side (red along x within a slice, green
 along y, blue by slice), imported as a Texture3D with that many horizontal
-slices. Reference: docs/reference/board-themes.md, "Colour grade".
+slices. Godot samples the table with textureLod(lut, colour) and no
+half-texel remap, so texel i along an axis is read at (i + 0.5) / size: the
+table holds the grade at texel centres, and lookup() models the same
+sampling. Reference: docs/reference/board-themes.md, "Colour grade".
 """
 
 import re
@@ -55,9 +58,9 @@ def cdl(rgb, grade):
 
 
 def table(grade):
-    """The grade sampled on a size^3 lattice, as a (size, size * size, 3) uint8 strip."""
+    """The grade sampled at the size^3 texel centres, as a (size, size * size, 3) uint8 strip."""
     n = grade["lut_size"]
-    axis = np.arange(n) / (n - 1)
+    axis = (np.arange(n) + 0.5) / n
     b, g, r = np.meshgrid(axis, axis, axis, indexing="ij")  # [slice, row, column]
     graded = cdl(np.stack([r, g, b], axis=-1), grade)
     strip = graded.transpose(1, 0, 2, 3).reshape(n, n * n, 3)  # slices side by side
@@ -65,10 +68,11 @@ def table(grade):
 
 
 def lookup(strip, rgb):
-    """Trilinear lookup of sRGB-encoded colours (..., 3) in [0, 1] through a strip, as the GPU samples it."""
+    """Trilinear lookup of sRGB-encoded colours (..., 3) in [0, 1] through a strip, as the GPU samples it:
+    texel centres at (i + 0.5) / size, clamped to the edge texels."""
     n = strip.shape[0]
     lut = strip.reshape(n, n, n, 3).transpose(1, 0, 2, 3).astype(np.float64) / 255  # [b, g, r]
-    pos = np.clip(np.asarray(rgb, dtype=np.float64), 0.0, 1.0) * (n - 1)
+    pos = np.clip(np.asarray(rgb, dtype=np.float64) * n - 0.5, 0.0, n - 1)
     i0 = np.minimum(np.floor(pos).astype(int), n - 2)
     f = pos - i0
     out = 0.0

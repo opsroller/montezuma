@@ -243,14 +243,15 @@ tonemapping: per channel `out = clamp(in × slope + offset) ^ power`, then
 `tools/assets/grade_lut.py` into
 `game/assets/textures/<theme>/grade/T_Grade_LUT.png`, a `lut_size`³ table
 laid out as `lut_size` slices side by side (red across, green down, blue
-by slice), and writes its `.import` (`importer="3d_texture"`, lossless,
+by slice, each texel holding the grade at its centre, `(i + 0.5) / lut_size`,
+since Godot samples the table with no half-texel remap), and writes its `.import` (`importer="3d_texture"`, lossless,
 no mipmaps, `slices/horizontal` = `lut_size`). The theme's
 `WorldEnvironment` uses it as `adjustment_color_correction` on every tier.
 Why a CDL and a LUT: [About post-processing](../explanation/about-post-processing.md).
 
 | Key (`grade.*`) | Meaning | Temple |
 |---|---|---|
-| `lut_size` | lattice points per axis | 32 (a 1024 × 32 PNG, 96 KB in memory) |
+| `lut_size` | texels per axis | 32 (a 1024 × 32 PNG, 96 KB in memory) |
 | `slope`, `offset`, `power` | CDL per channel, sRGB-encoded values in 0 to 1 | slope 1.03, 1.0, 0.96; offset 0, 0, 0.01; power 1 |
 | `saturation` | CDL saturation, 1 keeps it | 1.06 |
 | `check.max_shift_pieces`, `check.max_shift_surfaces` | most a piece colour (`materials.<kind>.albedo`) or palette colour (`surface_tokens`, `extra_tokens`) may move, OKLab distance | 0.04, 0.05 |

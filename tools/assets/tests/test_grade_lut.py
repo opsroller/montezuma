@@ -25,20 +25,28 @@ class TableTest(unittest.TestCase):
     def test_identity_grade_changes_nothing(self):
         strip = grade_lut.table(IDENTITY)
         self.assertEqual(strip.shape, (17, 17 * 17, 3))
-        colours = np.random.default_rng(1).random((200, 3))
+        # Between the outermost texel centres; outside them the GPU clamps to the edge texel.
+        colours = 0.5 / 17 + np.random.default_rng(1).random((200, 3)) * (1 - 1 / 17)
         self.assertLess(np.abs(grade_lut.lookup(strip, colours) - colours).max(), 1 / 255)
+
+    def test_identity_keeps_dark_tones(self):
+        # Godot reads texel i at (i + 0.5) / size with no remap; a lattice at i / (size - 1)
+        # would darken 0.1 to about 0.087 on a 32^3 table.
+        strip = grade_lut.table(dict(IDENTITY, lut_size=32))
+        dark = np.array([[0.1, 0.1, 0.1], [0.05, 0.12, 0.15]])
+        self.assertLess(np.abs(grade_lut.lookup(strip, dark) - dark).max(), 1 / 255)
 
     def test_layout_is_red_across_green_down_blue_by_slice(self):
         strip = grade_lut.table(IDENTITY).astype(int)
         n = 17
-        # Slice 3, row 5, column 7 is (r, g, b) = (7, 5, 3) / (n - 1).
-        np.testing.assert_array_equal(strip[5, 3 * n + 7], np.round(np.array([7, 5, 3]) / (n - 1) * 255))
+        # Slice 3, row 5, column 7 is the texel centre (r, g, b) = ((7, 5, 3) + 0.5) / n.
+        np.testing.assert_array_equal(strip[5, 3 * n + 7], np.round((np.array([7, 5, 3]) + 0.5) / n * 255))
 
     def test_lookup_matches_the_grade_between_lattice_points(self):
-        # A 32^3 table, as the temple uses: trilinear filtering between lattice
-        # points stays within a few 8-bit steps of the exact grade.
+        # A 32^3 table, as the temple uses: trilinear filtering between texel
+        # centres stays within a few 8-bit steps of the exact grade.
         grade = dict(IDENTITY, lut_size=32, slope=[1.03, 1.0, 0.96], offset=[0, 0, 0.01], saturation=1.06)
-        colours = np.random.default_rng(2).random((500, 3))
+        colours = 0.5 / 32 + np.random.default_rng(2).random((500, 3)) * (1 - 1 / 32)
         error = np.abs(grade_lut.lookup(grade_lut.table(grade), colours) - grade_lut.cdl(colours, grade))
         self.assertLess(error.max(), 3 / 255)
         self.assertLess(error.mean(), 0.5 / 255)

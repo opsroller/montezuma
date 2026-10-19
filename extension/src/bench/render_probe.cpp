@@ -218,7 +218,7 @@ void EffectSwitch::capture(Node* root, Viewport* viewport) {
     ERR_FAIL_NULL(viewport);
     env_ = environment_of(viewport);
     if (env_.is_valid()) {
-        base_ = {env_->is_fog_enabled(), env_->is_volumetric_fog_enabled(), env_->is_glow_enabled(),
+        base_ = {env_->is_fog_enabled(), env_->is_volumetric_fog_enabled(),
                  env_->get_glow_intensity(), env_->is_ssr_enabled(), env_->is_ssao_enabled(), env_->is_ssil_enabled(), env_->is_sdfgi_enabled()};
     }
     const Ref<CameraAttributesPractical> practical = camera_attributes_of(viewport);
