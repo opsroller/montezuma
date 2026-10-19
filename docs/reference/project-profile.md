@@ -156,3 +156,15 @@ budgets, frame times and the look each tier must show are in
 - Docs: the right Diataxis kind in the right folder, updated with the
   change.
 - Every PR title is a Conventional Commit (it becomes the squash commit).
+
+### Pitfalls seen in two reviews
+
+- A performance figure in the docs or the plan with no source, or measured
+  in a configuration that is no tier's (#35, #75, #79, #80). Check: every
+  number links to its row in `docs/reference/benchmark-results.md`, and
+  that row names the tier's render size, scaling and an uncapped,
+  matched-baseline run.
+- A plan row that waits on, or overlaps, packages its `Depends on` column
+  does not list (#35, #80). Check: every package named in a row's status
+  note or `Done when` is in its `Depends on` column, and frame-time numbers
+  stay with the package that owns them (WP-46).
