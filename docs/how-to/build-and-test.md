@@ -17,6 +17,14 @@ build: Make then starts every compile at once, and godot-cpp alone has about
 a thousand, which runs a 16 GB machine out of memory with the compilers
 stalled in swap. To build one thing, name it with `--target`.
 
+CMake will not switch an existing build folder to another generator. If a
+folder was configured with Make (the old default), delete it before
+configuring it with Ninja, for example:
+
+```sh
+cmake -E rm -rf build-ext
+```
+
 ## Build and test the core only
 
 Needs CMake 3.22+, Ninja and a C++20 compiler. No Godot needed.
