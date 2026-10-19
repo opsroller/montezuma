@@ -28,12 +28,12 @@ with the extension built and the lightmaps baked
    python3 tools/assets/gen_theme_scenes.py
    ```
 
-3. Look at it in play at the size you care about, for example a level
-   full screen at 4K:
+3. Look at it in play, full screen on the screen you care about (the
+   game's full-screen setting, or the `override.cfg` below for 4K):
 
    ```sh
-   godot --path game --resolution 3840x2160 -- --start-level=e1-l01 --quality=desktop-high
-   godot --path game --resolution 3840x2160 -- --start-level=e1-l01 --quality=desktop-standard
+   godot --path game -- --start-level=e1-l01 --quality=desktop-high
+   godot --path game -- --start-level=e1-l01 --quality=desktop-standard
    ```
 
    The patches drift; watch for a minute rather than judging one frame.
@@ -50,13 +50,20 @@ cmake -DTIER=desktop-high -DREADABILITY=ON -DOUT=bench-out/high -P tools/bench/r
 cmake -DTIER=desktop-standard -DREADABILITY=ON -DOUT=bench-out/standard -P tools/bench/run_bench.cmake
 ```
 
-These capture at 540×1170. To check at 4K as well, capture the
-readability scene at that size and run the check on it, for each tier:
+These capture at 540×1170. To check at 4K as well, put a landscape 4K
+full-screen window in `game/override.cfg` (it is not committed; move any
+you have aside first), capture the readability scene and run the check
+on it, for each tier:
 
 ```sh
-godot --path game --resolution 3840x2160 res://scenes/bench/readability.tscn -- --capture-out=bench-out/high-4k --quality=desktop-high
+printf '[display]\nwindow/size/viewport_width=3840\nwindow/size/viewport_height=2160\nwindow/size/mode=3\n' > game/override.cfg
+godot --path game res://scenes/bench/readability.tscn -- --capture-out=bench-out/high-4k --quality=desktop-high
 python3 tools/bench/check_readability.py bench-out/high-4k
+rm game/override.cfg
 ```
+
+A `--resolution` flag or a window-size override alone gives a portrait
+capture on a desktop, which is not what the 4K figures measure.
 
 Each prints a line like
 `PASS rule 2: worst cell contrast loss 23% (max 40%), clear cells 34% (min 25%)`.
