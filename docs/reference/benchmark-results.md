@@ -458,8 +458,24 @@ On Vulkan the two versions cost the same (within the run-to-run spread
 of a few tenths of a millisecond). Every run rendered at native 4K,
 matched its replay plan and compiled no shader during the capture; the
 feature check reads 16 of 17 rows on both, failing only
-screen-space reflections, as on `main`. The gain 4.8 is taken for is in
-its Metal driver and has to be measured on the Mac mini M4.
+screen-space reflections, as on `main`.
+
+Mac mini M4, Metal, Forward+, `desktop-high`, exclusive full screen at
+native 5120×2880 with no upscaler, vsync off, 3 s warm-up and a 10 s
+capture, 2026-10-19. `main` at 2fe44c2 on 4.7.2 against this change at
+433e7a5 on 4.8 beta 1 (one commit apart: the 4.8 tree lacks #107's
+lighting change).
+
+| Godot | `frame_ms` p50 | p95 | `gpu_ms` p50 |
+|---|---|---|---|
+| 4.7.2 | 113.1 | 113.7 | none (no Metal timestamps) |
+| 4.8 beta 1 | 117.5 | 118.0 | 115.6 |
+
+4.8 beta 1 is about 4 ms slower, inside this machine's run-to-run spread
+of about 5 ms: no gain on Metal. The first 4.8 run after a fresh import
+had a 3.4 s hitch (p95 245 ms), most likely pipeline compilation; the
+table shows the re-run. 4.8's Metal driver reports GPU timestamps, so
+`gpu_ms` is usable on the Mac from 4.8 on.
 
 Frame 80 of the replay at 1920×1080 (the
 [look check](../how-to/run-the-benchmark.md)): two 4.7.2 captures differ

@@ -45,9 +45,13 @@ long, so the project moved to the first beta.
 - **The look.** The same replay frame captured on both engines differs
   only where GPU particles (fire embers, sparkles) land, which come out
   in other places on 4.8; the board, light and grade match.
-- **Speed on Vulkan.** On the RTX 4080 at native 4K the frame costs the
-  same on both versions; the change is in the Metal driver, so the gain
-  can only show on the Mac. Both measurements are in
+- **Speed, so far.** On the RTX 4080 at native 4K the frame costs the
+  same on both versions. On the M4 at native 5K beta 1 is no faster
+  either (117.5 ms against 113.1 ms, within the spread), so the hoped-for
+  Metal gain has not shown up yet; later betas are compared the same
+  way. One thing did improve: 4.8's Metal driver reports GPU
+  timestamps, so per-pass GPU time can now be measured on the Mac. The
+  measurements are in
   [Benchmark results](../reference/benchmark-results.md#godot-48-beta-1-against-472).
 
 ## Going back
