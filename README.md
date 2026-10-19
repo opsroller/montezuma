@@ -28,12 +28,12 @@ different graphics and rule variants on the same core.
 
 ## Building and testing
 
-You need CMake 3.22 or newer, a C++20 compiler (GCC, Clang or MSVC),
+You need CMake 3.22 or newer, Ninja, a C++20 compiler (GCC, Clang or MSVC),
 Python 3 (godot-cpp generates its bindings with it) and Godot 4.7.2.
 
 ```sh
 git submodule update --init --recursive
-cmake -S . -B build
+cmake -S . -B build -G Ninja
 cmake --build build
 ctest --test-dir build --output-on-failure
 godot --path game        # play; the extension is built into game/bin/

@@ -51,6 +51,7 @@ shows up on `main` after merge, and the next PR fixes it.
 |---|---|---|---|---|
 | Compiler cache | `extension (ubuntu-latest)` | ccache | `tests-extension-godot-cpp-10-ubuntu-latest` + timestamp | 500 MB |
 | Compiler cache | `extension (windows-latest)` on `main`; `build and test (windows)` in the `windows` workflow | sccache | `tests-extension-godot-cpp-10-windows-latest` + timestamp | 500 MB |
+| Lightmaps | `extension (ubuntu-latest)`; also the `build` export job and the `web` job | `.github/actions/lightmaps` | `lightmaps-` plus a hash of the bake inputs (see below) | about 1 MB per theme |
 | Compiler cache | `core (ubuntu-latest)`, `core (macos-latest)` | ccache | `tests-core-<os>` + timestamp | 200 MB |
 | Compiler cache | `sanitizers` | ccache | `tests-sanitizers` + timestamp | 200 MB |
 | Compiler cache | `balance` in the `levels` workflow | ccache | `levels-sim` + timestamp | 200 MB |
@@ -63,7 +64,20 @@ shows up on `main` after merge, and the next PR fixes it.
 - The **Compiler cache stats** step prints hits and misses for the run.
 - Caches written by a branch or PR are visible only to that branch or PR.
   Branches and PRs read the caches written on `main`.
-- Godot itself (one download of about 60 MB, a few seconds) is not cached. The job fetches the editor pinned in `tools/release/godot.env` with `tools/release/fetch-godot.sh`, the same script and checksum the build pipeline uses.
+- Godot itself (one download of about 60 MB, a few seconds) is not cached. The job fetches the editor pinned in `tools/release/godot.env` with `tools/release/fetch-godot.cmake`, the same step and checksum the build pipeline uses.
+
+- **Lightmaps.** The composite action `.github/actions/lightmaps` runs
+  after the textures action. It restores each theme's
+  `PF_Environment.lmbake`, `.exr`, `.exr.import` and `.lightmap-inputs`
+  stamp, keyed by a hash of the board and backdrop folders, the materials,
+  the textures' `.inputs` stamps, the `LD_*_Bake.tscn` scenes, the bake
+  driver `lightmap_baker.cpp`, `godot.env` and `project.godot`. Then
+  `cmake -DCHECK=ON -P tools/assets/bake_lightmaps.cmake` compares the stamps; only when
+  one is stale does the action install Mesa lavapipe and xvfb, build the
+  native extension if the job has none (and delete it afterwards, so it
+  never reaches a web or desktop export), import the project and bake
+  (about 4 minutes for the temple on a runner without a GPU). See
+  [Board themes: Lighting](board-themes.md#lighting).
 
 `core (windows-latest)` uses no cache: it builds with the Visual Studio
 generator, which ignores compiler launchers, and runs only on `main` and
@@ -138,8 +152,8 @@ level under `game/data/levels/` against the
 Run it locally:
 
 ```sh
-cmake -S . -B build-rel -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=OFF -DMONTEZUMA_BUILD_TESTS=OFF
-cmake --build build-rel --target montezuma_sim -j
+cmake -S . -B build-rel -G Ninja -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=OFF -DMONTEZUMA_BUILD_TESTS=OFF
+cmake --build build-rel --target montezuma_sim
 build-rel/tools/sim/montezuma_sim game/data/levels --check
 ```
 

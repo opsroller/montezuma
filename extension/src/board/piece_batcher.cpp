@@ -86,6 +86,9 @@ PieceBatcher::Batch& PieceBatcher::batch_for(const Key& key, MeshInstance3D* mi,
         batch.node->set_multimesh(batch.multimesh);
         batch.node->set_material_override(material);
         batch.node->set_cast_shadows_setting(mi->get_cast_shadows_setting());
+        // Lit by the lightmap probes like the pieces it draws; the engine
+        // samples them once for the whole batch, at its bounds' centre.
+        batch.node->set_gi_mode(mi->get_gi_mode());
         batch.node->set_layer_mask(std::get<3>(key));
         parent_->add_child(batch.node);
     }

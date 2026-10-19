@@ -25,6 +25,7 @@
 
 #include "animator.hpp"
 #include "feel.hpp"
+#include "../render/baked_lighting.hpp"
 #include "../render/quality_tiers.hpp"
 
 using namespace godot;
@@ -367,6 +368,9 @@ void BoardView3D::rebuild() {
     slab_ = library_.make_board(grid_.width, grid_.height, grid_.cell);
     slab_->set_name("Slab");
     add_child(slab_);
+    // The theme's lightmap finds the slab's meshes by path, so it re-attaches
+    // to each new slab; VoxelGI bakes from both once the tier wants it.
+    attach_baked_lighting(environment_, this);
     AABB box;
     bool any = false;
     grow_bounds(slab_, Transform3D(), box, any);
@@ -888,6 +892,12 @@ void BoardView3D::_notification(int what) {
     // Window focus events are not used: some X11 setups send one on every
     // click (pointer grab), which would cancel every swipe.
     if (what == NOTIFICATION_APPLICATION_FOCUS_OUT) gesture_.cancel();
+    if (what == NOTIFICATION_READY) {
+        if (QualityTiers* tiers = QualityTiers::get_singleton()) {
+            tiers->connect("tier_changed", callable_mp(this, &BoardView3D::on_tier_changed));
+        }
+        attach_baked_lighting(environment_, this);
+    }
     // The pieces' batches follow the pieces once every tween has moved them
     // (tweens run after _process), so they never trail by a frame.
     RenderingServer* rs = RenderingServer::get_singleton();
@@ -908,6 +918,8 @@ Dictionary BoardView3D::get_piece_draws() const {
     out["meshes_batched"] = batcher_.meshes_batched();
     return out;
 }
+
+void BoardView3D::on_tier_changed(const String&) { attach_baked_lighting(environment_, this); }
 
 input::Output BoardView3D::press(int pointer, Vector2 screen_pos) {
     // Taps during an animation are ignored by design: the board is about to

@@ -429,6 +429,43 @@
           "edge_softness": 0.08
         }
       }
+    },
+    "MI_AtmosphereFog": {
+      "_comment": "gen_theme_scenes.py sets clear_half from the board size and lighting.atmosphere.volumes.clearance, and sun_direction from environment.sun.",
+      "shader": "res://assets/materials/shaders/SH_AtmosphereFog.gdshader",
+      "noise_textures_3d": {
+        "density_texture": {
+          "seed": 51,
+          "frequency": 0.08,
+          "size": 64
+        }
+      },
+      "params": {
+        "density": 0.4,
+        "albedo": "#f2dcb0",
+        "fade": 1.2,
+        "height_top": 2.4,
+        "top_fade": 2.4,
+        "noise_scale": 6.0,
+        "shaft_stretch": 8.0,
+        "contrast": [0.35, 0.75],
+        "wind": [0.12, 0.0, -0.05]
+      }
+    },
+    "MI_Dust": {
+      "shader": "res://assets/materials/shaders/SH_Dust.gdshader",
+      "params": {
+        "dust_color": "#fff0d6",
+        "intensity": 3.0,
+        "twinkle": 0.6
+      }
+    },
+    "MI_LightShaft": {
+      "shader": "res://assets/materials/shaders/SH_LightShaft.gdshader",
+      "params": {
+        "shaft_color": "#ffdba0",
+        "intensity": 0.25
+      }
     }
   },
   "environment": {
@@ -436,19 +473,123 @@
     "sky_horizon": "#b7ae86",
     "ground_bottom": "#1d2a16",
     "ambient_energy": 0.4,
-    "exposure": 0.95,
-    "fog": "#7f946c",
-    "fog_density": 0.003,
     "saturation": 1.08,
     "sun": {
-      "transform": "Transform3D(0.819152, 0.383798, -0.426250, 0.000000, 0.743145, 0.669131, 0.573576, -0.548120, 0.608749, 0, 8, 0)",
-      "color": "#ffdcae",
-      "energy": 1.15
+      "transform": "Transform3D(0.819152, 0.383798, -0.426250, 0.000000, 0.743145, 0.669131, 0.573576, -0.548120, 0.608749, 0, 8, 0)"
+    }
+  },
+  "lighting": {
+    "_comment": "Physical light units (lux, lumens, nits, Kelvin, ISO). Lights, GI and exposure: docs/reference/board-themes.md#lighting; per-tier behaviour: docs/reference/quality-tiers.md.",
+    "sky_nits": 15000,
+    "agx_white": 16.0,
+    "agx_contrast": 1.25,
+    "exposure": {
+      "sensitivity": 440,
+      "multiplier": 1.0,
+      "auto_scale": 0.4,
+      "auto_speed": 0.5,
+      "auto_min_sensitivity": 300,
+      "auto_max_sensitivity": 640
+    },
+    "sun": {
+      "lux": 11000,
+      "kelvin": 4500,
+      "color": "#ffffff",
+      "angular_distance": 0.6
     },
     "torch": {
-      "color": "#ff9a3c",
-      "energy": 1.6,
+      "lumens": 60000,
+      "kelvin": 1900,
+      "color": "#ffffff",
+      "size": 0.12,
       "range": 4.5
+    },
+    "sky_fill": {
+      "transform": "Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 6, 0)",
+      "lumens": 20000,
+      "color": "#b8d4ff",
+      "size": [
+        10.0,
+        10.0
+      ],
+      "range": 12.0
+    },
+    "reflection_probe": {
+      "position": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "size": [
+        12.0,
+        4.0,
+        12.0
+      ]
+    },
+    "voxel_gi": {
+      "position": [
+        0,
+        0.5,
+        0
+      ],
+      "size": [
+        14,
+        4,
+        14
+      ],
+      "subdiv": 0
+    },
+    "lightmap": {
+      "quality": 1,
+      "bounces": 3,
+      "texel_scale": 1.0,
+      "max_texture_size": 2048,
+      "probes_subdiv": 2
+    },
+    "atmosphere": {
+      "_comment": "Volumetric fog, dust and light-shaft cards around the temple, never over the board (WP-51). Keys: docs/reference/board-themes.md#atmosphere.",
+      "fog": {
+        "anisotropy": 0.0,
+        "length": 40.0,
+        "detail_spread": 2.0,
+        "gi_inject": 0.4,
+        "ambient_inject": 0.3,
+        "temporal_amount": 0.9
+      },
+      "volumes": {
+        "clearance": 1.6,
+        "outer": 19.0,
+        "bottom": -2.6
+      },
+      "dust": {
+        "amount": 320,
+        "lifetime": 12.0,
+        "inner_radius": 8.5,
+        "outer_radius": 13.0,
+        "bottom": -2.0,
+        "top": 1.4,
+        "size": 0.05,
+        "speed": [
+          0.02,
+          0.05
+        ],
+        "turbulence": 0.3
+      },
+      "shafts": {
+        "count": 12,
+        "inner_radius": 7.6,
+        "outer_radius": 11.5,
+        "length": [
+          3.5,
+          5.5
+        ],
+        "width": [
+          0.6,
+          1.3
+        ],
+        "ground": -1.9
+      },
+      "board_clearance": 0.5
     }
   },
   "lookdev": {

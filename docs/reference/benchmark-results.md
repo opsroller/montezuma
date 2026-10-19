@@ -100,6 +100,78 @@ numbers above include them. On this machine they fit `desktop-standard`
 so this is a miss on that tier's own hardware. The cost of the effects alone was not isolated: the benchmark
 has no switch to turn them off.
 
+## WP-51 atmosphere
+
+Cost of the volumetric haze, dust and light-shaft cards alone: `main` at
+83feede (WP-47 lighting) against the same plus the WP-51 commits
+(dc2ed98). Mac mini M4, Metal, Forward+, `desktop-high`, 2560×1440,
+vsync off, busiest-board replay seed 52, 10 s warm-up and 60 s capture
+with `tools/bench/run_bench.sh`, 2026-10-19. Textures and fire
+generated and lightmaps baked on both builds; the two builds ran
+alternately in one session, two runs each.
+
+| `frame_ms` | `main` run 1 | `main` run 2 | WP-51 run 1 | WP-51 run 2 | Change (mean of runs) |
+|---|---|---|---|---|---|
+| mean | 47.71 | 48.09 | 48.10 | 47.95 | +0.13 |
+| p50 | 46.71 | 47.23 | 47.13 | 46.91 | +0.05 |
+| p95 | 54.75 | 55.49 | 55.78 | 55.41 | +0.48 |
+| p99 | 56.74 | 57.09 | 57.82 | 57.33 | +0.66 |
+| Frames in 60 s | 1258 | 1248 | 1248 | 1252 | −0.2% |
+
+| Measure | `main` | WP-51 |
+|---|---|---|
+| Video memory max | 1482 MB | 1504 MB |
+| Draw calls p95 (scene pass) | 274 (97) | 275 (98) |
+| CPU p95 (ms) | 0.8 | 0.8 |
+| Scene report | `volumetric_fog` false, 0 fog volumes, 12 GPU particle systems (160 particles) | `volumetric_fog` true, 1 fog volume, 13 GPU particle systems (480 particles) |
+| Saturation, `all_on` readability capture at 2560×1440 (0 to 255) | 58.8 | 72.2 |
+| Mean luma, same capture | 133.3 | 131.1 |
+
+The two `main` runs differ by 0.5 ms at p50, so the p50 change is within
+run-to-run noise. With the haze, 14 of 17 `desktop-high` feature rows are
+met; volumetric fog is now one of them.
+
+## Pieces out of GI
+
+Pieces were dynamic GI objects (`gi_mode = 2`) after WP-47, so Godot
+voxelized all 64 into `VoxelGI` on every frame; they now stay out of GI
+(`gi_mode = 0`) and only receive it. Machine: RTX 4080 SUPER, Ryzen 9
+7950X3D, NixOS, GNOME on Wayland, Godot 4.7.2 from nixpkgs, Vulkan,
+Forward+, `desktop-high` at 2560×1440 (FSR 2 at 0.5), 60 s capture after
+10 s warm-up, on the live desktop. GPU timing is available on this
+driver.
+
+GNOME keeps FIFO presentation when Godot asks for vsync off, so the
+uncapped runs set `display/window/vsync/vsync_mode=3` (mailbox) in an
+`override.cfg`.
+
+| Build | Presentation | `frame_ms` p50 | p95 | p99 | `gpu_ms` p50 | Video memory max |
+|---|---|---|---|---|---|---|
+| `main` at b67b96a | vsync, 60 Hz | 16.74 | 17.86 | 20.71 | 3.08 | 1467 MB |
+| Pieces out of GI | vsync, 60 Hz | 16.70 | 16.83 | 20.08 | 4.75 | 711 MB |
+| `main` at b67b96a | mailbox, uncapped | lost the Vulkan device in warm-up, 2 runs of 2 | | | | |
+| Pieces out of GI | mailbox, uncapped | 2.15 | 5.35 | 6.32 | 1.98 | 711 MB |
+
+With vsync on, the GPU clocks down between frames, so `gpu_ms` there is
+not a measure of the work. Uncapped, `main` stopped with
+`VK_ERROR_DEVICE_LOST` in warm-up both times, while the pieces out of GI
+ran at `frame_ms` p50 2.15 ms.
+
+On the Mac mini M4 (Metal, `desktop-high`, 2560×1440, vsync off, seed
+52, three alternating runs per build, which agreed within 0.6 ms; both
+builds without baked lightmaps):
+
+| Build | `frame_ms` p50 | p95 | Video memory max | Verdict |
+|---|---|---|---|---|
+| `main` at b67b96a | 50.0 | 59.4 | 1503 MB | over budget |
+| Pieces out of GI (a83326a) | 17.5 | 18.4 | 747 MB | over budget: p95 0.7 to 1.3 ms above the 17.5 ms limit |
+
+`desktop-high` p95 on the M4 is 18.4 ms against the 17.5 ms limit: still
+a miss. The M4 presents paced to the display even with vsync off, so no
+frame there is shorter than 16.67 ms and p50 sits near that floor; the
+miss is in the tail. The follow-up is the M4's p95 tail (hitches and
+frames that miss a present), not the mean cost. The budget is unchanged.
+
 ## Feature rows
 
 `check_features.py` on the same reports. Rows that fail are the

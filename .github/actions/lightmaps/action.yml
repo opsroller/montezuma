@@ -1,0 +1,61 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
+#
+# Restores or bakes every board theme's lightmap (git ignores them, like the
+# generated textures). Run it after the textures action. The output is cached
+# by a hash of the bake inputs; tools/assets/bake_lightmaps.cmake then compares
+# each theme's .lightmap-inputs stamp and bakes only what is stale.
+# A bake needs the Godot editor, the native extension (its editor plugin
+# drives the bake) and Vulkan: GitHub's runners have no GPU, so it uses
+# Mesa's lavapipe under xvfb (a few minutes per theme, only on a cache miss).
+# Reference: docs/reference/ci-pipeline.md
+name: Bake lightmaps
+description: Restore or bake the board theme lightmaps
+inputs:
+  godot:
+    description: Path to the pinned Godot editor binary (tools/release/fetch-godot.cmake)
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Cache lightmaps
+      uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+      with:
+        path: |
+          game/assets/models/*/backdrop/*.lmbake
+          game/assets/models/*/backdrop/*.exr
+          game/assets/models/*/backdrop/*.exr.import
+          game/assets/models/*/backdrop/.lightmap-inputs
+        key: lightmaps-${{ hashFiles('game/assets/models/*/board/*', 'game/assets/models/*/backdrop/*', 'game/assets/materials/**', 'game/assets/textures/*/.inputs', 'game/assets/lookdev/LD_*_Bake.tscn', 'extension/src/render/lightmap_baker.cpp', 'tools/release/godot.env', 'game/project.godot') }}
+    - name: Check the bakes
+      id: check
+      shell: bash
+      run: cmake -DCHECK=ON "-DCHECK_OUTPUT=$GITHUB_OUTPUT" -P tools/assets/bake_lightmaps.cmake
+    - name: Install lavapipe and xvfb
+      if: steps.check.outputs.stale == 'true'
+      shell: bash
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq --no-install-recommends mesa-vulkan-drivers xvfb ninja-build
+    # The editor loads the native debug library. A job that already built it
+    # (tests) keeps it; any other job builds it here and removes it after, so
+    # it never ends up in an export.
+    - name: Build the native extension for the editor
+      if: steps.check.outputs.stale == 'true' && hashFiles('game/bin/libmontezuma.linux.template_debug.x86_64.so') == ''
+      id: ext
+      shell: bash
+      run: |
+        cmake -S . -B "$RUNNER_TEMP/bake-ext" -G Ninja -DCMAKE_BUILD_TYPE=Release \
+          -DMONTEZUMA_BUILD_EXTENSION=ON -DMONTEZUMA_BUILD_TESTS=OFF
+        cmake --build "$RUNNER_TEMP/bake-ext"
+    # Imports the project, then bakes; each Godot run has a hard timeout.
+    - name: Bake lightmaps
+      if: steps.check.outputs.stale == 'true'
+      shell: bash
+      env:
+        GODOT: ${{ inputs.godot }}
+      run: cmake "-DGODOT=$GODOT" -DXVFB=ON -P tools/assets/bake_lightmaps.cmake
+    - name: Remove the native extension
+      if: always() && steps.ext.outcome != 'skipped'
+      shell: bash
+      run: cmake -E rm -f game/bin/libmontezuma.linux.template_debug.x86_64.so

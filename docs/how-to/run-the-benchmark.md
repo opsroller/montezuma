@@ -16,8 +16,8 @@ or a cloud machine without a GPU do not count against the
    and import the project once:
 
    ```sh
-   cmake -S . -B build-ext -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON
-   cmake --build build-ext -j
+   cmake -S . -B build-ext -G Ninja -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON
+   cmake --build build-ext
    godot --headless --path game --import
    ```
 
@@ -28,24 +28,25 @@ or a cloud machine without a GPU do not count against the
    binary is `/Applications/Godot.app/Contents/MacOS/Godot`.
 
 2. Run the benchmark and the readability capture for the tier the machine
-   stands for (on Windows, use Git Bash or WSL for the script):
+   stands for (the same command on Windows, macOS and Linux):
 
    ```sh
-   tools/bench/run_bench.sh --tier desktop-standard --readability --out bench-out
+   cmake -DTIER=desktop-standard -DREADABILITY=ON -DOUT=bench-out -P tools/bench/run_bench.cmake
    ```
 
-   Add `--driver vulkan`, `metal`, `d3d12` or `opengl3` to pick the
-   rendering driver, `--size 2560x1440` for `desktop-high`, and `--godot
-   PATH` when Godot is not on `PATH`. The script locks the render at
-   `--size` (default 1920x1080) and fails the run if any frame rendered
+   Add `-DDRIVER=vulkan`, `metal`, `d3d12` or `opengl3` to pick the
+   rendering driver, `-DSIZE=2560x1440` for `desktop-high`, and
+   `-DGODOT=PATH` when Godot is not on `PATH` (every `-D` goes before
+   `-P`). The runner locks the render at
+   `SIZE` (default 1920x1080) and fails the run if any frame rendered
    at another size. The checks need Python 3; the
    readability check also needs Pillow, installed as in
-   [Check the assets](build-and-test.md#check-the-assets) (run the script
+   [Check the assets](build-and-test.md#check-the-assets) (run the command
    with that venv active). The run takes about 70 s plus two
    short windows for the captures. Do not touch the window while it runs.
 
    On a display faster than 60 Hz, or to see what a frame costs rather
-   than when the display shows it, run again with `--vsync off`. Godot
+   than when the display shows it, run again with `-DVSYNC=off`. Godot
    4.7.2's Metal driver has been seen to stay display-synced even then
    ([Benchmark results](../reference/benchmark-results.md#frame-time));
    `display.vsync` in the report says what was asked for, not what the
@@ -71,7 +72,7 @@ or a cloud machine without a GPU do not count against the
    On macOS with Metal, `gpu_ms` is null (`timing.gpu` false): judge
    by `frame_ms`. `render_cpu_ms` there includes the wait for the next
    drawable, so with vsync on `cpu_ms` fills the frame whatever the CPU
-   does; read `process_ms` for game logic, and try `--vsync off` to see
+   does; read `process_ms` for game logic, and try `-DVSYNC=off` to see
    the work without that wait (see the note above on Metal).
 
 4. Add the numbers to [Benchmark results](../reference/benchmark-results.md):

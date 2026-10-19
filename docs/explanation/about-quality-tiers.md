@@ -90,7 +90,10 @@ cascades and per-piece draws: it is far under its caps (129 to 137 of
 The rest of each budget is the board, backdrop, particles and the game's
 own CPU work. Measured p50 and p95 from the WP-46 benchmark are in
 [Benchmark results](../reference/benchmark-results.md); WP-41 moves any
-tier setting the numbers say to move.
+tier setting the numbers say to move. The lighting share is broken down
+per item in [About lighting](about-lighting.md#costs); WP-47 capped
+`desktop-high` at 720 internal lines with the temporal upscaler above
+that, after the M4 measured p95 25.1 ms at native 1440p.
 
 ## Consequences
 

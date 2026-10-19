@@ -69,8 +69,9 @@ def main(argv):
               encoding="utf-8", newline="\n") as f:
         f.write("\n".join(parts))
 
-    version = subprocess.run(["bash", "tools/release/version.sh"], check=True,
-                             capture_output=True, text=True).stdout.strip()
+    version = subprocess.run(["cmake", "-P", "tools/release/version.cmake"],
+                             check=True, capture_output=True, text=True,
+                             timeout=120).stdout.strip()
     with open(os.path.join(outdir, "SOURCE.txt"), "w", encoding="utf-8",
               newline="\n") as f:
         f.write(SOURCE.format(version=version, commit=git("rev-parse", "HEAD"),

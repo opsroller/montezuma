@@ -11,13 +11,27 @@ cd montezuma
 git submodule update --init --recursive    # godot-cpp in thirdparty/
 ```
 
-## Build and test the core only
+Configure with Ninja (`-G Ninja`, as below) and build without `-j`: Ninja
+already runs one job per core plus two. Do not pass a bare `-j` to a Make
+build: Make then starts every compile at once, and godot-cpp alone has about
+a thousand, which runs a 16 GB machine out of memory with the compilers
+stalled in swap. To build one thing, name it with `--target`.
 
-Needs CMake 3.22+ and a C++20 compiler. No Godot needed.
+CMake will not switch an existing build folder to another generator. If a
+folder was configured with Make (the old default), delete it before
+configuring it with Ninja, for example:
 
 ```sh
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DMONTEZUMA_WERROR=ON -DMONTEZUMA_BUILD_EXTENSION=OFF
-cmake --build build -j
+cmake -E rm -rf build-ext
+```
+
+## Build and test the core only
+
+Needs CMake 3.22+, Ninja and a C++20 compiler. No Godot needed.
+
+```sh
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DMONTEZUMA_WERROR=ON -DMONTEZUMA_BUILD_EXTENSION=OFF
+cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
@@ -28,9 +42,9 @@ add `-DMONTEZUMA_BUILD_SIM=OFF` to skip it. Running it is in
 ## Run the tests under sanitizers
 
 ```sh
-cmake -S . -B build-asan -DCMAKE_BUILD_TYPE=Debug -DMONTEZUMA_WERROR=ON -DMONTEZUMA_BUILD_EXTENSION=OFF \
+cmake -S . -B build-asan -G Ninja -DCMAKE_BUILD_TYPE=Debug -DMONTEZUMA_WERROR=ON -DMONTEZUMA_BUILD_EXTENSION=OFF \
   -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer"
-cmake --build build-asan -j
+cmake --build build-asan
 ctest --test-dir build-asan --output-on-failure
 ```
 
@@ -42,8 +56,8 @@ build folder: CMake caches options, so reusing the core-only `build/`
 would keep the extension off. The library lands in `game/bin/`.
 
 ```sh
-cmake -S . -B build-ext -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON
-cmake --build build-ext -j
+cmake -S . -B build-ext -G Ninja -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON
+cmake --build build-ext
 ctest --test-dir build-ext --output-on-failure   # every test, as CI's extension job
 godot --headless --path game --import
 godot --headless --path game --quit-after 120    # errors show here
@@ -54,7 +68,7 @@ On macOS, build the universal (arm64 and x86_64) library: the game's
 single-architecture build does not load. Configure with:
 
 ```sh
-cmake -S . -B build-ext -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON \
+cmake -S . -B build-ext -G Ninja -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON \
   -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
 ```
 
@@ -120,6 +134,25 @@ The hashes in `assets.txt` cover every platform numpy and Pillow ship wheels for
 so the same commands work on Linux, macOS and Windows. On Windows the
 venv's programs are in `.venv\Scripts\`.
 
+## Bake the lightmaps
+
+Needs the native extension built, the textures generated and the Godot
+editor from `tools/release/godot.env`, with a Vulkan driver. Without a GPU,
+install Mesa's lavapipe and a virtual display (`sudo apt install
+mesa-vulkan-drivers xvfb` on Debian or Ubuntu) and add `-DXVFB=ON`.
+
+```sh
+cmake -DGODOT="$(command -v godot)" -DXVFB=ON -P tools/assets/bake_lightmaps.cmake
+```
+
+It skips themes whose bake inputs did not change, imports the project
+before a bake, and prints
+`LIGHTMAP_BAKE ok res://assets/lookdev/LD_<Theme>_Bake.tscn …` for each
+bake. If the editor starts an import of its own during a bake, the bake
+fails, prints `LIGHTMAP_BAKE retry …` and runs once more. Without a bake
+the game still runs, without baked light. Details:
+[Board themes: Lighting](../reference/board-themes.md#lighting).
+
 ## Capture screenshots without a display
 
 Godot's Movie Maker renders frames to PNG files. On a machine without a
@@ -147,7 +180,7 @@ first level at 1280×720, saved as `title.png` and `board.png`):
 
 ```sh
 xvfb-run -a -s "-screen 0 1280x720x24" \
-  tools/release/smoke-test.sh dist/linux/montezuma-<version>-linux-x86_64.tar.gz /tmp/screens
+  cmake -DARCHIVE=dist/linux -DSCREENS=/tmp/screens -P tools/release/smoke-test.cmake
 ```
 
 ## Export a build

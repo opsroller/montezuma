@@ -3,6 +3,7 @@
 
 #include <gdextension_interface.h>
 
+#include <godot_cpp/classes/editor_plugin_registration.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/defs.hpp>
 #include <godot_cpp/godot.hpp>
@@ -14,6 +15,7 @@
 #include "game/register_game.hpp"
 #include "match3_board.hpp"
 #include "match3_level.hpp"
+#include "render/lightmap_baker.hpp"
 #include "render/register_render.hpp"
 #include "ui/register_ui.hpp"
 
@@ -22,6 +24,12 @@ using namespace godot;
 namespace {
 
 void initialize_montezuma(ModuleInitializationLevel level) {
+    if (level == MODULE_INITIALIZATION_LEVEL_EDITOR) {
+        // Editor-only tooling: the lightmap bake step (tools/assets/bake_lightmaps.cmake).
+        GDREGISTER_CLASS(montezuma::godot_binding::LightmapBaker);
+        EditorPlugins::add_by_type<montezuma::godot_binding::LightmapBaker>();
+        return;
+    }
     if (level != MODULE_INITIALIZATION_LEVEL_SCENE) return;
     GDREGISTER_CLASS(montezuma::godot_binding::Match3Board);
     GDREGISTER_CLASS(montezuma::godot_binding::Match3Level);

@@ -104,7 +104,7 @@ one entry (phones, web).
 | Argument (after `--`) | Effect |
 |---|---|
 | `--quality=<tier id or auto>` | Uses that tier for this run without saving it (benchmark captures) |
-| `--quality-selftest` | Switches through every available tier on scratch nodes, checks each switch (environment, groups, shadow budget, sun shadow cascades and material variants of `MI_Gold` and `MI_Lapis`, also after a node leaves and re-enters the tree), prints `QualityTiers self-test: N checks, F failures` |
+| `--quality-selftest` | Switches through every available tier on scratch nodes, checks each switch (environment, groups, shadow budget, sun shadow cascades and material variants of `MI_Gold` and `MI_Ground`, also after a node leaves and re-enters the tree), prints `QualityTiers self-test: N checks, F failures` |
 
 ## Feature ids
 
@@ -119,7 +119,7 @@ target names.
 | `ssr` | `Environment.ssr_enabled` (half size on standard) | ✔ | ✔ | — | — |
 | `sdfgi` | `Environment.sdfgi_enabled` (only if WP-47 picks SDFGI over VoxelGI) | ✔ | — | — | — |
 | `voxel_gi` | nodes in `quality:voxel_gi` | ✔ | — | — | — |
-| `volumetric_fog` | `Environment.volumetric_fog_enabled` | ✔ | ✔ | — | — |
+| `volumetric_fog` | `Environment.volumetric_fog_enabled`; also off, with its fallback nodes shown, on a GPU without atomic `R32_UINT` storage images (Godot's fog needs them; some virtual GPUs lack them and crash) | ✔ | ✔ | — | — |
 | `fog_fire_light` | volumetric fog energy of lights in `quality_fog_light` | ✔ | — | — | — |
 | `auto_exposure` | `CameraAttributes.auto_exposure_enabled` | ✔ | ✔ | — | — |
 | `depth_of_field` | `CameraAttributesPractical` far and near blur | ✔ | ✔ | — | — |
@@ -142,6 +142,7 @@ target names.
 | `quality_fallback:<feature id>` | any node with `visible` | shown only where the tier lacks it (light-shaft cards, cube-map gems, 4×4 flipbooks) |
 | `quality_shadow_light` | `Light3D` | the nearest N to the active camera keep the shadow the scene gave them, the rest lose it |
 | `quality_fog_light` | `Light3D` | keeps its authored volumetric fog energy only with `fog_fire_light` |
+| (metadata) `fog_material_path` | `FogVolume` | its material is loaded from this path only with `volumetric_fog`, and cleared without it: Compatibility prints an error for any fog shader it loads |
 
 A group naming an unknown feature id logs a warning and is ignored.
 
@@ -158,7 +159,7 @@ switch. The root viewport re-applies on resize.
 
 | Setting | `desktop-high` | `desktop-standard` | `mobile` | `web` |
 |---|---|---|---|---|
-| 3D scaling | bilinear 1.0 with TAA; above 1440p output: temporal upscaler at 0.67, no TAA | temporal upscaler at 0.77 | bilinear 1.0 | bilinear 1.0 |
+| 3D scaling | at most 720 lines: up to 720p output bilinear 1.0 with TAA; above, temporal upscaler at 720 / output height (0.67 at 1080p, 0.5 at 1440p), never below 0.5, no TAA | temporal upscaler at 0.77 | bilinear 1.0 | bilinear 1.0 |
 | Temporal upscaler | MetalFX temporal on Metal, FSR 2.2 elsewhere | same | — | — |
 | MSAA (3D) | off | off | 2× | 2× |
 | Anisotropic filtering | 16× | 8× | 4× | 2× |
@@ -171,7 +172,7 @@ switch. The root viewport re-applies on resize.
 | SSR half size | no | yes | — | — |
 | Volumetric fog froxels (size × depth) | 64 × 64 | 32 × 32 | — | — |
 | Subsurface scattering quality | high | medium | off | off |
-| Texture variant folder | `hi/` | `hi/` | base only | `lo/` |
+| Texture and material variant folder | `hi/` | `hi/` | base only | `lo/` |
 | Pieces batched (`batch_pieces`, [Board view](board-view.md#draw-calls)) | no | no | yes | yes |
 
 Sun shadow cascades apply to every `DirectionalLight3D` as it enters the

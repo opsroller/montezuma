@@ -57,9 +57,11 @@ jobs:
       - name: Build the extension (WebAssembly)
         env:
           EM_COMPILER_WRAPPER: ccache
+          EM_CONFIG: /home/runner/emsdk/.emscripten
         run: |
-          source "$(tools/release/web-fetch-emsdk.sh ~/emsdk)"
-          emcmake cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+          cmake -DDIR=$HOME/emsdk -P tools/release/web-fetch-emsdk.cmake
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_TOOLCHAIN_FILE=$HOME/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
             -DMONTEZUMA_BUILD_EXTENSION=ON -DMONTEZUMA_BUILD_TESTS=OFF -DMONTEZUMA_WERROR=ON \
             -DGODOTCPP_TARGET=template_release -DGODOTCPP_THREADS=OFF
           cmake --build build -j4
@@ -72,14 +74,19 @@ jobs:
           path: ~/godot-dl
           key: godot-${{ hashFiles('tools/release/godot.env') }}
       - name: Fetch Godot and the web template
-        run: tools/release/fetch-godot.sh ~/godot-dl web_dlink_nothreads_release.zip
+        run: cmake -DDIR=$HOME/godot-dl -DTEMPLATES=web_dlink_nothreads_release.zip -P tools/release/fetch-godot.cmake
+      - name: Bake lightmaps
+        uses: ./.github/actions/lightmaps
+        with:
+          godot: /home/runner/godot-dl/godot
       - name: Export
         env:
           GODOT: /home/runner/godot-dl/godot
         run: |
-          version="$(tools/release/version.sh)"
+          version="$(cmake -P tools/release/version.cmake)"
           echo "Version $version" >> "$GITHUB_STEP_SUMMARY"
-          tools/release/web-export.sh "$version" dist/web | tee -a "$GITHUB_STEP_SUMMARY"
+          cmake "-DGODOT=$GODOT" "-DVERSION=$version" -DOUT=dist/web -P tools/release/web-export.cmake \
+            | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Upload export logs
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

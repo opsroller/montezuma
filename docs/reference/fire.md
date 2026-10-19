@@ -100,7 +100,8 @@ for `T_Fire_Motion` (averaged vectors are wrong at tile edges).
 ## `PF_BrazierFire`
 
 Parameters come from the theme's `fire` block (`tools/assets/themes/temple.json`)
-and the light's colour, energy and range from `environment.torch`.
+and the light's lumens, temperature, colour, size and range from `lighting.torch`
+([Board themes: Lighting](board-themes.md#lighting)).
 
 | Node | Type | Group | What |
 |---|---|---|---|
@@ -109,10 +110,13 @@ and the light's colour, energy and range from `environment.torch`.
 | `Embers` | `GPUParticles3D` | `quality:particle_trails` | 18 particles, 1.6 s, 0.6 to 1.3 m/s up within 25°, turbulence, 0.12 s tube trails; `MI_EmberTrail` |
 | `EmbersNoTrail` | `GPUParticles3D` | `quality_fallback:particle_trails` | the same embers as dots; `MI_Ember` |
 | `HeatHaze` | `MeshInstance3D` | `quality:heat_haze` | 0.9 × 1.1 m quad 0.95 m above the rim; `MI_HeatHaze` |
-| `Light` | `FlickerLight3D` | `quality_shadow_light`, `quality_fog_light` | 0.42 m above the rim; shadows on, blur 1.5; volumetric fog energy 2.0; bake mode dynamic |
+| `Light` | `FlickerLight3D` | `quality_shadow_light`, `quality_fog_light` | 0.42 m above the rim, turned so its dual paraboloid shadow seam lies flat; 60,000 lm at 1900 K; shadows on, blur 1.5; volumetric fog energy 2.0; bake mode dynamic |
 
 Every particle system starts full (`preprocess` = lifetime) and casts no
-shadow. Visible GPU particles for four fires: 160 counted by the
+shadow. The particles and the heat haze are on render layer 2, which
+reflection probes leave out (`cull_mask`): on Compatibility a probe that
+draws a material reading the depth texture blits its depth-only atlas into
+a depth-stencil buffer, and WebKit's WebGL rejects that blit. Visible GPU particles for four fires: 160 counted by the
 benchmark (both ember systems count, though one is hidden).
 
 ## Shaders
@@ -221,9 +225,10 @@ tiers ([Quality tiers](quality-tiers.md)); the look-dev scene
 `LD_Temple_Fire_Hi` sets them directly. The web export strips `hi/`, so it
 never carries the 8×8 sheets.
 
-\*\* The light carries `light_volumetric_fog_energy` 2.0, but the temple
-environment does not enable volumetric fog yet, so nothing shows until it
-does.
+\*\* The light carries `light_volumetric_fog_energy` 2.0 and lights the
+temple's dusty air where it reaches it, outside the board
+([Board themes: Atmosphere](board-themes.md#atmosphere)); the air is
+empty over the board, so nothing glows there.
 
 ## Cost
 
