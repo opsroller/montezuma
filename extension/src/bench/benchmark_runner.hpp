@@ -13,6 +13,7 @@
 #include <godot_cpp/variant/string.hpp>
 #include <godot_cpp/variant/vector2i.hpp>
 
+#include "ablation.hpp"
 #include "frame_stats.hpp"
 
 #include "match3_board.hpp"
@@ -76,6 +77,7 @@ private:
     void restart_replay();
     void play_next_beat();
     void sample_frame();
+    void apply_off_items();
     void push_process_sample();
     void on_process_frame();
     void finish();
@@ -95,6 +97,10 @@ private:
     bool size_arg_invalid_ = false;
     bool tolerance_arg_invalid_ = false;
     bool quit_when_done_ = true;
+    // --bench-off: render items turned off for an ablation run; the first
+    // unknown name, if any.
+    bench::OffItems off_;
+    godot::String off_arg_invalid_;
 
     godot::Ref<Match3Board> board_;
     bench::Replay replay_;

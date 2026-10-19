@@ -195,6 +195,14 @@ class CheckRunTest(unittest.TestCase):
         self.assertIn("software", out.lower(), out)
         self.assertNotIn("PASS budget", out)
 
+    def test_ablation_run_is_not_a_budget_pass(self):
+        r = copy.deepcopy(GOOD)
+        r["ablation"] = ["voxel_gi"]
+        code, out = run(r, "--size", "1920x1080")
+        self.assertNotIn("PASS budget", out)
+        self.assertNotEqual(code, 0, out)
+        self.assertIn("ablation run with voxel_gi off", out)
+
     def test_missing_gpu_timing_is_not_reported_as_zero_ms(self):
         r = copy.deepcopy(GOOD)
         r["gpu_ms"] = {"frames": 3600, "mean": 0.0, "p50": 0.0, "p95": 0.0, "p99": 0.0, "max": 0.0, "over_budget": 0}

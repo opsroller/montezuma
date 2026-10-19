@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 
+#include "ablation.hpp"
 #include "frame_stats.hpp"
 #include "montezuma/board.hpp"
 #include "replay.hpp"
@@ -254,7 +255,25 @@ void test_missing_gpu_samples_are_dropped() {
     check(positive_only({0.0, 0.0}).empty(), "no timestamps, no samples");
 }
 
+void test_off_items() {
+    std::string unknown;
+    const auto none = parse_off_items("", unknown);
+    check(none && none->empty(), "--bench-off= turns nothing off");
+    const auto two = parse_off_items("voxel_gi,,area_light", unknown);
+    check(two && two->has(OffItem::VoxelGi) && two->has(OffItem::AreaLight) && !two->has(OffItem::Ssao),
+          "two items, empty entry skipped");
+    check(two && two->names() == std::vector<std::string_view>{"voxel_gi", "area_light"}, "names in item order");
+    const auto bad = parse_off_items("ssao,voxelgi", unknown);
+    check(!bad && unknown == "voxelgi", "unknown item named");
+    for (std::size_t i = 0; i < kOffItemNames.size(); ++i) {
+        const auto one = parse_off_items(kOffItemNames[i], unknown);
+        check(one && one->has(static_cast<OffItem>(i)) && one->names().size() == 1,
+              "every item parses: " + std::string(kOffItemNames[i]));
+    }
+}
+
 int main() {
+    test_off_items();
     test_nearest_rank_percentiles();
     test_replay_is_deterministic();
     test_scene_seed_is_the_busiest_board();

@@ -89,6 +89,8 @@ def budget_problems(report):
         return ["not a measurement: headless, nothing rendered"]
     if device.get("software"):
         return [f"not a measurement: software renderer ({device.get('adapter')}), frame times are not a GPU's"]
+    if report.get("ablation"):
+        return [f"not a measurement: ablation run with {', '.join(report['ablation'])} off, not the tier"]
     problems = []
     tol = budget.get("tolerance")
     if not isinstance(tol, (int, float)) or not 0 <= tol <= MAX_TOLERANCE:

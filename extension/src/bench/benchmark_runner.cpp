@@ -140,6 +140,12 @@ void BenchmarkRunner::read_command_line() {
         }
         if (a == "--bench-vsync=off") disable_vsync_ = true;
         if (a == "--bench-stay") quit_when_done_ = false;
+        if (a.begins_with("--bench-off=")) {
+            std::string unknown;
+            const auto items = bench::parse_off_items(value.utf8().get_data(), unknown);
+            off_arg_invalid_ = String::utf8(unknown.c_str());
+            off_ = items.value_or(bench::OffItems{});
+        }
     }
 }
 
@@ -157,6 +163,12 @@ void BenchmarkRunner::_ready() {
     budget_ms_ = spec.rules.empty() ? 0.0 : spec.rules.front().budget_ms;
     if (size_arg_invalid_ || tolerance_arg_invalid_) {
         ERR_PRINT("BenchmarkRunner: --bench-size must look like 1920x1080 and --bench-tolerance be a number.");
+        if (quit_when_done_) get_tree()->quit(1);
+        return;
+    }
+    if (!off_arg_invalid_.is_empty()) {
+        ERR_PRINT("BenchmarkRunner: --bench-off names no render item: " + off_arg_invalid_ +
+                  " (items: docs/reference/benchmark.md#ablation).");
         if (quit_when_done_) get_tree()->quit(1);
         return;
     }
@@ -183,6 +195,8 @@ void BenchmarkRunner::_ready() {
     get_tree()->connect("process_frame", callable_mp(this, &BenchmarkRunner::on_process_frame));
     board_.instantiate();
     restart_replay();
+    // After the tiers and the scene have set themselves up this frame.
+    call_deferred("apply_off_items");
     start_usec_ = Time::get_singleton()->get_ticks_usec();
     last_frame_usec_ = start_usec_;
     phase_ = Phase::Warmup;
@@ -240,6 +254,8 @@ void BenchmarkRunner::play_next_beat() {
         restart_replay();
     }
     const bench::Action& beat = replay_.actions[next_beat_++];
+    // Pieces the beat brings in are switched too.
+    apply_off_items();
     ++beats_played_;
     emit_signal("bench_event", String(beat.label.c_str()), to_array(beat.cells));
 
@@ -263,6 +279,10 @@ void BenchmarkRunner::play_next_beat() {
     deep_cascades_played_ += beat.steps >= 4 ? 1 : 0;
     max_steps_played_ = std::max(max_steps_played_, beat.steps);
     v->play(result);
+}
+
+void BenchmarkRunner::apply_off_items() {
+    if (!off_.empty()) bench::apply_off_items(get_tree()->get_root(), get_viewport(), off_);
 }
 
 void BenchmarkRunner::sample_frame() {
@@ -372,6 +392,7 @@ void BenchmarkRunner::finish() {
     String unmeasured;
     if (bool(device["headless"])) unmeasured = "headless, nothing rendered";
     else if (bool(device["software"])) unmeasured = "software renderer (" + String(device["adapter"]) + ")";
+    else if (!off_.empty()) unmeasured = "ablation run, render items turned off";
     const bench::BudgetVerdict verdict = bench::judge_budget(frames, spec, vsync_ == "disabled" ? -1.0 : display_hz_,
                                                              unmeasured.utf8().get_data());
 
@@ -427,6 +448,9 @@ void BenchmarkRunner::finish() {
     report_["render"] = render;
     report_["replay"] = replay;
     report_["features"] = features_;
+    PackedStringArray off_names;
+    for (const std::string_view name : off_.names()) off_names.push_back(String::utf8(name.data(), static_cast<int>(name.size())));
+    report_["ablation"] = off_names;
     if (const QualityTiers* tiers = QualityTiers::get_singleton()) report_["quality_features"] = tiers->get_active_features();
 
     const String dir = output_path_.get_base_dir();
@@ -481,6 +505,7 @@ void BenchmarkRunner::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_quit_when_done", "quit"), &BenchmarkRunner::set_quit_when_done);
     ClassDB::bind_method(D_METHOD("get_quit_when_done"), &BenchmarkRunner::get_quit_when_done);
     ClassDB::bind_method(D_METHOD("get_report"), &BenchmarkRunner::get_report);
+    ClassDB::bind_method(D_METHOD("apply_off_items"), &BenchmarkRunner::apply_off_items);
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "board_view_path", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "BoardView3D"),
                  "set_board_view_path", "get_board_view_path");
     ADD_PROPERTY(PropertyInfo(Variant::INT, "seed"), "set_seed", "get_seed");

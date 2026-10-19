@@ -3,6 +3,7 @@
 
 #include "render_probe.hpp"
 
+#include <godot_cpp/classes/area_light3d.hpp>
 #include <godot_cpp/classes/camera3d.hpp>
 #include <godot_cpp/classes/camera_attributes.hpp>
 #include <godot_cpp/classes/camera_attributes_practical.hpp>
@@ -13,6 +14,7 @@
 #include <godot_cpp/classes/display_server.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/fog_volume.hpp>
+#include <godot_cpp/classes/geometry_instance3d.hpp>
 #include <godot_cpp/classes/gpu_particles3d.hpp>
 #include <godot_cpp/classes/lightmap_gi.hpp>
 #include <godot_cpp/classes/omni_light3d.hpp>
@@ -210,6 +212,57 @@ void hide_ui_overlays(Node* root) {
     ERR_FAIL_NULL(root);
     for (int i = 0; i < root->get_child_count(); ++i) {
         if (auto* layer = Object::cast_to<CanvasLayer>(root->get_child(i))) layer->set_visible(false);
+    }
+}
+
+void apply_off_items(Node* root, Viewport* viewport, const OffItems& items) {
+    ERR_FAIL_NULL(root);
+    ERR_FAIL_NULL(viewport);
+    if (items.empty()) return;
+    const Ref<Environment> env = environment_of(viewport);
+    if (env.is_valid()) {
+        if (items.has(OffItem::Ssao)) env->set_ssao_enabled(false);
+        if (items.has(OffItem::Ssil)) env->set_ssil_enabled(false);
+        if (items.has(OffItem::Glow)) env->set_glow_enabled(false);
+    }
+    if (items.has(OffItem::AutoExposure)) {
+        const Ref<CameraAttributes> attrs = camera_attributes_of(viewport);
+        if (attrs.is_valid()) attrs->set_auto_exposure_enabled(false);
+    }
+    RenderingServer* rs = RenderingServer::get_singleton();
+    if (items.has(OffItem::SoftShadows)) {
+        rs->directional_soft_shadow_filter_set_quality(RenderingServer::SHADOW_QUALITY_HARD);
+        rs->positional_soft_shadow_filter_set_quality(RenderingServer::SHADOW_QUALITY_HARD);
+    }
+    // Same render scale, plain bilinear: what the temporal upscaler costs.
+    if (items.has(OffItem::TemporalUpscaler)) viewport->set_scaling_3d_mode(Viewport::SCALING_3D_MODE_BILINEAR);
+
+    std::vector<Node*> stack{root};
+    while (!stack.empty()) {
+        Node* n = stack.back();
+        stack.pop_back();
+        for (int i = 0; i < n->get_child_count(); ++i) stack.push_back(n->get_child(i));
+        auto* n3 = Object::cast_to<Node3D>(n);
+        if (!n3) continue;
+        const bool hide = (items.has(OffItem::VoxelGi) && Object::cast_to<VoxelGI>(n3)) ||
+                          (items.has(OffItem::LightmapGi) && Object::cast_to<LightmapGI>(n3)) ||
+                          (items.has(OffItem::AreaLight) && Object::cast_to<AreaLight3D>(n3)) ||
+                          (items.has(OffItem::ReflectionProbe) && Object::cast_to<ReflectionProbe>(n3)) ||
+                          (items.has(OffItem::Particles) &&
+                           (Object::cast_to<GPUParticles3D>(n3) || Object::cast_to<CPUParticles3D>(n3))) ||
+                          (items.has(OffItem::FireLights) &&
+                           (Object::cast_to<OmniLight3D>(n3) || Object::cast_to<SpotLight3D>(n3)));
+        if (hide) n3->set_visible(false);
+        if (items.has(OffItem::SunShadow)) {
+            if (auto* sun = Object::cast_to<DirectionalLight3D>(n3)) sun->set_shadow(false);
+        }
+        if (items.has(OffItem::FireShadows) && (Object::cast_to<OmniLight3D>(n3) || Object::cast_to<SpotLight3D>(n3))) {
+            Object::cast_to<Light3D>(n3)->set_shadow(false);
+        }
+        if (items.has(OffItem::PieceDynamicGi)) {
+            auto* g = Object::cast_to<GeometryInstance3D>(n3);
+            if (g && g->get_gi_mode() == GeometryInstance3D::GI_MODE_DYNAMIC) g->set_gi_mode(GeometryInstance3D::GI_MODE_DISABLED);
+        }
     }
 }
 

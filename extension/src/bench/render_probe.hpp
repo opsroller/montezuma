@@ -11,6 +11,8 @@
 #include <godot_cpp/classes/viewport.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
 
+#include "ablation.hpp"
+
 namespace montezuma::godot_binding::bench {
 
 // What the frame is rendering with, read from the live viewport, world
@@ -24,6 +26,11 @@ godot::Dictionary device_info(godot::Viewport* viewport);
 // Hides the UI layers the autoloads put over every scene (the menus), so
 // the frame is the 3D board alone.
 void hide_ui_overlays(godot::Node* root);
+
+// Turns off the `items` (from `--bench-off=`) under `root` and on
+// `viewport`, for a diagnostic run that measures what each costs. Safe to
+// call again: nodes added since (new pieces) are switched too.
+void apply_off_items(godot::Node* root, godot::Viewport* viewport, const OffItems& items);
 
 // Groups of effects the readability capture turns on and off
 // (docs/reference/visual-target.md#readability-rules-every-tier).
