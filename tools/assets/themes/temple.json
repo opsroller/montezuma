@@ -477,7 +477,7 @@
     "sky_top": "#24566e",
     "sky_horizon": "#b7ae86",
     "ground_bottom": "#1d2a16",
-    "ambient_energy": 0.4,
+    "ambient_energy": 0.15,
     "saturation": 1.08,
     "sun": {
       "transform": "Transform3D(0.819152, 0.383798, -0.426250, 0.000000, 0.743145, 0.669131, 0.573576, -0.548120, 0.608749, 0, 8, 0)"
@@ -488,10 +488,16 @@
     "sky_nits": 15000,
     "agx_white": 16.0,
     "agx_contrast": 1.25,
+    "ssao": {
+      "_comment": "Ambient occlusion strength in the creases: intensity, power and how much it darkens direct light.",
+      "intensity": 3.0,
+      "power": 1.5,
+      "light_affect": 0.3
+    },
     "exposure": {
       "sensitivity": 440,
       "multiplier": 1.0,
-      "auto_scale": 0.45,
+      "auto_scale": 0.32,
       "auto_speed": 0.5,
       "auto_min_sensitivity": 300,
       "auto_max_sensitivity": 640
@@ -504,7 +510,7 @@
       "fog_energy": 7.0
     },
     "torch": {
-      "lumens": 60000,
+      "lumens": 90000,
       "kelvin": 1900,
       "color": "#ffffff",
       "size": 0.12,
@@ -512,7 +518,7 @@
     },
     "sky_fill": {
       "transform": "Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 6, 0)",
-      "lumens": 20000,
+      "lumens": 6000,
       "color": "#b8d4ff",
       "size": [
         10.0,
@@ -550,7 +556,8 @@
       "bounces": 3,
       "texel_scale": 1.0,
       "max_texture_size": 2048,
-      "probes_subdiv": 2
+      "probes_subdiv": 2,
+      "sky_energy": 0.3
     },
     "atmosphere": {
       "_comment": "Volumetric fog, dust and light-shaft cards around the temple, never over the board (WP-51). Keys: docs/reference/board-themes.md#atmosphere.",

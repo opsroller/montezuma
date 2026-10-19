@@ -561,7 +561,7 @@ def main():
                 r.body[i + 1:i + 1] = ["cast_shadow = 0", "gi_mode = 0"]
     env = p["environment"]
     light = p["lighting"]
-    exposure, fog = light["exposure"], light.get("fog")
+    exposure, fog, ssao = light["exposure"], light.get("fog"), light["ssao"]
     fog3 = light.get("atmosphere", {}).get("fog")
     sky = [
         "[sub_resource type=\"ProceduralSkyMaterial\" id=\"sky_mat\"]",
@@ -598,6 +598,9 @@ def main():
         # Screen-space passes are authored on; the quality tier turns them off
         # where its renderer or budget has none (docs/reference/quality-tiers.md).
         "ssao_enabled = true",
+        f"ssao_intensity = {ssao['intensity']}",
+        f"ssao_power = {ssao['power']}",
+        f"ssao_light_affect = {ssao['light_affect']}",
         "ssil_enabled = true",
         "glow_enabled = true",
         "glow_intensity = 0.6",
@@ -675,6 +678,11 @@ def main():
     r.body += ["", '[node name="Lightmap" type="LightmapGI" parent="."]', f"quality = {lm['quality']}",
                f"bounces = {lm['bounces']}", f"texel_scale = {lm['texel_scale']}",
                f"max_texture_size = {lm['max_texture_size']}", f"generate_probes_subdiv = {lm['probes_subdiv']}",
+               # Bake a dimmed copy of the sky: lightmapped surfaces get their indirect
+               # light only from the bake, so ambient_energy does not reach them
+               # (docs/explanation/about-lighting.md, WP-60).
+               *(["environment_mode = 2", 'environment_custom_sky = SubResource("sky")',
+                  f"environment_custom_energy = {lm['sky_energy']}"] if "sky_energy" in lm else []),
                # Bake at the theme's exposure: with physical light units the raw
                # lux values would otherwise overflow the lightmap's range.
                'camera_attributes = SubResource("camera")',

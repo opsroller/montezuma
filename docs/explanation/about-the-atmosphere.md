@@ -91,10 +91,12 @@ in mist this thick the many scatterings even the lobe out, so isotropic is
 the closer match to what the eye sees.
 
 Auto exposure, which only the desktop tiers have, as they alone have the
-fog, still meters the brighter frame. The theme's `auto_scale` goes from
-0.4 to 0.45 so the board renders as bright as it does with no fog at all
-(mean RGB (162, 135, 114) against (163, 136, 114) without fog, 1920×1080,
-`e1-l01`, frame 150, RTX 4080 SUPER).
+fog, still meters the brighter frame. When the mist went in, the theme's
+`auto_scale` went from 0.4 to 0.45 so the board rendered as bright as it
+did with no fog at all (mean RGB (162, 135, 114) against (163, 136, 114)
+without fog, 1920×1080, `e1-l01`, frame 150, RTX 4080 SUPER). WP-60 later
+lowered it to 0.32 on purpose, for darker sunlit stone; see
+[About lighting: Revision](about-lighting.md#revision-darker-shadows-wp-60).
 
 ## Dust
 

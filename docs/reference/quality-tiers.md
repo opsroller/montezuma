@@ -165,6 +165,7 @@ switch. The root viewport re-applies on resize. On every Forward+ tier, `project
 | Temporal upscaler | MetalFX temporal on Metal, FSR 2.2 elsewhere | same | — | — |
 | MSAA (3D) | off | off | 2× | 2× |
 | Anisotropic filtering | 16× | 8× | 4× | 2× |
+| Debanding | On | On | Off | Off |
 | Mesh LOD threshold (px) | 1.0 | 1.0 | 2.0 | 2.0 |
 | Sun shadow atlas | 4096 | 2048 | 2048 | 1024 |
 | Sun shadow cascades (most) | 4 | 4 | 4 | 1 (orthogonal) |

@@ -347,6 +347,7 @@ void QualityTiers::apply_viewport() {
     root->set_msaa_3d(msaa_mode(p.msaa));
     root->set_screen_space_aa(p.smaa ? Viewport::SCREEN_SPACE_AA_SMAA : Viewport::SCREEN_SPACE_AA_DISABLED);
     root->set_anisotropic_filtering_level(anisotropy_level(p.anisotropy));
+    root->set_use_debanding(p.debanding);
     root->set_mesh_lod_threshold(p.mesh_lod_threshold);
     root->set_positional_shadow_atlas_size(p.positional_shadow_atlas);
 }
@@ -760,6 +761,7 @@ void QualityTiers::run_self_test() {
         apply_shadow_budget();
         const q::Profile& p = get_profile();
         check(get_tier() == id, id, "tier did not take effect");
+        check(get_tree()->get_root()->is_using_debanding() == p.debanding, id, "debanding");
         check(env->is_ssao_enabled() == p.has(q::Feature::Ssao), id, "SSAO");
         check(env->is_ssil_enabled() == p.has(q::Feature::Ssil), id, "SSIL");
         check(env->is_ssr_enabled() == p.has(q::Feature::Ssr), id, "SSR");
