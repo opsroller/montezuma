@@ -172,6 +172,29 @@ frame there is shorter than 16.67 ms and p50 sits near that floor; the
 miss is in the tail. The follow-up is the M4's p95 tail (hitches and
 frames that miss a present), not the mean cost. The budget is unchanged.
 
+## Mac mini M4 at native 5K
+
+WP-60's darker shadows against their merge base with `main`
+(db718de). Mac mini M4, Metal, Forward+, `desktop-high`, full screen at
+native 5120×2880 with 3D at 1.0 and no upscaler (a local, uncommitted
+patch in both builds, since this branch has no native switch; TAA off),
+vsync off, busiest-board replay seed 52, 5 s warm-up and one 10 s
+capture per build, run back to back with no other Godot process,
+2026-10-19. Textures and fire generated and lightmaps baked in both
+builds.
+
+| Build | `frame_ms` p50 | p95 | p99 | Frames in 10 s | `cpu_ms` p95 | Draw calls p95 | Video memory max |
+|---|---|---|---|---|---|---|---|
+| Merge base db718de | 119.1 | 125.0 | 131.4 | 84 | 1.39 | 262 | 2107 MB |
+| WP-60 be2ebdc | 114.3 | 116.3 | 118.5 | 88 | 1.62 | 277 | 2107 MB |
+
+Every frame rendered at 5120×2880 and the replay matched its plan in
+both runs. The merge base's run is slow for its code: c0f387e, whose
+only difference from db718de is documentation, ran p50 113.9 and p95
+114.7 the same way minutes earlier. So the 4.8 ms gap is run-to-run
+spread, not a saving; within that spread WP-60 costs nothing
+measurable at 5K.
+
 ## Ground mist rework
 
 Cost of reworking the WP-51 fog into ground mist (`SH_AtmosphereFog`,
