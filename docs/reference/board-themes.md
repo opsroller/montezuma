@@ -197,7 +197,7 @@ the parameter file's `lighting` section:
 | Node | Type | Tiers | Parameters (`lighting.*`) | Temple |
 |---|---|---|---|---|
 | `WorldEnvironment` | sky, AgX tonemapper, SSAO, SSIL, optional height fog; glow and the grade LUT from [Post-processing](#post-processing) and [Colour grade](#colour-grade) | all (switches per [Quality tiers](quality-tiers.md)) | `sky_nits`, `agx_white`, `agx_contrast`, optional `fog` (`color`, `height`, `height_density`, `sky_affect`) | 15,000 nits; white 16, contrast 1.25; no height fog. Volumetric fog on, with no density of its own: see [Atmosphere](#atmosphere) |
-| `camera` (`CameraAttributesPractical`) | exposure, on the environment, `LightmapGI` and `VoxelGI` | auto exposure on desktop only | `exposure` (`sensitivity`, `multiplier`, `auto_scale`, `auto_speed`, `auto_min_sensitivity`, `auto_max_sensitivity`) | ISO 440 (auto 300 to 640), `auto_scale` 0.45 (raised from 0.4 so the bright mist does not pull the board darker; auto exposure and the fog are both desktop-only) |
+| `camera` (`CameraAttributesPractical`) | exposure, on the environment, `LightmapGI` and `VoxelGI` | auto exposure on desktop only | `exposure` (`sensitivity`, `multiplier`, `auto_scale`, `auto_speed`, `auto_min_sensitivity`, `auto_max_sensitivity`) | ISO 440 (auto 400 to 480), `auto_scale` 0.45. The narrow auto range keeps the plaza mist from moving the board's exposure: from 300 to 640 it failed readability rules 2 and 4 at 4K ([`design/grade/temple.md`](../../design/grade/temple.md)). Auto exposure and the fog are both desktop-only |
 | `Sun` | `DirectionalLight3D`, shadows | all | `sun` (`lux`, `kelvin`, `color`, `angular_distance`, optional `fog_energy` → `light_volumetric_fog_energy`) | 11,000 lux, 4500 K, 0.6°, fog energy 7 (see [Atmosphere](#atmosphere)) |
 | `Fire1`…`Fire4/Light` | `FlickerLight3D` in each brazier's `PF_BrazierFire` ([Fire](fire.md)), dual paraboloid shadows (seam flat above the board), group `quality_shadow_light` | all; shadows on the nearest 8 or 2 | `torch` (`lumens`, `kelvin`, `color`, `size`, `range`) | 60,000 lm, 1900 K, range 4.5 m |
 | `SkyFill` | `AreaLight3D` over the board, group `quality:area_light`, not baked | `desktop-high` | `sky_fill` (`transform`, `lumens`, `color`, `size`, `range`) | 20,000 lm, 10 × 10 m |
@@ -253,8 +253,8 @@ Why a CDL and a LUT: [About post-processing](../explanation/about-post-processin
 | Key (`grade.*`) | Meaning | Temple |
 |---|---|---|
 | `lut_size` | texels per axis | 32 (a 1024 × 32 PNG, 96 KB in memory) |
-| `slope`, `offset`, `power` | CDL per channel, sRGB-encoded values in 0 to 1 | slope 1.03, 1.0, 0.96; offset 0, 0, 0.01; power 1 |
-| `saturation` | CDL saturation, 1 keeps it | 1.06 |
+| `slope`, `offset`, `power` | CDL per channel, sRGB-encoded values in 0 to 1 | slope 1.0712, 1.04, 0.9984; offset −0.02, −0.02, −0.0096; power 1 (the warm grade below a contrast of 1.04 around 0.5) |
+| `saturation` | CDL saturation, 1 keeps it | 1.04 |
 | `check.max_shift_pieces`, `check.max_shift_surfaces` | most a piece colour (`materials.<kind>.albedo`) or palette colour (`surface_tokens`, `extra_tokens`) may move, OKLab distance | 0.04, 0.05 |
 | `check.max_separation_drop` | most the closest pair of piece colours may come closer, OKLab distance, in normal vision, greyscale, protanopia, deuteranopia and tritanopia (Machado et al. 2009, severity 1) | 0.005 |
 

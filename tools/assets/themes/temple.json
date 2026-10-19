@@ -445,8 +445,8 @@
       "multiplier": 1.0,
       "auto_scale": 0.45,
       "auto_speed": 0.5,
-      "auto_min_sensitivity": 300,
-      "auto_max_sensitivity": 640
+      "auto_min_sensitivity": 400,
+      "auto_max_sensitivity": 480
     },
     "sun": {
       "lux": 11000,
@@ -554,10 +554,10 @@
   "grade": {
     "_comment": "Colour grade as an ASC CDL in display space, baked into a 3D LUT by gen_theme_textures.py; check limits for validate_assets.py. docs/reference/board-themes.md#colour-grade.",
     "lut_size": 32,
-    "slope": [1.03, 1.0, 0.96],
-    "offset": [0.0, 0.0, 0.01],
+    "slope": [1.0712, 1.04, 0.9984],
+    "offset": [-0.02, -0.02, -0.0096],
     "power": [1.0, 1.0, 1.0],
-    "saturation": 1.06,
+    "saturation": 1.04,
     "check": {
       "max_shift_pieces": 0.04,
       "max_shift_surfaces": 0.05,

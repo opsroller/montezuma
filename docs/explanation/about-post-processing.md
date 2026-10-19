@@ -48,7 +48,11 @@ such: the only renderer this package could run is software Vulkan and GL
    levels 2 and 3 only (radius of a few pixels at the internal
    resolution), additive blend at intensity 0.5, no `glow_bloom` (which
    blooms everything). Additive suits a pre-tonemap glow: soft light and
-   screen assume values in 0 to 1. Mobile and Compatibility put much lower
+   screen assume values in 0 to 1. The lighting pass's soft-light glow on
+   mips 3 to 7 with bloom 0.05 spread past a quarter cell over 6.1% of the
+   board at threshold 1.6 and 1.1% at 8 (rule 6 allows 0.1%), and its
+   intensity of 0.6 tripled the bloom on `web`, so the glow stays as it
+   was. Mobile and Compatibility put much lower
    values in the buffer glow reads: at a threshold of 1.1 or more nothing
    bloomed there at all. So `mobile` and `web` get their own threshold of
    0.6 (environment metadata `QualityTiers` applies per tier), which
@@ -67,8 +71,15 @@ such: the only renderer this package could run is software Vulkan and GL
    for a primary grade, so a theme author can read and adjust it, and
    the LUT keeps the cost at one texture read on every tier. The temple
    grade is gentle: warm highlights (red slope 1.03, blue 0.96), a slight
-   blue lift in the shadows (offset 0.01) and saturation 1.06, replacing
-   the old environment saturation of 1.08.
+   blue lift in the shadows (offset 0.01), a contrast of 1.04 around mid
+   grey folded into slope and offset, and saturation 1.04. The lighting
+   pass asked for contrast 1.12 and saturation 1.18 as environment
+   adjustments; in the grade those move ruby by 0.078 and close the
+   tritanopia pair by 0.04, far past the limits below, and 1.04 and 1.04
+   is the nearest pair that passes with both raised. Its AgX contrast of
+   1.6 made amethyst on the light tile as bright as the tile on `mobile`
+   (rule 4), so AgX contrast stays at 1.25
+   ([`design/grade/temple.md`](../../design/grade/temple.md)).
 3. **The grade has to keep the palette.** `validate_assets.py` fails a
    grade that moves any piece colour by more than 0.04 in OKLab (about
    one just-noticeable difference) or a surface colour by more than 0.05,
