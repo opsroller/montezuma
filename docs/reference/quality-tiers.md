@@ -104,7 +104,7 @@ one entry (phones, web).
 | Argument (after `--`) | Effect |
 |---|---|
 | `--quality=<tier id or auto>` | Uses that tier for this run without saving it (benchmark captures) |
-| `--quality-selftest` | Switches through every available tier on scratch nodes, checks each switch (environment, groups, shadow budget, sun shadow cascades and material variants of `MI_Gold` and `MI_Ground`, also after a node leaves and re-enters the tree), prints `QualityTiers self-test: N checks, F failures` |
+| `--quality-selftest` | Switches through every available tier on scratch nodes, checks each switch (environment, groups, shadow budget, sun shadow cascades, material variants of `MI_Gold` and `MI_Ground`, and the backdrop blur on environments and cameras, also after a node leaves and re-enters the tree), prints `QualityTiers self-test: N checks, F failures` |
 
 ## Feature ids
 
@@ -172,7 +172,7 @@ switch. The root viewport re-applies on resize.
 | SSR half size | no | yes | — | — |
 | Volumetric fog froxels (size × depth) | 64 × 64 | 32 × 32 | — | — |
 | Subsurface scattering quality | high | medium | off | off |
-| Depth of field blur quality, jitter (box bokeh) | low, jittered | low, jittered | — | — |
+| Backdrop depth of field (`BackdropBlur`; Godot's own DoF is always off) | on | on | — | — |
 | Texture and material variant folder | `hi/` | `hi/` | base only | `lo/` |
 | Pieces batched (`batch_pieces`, [Board view](board-view.md#draw-calls)) | no | no | yes | yes |
 
@@ -181,6 +181,41 @@ tree: the light uses the fewer of the cascades its scene authored and the
 tier's count (1 orthogonal, 2 or 4 parallel splits), and gets its authored
 mode back on a tier that allows it (`_quality_authored` metadata). Each
 cascade draws every shadow caster again.
+
+### Backdrop depth of field
+
+`BackdropBlur` (`extension/src/render/backdrop_blur.hpp`) is a
+`CompositorEffect` that draws the far depth of field in place of Godot's.
+Why: [About post-processing](../explanation/about-post-processing.md#decision);
+the parameters a theme sets: [Board themes: Post-processing](board-themes.md#post-processing).
+
+- `QualityTiers` turns Godot's far and near depth of field off on every
+  `CameraAttributesPractical` it sees, on every tier.
+- A `WorldEnvironment` whose attributes authored a far blur gets a
+  `BackdropBlur` on its compositor (made if it has none), bound to those
+  attributes. A `Camera3D` with its own attributes or compositor gets one
+  on its own compositor, bound to the attributes it renders with (its own,
+  else the world's), because Godot takes both from the camera first. A
+  camera's own attributes without a far blur get an empty compositor,
+  which hides the world's blur.
+- The effect is enabled where the tier has `depth_of_field` and the
+  attributes authored a far blur. Compatibility has no `RenderingDevice`,
+  so no effect is added there.
+- Each frame it reads `dof_blur_far_distance`, `dof_blur_far_transition`
+  and `dof_blur_amount` from the attributes. It runs after the transparent
+  pass, before TAA and the temporal upscaler, at the internal size: a
+  half-size blur with a radius of `amount` × 64 pixels at the output size,
+  then a full-size blend. Pixels short of the far distance are left as
+  they are.
+- `BackdropBlur::drawing(viewport)` returns the effect a viewport renders
+  with (its camera's, else its world's). The benchmark's `depth_of_field`
+  feature reads its enabled flag.
+- Under `--gpu-profile` it shows as its own `Backdrop Blur` row.
+
+| Measured, RTX 4080, 3840×2160, `--gpu-profile`, `e1-l01` | `desktop-high` | `desktop-standard` |
+|---|---|---|
+| Godot's low box depth of field (before) | 0.63 ms | 0.58 ms |
+| `BackdropBlur` | 0.05 ms | 0.09 ms |
 
 FSR 1 and FSR 2.2 run only on Forward+ in Godot 4.7, so the Mobile
 renderer has no upscaler. Frame-time costs behind these numbers are

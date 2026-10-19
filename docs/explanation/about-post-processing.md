@@ -83,11 +83,26 @@ such: the only renderer this package could run is software Vulkan and GL
    `BoardCamera3D` writes the far distance every time it refits: the view
    depth of the board's far edge plus that margin. The blur then never
    reaches the board at any aspect ratio, and the jungle floor two metres
-   below the platform softens. Low blur quality with a box bokeh on both
-   desktop tiers, jittered for the temporal pass; none on mobile and web,
-   as the target says. The blur only softens a backdrop, so its bokeh
-   shape and sample count never show, and the first M4 run (below) found
-   medium quality with the default hexagon bokeh far too expensive.
+   below the platform softens. Both desktop tiers draw it; mobile and web
+   do not, as the target says.
+
+   The blur is our own `BackdropBlur` compositor effect, not Godot's depth
+   of field, which `QualityTiers` keeps off on every tier. The M4 runs
+   (below) put Godot's low box blur at about 3 ms, the whole cost of this
+   package: Godot runs it after the upscaler, at the output size, in four
+   passes over every pixel, the board included, though the board never
+   blurs. `BackdropBlur` reads the same three settings (far distance,
+   transition, amount) from the theme's `CameraAttributesPractical` and
+   runs after the transparent pass, before TAA and the temporal upscaler,
+   at the internal size. It has two compute passes, and both stop at once
+   on any pixel short of the far distance. A half-size pass averages a 4×4
+   grid of bilinear taps across each pixel's blur radius, weighted by each
+   tap's own blur so the board never bleeds into the backdrop. A full-size
+   pass then blends that over the sharp image the way Godot's composite
+   does. The radius is Godot's (`amount` × 64 pixels at the output size),
+   so at 4K it matches Godot's frame to under 1/255 on average, with the
+   board unchanged. With no blur shape to choose, the box bokeh, sample
+   count and jitter settings went away.
 5. **Readability captures average 64 frames, hold the fire lights and
    switch glow off by intensity.**
    With TAA or the temporal upscaler, every frame is jittered, and the
@@ -124,9 +139,14 @@ in the tonemap pass is a fraction of a millisecond, so the cost is
 depth of field. The first version used medium quality with the default
 hexagon bokeh, which Godot runs at the 1440p output size after the
 upscaler; low quality with a box bokeh, Godot's cheapest, took 2 ms off.
-The package still costs about 3 ms against a target of under 1 ms on
-`desktop-high`, and the remaining lever is turning backdrop depth of
-field off on that tier.
+That left the package about 3 ms over a target of under 1 ms, so
+`BackdropBlur` replaced Godot's depth of field (decision 4). Its M4
+figures are pending the re-measure with this pull request. On the RTX
+4080 at 3840×2160, `--gpu-profile` puts Godot's low box blur at 0.63 ms
+on `desktop-high` and 0.58 ms on `desktop-standard`, and `BackdropBlur`
+at 0.05 ms and 0.09 ms
+([Quality tiers](../reference/quality-tiers.md#backdrop-depth-of-field)).
+Its half-size buffer takes about 17 MB of video memory at native 4K.
 
 `desktop-standard` at 1920×1080 measured p95 17.5 ms on `main` and
 17.4 ms with this package. Both sit on the 60 Hz floor, because the
@@ -145,6 +165,8 @@ no new passes. No draw calls are added on any tier.
 | Grading with the environment's brightness, contrast and saturation only | No per-channel control, so no warm highlights or cool shadows |
 | A fixed depth-of-field distance | Blurs the board on portrait windows or misses the backdrop on wide ones |
 | Near blur too | Nothing in the frame is nearer than the board |
+| Godot's own depth of field at low quality with a box bokeh | About 3 ms on the M4: it runs after the upscaler at the output size, in four passes over every pixel, the board included |
+| Turning backdrop depth of field off on `desktop-high` | The target asks for it on both desktop tiers, and `BackdropBlur` costs a tenth as much |
 | Raising rule 6's thresholds to absorb the capture noise | Hides real bloom; the noise came from the capture, so the capture changed |
 
 ## Consequences

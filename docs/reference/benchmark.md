@@ -221,7 +221,7 @@ attributes and the visible nodes of the scene tree.
 | `glow`, `fog`, `volumetric_fog`, `ssr`, `ssao`, `ssil`, `sdfgi` | bool | that `Environment` setting is on |
 | `color_grade_lut` | bool | adjustments on with a colour-correction texture |
 | `auto_exposure` | bool | the camera attributes have auto exposure on |
-| `depth_of_field` | bool | near or far DOF blur on (`CameraAttributesPractical`) |
+| `depth_of_field` | bool | the `BackdropBlur` the viewport renders with (its camera's, else its world's) is enabled |
 | `lightmap_gi`, `voxel_gi` | bool | a visible `LightmapGI` / `VoxelGI` node |
 | `reflection_probes`, `fog_volumes`, `decals` | int | visible nodes of that type |
 | `gpu_particles`, `gpu_particle_amount` | int | emitting `GPUParticles3D` nodes and their summed `amount` |
