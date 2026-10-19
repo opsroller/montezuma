@@ -85,6 +85,65 @@ godot --path game res://scenes/bench/bench.tscn -- --quality=desktop-high --benc
 python3 tools/bench/check_run.py /tmp/bench.json --size 2560x1440
 ```
 
+### Check what one effect or edit costs with a short run
+
+Run the way players see the game: full screen, at the screen's own
+resolution, with no render-scale cut or upscaler. The script does that
+by default (`NATIVE`, `--quality-native`); `-DFULLSCREEN=ON` makes the
+window exclusive full screen at the screen's size and ignores `SIZE`.
+For a quick look at where GPU time goes, or what a small change did,
+run a short capture with Godot's per-pass profile instead of the full
+minute:
+
+```sh
+cmake -DTIER=desktop-high -DFULLSCREEN=ON -DVSYNC=off -DSECONDS=6 -DWARMUP=3 -DGPU_PROFILE=ON -P tools/bench/run_bench.cmake
+```
+
+The run takes about 15 s. Each `GPU PROFILE` block it prints gives the
+GPU time of every render pass in one frame (depth pre-pass, opaque pass,
+SSAO, glow, TAA and so on), and `gpu_ms` in `benchmark.json` gives the
+whole frame. Add `-DQUALITY_OFF=glow` (any
+[feature ids](../reference/quality-tiers.md#feature-ids), comma-separated)
+and compare `gpu_ms` p50 with a run without it to get that effect's cost;
+the feature check then fails for those rows, which is expected. Run the
+two back to back: run-to-run spread is a few tenths of a millisecond.
+
+Compare `gpu_ms` with vsync off: with vsync on the GPU clocks down
+between frames. With `-DVSYNC=off` the script also asks for mailbox
+presentation, because some compositors (GNOME) keep vsync on otherwise;
+`display.vsync` in the report then reads `mailbox`, or `disabled` where
+the driver started the window without mailbox and the runner turned
+vsync off; either way frames are not held to the display's rate.
+
+On Metal, Godot 4.7.2 returns no GPU timestamps, so the profile prints
+zeros there: judge by `frame_ms` or use Apple's Metal tools.
+
+`render.pipeline_compilations.during_capture` in the report counts
+shaders compiled inside the timed window; `draw` above 0 means frames
+stalled on a compile.
+
+To check that a change leaves the picture alone, capture the same frame
+of the replay before and after the change, and once more before it:
+
+```sh
+godot --path game --resolution 1920x1080 --write-movie /tmp/before/f.png --fixed-fps 30 --quit-after 82 res://scenes/bench/bench.tscn -- --quality=desktop-high --quality-native --bench-size=1920x1080 --bench-seconds=100 --bench-warmup=1
+```
+
+Compare `f00000080.png` from each pair with any image tool that reports
+the mean absolute difference per channel, for example in Python with
+Pillow and NumPy:
+
+```sh
+python3 -c "import sys,numpy as n;from PIL import Image as I;a,b=(n.asarray(I.open(f).convert('RGB'),float) for f in sys.argv[1:]);print(abs(a-b).mean())" /tmp/before/f00000080.png /tmp/after/f00000080.png
+```
+
+Two captures of one build differ a little on their own (about 0.3 of
+255 on this scene); a change that keeps the look stays at that level.
+The measured costs per pass and per effect are in
+[Benchmark results](../reference/benchmark-results.md#gpu-time-per-pass-and-per-effect),
+and why cost is cut this way in
+[About quality tiers](../explanation/about-quality-tiers.md#cutting-cost-without-changing-the-look).
+
 ## On an Android or iOS phone
 
 Phones take no command-line arguments, so the benchmark scene becomes the

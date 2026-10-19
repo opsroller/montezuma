@@ -150,6 +150,13 @@ void test_viewport_plan() {
           "4K temporal upscale at the 0.5 floor");
     const ViewportPlan std_plan = viewport_plan(profile(Tier::DesktopStandard), 2160);
     check(std_plan.render_scale == 0.77f, "standard ignores output size");
+    const ViewportPlan high_native = viewport_plan(high, 2880, true);
+    check(high_native.scaling == Scaling::Bilinear && high_native.render_scale == 1.0f && high_native.taa,
+          "native: full size, no upscaler, TAA");
+    const ViewportPlan std_native = viewport_plan(profile(Tier::DesktopStandard), 1080, true);
+    check(std_native.render_scale == 1.0f && std_native.taa, "native standard keeps temporal AA as TAA");
+    const ViewportPlan web_native = viewport_plan(profile(Tier::Web), 720, true);
+    check(web_native.render_scale == 1.0f && !web_native.taa, "native web adds no TAA");
 }
 
 void test_variant_path() {

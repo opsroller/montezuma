@@ -150,7 +150,9 @@ struct ViewportPlan {
     float render_scale;
     bool taa;
 };
-ViewportPlan viewport_plan(const Profile& profile, int output_height);
+// With `native`, the 3D renders at the output size with no upscaler (TAA
+// where the tier would have a temporal upscaler or TAA), as benchmarks run.
+ViewportPlan viewport_plan(const Profile& profile, int output_height, bool native = false);
 
 // The tier variant of an asset path: "dir/file" becomes "dir/<variant>/file".
 // Returns the path unchanged when the profile has no variant folder.

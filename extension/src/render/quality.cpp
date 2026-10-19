@@ -181,7 +181,8 @@ const Profile& profile(Tier tier) {
     return profiles[static_cast<std::size_t>(tier)];
 }
 
-ViewportPlan viewport_plan(const Profile& p, int output_height) {
+ViewportPlan viewport_plan(const Profile& p, int output_height, bool native) {
+    if (native) return {Scaling::Bilinear, 1.0f, p.taa || p.scaling == Scaling::TemporalUpscale};
     if (p.tier == Tier::DesktopHigh && output_height > kHighInternalHeight)
         return {Scaling::TemporalUpscale,
                 std::max(kHighMinScale, static_cast<float>(kHighInternalHeight) / static_cast<float>(output_height)),

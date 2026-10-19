@@ -300,8 +300,8 @@ random (seed + 51) until they pass.
 | `SH_AtmosphereFog` | the temple's `FogVolume` (`MI_AtmosphereFog`), desktop | fog shader | 1 3D-noise sample per froxel in the volume |
 | `SH_Dust` | dust motes (`MI_Dust`), desktop | lit, additive, no depth write, camera-facing | no texture samples |
 | `SH_LightShaft` | light-shaft cards (`MI_LightShaft`), mobile and web | unshaded, additive, no depth write; fades out toward the ground in UV | no texture samples |
-| `SH_TriplanarPBR` | desktop stone (`hi/MI_Stone*`) | opaque, Burley diffuse, GGX; object-space triplanar PBR set; parallax occlusion on upward faces (`height_depth` metres, 8 to 24 layers by view angle) | 9 texture samples, plus up to 25 height samples on upward faces |
-| `SH_Gem` | desktop ruby and amethyst (`hi/MI_Ruby`, `hi/MI_Amethyst`) | transparent pass (reads the screen texture), depth write; refraction with `ior` and `dispersion`, absorption by the body colour over `thickness` | 9 texture samples, 3 screen and 3 depth samples |
+| `SH_TriplanarPBR` | desktop stone (`hi/MI_Stone*`) | opaque, Burley diffuse, GGX; object-space triplanar PBR set; parallax occlusion on upward faces (`height_depth` metres, 8 to 24 layers by view angle) | 3 texture samples where one projection carries the surface (most pixels; projections under 2% weight are skipped), up to 9 on edges, plus up to 25 height samples on upward faces |
+| `SH_Gem` | desktop ruby and amethyst (`hi/MI_Ruby`, `hi/MI_Amethyst`) | transparent pass (reads the screen texture), depth write; refraction with `ior` and `dispersion`, absorption by the body colour over `thickness` | 3 to 9 texture samples (as `SH_TriplanarPBR`), 4 screen samples at LOD 0 (no screen mip chain) and 3 depth samples |
 | `SH_Triplanar.gdshaderinc` | included by the two above | object-space triplanar sampling, normal-map blending, Y-face parallax | none of its own |
 
 `SH_CellHighlight` and `SH_Spark` run on Forward+, Mobile and
