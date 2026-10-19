@@ -472,7 +472,7 @@ lighting change).
 | 4.8 beta 1 | 117.5 | 118.0 | 115.6 |
 
 4.8 beta 1 is about 4 ms slower, inside this machine's run-to-run spread
-of about 5 ms: no gain on Metal. The first 4.8 run after a fresh import
+of about 5 ms: no gain measured on Metal (the pair is one commit apart). The first 4.8 run after a fresh import
 had a 3.4 s hitch (p95 245 ms), most likely pipeline compilation; the
 table shows the re-run. 4.8's Metal driver reports GPU timestamps, so
 `gpu_ms` is usable on the Mac from 4.8 on.
