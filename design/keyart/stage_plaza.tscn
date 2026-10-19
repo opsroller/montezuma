@@ -1,0 +1,280 @@
+[gd_scene format=3]
+; SPDX-License-Identifier: GPL-2.0-or-later
+; Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
+; Lit stage for the plaza key art: the temple, the paved plaza inside the precinct wall and
+; the invented precinct buildings, golden-hour sun from the left, and a LightmapGI (bake output
+; stage_plaza.lmbake is generated and not committed). Buildings beyond the wall are in
+; mark_on_plaza.tscn, lit without the bake.
+; Render all stills in one launch (see render_all.tscn):
+;   python3 design/keyart/gen/build.py
+;   godot --editor --path design/keyart -- --bake-lightmaps=res://stage_studio.tscn,res://stage_plaza.tscn
+;   godot --path design/keyart --write-movie /tmp/keyart/all.png --fixed-fps 1 --quit-after 16
+;   python3 design/keyart/gen/finish.py /tmp/keyart/all00000015.png
+
+
+[ext_resource type="PackedScene" path="res://temple.tscn" id="temple"]
+[ext_resource type="Mesh" path="res://meshes/ground_plaza.obj" id="ground"]
+[ext_resource type="LightmapGIData" path="res://stage_plaza.lmbake" id="lm"]
+[ext_resource type="Texture2D" path="res://textures/paving_albedo.png" id="pa"]
+[ext_resource type="Texture2D" path="res://textures/paving_normal.png" id="pn"]
+[ext_resource type="Texture2D" path="res://textures/paving_orm.png" id="po"]
+[ext_resource type="Texture2D" path="res://textures/sky_golden.png" id="sky"]
+[ext_resource type="Mesh" path="res://meshes/temple_small.obj" id="ts"]
+[ext_resource type="Mesh" path="res://meshes/palace.obj" id="pa"]
+[ext_resource type="Mesh" path="res://meshes/wall.obj" id="wa"]
+[ext_resource type="Texture2D" path="res://textures/precinct_albedo.png" id="pra"]
+[ext_resource type="Texture2D" path="res://textures/precinct_normal.png" id="prn"]
+[ext_resource type="Texture2D" path="res://textures/precinct_orm.png" id="pro"]
+
+[sub_resource type="PanoramaSkyMaterial" id="sky_mat"]
+panorama = ExtResource("sky")
+energy_multiplier = 1.3
+
+[sub_resource type="Sky" id="sky"]
+sky_material = SubResource("sky_mat")
+radiance_size = 4
+
+[sub_resource type="FastNoiseLite" id="n_macro"]
+frequency = 0.004
+fractal_octaves = 5
+
+[sub_resource type="Gradient" id="g_macro"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(0.55, 0.52, 0.49, 1, 1.12, 1.06, 1.0, 1)
+
+[sub_resource type="NoiseTexture2D" id="t_macro"]
+width = 1024
+height = 1024
+seamless = true
+noise = SubResource("n_macro")
+color_ramp = SubResource("g_macro")
+
+[sub_resource type="StandardMaterial3D" id="m_paving"]
+albedo_color = Color(0.9, 0.88, 0.86, 1)
+albedo_texture = ExtResource("pa")
+roughness_texture = ExtResource("po")
+roughness_texture_channel = 1
+normal_enabled = true
+normal_texture = ExtResource("pn")
+ao_enabled = true
+ao_texture = ExtResource("po")
+detail_enabled = true
+detail_blend_mode = 3
+detail_uv_layer = 1
+detail_albedo = SubResource("t_macro")
+uv2_scale = Vector3(0.01, 0.01, 0.01)
+uv2_triplanar = true
+uv2_world_triplanar = true
+texture_filter = 5
+
+[sub_resource type="StandardMaterial3D" id="m_precinct"]
+albedo_texture = ExtResource("pra")
+roughness_texture = ExtResource("pro")
+roughness_texture_channel = 1
+normal_enabled = true
+normal_texture = ExtResource("prn")
+ao_enabled = true
+ao_texture = ExtResource("pro")
+ao_light_affect = 0.15
+texture_filter = 5
+
+[node name="StagePlaza" type="Node3D"]
+
+[node name="Temple" parent="." instance=ExtResource("temple")]
+
+[node name="Ground" type="MeshInstance3D" parent="."]
+mesh = ExtResource("ground")
+surface_material_override/0 = SubResource("m_paving")
+
+[node name="Precinct" type="Node3D" parent="."]
+
+[node name="TempleNorth" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(0.00000, 0, 1.00000, 0, 1.00000, 0, -1.00000, 0, 0.00000, -66.000, 0.000, 128.000)
+mesh = ExtResource("ts")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="TempleSouthFront" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(0.00000, 0, -0.90000, 0, 0.90000, 0, 0.90000, 0, 0.00000, 64.000, 0.000, 112.000)
+mesh = ExtResource("ts")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="PalaceSouth" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, 70.000, 0.000, 40.000)
+mesh = ExtResource("pa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="PalaceNorth" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(-1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, -1.00000, -74.000, 0.000, 10.000)
+mesh = ExtResource("pa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallEast0" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, -240.000, 0.000, -52.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallEast1" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, -200.000, 0.000, -52.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallEast2" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, -160.000, 0.000, -52.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallEast3" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, -120.000, 0.000, -52.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallEast4" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, -80.000, 0.000, -52.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallEast5" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, -40.000, 0.000, -52.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallEast6" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, 0.000, 0.000, -52.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallEast7" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, 40.000, 0.000, -52.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallEast8" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, 80.000, 0.000, -52.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallEast9" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, 120.000, 0.000, -52.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallEast10" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, 160.000, 0.000, -52.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallEast11" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, 200.000, 0.000, -52.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallEast12" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, 240.000, 0.000, -52.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallNorth0" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(0.00000, 0, -1.00000, 0, 1.00000, 0, 1.00000, 0, 0.00000, -128.000, 0.000, -32.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallSouth0" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(0.00000, 0, 1.00000, 0, 1.00000, 0, -1.00000, 0, 0.00000, 128.000, 0.000, -32.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallNorth1" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(0.00000, 0, -1.00000, 0, 1.00000, 0, 1.00000, 0, 0.00000, -128.000, 0.000, 8.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallSouth1" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(0.00000, 0, 1.00000, 0, 1.00000, 0, -1.00000, 0, 0.00000, 128.000, 0.000, 8.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallNorth2" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(0.00000, 0, -1.00000, 0, 1.00000, 0, 1.00000, 0, 0.00000, -128.000, 0.000, 48.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallSouth2" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(0.00000, 0, 1.00000, 0, 1.00000, 0, -1.00000, 0, 0.00000, 128.000, 0.000, 48.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallNorth3" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(0.00000, 0, -1.00000, 0, 1.00000, 0, 1.00000, 0, 0.00000, -128.000, 0.000, 88.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallSouth3" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(0.00000, 0, 1.00000, 0, 1.00000, 0, -1.00000, 0, 0.00000, 128.000, 0.000, 88.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallNorth4" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(0.00000, 0, -1.00000, 0, 1.00000, 0, 1.00000, 0, 0.00000, -128.000, 0.000, 128.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallSouth4" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(0.00000, 0, 1.00000, 0, 1.00000, 0, -1.00000, 0, 0.00000, 128.000, 0.000, 128.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallNorth5" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(0.00000, 0, -1.00000, 0, 1.00000, 0, 1.00000, 0, 0.00000, -128.000, 0.000, 168.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallSouth5" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(0.00000, 0, 1.00000, 0, 1.00000, 0, -1.00000, 0, 0.00000, 128.000, 0.000, 168.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallNorth6" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(0.00000, 0, -1.00000, 0, 1.00000, 0, 1.00000, 0, 0.00000, -128.000, 0.000, 208.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallSouth6" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(0.00000, 0, 1.00000, 0, 1.00000, 0, -1.00000, 0, 0.00000, 128.000, 0.000, 208.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallNorth7" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(0.00000, 0, -1.00000, 0, 1.00000, 0, 1.00000, 0, 0.00000, -128.000, 0.000, 248.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="WallSouth7" type="MeshInstance3D" parent="Precinct"]
+transform = Transform3D(0.00000, 0, 1.00000, 0, 1.00000, 0, -1.00000, 0, 0.00000, 128.000, 0.000, 248.000)
+mesh = ExtResource("wa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.46947, 0.13812, -0.87208, -0.00000, 0.98769, 0.15643, 0.88295, -0.07344, 0.46369, -0.87208, 50.15643, 0.46369)
+light_color = Color(1, 0.76, 0.52, 1)
+light_energy = 5.0
+light_angular_distance = 0.6
+light_volumetric_fog_energy = 1.0
+light_bake_mode = 2
+shadow_enabled = true
+shadow_blur = 0.5
+directional_shadow_max_distance = 700.0
+
+[node name="Lightmap" type="LightmapGI" parent="."]
+quality = 3
+bounces = 4
+bounce_indirect_energy = 1.0
+use_denoiser = true
+denoiser_strength = 0.1
+use_texture_for_bounces = true
+interior = false
+environment_mode = 2
+environment_custom_sky = SubResource("sky")
+environment_custom_energy = 1.0
+generate_probes_subdiv = 2
+max_texture_size = 16384
+light_data = ExtResource("lm")

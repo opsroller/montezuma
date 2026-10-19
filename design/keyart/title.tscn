@@ -1,0 +1,208 @@
+[gd_scene format=3]
+; SPDX-License-Identifier: GPL-2.0-or-later
+; Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
+; Title wordmark "MONTEZUMA'S": Archivo (SIL OFL 1.1, fonts/OFL.txt; github.com/Omnibus-Type/Archivo,
+; pinned commit 47d54ca1ebb14fd864695f1d39dc734f39017c33) at wght 800, wdth 112, open tracking,
+; extruded 0.12 of the cap height, in burnished pale high-karat cast gold (silver-rich, metallic,
+; polished faces, rougher sides) standing on a thin basalt plate with a lime-stucco rim.
+; Transparent background. Output renders/title-wordmark.png, 1920x600 (rendered at 3840x1200).
+; Render all stills in one launch (see render_all.tscn):
+;   python3 design/keyart/gen/build.py
+;   godot --editor --path design/keyart -- --bake-lightmaps=res://stage_studio.tscn,res://stage_plaza.tscn
+;   godot --path design/keyart --write-movie /tmp/keyart/all.png --fixed-fps 1 --quit-after 16
+;   python3 design/keyart/gen/finish.py /tmp/keyart/all00000015.png
+
+
+[ext_resource type="FontFile" path="res://fonts/Archivo.ttf" id="font"]
+[ext_resource type="Texture2D" path="res://textures/title_env.png" id="sky"]
+
+[sub_resource type="PanoramaSkyMaterial" id="sky_mat"]
+panorama = ExtResource("sky")
+energy_multiplier = 2.2
+
+[sub_resource type="Sky" id="sky"]
+sky_material = SubResource("sky_mat")
+radiance_size = 4
+
+[sub_resource type="Gradient" id="g_grade"]
+offsets = PackedFloat32Array(0, 0.25, 0.5, 0.75, 1)
+colors = PackedColorArray(0.0, 0.006, 0.022, 1, 0.24, 0.25, 0.265, 1, 0.505, 0.5, 0.485, 1, 0.765, 0.75, 0.72, 1, 1, 0.99, 0.95, 1)
+
+[sub_resource type="GradientTexture1D" id="t_grade"]
+gradient = SubResource("g_grade")
+width = 256
+
+[sub_resource type="Environment" id="env"]
+background_mode = 0
+background_color = Color(0, 0, 0, 1)
+sky = SubResource("sky")
+ambient_light_source = 3
+reflected_light_source = 2
+tonemap_mode = 2
+tonemap_white = 6.0
+ssao_enabled = true
+ssao_radius = 1.2
+ssao_intensity = 1.2
+ssil_enabled = true
+ssil_intensity = 0.5
+glow_enabled = true
+glow_intensity = 0.35
+glow_hdr_threshold = 1.5
+adjustment_enabled = true
+adjustment_saturation = 1.06
+adjustment_contrast = 1.06
+adjustment_color_correction = SubResource("t_grade")
+
+[sub_resource type="FontVariation" id="archivo"]
+base_font = ExtResource("font")
+variation_opentype = {2003265652: 800, 2003072104: 112}
+spacing_glyph = 9
+
+[sub_resource type="TextMesh" id="letters"]
+text = "MONTEZUMA’S"
+font = SubResource("archivo")
+font_size = 86
+depth = 0.072
+curve_step = 0.25
+
+[sub_resource type="TextMesh" id="faces"]
+text = "MONTEZUMA’S"
+font = SubResource("archivo")
+font_size = 86
+depth = 0.004
+curve_step = 0.25
+
+[sub_resource type="FastNoiseLite" id="n_burnish"]
+frequency = 0.08
+fractal_octaves = 4
+
+[sub_resource type="Gradient" id="g_burnish"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(0.10, 0.10, 0.10, 1, 0.24, 0.24, 0.24, 1)
+
+[sub_resource type="NoiseTexture2D" id="t_burnish"]
+width = 512
+height = 512
+seamless = true
+noise = SubResource("n_burnish")
+color_ramp = SubResource("g_burnish")
+
+[sub_resource type="StandardMaterial3D" id="m_gold_face"]
+albedo_color = Color(1.0, 0.92, 0.7, 1)
+metallic = 1.0
+roughness = 1.0
+roughness_texture = SubResource("t_burnish")
+uv1_scale = Vector3(2, 2, 2)
+uv1_triplanar = true
+
+[sub_resource type="StandardMaterial3D" id="m_gold_side"]
+albedo_color = Color(0.97, 0.88, 0.66, 1)
+metallic = 1.0
+roughness = 0.34
+
+[sub_resource type="BoxMesh" id="plate"]
+size = Vector3(9.7, 1.36, 0.12)
+
+[sub_resource type="BoxMesh" id="rim"]
+size = Vector3(10.0, 1.66, 0.1)
+
+[sub_resource type="FastNoiseLite" id="n_basalt"]
+frequency = 0.15
+fractal_octaves = 6
+
+[sub_resource type="Gradient" id="g_basalt"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(0.016, 0.018, 0.021, 1, 0.036, 0.038, 0.042, 1)
+
+[sub_resource type="NoiseTexture2D" id="t_basalt"]
+width = 1024
+height = 1024
+seamless = true
+noise = SubResource("n_basalt")
+color_ramp = SubResource("g_basalt")
+
+[sub_resource type="NoiseTexture2D" id="t_basalt_n"]
+width = 1024
+height = 1024
+seamless = true
+as_normal_map = true
+bump_strength = 4.0
+noise = SubResource("n_basalt")
+
+[sub_resource type="StandardMaterial3D" id="m_basalt"]
+albedo_texture = SubResource("t_basalt")
+normal_enabled = true
+normal_scale = 0.4
+normal_texture = SubResource("t_basalt_n")
+roughness = 0.82
+uv1_scale = Vector3(0.5, 0.5, 0.5)
+uv1_triplanar = true
+
+[sub_resource type="FastNoiseLite" id="n_lime"]
+frequency = 0.05
+fractal_octaves = 5
+
+[sub_resource type="Gradient" id="g_lime"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(0.70, 0.66, 0.58, 1, 0.86, 0.83, 0.76, 1)
+
+[sub_resource type="NoiseTexture2D" id="t_lime"]
+width = 512
+height = 512
+seamless = true
+noise = SubResource("n_lime")
+color_ramp = SubResource("g_lime")
+
+[sub_resource type="StandardMaterial3D" id="m_lime"]
+albedo_texture = SubResource("t_lime")
+roughness = 0.9
+uv1_scale = Vector3(0.8, 0.8, 0.8)
+uv1_triplanar = true
+
+[node name="Title" type="Node3D"]
+
+[node name="Sign" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.99027, 0.13917, 0, -0.13917, 0.99027, 0, 0, 0)
+
+[node name="Letters" type="MeshInstance3D" parent="Sign"]
+mesh = SubResource("letters")
+surface_material_override/0 = SubResource("m_gold_side")
+
+[node name="Faces" type="MeshInstance3D" parent="Sign"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.0372)
+mesh = SubResource("faces")
+surface_material_override/0 = SubResource("m_gold_face")
+
+[node name="Plate" type="MeshInstance3D" parent="Sign"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.096)
+mesh = SubResource("plate")
+surface_material_override/0 = SubResource("m_basalt")
+
+[node name="Rim" type="MeshInstance3D" parent="Sign"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.136)
+mesh = SubResource("rim")
+surface_material_override/0 = SubResource("m_lime")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.74314, 0.31414, -0.59081, -0.00000, 0.88295, 0.46947, 0.66913, -0.34889, 0.65616, -0.59081, 50.46947, 0.65616)
+light_color = Color(1, 0.8, 0.58, 1)
+light_energy = 3.6
+light_angular_distance = 0.6
+shadow_enabled = true
+shadow_blur = 0.4
+directional_shadow_max_distance = 80.0
+
+[node name="Rim light" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.86603, 0.28679, -0.40958, 0.00000, 0.81915, 0.57358, 0.50000, 0.49673, -0.70941, -0.40958, 50.57358, -0.70941)
+light_color = Color(1, 0.72, 0.45, 1)
+light_energy = 2.4
+light_specular = 2.0
+
+[node name="Env" type="WorldEnvironment" parent="."]
+environment = SubResource("env")
+
+[node name="Camera" type="Camera3D" parent="."]
+transform = Transform3D(1.00000, 0.00000, 0.00000, 0.00000, 0.99920, 0.03997, 0.00000, -0.03997, 0.99920, 0.00000, 1.60000, 40.00000)
+keep_aspect = 0
+fov = 15.2
+far = 200.0

@@ -1,0 +1,340 @@
+[gd_scene format=3]
+; SPDX-License-Identifier: GPL-2.0-or-later
+; Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
+; Key art: the twin temple across its basalt-paved plaza at golden hour, looking east toward
+; Iztaccihuatl and Popocatepetl. Buildings other than the temple are invented generic forms.
+; Output renders/mark-on-plaza.png, 1920x1080 (rendered at 3840x2160 in render_all.tscn).
+; Render all stills in one launch (see render_all.tscn):
+;   python3 design/keyart/gen/build.py
+;   godot --editor --path design/keyart -- --bake-lightmaps=res://stage_studio.tscn,res://stage_plaza.tscn
+;   godot --path design/keyart --write-movie /tmp/keyart/all.png --fixed-fps 1 --quit-after 16
+;   python3 design/keyart/gen/finish.py /tmp/keyart/all00000015.png
+
+
+[ext_resource type="PackedScene" path="res://stage_plaza.tscn" id="stage"]
+[ext_resource type="Mesh" path="res://meshes/skyline_east.obj" id="skyline"]
+[ext_resource type="Texture2D" path="res://textures/skyline_albedo.png" id="skya"]
+[ext_resource type="Mesh" path="res://meshes/cloud_sheet.obj" id="cs"]
+[ext_resource type="Texture2D" path="res://textures/clouds_sheet.png" id="ct"]
+[ext_resource type="Texture2D" path="res://textures/paving_albedo.png" id="pa"]
+[ext_resource type="Texture2D" path="res://textures/paving_normal.png" id="pn"]
+[ext_resource type="Texture2D" path="res://textures/paving_orm.png" id="po"]
+[ext_resource type="Texture2D" path="res://textures/sky_golden.png" id="sky"]
+[ext_resource type="Mesh" path="res://meshes/temple_small.obj" id="ts"]
+[ext_resource type="Mesh" path="res://meshes/palace.obj" id="pa"]
+[ext_resource type="Mesh" path="res://meshes/wall.obj" id="wa"]
+[ext_resource type="Texture2D" path="res://textures/precinct_albedo.png" id="pra"]
+[ext_resource type="Texture2D" path="res://textures/precinct_normal.png" id="prn"]
+[ext_resource type="Texture2D" path="res://textures/precinct_orm.png" id="pro"]
+
+[sub_resource type="PanoramaSkyMaterial" id="sky_mat"]
+panorama = ExtResource("sky")
+energy_multiplier = 1.3
+
+[sub_resource type="Sky" id="sky"]
+sky_material = SubResource("sky_mat")
+radiance_size = 4
+
+[sub_resource type="Gradient" id="g_grade"]
+offsets = PackedFloat32Array(0, 0.25, 0.5, 0.75, 1)
+colors = PackedColorArray(0.0, 0.006, 0.022, 1, 0.24, 0.25, 0.265, 1, 0.505, 0.5, 0.485, 1, 0.765, 0.75, 0.72, 1, 1, 0.99, 0.95, 1)
+
+[sub_resource type="GradientTexture1D" id="t_grade"]
+gradient = SubResource("g_grade")
+width = 256
+
+[sub_resource type="Gradient" id="g_vig"]
+offsets = PackedFloat32Array(0, 0.6, 1)
+colors = PackedColorArray(0, 0, 0, 0, 0, 0, 0, 0.08, 0, 0, 0, 0.45)
+
+[sub_resource type="GradientTexture2D" id="t_vig"]
+gradient = SubResource("g_vig")
+width = 512
+height = 512
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1.08, 1.08)
+
+[sub_resource type="Environment" id="env"]
+background_mode = 2
+background_color = Color(0, 0, 0, 1)
+sky = SubResource("sky")
+ambient_light_source = 3
+reflected_light_source = 2
+tonemap_mode = 2
+tonemap_white = 6.0
+ssao_enabled = true
+ssao_radius = 1.2
+ssao_intensity = 1.2
+ssil_enabled = true
+ssil_intensity = 0.5
+glow_enabled = true
+glow_intensity = 0.35
+glow_hdr_threshold = 1.5
+fog_enabled = true
+fog_light_color = Color(0.80, 0.70, 0.62, 1)
+fog_sun_scatter = 0.3
+fog_density = 0.0007
+fog_aerial_perspective = 0.5
+fog_sky_affect = 0.0
+volumetric_fog_enabled = true
+volumetric_fog_density = 0.0018
+volumetric_fog_albedo = Color(0.92, 0.86, 0.8, 1)
+volumetric_fog_anisotropy = 0.6
+volumetric_fog_length = 260.0
+volumetric_fog_sky_affect = 0.15
+adjustment_enabled = true
+adjustment_saturation = 1.06
+adjustment_contrast = 1.06
+adjustment_color_correction = SubResource("t_grade")
+
+[sub_resource type="CameraAttributesPractical" id="cam_attr"]
+dof_blur_far_enabled = true
+dof_blur_far_distance = 380.0
+dof_blur_far_transition = 700.0
+dof_blur_near_enabled = true
+dof_blur_near_distance = 22.0
+dof_blur_near_transition = 18.0
+dof_blur_amount = 0.05
+
+[sub_resource type="FastNoiseLite" id="n_macro"]
+frequency = 0.004
+fractal_octaves = 5
+
+[sub_resource type="Gradient" id="g_macro"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(0.55, 0.52, 0.49, 1, 1.12, 1.06, 1.0, 1)
+
+[sub_resource type="NoiseTexture2D" id="t_macro"]
+width = 1024
+height = 1024
+seamless = true
+noise = SubResource("n_macro")
+color_ramp = SubResource("g_macro")
+
+[sub_resource type="StandardMaterial3D" id="m_paving"]
+albedo_color = Color(0.9, 0.88, 0.86, 1)
+albedo_texture = ExtResource("pa")
+roughness_texture = ExtResource("po")
+roughness_texture_channel = 1
+normal_enabled = true
+normal_texture = ExtResource("pn")
+ao_enabled = true
+ao_texture = ExtResource("po")
+detail_enabled = true
+detail_blend_mode = 3
+detail_uv_layer = 1
+detail_albedo = SubResource("t_macro")
+uv2_scale = Vector3(0.01, 0.01, 0.01)
+uv2_triplanar = true
+uv2_world_triplanar = true
+texture_filter = 5
+
+[sub_resource type="StandardMaterial3D" id="m_precinct"]
+albedo_texture = ExtResource("pra")
+roughness_texture = ExtResource("pro")
+roughness_texture_channel = 1
+normal_enabled = true
+normal_texture = ExtResource("prn")
+ao_enabled = true
+ao_texture = ExtResource("pro")
+ao_light_affect = 0.15
+texture_filter = 5
+
+[sub_resource type="PlaneMesh" id="outer"]
+size = Vector2(9000, 9000)
+
+[sub_resource type="StandardMaterial3D" id="m_skyline"]
+albedo_texture = ExtResource("skya")
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="m_clouds"]
+transparency = 1
+cull_mode = 2
+shading_mode = 0
+disable_fog = true
+disable_receive_shadows = true
+albedo_texture = ExtResource("ct")
+albedo_color = Color(2.0, 2.0, 2.0, 1)
+texture_filter = 5
+
+[sub_resource type="Gradient" id="g_dust"]
+offsets = PackedFloat32Array(0, 0.55, 1)
+colors = PackedColorArray(0.55, 0.47, 0.37, 0.75, 0.55, 0.47, 0.37, 0.45, 0.55, 0.47, 0.37, 0)
+
+[sub_resource type="GradientTexture2D" id="t_dust"]
+gradient = SubResource("g_dust")
+width = 512
+height = 512
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1.0, 0.5)
+
+[sub_resource type="FastNoiseLite" id="n_drift"]
+frequency = 0.012
+fractal_octaves = 6
+fractal_gain = 0.55
+domain_warp_enabled = true
+domain_warp_amplitude = 40.0
+
+[sub_resource type="Gradient" id="g_drift"]
+offsets = PackedFloat32Array(0, 0.5, 0.7, 1)
+colors = PackedColorArray(0.16, 0.15, 0.14, 0.3, 0.5, 0.44, 0.36, 0, 0.6, 0.52, 0.42, 0.3, 0.66, 0.58, 0.47, 0.55)
+
+[sub_resource type="NoiseTexture2D" id="t_drift"]
+width = 1024
+height = 1024
+seamless = true
+noise = SubResource("n_drift")
+color_ramp = SubResource("g_drift")
+
+[node name="Plaza" type="Node3D"]
+
+[node name="Stage" parent="." instance=ExtResource("stage")]
+
+[node name="OuterGround" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.03, 0)
+gi_mode = 2
+mesh = SubResource("outer")
+surface_material_override/0 = SubResource("m_paving")
+
+[node name="BaseDust" type="Decal" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 10)
+size = Vector3(110, 3, 100)
+texture_albedo = SubResource("t_dust")
+modulate = Color(1, 1, 1, 0.7)
+upper_fade = 0.5
+lower_fade = 0.5
+normal_fade = 0.6
+
+[node name="Drifts" type="Decal" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 60)
+size = Vector3(300, 2, 260)
+texture_albedo = SubResource("t_drift")
+upper_fade = 0.5
+lower_fade = 0.5
+normal_fade = 0.6
+sorting_offset = -1.0
+
+[node name="City" type="Node3D" parent="."]
+
+[node name="CityTemple0" type="MeshInstance3D" parent="City"]
+transform = Transform3D(1.30000, 0, 0.00000, 0, 1.30000, 0, -0.00000, 0, 1.30000, -150.000, 0.000, -120.000)
+gi_mode = 2
+mesh = ExtResource("ts")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="CityTemple1" type="MeshInstance3D" parent="City"]
+transform = Transform3D(1.50000, 0, 0.00000, 0, 1.50000, 0, -0.00000, 0, 1.50000, 175.000, 0.000, -150.000)
+gi_mode = 2
+mesh = ExtResource("ts")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="CityTemple2" type="MeshInstance3D" parent="City"]
+transform = Transform3D(1.60000, 0, 0.00000, 0, 1.60000, 0, -0.00000, 0, 1.60000, -40.000, 0.000, -300.000)
+gi_mode = 2
+mesh = ExtResource("ts")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="CityTemple3" type="MeshInstance3D" parent="City"]
+transform = Transform3D(1.20000, 0, 0.00000, 0, 1.20000, 0, -0.00000, 0, 1.20000, 80.000, 0.000, -420.000)
+gi_mode = 2
+mesh = ExtResource("ts")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="CityTemple4" type="MeshInstance3D" parent="City"]
+transform = Transform3D(1.40000, 0, 0.00000, 0, 1.40000, 0, -0.00000, 0, 1.40000, -260.000, 0.000, -260.000)
+gi_mode = 2
+mesh = ExtResource("ts")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="CityTemple5" type="MeshInstance3D" parent="City"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, 300.000, 0.000, -330.000)
+gi_mode = 2
+mesh = ExtResource("ts")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="CityPalace0" type="MeshInstance3D" parent="City"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, -90.000, 0.000, -110.000)
+gi_mode = 2
+mesh = ExtResource("pa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="CityPalace1" type="MeshInstance3D" parent="City"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, 90.000, 0.000, -95.000)
+gi_mode = 2
+mesh = ExtResource("pa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="CityPalace2" type="MeshInstance3D" parent="City"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, 20.000, 0.000, -180.000)
+gi_mode = 2
+mesh = ExtResource("pa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="CityPalace3" type="MeshInstance3D" parent="City"]
+transform = Transform3D(0.00000, 0, 1.00000, 0, 1.00000, 0, -1.00000, 0, 0.00000, -200.000, 0.000, -180.000)
+gi_mode = 2
+mesh = ExtResource("pa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="CityPalace4" type="MeshInstance3D" parent="City"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, 230.000, 0.000, -230.000)
+gi_mode = 2
+mesh = ExtResource("pa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="CityPalace5" type="MeshInstance3D" parent="City"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, -120.000, 0.000, -380.000)
+gi_mode = 2
+mesh = ExtResource("pa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="CityPalace6" type="MeshInstance3D" parent="City"]
+transform = Transform3D(0.00000, 0, 1.00000, 0, 1.00000, 0, -1.00000, 0, 0.00000, 160.000, 0.000, -300.000)
+gi_mode = 2
+mesh = ExtResource("pa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="CityPalace7" type="MeshInstance3D" parent="City"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1.00000, 0, -0.00000, 0, 1.00000, -330.000, 0.000, -400.000)
+gi_mode = 2
+mesh = ExtResource("pa")
+surface_material_override/0 = SubResource("m_precinct")
+
+[node name="Skyline" type="MeshInstance3D" parent="."]
+gi_mode = 0
+cast_shadow = 0
+mesh = ExtResource("skyline")
+surface_material_override/0 = SubResource("m_skyline")
+
+[node name="Clouds" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.0, 8.0, 132.0)
+gi_mode = 0
+cast_shadow = 0
+mesh = ExtResource("cs")
+surface_material_override/0 = SubResource("m_clouds")
+
+[node name="Env" type="WorldEnvironment" parent="."]
+environment = SubResource("env")
+camera_attributes = SubResource("cam_attr")
+
+[node name="Vignette" type="CanvasLayer" parent="."]
+
+[node name="Shade" type="TextureRect" parent="Vignette"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("t_vig")
+expand_mode = 1
+
+[node name="Camera" type="Camera3D" parent="."]
+transform = Transform3D(0.99714, 0.00000, -0.07554, -0.00000, 1.00000, 0.00000, 0.07554, 0.00000, 0.99714, -9.00000, 8.00000, 132.00000)
+projection = 2
+size = 0.56
+frustum_offset = Vector2(0, 0.11)
+near = 1.0
+far = 20000.0

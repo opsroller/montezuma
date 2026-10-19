@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
+# Build outputs: gen/build.py writes meshes/ and textures/ (with their .import
+# files); the lightmap bake writes *.lmbake and its textures next to the stage scenes.
+.godot/
+meshes/
+textures/
+*.lmbake
+stage_*.exr
+stage_*.exr.import
+__pycache__/
+fonts/*.import

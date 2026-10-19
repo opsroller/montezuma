@@ -1,0 +1,174 @@
+[gd_scene format=3]
+; SPDX-License-Identifier: GPL-2.0-or-later
+; Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
+; Renders every key-art still in one launch: each shot is a SubViewport with its own world,
+; laid out on one 8192x8192 canvas; gen/finish.py cuts the last movie frame into renders/.
+; The lockup (renders/lockup-hero.png) reuses the hero and title textures on soot (#1e1916).
+;   Layout: hero 0,0 4096x4096; plaza 4096,0 3840x2160; icon 4096,2160 2048x2048;
+;   title 4096,4256 3840x1200 (transparent); lockup 0,4096 4096x4096.
+; Render all stills in one launch (see render_all.tscn):
+;   python3 design/keyart/gen/build.py
+;   godot --editor --path design/keyart -- --bake-lightmaps=res://stage_studio.tscn,res://stage_plaza.tscn
+;   godot --path design/keyart --write-movie /tmp/keyart/all.png --fixed-fps 1 --quit-after 16
+;   python3 design/keyart/gen/finish.py /tmp/keyart/all00000015.png
+
+
+[ext_resource type="PackedScene" path="res://mark_hero.tscn" id="Hero"]
+[ext_resource type="PackedScene" path="res://mark_on_plaza.tscn" id="Plaza"]
+[ext_resource type="PackedScene" path="res://app_icon_3d.tscn" id="Icon"]
+[ext_resource type="PackedScene" path="res://title.tscn" id="Title"]
+
+[sub_resource type="ViewportTexture" id="vt_Hero"]
+resource_local_to_scene = true
+viewport_path = NodePath("HeroVP")
+
+[sub_resource type="ViewportTexture" id="vt_Plaza"]
+resource_local_to_scene = true
+viewport_path = NodePath("PlazaVP")
+
+[sub_resource type="ViewportTexture" id="vt_Icon"]
+resource_local_to_scene = true
+viewport_path = NodePath("IconVP")
+
+[sub_resource type="ViewportTexture" id="vt_Title"]
+resource_local_to_scene = true
+viewport_path = NodePath("TitleVP")
+
+[sub_resource type="Gradient" id="g_fade"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(0.118, 0.098, 0.086, 0, 0.118, 0.098, 0.086, 1)
+
+[sub_resource type="GradientTexture2D" id="t_fade"]
+gradient = SubResource("g_fade")
+width = 16
+height = 256
+fill_from = Vector2(0, 0)
+fill_to = Vector2(0, 1)
+
+[node name="RenderAll" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 8192.0
+offset_bottom = 8192.0
+
+[node name="HeroVP" type="SubViewport" parent="."]
+own_world_3d = true
+transparent_bg = true
+msaa_3d = 3
+use_taa = false
+use_debanding = true
+positional_shadow_atlas_size = 8192
+size = Vector2i(4096, 4096)
+render_target_update_mode = 4
+
+[node name="Shot" parent="HeroVP" instance=ExtResource("Hero")]
+
+[node name="HeroSoot" type="ColorRect" parent="."]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 4096.0
+offset_bottom = 4096.0
+color = Color(0.118, 0.098, 0.086, 1)
+
+[node name="Hero" type="TextureRect" parent="."]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 4096.0
+offset_bottom = 4096.0
+texture = SubResource("vt_Hero")
+expand_mode = 1
+
+[node name="PlazaVP" type="SubViewport" parent="."]
+own_world_3d = true
+transparent_bg = false
+msaa_3d = 2
+use_taa = true
+use_debanding = true
+positional_shadow_atlas_size = 8192
+size = Vector2i(3840, 2160)
+render_target_update_mode = 4
+
+[node name="Shot" parent="PlazaVP" instance=ExtResource("Plaza")]
+
+[node name="Plaza" type="TextureRect" parent="."]
+offset_left = 4096.0
+offset_top = 0.0
+offset_right = 7936.0
+offset_bottom = 2160.0
+texture = SubResource("vt_Plaza")
+expand_mode = 1
+
+[node name="IconVP" type="SubViewport" parent="."]
+own_world_3d = true
+transparent_bg = false
+msaa_3d = 2
+use_taa = true
+use_debanding = true
+positional_shadow_atlas_size = 8192
+size = Vector2i(2048, 2048)
+render_target_update_mode = 4
+
+[node name="Shot" parent="IconVP" instance=ExtResource("Icon")]
+
+[node name="Icon" type="TextureRect" parent="."]
+offset_left = 4096.0
+offset_top = 2160.0
+offset_right = 6144.0
+offset_bottom = 4208.0
+texture = SubResource("vt_Icon")
+expand_mode = 1
+
+[node name="TitleVP" type="SubViewport" parent="."]
+own_world_3d = true
+transparent_bg = true
+msaa_3d = 3
+use_taa = false
+use_debanding = true
+positional_shadow_atlas_size = 8192
+size = Vector2i(3840, 1200)
+render_target_update_mode = 4
+
+[node name="Shot" parent="TitleVP" instance=ExtResource("Title")]
+
+[node name="Title" type="TextureRect" parent="."]
+offset_left = 4096.0
+offset_top = 4256.0
+offset_right = 7936.0
+offset_bottom = 5456.0
+texture = SubResource("vt_Title")
+expand_mode = 1
+
+[node name="Lockup" type="ColorRect" parent="."]
+clip_contents = true
+offset_top = 4096.0
+offset_right = 4096.0
+offset_bottom = 8192.0
+color = Color(0.118, 0.098, 0.086, 1)
+
+[node name="LockupHero" type="TextureRect" parent="Lockup"]
+offset_top = -500.0
+offset_right = 4096.0
+offset_bottom = 3596.0
+texture = SubResource("vt_Hero")
+expand_mode = 1
+
+[node name="LockupFade" type="TextureRect" parent="Lockup"]
+offset_top = 2800.0
+offset_right = 4096.0
+offset_bottom = 3300.0
+texture = SubResource("t_fade")
+expand_mode = 1
+
+[node name="LockupSoot" type="ColorRect" parent="Lockup"]
+offset_top = 3300.0
+offset_right = 4096.0
+offset_bottom = 4096.0
+color = Color(0.118, 0.098, 0.086, 1)
+
+[node name="LockupTitle" type="TextureRect" parent="Lockup"]
+offset_left = 548.0
+offset_top = 3040.0
+offset_right = 3548.0
+offset_bottom = 3977.0
+texture = SubResource("vt_Title")
+expand_mode = 1

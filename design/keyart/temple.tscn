@@ -1,0 +1,534 @@
+[gd_scene format=3]
+; SPDX-License-Identifier: GPL-2.0-or-later
+; Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
+; The twin temple (Templo Mayor, Stage VII as inferred), 1 unit = 1 m, facing +Z (west):
+; Tlaloc's blue shrine on the north (-X), Huitzilopochtli's ochre shrine on the south (+X).
+; Meshes and textures come from gen/build.py; braziers after OB-05, reed mats (petate) at the doors.
+
+[ext_resource type="Mesh" path="res://meshes/temple_body.obj" id="1_body"]
+[ext_resource type="Mesh" path="res://meshes/temple_shrines.obj" id="2_shrines"]
+[ext_resource type="Texture2D" path="res://textures/body_albedo.png" id="3_ba"]
+[ext_resource type="Texture2D" path="res://textures/body_normal.png" id="4_bn"]
+[ext_resource type="Texture2D" path="res://textures/body_orm.png" id="5_bo"]
+[ext_resource type="Texture2D" path="res://textures/shrines_albedo.png" id="6_sa"]
+[ext_resource type="Texture2D" path="res://textures/shrines_normal.png" id="7_sn"]
+[ext_resource type="Texture2D" path="res://textures/shrines_orm.png" id="8_so"]
+[ext_resource type="Texture2D" path="res://textures/petate_albedo.png" id="9_pa"]
+[ext_resource type="Mesh" path="res://meshes/brazier.obj" id="10_brazier"]
+[ext_resource type="Mesh" path="res://meshes/ember_bed.obj" id="11_ember"]
+[ext_resource type="Texture2D" path="res://textures/petate_normal.png" id="12_pn"]
+[ext_resource type="Mesh" path="res://meshes/banner.obj" id="13_banner"]
+[ext_resource type="Texture2D" path="res://textures/banner_blue.png" id="14_bb"]
+[ext_resource type="Texture2D" path="res://textures/banner_ochre.png" id="15_bo"]
+
+[sub_resource type="StandardMaterial3D" id="m_body"]
+albedo_texture = ExtResource("3_ba")
+roughness_texture = ExtResource("5_bo")
+roughness_texture_channel = 1
+normal_enabled = true
+normal_texture = ExtResource("4_bn")
+ao_enabled = true
+ao_texture = ExtResource("5_bo")
+ao_light_affect = 0.15
+texture_filter = 5
+
+[sub_resource type="StandardMaterial3D" id="m_shrines"]
+albedo_texture = ExtResource("6_sa")
+roughness_texture = ExtResource("8_so")
+roughness_texture_channel = 1
+normal_enabled = true
+normal_texture = ExtResource("7_sn")
+ao_enabled = true
+ao_texture = ExtResource("8_so")
+ao_light_affect = 0.15
+texture_filter = 5
+
+[sub_resource type="FastNoiseLite" id="n_clay"]
+frequency = 0.02
+
+[sub_resource type="NoiseTexture2D" id="t_clay"]
+width = 256
+height = 256
+seamless = true
+noise = SubResource("n_clay")
+
+[sub_resource type="StandardMaterial3D" id="m_clay"]
+cull_mode = 2
+albedo_color = Color(0.36, 0.17, 0.1, 1)
+roughness = 0.5
+roughness_texture = SubResource("t_clay")
+uv1_scale = Vector3(4, 2, 1)
+
+[sub_resource type="Gradient" id="g_ember"]
+offsets = PackedFloat32Array(0, 0.45, 0.62, 0.8, 1)
+colors = PackedColorArray(0.02, 0.015, 0.012, 1, 0.08, 0.02, 0.01, 1, 0.6, 0.12, 0.02, 1, 1, 0.42, 0.08, 1, 1, 0.75, 0.35, 1)
+
+[sub_resource type="FastNoiseLite" id="n_ember"]
+noise_type = 2
+frequency = 0.06
+fractal_type = 0
+cellular_return_type = 1
+
+[sub_resource type="NoiseTexture2D" id="t_ember"]
+width = 256
+height = 256
+seamless = true
+noise = SubResource("n_ember")
+color_ramp = SubResource("g_ember")
+
+[sub_resource type="StandardMaterial3D" id="m_ember"]
+cull_mode = 2
+albedo_color = Color(0.05, 0.04, 0.035, 1)
+roughness = 0.95
+emission_enabled = true
+emission_energy_multiplier = 5.0
+emission_texture = SubResource("t_ember")
+uv1_scale = Vector3(3, 3, 1)
+
+[sub_resource type="BoxMesh" id="mat_mesh"]
+size = Vector3(2.6, 0.02, 1.6)
+
+[sub_resource type="StandardMaterial3D" id="m_petate"]
+albedo_texture = ExtResource("9_pa")
+normal_enabled = true
+normal_texture = ExtResource("12_pn")
+roughness = 0.9
+uv1_scale = Vector3(1.667, 1.667, 1.667)
+uv1_triplanar = true
+uv1_world_triplanar = false
+texture_filter = 5
+
+[sub_resource type="StandardMaterial3D" id="m_banner_blue"]
+cull_mode = 2
+albedo_texture = ExtResource("14_bb")
+roughness = 0.9
+backlight_enabled = true
+backlight = Color(0.45, 0.4, 0.33, 1)
+texture_filter = 5
+
+[sub_resource type="StandardMaterial3D" id="m_banner_ochre"]
+cull_mode = 2
+albedo_texture = ExtResource("15_bo")
+roughness = 0.9
+backlight_enabled = true
+backlight = Color(0.45, 0.4, 0.33, 1)
+texture_filter = 5
+
+[sub_resource type="StandardMaterial3D" id="m_pole"]
+albedo_color = Color(0.33, 0.24, 0.16, 1)
+roughness = 0.8
+
+[sub_resource type="Gradient" id="g_puff"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0.45, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="t_puff"]
+gradient = SubResource("g_puff")
+width = 128
+height = 128
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="StandardMaterial3D" id="m_smoke"]
+transparency = 1
+cull_mode = 2
+vertex_color_use_as_albedo = true
+albedo_texture = SubResource("t_puff")
+roughness = 1.0
+billboard_mode = 3
+billboard_keep_scale = true
+particles_anim_h_frames = 1
+particles_anim_v_frames = 1
+
+[sub_resource type="QuadMesh" id="q_smoke"]
+material = SubResource("m_smoke")
+
+[sub_resource type="Gradient" id="g_smoke_col"]
+offsets = PackedFloat32Array(0, 0.12, 0.6, 1)
+colors = PackedColorArray(0.55, 0.52, 0.5, 0, 0.6, 0.58, 0.56, 0.06, 0.7, 0.68, 0.66, 0.03, 0.75, 0.73, 0.72, 0)
+
+[sub_resource type="GradientTexture1D" id="t_smoke_col"]
+gradient = SubResource("g_smoke_col")
+
+[sub_resource type="Curve" id="c_smoke_scale"]
+_data = [Vector2(0, 0.3), 0.0, 2.0, 0, 0, Vector2(1, 2.5), 0.6, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="t_smoke_scale"]
+curve = SubResource("c_smoke_scale")
+
+[sub_resource type="ParticleProcessMaterial" id="p_smoke"]
+emission_shape = 1
+emission_sphere_radius = 0.25
+direction = Vector3(0, 1, 0)
+spread = 6.0
+initial_velocity_min = 0.7
+initial_velocity_max = 1.0
+gravity = Vector3(0.18, 0.05, -0.05)
+damping_min = 0.02
+damping_max = 0.05
+scale_min = 0.7
+scale_max = 1.1
+scale_curve = SubResource("t_smoke_scale")
+color_ramp = SubResource("t_smoke_col")
+angle_min = -180.0
+angle_max = 180.0
+
+[sub_resource type="StandardMaterial3D" id="m_flame"]
+transparency = 1
+blend_mode = 1
+cull_mode = 2
+shading_mode = 0
+vertex_color_use_as_albedo = true
+albedo_color = Color(4, 3, 2.2, 1)
+albedo_texture = SubResource("t_puff")
+billboard_mode = 3
+billboard_keep_scale = true
+particles_anim_h_frames = 1
+particles_anim_v_frames = 1
+
+[sub_resource type="QuadMesh" id="q_flame"]
+material = SubResource("m_flame")
+size = Vector2(0.5, 0.7)
+
+[sub_resource type="Gradient" id="g_flame"]
+offsets = PackedFloat32Array(0, 0.15, 0.6, 1)
+colors = PackedColorArray(1, 0.75, 0.35, 0, 1, 0.6, 0.2, 0.9, 0.9, 0.3, 0.06, 0.5, 0.5, 0.1, 0.02, 0)
+
+[sub_resource type="GradientTexture1D" id="t_flame"]
+gradient = SubResource("g_flame")
+
+[sub_resource type="Curve" id="c_flame"]
+_data = [Vector2(0, 1), 0.0, -0.8, 0, 0, Vector2(1, 0.15), -0.8, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="t_flame_scale"]
+curve = SubResource("c_flame")
+
+[sub_resource type="ParticleProcessMaterial" id="p_flame"]
+emission_shape = 1
+emission_sphere_radius = 0.22
+direction = Vector3(0, 1, 0)
+spread = 10.0
+initial_velocity_min = 0.6
+initial_velocity_max = 1.1
+gravity = Vector3(0.1, 0.8, 0)
+scale_min = 0.6
+scale_max = 1.0
+scale_curve = SubResource("t_flame_scale")
+color_ramp = SubResource("t_flame")
+angle_min = -20.0
+angle_max = 20.0
+
+[node name="Temple" type="Node3D"]
+
+[node name="Body" type="MeshInstance3D" parent="."]
+mesh = ExtResource("1_body")
+surface_material_override/0 = SubResource("m_body")
+
+[node name="Shrines" type="MeshInstance3D" parent="."]
+mesh = ExtResource("2_shrines")
+surface_material_override/0 = SubResource("m_shrines")
+
+[node name="Props" type="Node3D" parent="."]
+
+[node name="BrazierNorth0" type="MeshInstance3D" parent="Props"]
+transform = Transform3D(1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, -9.600, 28.000, 10.700)
+mesh = ExtResource("10_brazier")
+surface_material_override/0 = SubResource("m_clay")
+
+
+
+[node name="Flame" type="GPUParticles3D" parent="Props/BrazierNorth0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.98, 0)
+amount = 40
+lifetime = 0.9
+preprocess = 2.0
+speed_scale = 0.01
+visibility_aabb = AABB(-2, -1, -2, 4, 4, 4)
+process_material = SubResource("p_flame")
+draw_pass_1 = SubResource("q_flame")
+[node name="Smoke" type="GPUParticles3D" parent="Props/BrazierNorth0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+amount = 220
+lifetime = 12.0
+preprocess = 12.0
+speed_scale = 0.01
+fixed_fps = 0
+visibility_aabb = AABB(-6, -1, -6, 12, 16, 12)
+process_material = SubResource("p_smoke")
+draw_pass_1 = SubResource("q_smoke")
+[node name="Embers" type="MeshInstance3D" parent="Props/BrazierNorth0"]
+gi_mode = 2
+transform = Transform3D(1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, 0.000, 0.900, 0.000)
+mesh = ExtResource("11_ember")
+surface_material_override/0 = SubResource("m_ember")
+
+[node name="Fire" type="OmniLight3D" parent="Props/BrazierNorth0"]
+transform = Transform3D(1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, 0.000, 1.600, 0.000)
+light_color = Color(1, 0.55, 0.22, 1)
+light_energy = 3.0
+light_size = 0.4
+shadow_enabled = true
+omni_range = 9.0
+omni_attenuation = 1.6
+
+[node name="BrazierNorth1" type="MeshInstance3D" parent="Props"]
+transform = Transform3D(1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, -5.000, 28.000, 10.700)
+mesh = ExtResource("10_brazier")
+surface_material_override/0 = SubResource("m_clay")
+
+
+
+[node name="Flame" type="GPUParticles3D" parent="Props/BrazierNorth1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.98, 0)
+amount = 40
+lifetime = 0.9
+preprocess = 2.0
+speed_scale = 0.01
+visibility_aabb = AABB(-2, -1, -2, 4, 4, 4)
+process_material = SubResource("p_flame")
+draw_pass_1 = SubResource("q_flame")
+[node name="Smoke" type="GPUParticles3D" parent="Props/BrazierNorth1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+amount = 220
+lifetime = 12.0
+preprocess = 12.0
+speed_scale = 0.01
+fixed_fps = 0
+visibility_aabb = AABB(-6, -1, -6, 12, 16, 12)
+process_material = SubResource("p_smoke")
+draw_pass_1 = SubResource("q_smoke")
+[node name="Embers" type="MeshInstance3D" parent="Props/BrazierNorth1"]
+gi_mode = 2
+transform = Transform3D(1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, 0.000, 0.900, 0.000)
+mesh = ExtResource("11_ember")
+surface_material_override/0 = SubResource("m_ember")
+
+[node name="Fire" type="OmniLight3D" parent="Props/BrazierNorth1"]
+transform = Transform3D(1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, 0.000, 1.600, 0.000)
+light_color = Color(1, 0.55, 0.22, 1)
+light_energy = 3.0
+light_size = 0.4
+shadow_enabled = true
+omni_range = 9.0
+omni_attenuation = 1.6
+
+[node name="MatNorth" type="MeshInstance3D" parent="Props"]
+gi_mode = 2
+transform = Transform3D(1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, -7.300, 28.012, 9.500)
+mesh = SubResource("mat_mesh")
+surface_material_override/0 = SubResource("m_petate")
+
+[node name="InteriorNorth" type="OmniLight3D" parent="Props"]
+transform = Transform3D(1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, -7.300, 30.800, 4.000)
+light_color = Color(1, 0.5, 0.2, 1)
+light_energy = 1.5
+omni_range = 7.0
+
+[node name="BrazierSouth0" type="MeshInstance3D" parent="Props"]
+transform = Transform3D(1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, 5.000, 28.000, 10.700)
+mesh = ExtResource("10_brazier")
+surface_material_override/0 = SubResource("m_clay")
+
+
+
+[node name="Flame" type="GPUParticles3D" parent="Props/BrazierSouth0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.98, 0)
+amount = 40
+lifetime = 0.9
+preprocess = 2.0
+speed_scale = 0.01
+visibility_aabb = AABB(-2, -1, -2, 4, 4, 4)
+process_material = SubResource("p_flame")
+draw_pass_1 = SubResource("q_flame")
+[node name="Smoke" type="GPUParticles3D" parent="Props/BrazierSouth0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+amount = 220
+lifetime = 12.0
+preprocess = 12.0
+speed_scale = 0.01
+fixed_fps = 0
+visibility_aabb = AABB(-6, -1, -6, 12, 16, 12)
+process_material = SubResource("p_smoke")
+draw_pass_1 = SubResource("q_smoke")
+[node name="Embers" type="MeshInstance3D" parent="Props/BrazierSouth0"]
+gi_mode = 2
+transform = Transform3D(1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, 0.000, 0.900, 0.000)
+mesh = ExtResource("11_ember")
+surface_material_override/0 = SubResource("m_ember")
+
+[node name="Fire" type="OmniLight3D" parent="Props/BrazierSouth0"]
+transform = Transform3D(1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, 0.000, 1.600, 0.000)
+light_color = Color(1, 0.55, 0.22, 1)
+light_energy = 3.0
+light_size = 0.4
+shadow_enabled = true
+omni_range = 9.0
+omni_attenuation = 1.6
+
+[node name="BrazierSouth1" type="MeshInstance3D" parent="Props"]
+transform = Transform3D(1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, 9.600, 28.000, 10.700)
+mesh = ExtResource("10_brazier")
+surface_material_override/0 = SubResource("m_clay")
+
+
+
+[node name="Flame" type="GPUParticles3D" parent="Props/BrazierSouth1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.98, 0)
+amount = 40
+lifetime = 0.9
+preprocess = 2.0
+speed_scale = 0.01
+visibility_aabb = AABB(-2, -1, -2, 4, 4, 4)
+process_material = SubResource("p_flame")
+draw_pass_1 = SubResource("q_flame")
+[node name="Smoke" type="GPUParticles3D" parent="Props/BrazierSouth1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+amount = 220
+lifetime = 12.0
+preprocess = 12.0
+speed_scale = 0.01
+fixed_fps = 0
+visibility_aabb = AABB(-6, -1, -6, 12, 16, 12)
+process_material = SubResource("p_smoke")
+draw_pass_1 = SubResource("q_smoke")
+[node name="Embers" type="MeshInstance3D" parent="Props/BrazierSouth1"]
+gi_mode = 2
+transform = Transform3D(1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, 0.000, 0.900, 0.000)
+mesh = ExtResource("11_ember")
+surface_material_override/0 = SubResource("m_ember")
+
+[node name="Fire" type="OmniLight3D" parent="Props/BrazierSouth1"]
+transform = Transform3D(1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, 0.000, 1.600, 0.000)
+light_color = Color(1, 0.55, 0.22, 1)
+light_energy = 3.0
+light_size = 0.4
+shadow_enabled = true
+omni_range = 9.0
+omni_attenuation = 1.6
+
+[node name="MatSouth" type="MeshInstance3D" parent="Props"]
+gi_mode = 2
+transform = Transform3D(1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, 7.300, 28.012, 9.500)
+mesh = SubResource("mat_mesh")
+surface_material_override/0 = SubResource("m_petate")
+
+[node name="InteriorSouth" type="OmniLight3D" parent="Props"]
+transform = Transform3D(1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, 7.300, 30.800, 4.000)
+light_color = Color(1, 0.5, 0.2, 1)
+light_energy = 1.5
+omni_range = 7.0
+
+[node name="Banner0" type="MeshInstance3D" parent="Props"]
+gi_mode = 2
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.5, 28.0, 11.5)
+mesh = ExtResource("13_banner")
+surface_material_override/0 = SubResource("m_banner_blue")
+surface_material_override/1 = SubResource("m_pole")
+
+[node name="Banner1" type="MeshInstance3D" parent="Props"]
+gi_mode = 2
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.6, 0.0, 37.0)
+mesh = ExtResource("13_banner")
+surface_material_override/0 = SubResource("m_banner_blue")
+surface_material_override/1 = SubResource("m_pole")
+
+[node name="Banner2" type="MeshInstance3D" parent="Props"]
+gi_mode = 2
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.6, 0.0, 37.0)
+mesh = ExtResource("13_banner")
+surface_material_override/0 = SubResource("m_banner_ochre")
+surface_material_override/1 = SubResource("m_pole")
+
+[node name="Banner3" type="MeshInstance3D" parent="Props"]
+gi_mode = 2
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.5, 28.0, 11.5)
+mesh = ExtResource("13_banner")
+surface_material_override/0 = SubResource("m_banner_ochre")
+surface_material_override/1 = SubResource("m_pole")
+
+[node name="BaseBrazierNorth" type="MeshInstance3D" parent="Props"]
+transform = Transform3D(1.5, 0, 0, 0, 1.5, 0, 0, 0, 1.5, -18.6, 0.0, 38.5)
+mesh = ExtResource("10_brazier")
+surface_material_override/0 = SubResource("m_clay")
+
+
+
+[node name="Flame" type="GPUParticles3D" parent="Props/BaseBrazierNorth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.98, 0)
+amount = 40
+lifetime = 0.9
+preprocess = 2.0
+speed_scale = 0.01
+visibility_aabb = AABB(-2, -1, -2, 4, 4, 4)
+process_material = SubResource("p_flame")
+draw_pass_1 = SubResource("q_flame")
+[node name="Smoke" type="GPUParticles3D" parent="Props/BaseBrazierNorth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+amount = 220
+lifetime = 12.0
+preprocess = 12.0
+speed_scale = 0.01
+fixed_fps = 0
+visibility_aabb = AABB(-6, -1, -6, 12, 16, 12)
+process_material = SubResource("p_smoke")
+draw_pass_1 = SubResource("q_smoke")
+[node name="Embers" type="MeshInstance3D" parent="Props/BaseBrazierNorth"]
+gi_mode = 2
+transform = Transform3D(1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, 0.000, 0.900, 0.000)
+mesh = ExtResource("11_ember")
+surface_material_override/0 = SubResource("m_ember")
+
+[node name="Fire" type="OmniLight3D" parent="Props/BaseBrazierNorth"]
+transform = Transform3D(1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, 0.000, 1.600, 0.000)
+light_color = Color(1, 0.55, 0.22, 1)
+light_energy = 3.0
+light_size = 0.4
+shadow_enabled = true
+omni_range = 9.0
+omni_attenuation = 1.6
+
+
+[node name="BaseBrazierSouth" type="MeshInstance3D" parent="Props"]
+transform = Transform3D(1.5, 0, 0, 0, 1.5, 0, 0, 0, 1.5, 18.6, 0.0, 38.5)
+mesh = ExtResource("10_brazier")
+surface_material_override/0 = SubResource("m_clay")
+
+
+
+[node name="Flame" type="GPUParticles3D" parent="Props/BaseBrazierSouth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.98, 0)
+amount = 40
+lifetime = 0.9
+preprocess = 2.0
+speed_scale = 0.01
+visibility_aabb = AABB(-2, -1, -2, 4, 4, 4)
+process_material = SubResource("p_flame")
+draw_pass_1 = SubResource("q_flame")
+[node name="Smoke" type="GPUParticles3D" parent="Props/BaseBrazierSouth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+amount = 220
+lifetime = 12.0
+preprocess = 12.0
+speed_scale = 0.01
+fixed_fps = 0
+visibility_aabb = AABB(-6, -1, -6, 12, 16, 12)
+process_material = SubResource("p_smoke")
+draw_pass_1 = SubResource("q_smoke")
+[node name="Embers" type="MeshInstance3D" parent="Props/BaseBrazierSouth"]
+gi_mode = 2
+transform = Transform3D(1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, 0.000, 0.900, 0.000)
+mesh = ExtResource("11_ember")
+surface_material_override/0 = SubResource("m_ember")
+
+[node name="Fire" type="OmniLight3D" parent="Props/BaseBrazierSouth"]
+transform = Transform3D(1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, 0.000, 1.600, 0.000)
+light_color = Color(1, 0.55, 0.22, 1)
+light_energy = 3.0
+light_size = 0.4
+shadow_enabled = true
+omni_range = 9.0
+omni_attenuation = 1.6
+
