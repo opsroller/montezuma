@@ -151,13 +151,27 @@ depth of field. The first version used medium quality with the default
 hexagon bokeh, which Godot runs at the 1440p output size after the
 upscaler; low quality with a box bokeh, Godot's cheapest, took 2 ms off.
 That left the package about 3 ms over a target of under 1 ms, so
-`BackdropBlur` replaced Godot's depth of field (decision 4). Its M4
-figures are pending the re-measure with this pull request. On the RTX
+`BackdropBlur` replaced Godot's depth of field (decision 4). On the RTX
 4080 at 3840×2160, `--gpu-profile` puts Godot's low box blur at 0.63 ms
 on `desktop-high` and 0.58 ms on `desktop-standard`, and `BackdropBlur`
 at 0.05 ms and 0.09 ms
 ([Quality tiers](../reference/quality-tiers.md#backdrop-depth-of-field)).
 Its half-size buffer takes about 17 MB of video memory at native 4K.
+
+With `BackdropBlur`, the M4 was re-measured at the owner's benchmark
+standard: `desktop-high` full screen at native 5120×2880, no upscaler,
+seed 52, 5 s warm-up and one 10 s capture per side, run back to back
+against the merge base db718de
+([Benchmark results](../reference/benchmark-results.md#mac-mini-m4-at-native-5k)).
+
+| `desktop-high`, 5120×2880 | merge base | this package | delta |
+|---|---|---|---|
+| p50 frame time | 113.9 ms | 114.8 ms | +0.9 ms |
+| p95 frame time | 115.1 ms | 115.9 ms | +0.8 ms |
+| video memory max | 2,107 MB | 2,135 MB | +28 MB |
+
+The whole package now costs under 1 ms at p50 and p95 on the M4, at
+about four times the pixels of the 1440p rows above.
 
 `desktop-standard` at 1920×1080 measured p95 17.5 ms on `main` and
 17.4 ms with this package. Both sit on the 60 Hz floor, because the
