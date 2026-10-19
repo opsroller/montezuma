@@ -105,23 +105,28 @@ such: the only renderer this package could run is software Vulkan and GL
 
 Measured on the Mac mini M4 (Godot 4.7.2, Metal, release extension),
 busiest-board benchmark seed 52, 10 s warm-up and 60 s capture, vsync
-off, this package against `main` with both sides run alternately
-(PR #72, first run):
+off, this package against `main` with both sides run alternately. Both
+sides predate the VoxelGI fix, so the absolute frame times are high; the
+deltas are what this package adds.
 
-| `desktop-high`, 2560×1440 | `main` | this package, first version | delta |
+| `desktop-high`, 2560×1440 | `main` | this package | delta |
 |---|---|---|---|
-| p50 frame time | 47.1 ms | 52.2 ms | +5.1 ms |
-| p95 frame time | 55.4 ms | 60.6 ms | +5.2 ms |
+| p50 frame time, first version | 47.1 ms | 52.2 ms | +5.1 ms |
+| p95 frame time, first version | 55.4 ms | 60.6 ms | +5.2 ms |
+| p50 frame time, low box depth of field | 46.2 ms | 49.2 ms | +3.0 ms |
+| p95 frame time, low box depth of field | 55.3 ms | 58.5 ms | +3.2 ms |
 
-Draw calls (p95 about 274), video memory (1,482 MB) and CPU time did
-not change. The scene report differs only in the colour grade LUT and
-depth of field, and a LUT read in the tonemap pass is a fraction of a
-millisecond, so almost all of the 5 ms is depth of field. That first
-version used medium quality with the default hexagon bokeh, which Godot
-runs at the 1440p output size after the upscaler. It now uses low
-quality and a box bokeh, Godot's cheapest; the M4 re-run of this change
-replaces the row above. The target is under 1 ms for the whole package
-on `desktop-high`.
+The first two rows are one run each side; the last two are three runs
+each side. Draw calls (p95 about 274), video memory (1,503 MB on both
+sides in the second run) and CPU time did not change. The scene report
+differs only in the colour grade LUT and depth of field, and a LUT read
+in the tonemap pass is a fraction of a millisecond, so the cost is
+depth of field. The first version used medium quality with the default
+hexagon bokeh, which Godot runs at the 1440p output size after the
+upscaler; low quality with a box bokeh, Godot's cheapest, took 2 ms off.
+The package still costs about 3 ms against a target of under 1 ms on
+`desktop-high`, and the remaining lever is turning backdrop depth of
+field off on that tier.
 
 `desktop-standard` at 1920×1080 measured p95 17.5 ms on `main` and
 17.4 ms with this package. Both sit on the 60 Hz floor, because the
