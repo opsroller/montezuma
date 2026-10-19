@@ -30,7 +30,7 @@ runs:
     - name: Check the bakes
       id: check
       shell: bash
-      run: cmake -DCHECK=ON -DFORCE=ON "-DCHECK_OUTPUT=$GITHUB_OUTPUT" -P tools/assets/bake_lightmaps.cmake
+      run: cmake -DCHECK=ON "-DCHECK_OUTPUT=$GITHUB_OUTPUT" -P tools/assets/bake_lightmaps.cmake
     - name: Install lavapipe and xvfb
       if: steps.check.outputs.stale == 'true'
       shell: bash
@@ -54,7 +54,7 @@ runs:
       shell: bash
       env:
         GODOT: ${{ inputs.godot }}
-      run: cmake "-DGODOT=$GODOT" -DXVFB=ON -DFORCE=ON -P tools/assets/bake_lightmaps.cmake
+      run: cmake "-DGODOT=$GODOT" -DXVFB=ON -P tools/assets/bake_lightmaps.cmake
     - name: Remove the native extension
       if: always() && steps.ext.outcome != 'skipped'
       shell: bash
