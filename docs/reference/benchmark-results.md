@@ -288,6 +288,28 @@ Other findings:
   `--gpu-profile` prints a total of 0 there and the M4 cannot be split
   per pass from Godot.
 
+## Mac mini M4 at native 5K
+
+This change against its merge base with `main` (c0f387e). Mac mini M4,
+Metal, Forward+, `desktop-high`, full screen at native 5120×2880 with
+3D at 1.0 and no upscaler, vsync off, busiest-board replay seed 52,
+5 s warm-up and one 10 s capture per build, run back to back with no
+other Godot process, 2026-10-19. Textures and fire generated and
+lightmaps baked in both builds. The merge base has no
+`--quality-native`, so it ran with a local, uncommitted patch that
+sets the same bilinear 1.0 scaling; that leaves TAA off there, while
+`--quality-native` here keeps TAA on.
+
+| Build | `frame_ms` p50 | p95 | p99 | Frames in 10 s | `cpu_ms` p95 | Draw calls p95 | Video memory max |
+|---|---|---|---|---|---|---|---|
+| Merge base c0f387e (TAA off) | 113.9 | 114.7 | 115.0 | 88 | 2.04 | 277 | 2107 MB |
+| This change 42413a0 (TAA on) | 112.1 | 115.5 | 138.0 | 89 | 1.65 | 241 | 2275 MB |
+
+Every frame rendered at 5120×2880 and the replay matched its plan in
+both runs. The p50 drops 1.8 ms even with TAA added; p99 138.0 is one
+slow frame in a run of 89. Both are far over the 16.6 ms budget: at
+native 5K the M4 is GPU-bound at about 9 fps.
+
 ## Ground mist rework
 
 Cost of reworking the WP-51 fog into ground mist (`SH_AtmosphereFog`,
