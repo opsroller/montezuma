@@ -197,8 +197,8 @@ the parameter file's `lighting` section:
 | Node | Type | Tiers | Parameters (`lighting.*`) | Temple |
 |---|---|---|---|---|
 | `WorldEnvironment` | sky, AgX tonemapper, SSAO, SSIL, optional height fog; glow and the grade LUT from [Post-processing](#post-processing) and [Colour grade](#colour-grade) | all (switches per [Quality tiers](quality-tiers.md)) | `sky_nits`, `agx_white`, `agx_contrast`, optional `fog` (`color`, `height`, `height_density`, `sky_affect`) | 15,000 nits; white 16, contrast 1.25; no height fog. Volumetric fog on, with no density of its own: see [Atmosphere](#atmosphere) |
-| `camera` (`CameraAttributesPractical`) | exposure, on the environment, `LightmapGI` and `VoxelGI` | auto exposure on desktop only | `exposure` (`sensitivity`, `multiplier`, `auto_scale`, `auto_speed`, `auto_min_sensitivity`, `auto_max_sensitivity`) | ISO 440 (auto 300 to 640) |
-| `Sun` | `DirectionalLight3D`, shadows | all | `sun` (`lux`, `kelvin`, `color`, `angular_distance`) | 11,000 lux, 4500 K, 0.6° |
+| `camera` (`CameraAttributesPractical`) | exposure, on the environment, `LightmapGI` and `VoxelGI` | auto exposure on desktop only | `exposure` (`sensitivity`, `multiplier`, `auto_scale`, `auto_speed`, `auto_min_sensitivity`, `auto_max_sensitivity`) | ISO 440 (auto 300 to 640), `auto_scale` 0.45 (raised from 0.4 so the bright mist does not pull the board darker; auto exposure and the fog are both desktop-only) |
+| `Sun` | `DirectionalLight3D`, shadows | all | `sun` (`lux`, `kelvin`, `color`, `angular_distance`, optional `fog_energy` → `light_volumetric_fog_energy`) | 11,000 lux, 4500 K, 0.6°, fog energy 7 (see [Atmosphere](#atmosphere)) |
 | `Fire1`…`Fire4/Light` | `FlickerLight3D` in each brazier's `PF_BrazierFire` ([Fire](fire.md)), dual paraboloid shadows (seam flat above the board), group `quality_shadow_light` | all; shadows on the nearest 8 or 2 | `torch` (`lumens`, `kelvin`, `color`, `size`, `range`) | 60,000 lm, 1900 K, range 4.5 m |
 | `SkyFill` | `AreaLight3D` over the board, group `quality:area_light`, not baked | `desktop-high` | `sky_fill` (`transform`, `lumens`, `color`, `size`, `range`) | 20,000 lm, 10 × 10 m |
 | `ReflectionProbe` | box-projected probe; leaves out render layer 2 (fire effects, [Fire](fire.md#pf_brazierfire), and the light-shaft cards) | all | `reflection_probe` (`position`, `size`) | 12 × 4 × 12 m |
@@ -285,8 +285,8 @@ capture ([Benchmark](benchmark.md#readability-checks)).
 
 ## Atmosphere
 
-Dusty, sunlit air around the temple: volumetric fog with sun shafts and
-dust on the desktop tiers, light-shaft cards in its place on mobile and web.
+Ground mist and dust around the temple: volumetric fog lying in banks on
+the plaza, cut by the shadows of the temple and ferns, and dust on the desktop tiers, light-shaft cards in its place on mobile and web.
 Nothing of it is ever over the board (readability rule 2 in the
 [Visual target](visual-target.md#readability-rules-every-tier)). Why it is
 built this way: [About the atmosphere](../explanation/about-the-atmosphere.md).
@@ -297,8 +297,8 @@ parameter file's `lighting.atmosphere` section and the `MI_AtmosphereFog`,
 
 | Node | Type | Tiers | Parameters | Temple |
 |---|---|---|---|---|
-| `WorldEnvironment` | volumetric fog on, global density 0 | `desktop-high` (64 × 64 froxels), `desktop-standard` (32 × 32) | `atmosphere.fog` (`anisotropy`, `length`, `detail_spread`, `gi_inject`, `ambient_inject`, `temporal_amount`) | isotropic (the camera looks down, the sun comes from above); 40 m; GI 0.4, ambient 0.3 |
-| `AtmosphereFog` | box `FogVolume` around the temple, group `quality:volumetric_fog`; its material path in `metadata/fog_material_path` | desktop | `atmosphere.volumes` (`clearance`, `outer`, `bottom`); `MI_AtmosphereFog` (below) | 38 × 38 m, from 2.6 m below the board to the fog's `height_top` |
+| `WorldEnvironment` | volumetric fog on, global density 0 | `desktop-high` (64 × 64 froxels), `desktop-standard` (32 × 32) | `atmosphere.fog` (`anisotropy`, `length`, `detail_spread`, `gi_inject`, `ambient_inject`, `temporal_amount`) | isotropic; 30 m, detail spread 1 (even slices, so the low mist far below the camera is as finely sliced as the air near it); GI 0.05, ambient 0.2 (mist in shade is dim and lit by the sky, not glowing) |
+| `AtmosphereFog` | box `FogVolume` around the temple, group `quality:volumetric_fog`; its material path in `metadata/fog_material_path` | desktop | `atmosphere.volumes` (`clearance`, `outer`, `bottom`, `top`); `MI_AtmosphereFog` (below) | 38 × 38 m, from 2.6 m below the board to the board's height |
 | `Dust` | `GPUParticles3D`, ring around the platform, `MI_Dust`, group `quality:volumetric_fog` | desktop | `atmosphere.dust` (`amount`, `lifetime`, `inner_radius`, `outer_radius`, `bottom`, `top`, `size`, `speed`, `turbulence`) | 320 motes, 8.5 to 13 m from the centre, 5 cm, at most 5 cm/s |
 | `LightShaftCards` | `Node3D` holding one `MeshInstance3D` quad per card (`Card01`…), along the sun, `MI_LightShaft`, group `quality_fallback:volumetric_fog`; the cards are on render layer 2 so the reflection probe leaves them out | `mobile`, `web` | `atmosphere.shafts` (`count`, `inner_radius`, `outer_radius`, `length`, `width`, `ground`) | 12 cards, 3.5 to 5.5 m long, 12 draw calls |
 
@@ -309,16 +309,24 @@ fades in over `fade` metres outside it. The material's parameters:
 
 | Parameter | Temple | Meaning |
 |---|---|---|
-| `density` | 0.4 | extinction per metre where the noise is full |
-| `albedo` | `#f2dcb0` | colour of the dust that scatters the light |
+| `density` | 6 | extinction per metre in the core of a bank: the floor all but disappears under one |
+| `albedo` | `#ebedf0` | scattering colour; mist is water and scatters every colour alike, so it is near white and the light gives it its colour |
 | `clear_half` | 6.15 (set by the generator) | half the side of the fog-free square: board half-size 4.55 + clearance 1.6 |
 | `fade` | 1.2 m | ramp from no fog to full fog outside that square |
-| `height_top`, `top_fade` | 2.4 m, 2.4 m | the fog thins to nothing at `height_top`, over `top_fade` |
-| `noise_scale`, `wind` | 6 m, (0.12, 0, −0.05) m/s | size of one noise tile, and its drift |
-| `sun_direction` | set by the generator from `environment.sun` | the noise is stretched along it, so the air lines up into shafts |
-| `shaft_stretch` | 8 | how much longer the noise is along the sun than across |
-| `contrast` | (0.35, 0.75) | noise values mapped to no fog and full fog |
+| `ground_y` | −1.92 m | the plaza floor the mist lies on (platform top −0.42 m less three 0.5 m tiers) |
+| `bank_height`, `top_soft` | 1.4 m, 0.6 m | tallest a bank gets above the floor, and how far its top fades out |
+| `thicken_over`, `near_amount` | 7 m, 0.5 | banks next to the platform are `near_amount` as tall as those `thicken_over` metres out: more mist further away |
+| `bank_scale`, `coverage` | 9 m, (0.56, 0.64) | size of one tile of bank noise, and the noise values mapped to no bank and a full bank; the narrow range leaves clear floor between banks |
+| `wisp_scale`, `wisp_stretch`, `wisp_amount` | 4 m, 3, 0.35 | finer noise drawn out along the wind that breaks up the banks' tops and edges |
+| `wind` | (0.12, 0, −0.05) m/s | drift of the banks (the wisps drift 1.6 times faster) |
+| `base_shade` | 0.75 | share of the light the bottom of a bank scatters against its top; Godot's fog does not shadow itself, so this gives the banks lit tops |
 | `density_texture` | `NoiseTexture3D`, 64³, seed 51, frequency 0.08 | from `noise_textures_3d`, built by Godot at load |
+
+The sun's `fog_energy` (7) makes up for Godot lighting the fog by single
+scattering only: mist this thick scatters light many times, and with
+single scattering alone it renders darker than the floor under it, a grey
+veil instead of white mist. Scaling the shader's albedo above 1 does not
+do it: in our captures albedo × 4 and × 7 looked the same.
 
 The fog material is not in the scene as a resource. `QualityTiers` loads
 it from the volume's metadata on tiers with volumetric fog and clears it on
@@ -414,7 +422,8 @@ look packages compare against these.
 | [temple-board-post-desktop-high.jpg](../images/lookdev/temple-board-post-desktop-high.jpg) | `readability.tscn`, 1280×720 | Forward+ (`desktop-high`) | WP-52 glow, grade and depth of field |
 | [temple-board-post-web.jpg](../images/lookdev/temple-board-post-web.jpg) | `readability.tscn`, 540×1170 | Compatibility (`web`) | WP-52 glow and grade |
 | [temple-board-post-mobile.jpg](../images/lookdev/temple-board-post-mobile.jpg) | `readability.tscn`, 540×1170 | Mobile (`mobile`) | WP-52 glow and grade |
-| [temple-atmosphere-desktop-high.jpg](../images/lookdev/temple-atmosphere-desktop-high.jpg) | `LD_Temple_Hi` | Forward+ (`desktop-high`) | WP-51 volumetric fog and dust, no lightmap |
+| [temple-atmosphere-before-mist.jpg](../images/lookdev/temple-atmosphere-before-mist.jpg) | `LD_Temple_Hi` | Forward+ (`desktop-high`) | WP-51 volumetric fog and dust as first built (an even cream layer), no lightmap |
+| [temple-atmosphere-desktop-high.jpg](../images/lookdev/temple-atmosphere-desktop-high.jpg) | game, benchmark board | Forward+ (`desktop-high`), RTX 4080 SUPER | ground mist in banks and dust, lightmap and `VoxelGI` |
 | [temple-atmosphere-mobile.jpg](../images/lookdev/temple-atmosphere-mobile.jpg) | `LD_Temple` | Mobile (`mobile`) | WP-51 light-shaft cards, no lightmap |
 | [temple-atmosphere-web.jpg](../images/lookdev/temple-atmosphere-web.jpg) | `LD_Temple` | Compatibility (`web`) | WP-51 light-shaft cards, no lightmap |
 

@@ -32,7 +32,7 @@ sky_material = SubResource("sky_mat")
 exposure_sensitivity = 440
 exposure_multiplier = 1.0
 auto_exposure_enabled = true
-auto_exposure_scale = 0.4
+auto_exposure_scale = 0.45
 auto_exposure_speed = 0.5
 auto_exposure_min_sensitivity = 300
 auto_exposure_max_sensitivity = 640
@@ -74,10 +74,10 @@ metadata/glow_hdr_threshold_web = 0.6
 volumetric_fog_enabled = true
 volumetric_fog_density = 0.0
 volumetric_fog_anisotropy = 0.0
-volumetric_fog_length = 40.0
-volumetric_fog_detail_spread = 2.0
-volumetric_fog_gi_inject = 0.4
-volumetric_fog_ambient_inject = 0.3
+volumetric_fog_length = 30.0
+volumetric_fog_detail_spread = 1.0
+volumetric_fog_gi_inject = 0.05
+volumetric_fog_ambient_inject = 0.2
 volumetric_fog_sky_affect = 0.0
 volumetric_fog_temporal_reprojection_amount = 0.9
 adjustment_enabled = true
@@ -151,6 +151,7 @@ light_intensity_lux = 11000
 light_temperature = 4500
 light_color = Color(1.0000, 1.0000, 1.0000, 1.0000)
 light_angular_distance = 0.6
+light_volumetric_fog_energy = 7.0
 shadow_enabled = true
 directional_shadow_max_distance = 40.0
 
@@ -196,8 +197,8 @@ camera_attributes = SubResource("camera")
 metadata/light_data_path = "res://assets/models/temple/backdrop/PF_Environment.lmbake"
 
 [node name="AtmosphereFog" type="FogVolume" parent="." groups=["quality:volumetric_fog"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
-size = Vector3(38.0, 5.0, 38.0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.3, 0)
+size = Vector3(38.0, 2.6, 38.0)
 shape = 3
 metadata/fog_material_path = "res://assets/materials/temple/MI_AtmosphereFog.tres"
 

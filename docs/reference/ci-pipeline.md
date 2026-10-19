@@ -152,8 +152,8 @@ level under `game/data/levels/` against the
 Run it locally:
 
 ```sh
-cmake -S . -B build-rel -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=OFF -DMONTEZUMA_BUILD_TESTS=OFF
-cmake --build build-rel --target montezuma_sim -j
+cmake -S . -B build-rel -G Ninja -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=OFF -DMONTEZUMA_BUILD_TESTS=OFF
+cmake --build build-rel --target montezuma_sim
 build-rel/tools/sim/montezuma_sim game/data/levels --check
 ```
 

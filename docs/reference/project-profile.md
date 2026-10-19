@@ -10,6 +10,10 @@ to do the job; this file says with what, and where.
   iOS 2009; sources in `docs/reference/rules-sources.md`). It plays like
   the original and looks new. Rules are in
   `docs/reference/rules-spec.md`.
+- Design direction (owner, 2026-10-19): look, setting and design follow
+  sourced history of the late Mexica empire (about 1502 to 1520), led by
+  the historian; the original game is a reference, not the target. The
+  rules above still come from the original.
 - Targets: Windows, macOS, Linux, Android, iOS, plus a web demo. The
   website's entry is a playable intro level (the game's opening levels,
   compiled to WebAssembly); finishing it opens the download and store
@@ -63,6 +67,7 @@ Each role loads `engineering-practices` plus its own plugin from
 | `devops-engineer` | `.github/`, `game/export_presets.cfg`, `tools/release/`, `docs/stores/` | Builds every target including the wasm demo; store checklists in `docs/stores/` |
 | `frontend-web-developer` | `site/` | Site shell around the web demo, downloads, credits page; deploys to GitHub Pages |
 | `graphic-designer` | `design/` (identity, icons, store art, UI and site visuals) | Style guide in `design/README.md`; exports tokens for `game/ui/theme/` and `site/` |
+| `historian` | `docs/reference/history-*.md` | Sourced history briefs and reference sets for look, setting and design; game-designer and technical-artist apply them in their own files, and the technical-artist links them from `art-direction.md`. Cites and paraphrases; images or long excerpts only under an allowed license, logged in `game/assets/PROVENANCE.md`. Commits use the `docs` scope |
 | `project-manager` | `docs/reference/work-packages.md` status, plan changes | Coordinator: staffs packages, holds the owner's standing rules |
 | `code-reviewer` | — (reviews every PR) | Uses the review notes below |
 
@@ -156,3 +161,30 @@ budgets, frame times and the look each tier must show are in
 - Docs: the right Diataxis kind in the right folder, updated with the
   change.
 - Every PR title is a Conventional Commit (it becomes the squash commit).
+
+### Pitfalls seen in more than one review
+
+A finding raised in two or more reviews is listed here as a rule.
+
+- Performance figures (#35, #75, #79, #80). An absolute figure links to
+  its section of `docs/reference/benchmark-results.md` and names the row
+  (machine, tier, date or run); that row gives the tier, Resolution,
+  3D scaling and vsync or cap mode, and a capped row says why (for
+  example, Metal display sync). A before/after or "costs X ms" claim also
+  compares against a run of the merge base on the same machine, tier,
+  Resolution, 3D scaling and cap settings, uncapped where the driver
+  allows it. Frame-time numbers come from the benchmark the plan names as
+  their owner (today WP-46's), not from the row's own package.
+- Plan dependencies (#35, #80). In the plan
+  (`docs/reference/work-packages.md`), every package a `todo` or `active`
+  row waits on, needs, or shares owned files or numbers with is in its
+  `Depends on` column. Mentions of finished work, and the bracketed reason
+  of a `blocked` row, are not dependencies.
+- Two open PRs changing the same plan row (#7, #13, #80). A PR edits only
+  its own package's row. On rebase it keeps `main`'s text for every other
+  row; a PR that edits another package's row drops that edit or moves it
+  to the owning PR.
+- Docs rules (#80, #81). A new rule uses only terms the docs define where
+  they belong (the plan's status key, `benchmark-results.md`), contradicts
+  no rule already written down, and holds for the project's own existing
+  rows.
