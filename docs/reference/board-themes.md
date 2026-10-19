@@ -302,7 +302,7 @@ random (seed + 51) until they pass.
 | `SH_HeatHaze` | heat haze (`MI_HeatHaze`), desktop | screen-texture distortion, drawn before the flame | 2 noise and 1 screen sample |
 | `SH_CellHighlight` | `cell_highlight` | unshaded, additive | one 1×1 quad; no texture samples |
 | `SH_Spark` | `fx_match` | unshaded, additive; fades by `INSTANCE_CUSTOM.y` | 16 tiny spheres per burst |
-| `SH_AtmosphereFog` | the temple's `FogVolume` (`MI_AtmosphereFog`), desktop | fog shader | 1 3D-noise sample per froxel in the volume |
+| `SH_AtmosphereFog` | the temple's `FogVolume` (`MI_AtmosphereFog`), desktop (64 × 64 froxels on `desktop-high`, 32 × 32 on `desktop-standard`); mobile and web show the light-shaft cards and no veil | fog shader; no static switches, 1 variant | 3 3D-noise samples per froxel in the volume (banks, wisps, veil); no measurable cost against the clear-square version ([Benchmark results](benchmark-results.md#fog-veil-over-the-board)) |
 | `SH_Dust` | dust motes (`MI_Dust`), desktop | lit, additive, no depth write, camera-facing | no texture samples |
 | `SH_LightShaft` | light-shaft cards (`MI_LightShaft`), mobile and web | unshaded, additive, no depth write; fades out toward the ground in UV | no texture samples |
 | `SH_TriplanarPBR` | desktop stone (`hi/MI_Stone*`) | opaque, Burley diffuse, GGX; object-space triplanar PBR set; parallax occlusion on upward faces (`height_depth` metres, 8 to 24 layers by view angle) | 3 texture samples where one projection carries the surface (most pixels; projections under 2% weight are skipped), up to 9 on edges, plus up to 25 height samples on upward faces |
