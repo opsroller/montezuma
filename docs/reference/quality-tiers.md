@@ -104,6 +104,7 @@ one entry (phones, web).
 | Argument (after `--`) | Effect |
 |---|---|
 | `--quality=<tier id or auto>` | Uses that tier for this run without saving it (benchmark captures) |
+| `--quality-off=<id>[,<id>...]` | Turns those [feature ids](#feature-ids) off for this run, on every tier, so their cost can be measured; an unknown id prints an error and is ignored. `get_active_features()` leaves them out |
 | `--quality-selftest` | Switches through every available tier on scratch nodes, checks each switch (environment, groups, shadow budget, sun shadow cascades and material variants of `MI_Gold` and `MI_Ground`, also after a node leaves and re-enters the tree), prints `QualityTiers self-test: N checks, F failures` |
 
 ## Feature ids

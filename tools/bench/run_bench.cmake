@@ -21,6 +21,11 @@
 #   SECONDS      capture length (default 60)
 #   WARMUP       warm-up before the capture (default 10)
 #   OUT          where reports and captures go (default bench-out/)
+#   QUALITY_OFF  comma-separated feature ids to turn off for the runs
+#                (--quality-off), to measure what each costs; the feature
+#                check then fails for those rows
+#   GPU_PROFILE=ON  print Godot's GPU time per render pass about once a
+#                second (--gpu-profile; zeros on Metal in Godot 4.7.2)
 #   READABILITY=ON  also capture at 540x1170 and check rules 2, 4, 5 and 6
 #   XVFB=ON      run under xvfb-run (machines without a display)
 # Each Godot run is stopped after SECONDS + WARMUP + 300 s (the readability
@@ -107,6 +112,13 @@ set(quality "")
 if(TIER)
   set(quality "--quality=${TIER}")
 endif()
+if(QUALITY_OFF)
+  list(APPEND quality "--quality-off=${QUALITY_OFF}")
+endif()
+set(engine "")
+if(GPU_PROFILE)
+  set(engine --gpu-profile)
+endif()
 set(bench "--bench-seconds=${SECONDS}" "--bench-warmup=${WARMUP}" "--bench-size=${SIZE}" "--bench-out=${OUT}/benchmark.json")
 if(VSYNC STREQUAL "off")
   list(APPEND bench --bench-vsync=off)
@@ -120,7 +132,7 @@ set(status 0)
 # A stale report from an earlier run must not pass for this one.
 file(REMOVE "${OUT}/benchmark.json")
 window("${SIZE}")
-run_godot(${bench_timeout} rc res://scenes/bench/bench.tscn -- ${bench} ${quality})
+run_godot(${bench_timeout} rc ${engine} res://scenes/bench/bench.tscn -- ${bench} ${quality})
 if(NOT rc EQUAL 0)
   set(status 1)
 endif()

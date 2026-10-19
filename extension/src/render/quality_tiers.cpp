@@ -211,8 +211,18 @@ void QualityTiers::_ready() {
         if (arg.begins_with("--quality=")) {
             choice_ = arg.substr(10);
         }
+        // `-- --quality-off=<id>[,<id>...]` turns features off for this run
+        // (the benchmark uses it to measure what each one costs).
+        if (arg.begins_with("--quality-off=")) {
+            const PackedStringArray ids = arg.substr(14).split(",", false);
+            for (const String& id : ids) {
+                const std::optional<q::Feature> f = q::feature_from_id(to_std(id.strip_edges()));
+                if (f) forced_off_[static_cast<std::size_t>(*f)] = true;
+                else ERR_PRINT("QualityTiers: --quality-off names no feature: " + id);
+            }
+        }
     }
-    tier_ = q::resolve_tier(to_std(choice_), adapter_);
+    set_tier(q::resolve_tier(to_std(choice_), adapter_));
 
     SceneTree* tree = get_tree();
     tree->connect("node_added", callable_mp(this, &QualityTiers::on_node_added));
@@ -254,7 +264,7 @@ void QualityTiers::switch_to(const String& choice, bool save) {
     if (save) save_choice();
     const q::Tier next = q::resolve_tier(wanted, adapter_);
     if (next == tier_) return;
-    tier_ = next;
+    set_tier(next);
     variant_cache_.clear();  // resolved for the old tier's variant folder
     apply_all();
     emit_signal("tier_changed", get_tier());
@@ -290,6 +300,13 @@ String QualityTiers::resolve_variant(const String& path) const {
     if (variant.empty()) return path;
     const String candidate = to_godot(q::variant_path(to_std(path), variant));
     return ResourceLoader::get_singleton()->exists(candidate) ? candidate : path;
+}
+
+void QualityTiers::set_tier(q::Tier tier) {
+    tier_ = tier;
+    profile_ = q::profile(tier);
+    for (std::size_t i = 0; i < q::kFeatureCount; ++i)
+        if (forced_off_[i]) profile_.features[i] = false;
 }
 
 void QualityTiers::apply_all() {

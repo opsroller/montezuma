@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <vector>
@@ -123,6 +124,10 @@ private:
     std::vector<double> canvas_draw_calls_;
     std::vector<double> primitives_;
     double video_mem_max_ = 0.0;
+    // RenderingServer's running pipeline-compilation counts (canvas, mesh,
+    // surface, draw, specialization) when the run and the capture started.
+    std::array<uint64_t, 5> pipelines_at_start_{};
+    std::array<uint64_t, 5> pipelines_at_capture_{};
     bench::SizeTracker sizes_{std::nullopt};
     bench::SizeTracker window_sizes_{std::nullopt};
     // When SceneTree.process_frame fired: the start of this frame's _process.

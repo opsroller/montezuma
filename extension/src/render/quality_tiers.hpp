@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <array>
+
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/classes/packed_scene.hpp>
 #include <godot_cpp/classes/ref.hpp>
@@ -85,7 +87,8 @@ public:
     // Loaders call it when a theme loads.
     void preload_variants(const godot::Ref<godot::PackedScene>& scene);
 
-    const quality::Profile& get_profile() const { return quality::profile(tier_); }
+    // The tier's profile, less any features `-- --quality-off=` turned off.
+    const quality::Profile& get_profile() const { return profile_; }
 
     // The tier's feature, unless this GPU cannot run it: volumetric fog
     // needs atomic R32 storage images, which some virtual GPUs lack.
@@ -98,6 +101,7 @@ protected:
 
 private:
     void switch_to(const godot::String& choice, bool save);
+    void set_tier(quality::Tier tier);
     void load_choice();
     void save_choice() const;
     void apply_all();
@@ -121,6 +125,10 @@ private:
     quality::Adapter adapter_;
     bool atomic_storage_ = true;
     quality::Tier tier_ = quality::Tier::DesktopStandard;
+    quality::Profile profile_ = quality::profile(quality::Tier::DesktopStandard);
+    // Features `-- --quality-off=ssao,glow` turns off for this run, on every
+    // tier, so the cost of one effect can be measured against the rest.
+    std::array<bool, quality::kFeatureCount> forced_off_{};
     godot::String choice_ = "auto";
     godot::String settings_path_ = "user://quality.cfg";
     bool shadow_budget_pending_ = false;

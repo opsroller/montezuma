@@ -172,6 +172,75 @@ frame there is shorter than 16.67 ms and p50 sits near that floor; the
 miss is in the tail. The follow-up is the M4's p95 tail (hitches and
 frames that miss a present), not the mean cost. The budget is unchanged.
 
+## GPU time per pass and per effect
+
+Where the GPU time of one frame goes, and what each effect costs alone.
+Machine: RTX 4080 SUPER, Vulkan, Forward+, Godot 4.7.2 from nixpkgs,
+`desktop-high` at 2560×1440 (FSR 2 at 0.5, so 3D renders at 1280×720),
+vsync off under a headless gamescope at 240 Hz, busiest-board replay seed
+52, 3 s warm-up and 3 s capture, 2026-10-19, `main` at 791a680 plus this
+change. Per-pass times are one `--gpu-profile` frame; they move by
+under 0.01 ms between frames.
+
+| Pass | GPU ms |
+|---|---|
+| Render opaque pass | 0.70 |
+| FSR2 | 0.36 |
+| Render depth pre-pass | 0.16 |
+| Render GI + directional and omni shadows | 0.14 |
+| Render 3D transparent pass | 0.12 |
+| Glow | 0.10 |
+| Tonemap | 0.08 |
+| Process SSIL | 0.07 |
+| Render VoxelGI (relighting) | 0.05 |
+| Render motion pass | 0.05 |
+| Render, filter and integrate fog | 0.04 |
+| Process SSAO | 0.03 |
+| Update GPU particles, setup shadows, sub-surface scattering, merge specular, copy screen texture, copy final framebuffer, auto exposure | 0.02 or less each |
+| Frame (`gpu_ms` p50) | 2.05 |
+
+Each effect turned off alone with `--quality-off`, against two
+baseline runs (`gpu_ms` p50 2.049 and 2.048):
+
+| Feature off | `gpu_ms` p50 | Saved |
+|---|---|---|
+| `glow` | 1.890 | 0.16 |
+| `voxel_gi` | 1.900 | 0.15 |
+| `area_light` | 1.906 | 0.14 |
+| `ssil` | 1.955 | 0.09 |
+| `volumetric_fog` | 1.982 | 0.07 |
+| `ssao` | 2.018 | 0.03 |
+| `auto_exposure` | 2.028 | 0.02 |
+| `ssr`, `subsurface_scattering`, `gem_refraction`, `heat_haze`, `decals`, `parallax_occlusion`, `fog_fire_light` | 2.046 to 2.055 | none measurable |
+
+`ssr` saves nothing because the temple's environment leaves SSR off.
+
+- **Nothing redrawn needlessly every frame except VoxelGI.** The
+  brazier's `FlickerLight3D` changes its light energy every frame, and
+  Godot re-lights the `VoxelGI` grid whenever a dynamic light inside
+  it changes: 0.05 to 0.06 ms here. With the flicker stopped, the pass
+  is gone and nothing else changes; shadow passes cost the same either
+  way.
+- **No shader compiles stall a frame.** Godot compiled 139 surface and
+  85 specialization pipelines before the capture and 11 surface and 4
+  specialization pipelines during it (effects the replay shows for the
+  first time), and none at draw time, so an ubershader drew while each
+  compiled (`render.pipeline_compilations`, [Benchmark](benchmark.md#report)).
+- **WP-52 depth of field** (#72 branch at da752dc, same machine and
+  run): Godot's box-bokeh depth of field is 0.19 ms of a 2.29 ms frame
+  (8%); it runs at the 2560×1440 output, after FSR 2, so it shades four
+  times the pixels of the passes before it. On the Mac mini M4 it is
+  3.3 ms of 18.5 ms (main 15.5 ms; #72 without depth of field 15.2 ms).
+- **The M4 against this machine.** The same frame takes about 15 ms on
+  the M4 against 2.05 ms here, about 7 times as long. The frame is 21
+  passes that each write their result to memory and read it back,
+  Forward+'s design for desktop GPUs; the M4's 10-core GPU has about a
+  twelfth of this card's arithmetic and a sixth of its memory bandwidth.
+  Godot 4.7.2's Metal driver returns no GPU timestamps
+  (`timestamp_query_pool_get_results` clears the buffer), so `--gpu-profile`
+  prints a total of 0 there and the M4 cannot be split per pass from
+  Godot.
+
 ## Feature rows
 
 `check_features.py` on the same reports. Rows that fail are the

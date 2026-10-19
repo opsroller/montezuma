@@ -105,6 +105,30 @@ Array to_array(const std::vector<Cell>& cells) {
     return out;
 }
 
+// Pipeline-compilation sources in the order the report lists them.
+constexpr std::array<RenderingServer::RenderingInfo, 5> kPipelineInfos = {
+    RenderingServer::RENDERING_INFO_PIPELINE_COMPILATIONS_CANVAS,
+    RenderingServer::RENDERING_INFO_PIPELINE_COMPILATIONS_MESH,
+    RenderingServer::RENDERING_INFO_PIPELINE_COMPILATIONS_SURFACE,
+    RenderingServer::RENDERING_INFO_PIPELINE_COMPILATIONS_DRAW,
+    RenderingServer::RENDERING_INFO_PIPELINE_COMPILATIONS_SPECIALIZATION,
+};
+constexpr std::array<const char*, 5> kPipelineNames = {"canvas", "mesh", "surface", "draw", "specialization"};
+
+std::array<uint64_t, 5> pipeline_counts() {
+    RenderingServer* rs = RenderingServer::get_singleton();
+    std::array<uint64_t, 5> out{};
+    for (std::size_t i = 0; i < kPipelineInfos.size(); ++i) out[i] = rs->get_rendering_info(kPipelineInfos[i]);
+    return out;
+}
+
+Dictionary pipeline_delta(const std::array<uint64_t, 5>& from, const std::array<uint64_t, 5>& to) {
+    Dictionary d;
+    for (std::size_t i = 0; i < kPipelineNames.size(); ++i)
+        d[kPipelineNames[i]] = static_cast<int64_t>(to[i] >= from[i] ? to[i] - from[i] : 0);
+    return d;
+}
+
 std::uint64_t hash_board(const Ref<Match3Board>& board) {
     const PackedInt32Array cells = board->get_cells();
     std::vector<int> v(static_cast<std::size_t>(cells.size()));
@@ -181,6 +205,7 @@ void BenchmarkRunner::_ready() {
     // _process this frame (TIME_PROCESS is a once-a-second maximum).
     set_process_priority(1 << 30);
     get_tree()->connect("process_frame", callable_mp(this, &BenchmarkRunner::on_process_frame));
+    pipelines_at_start_ = pipeline_counts();
     board_.instantiate();
     restart_replay();
     start_usec_ = Time::get_singleton()->get_ticks_usec();
@@ -299,6 +324,7 @@ void BenchmarkRunner::_process(double) {
     if (phase_ == Phase::Warmup && seconds_between(start_usec_, now) >= warmup_seconds_) {
         phase_ = Phase::Measure;
         measure_start_usec_ = now;
+        pipelines_at_capture_ = pipeline_counts();
         features_ = bench::active_features(get_viewport());
         DisplayServer* ds = DisplayServer::get_singleton();
         // -1 when unknown (headless); some virtual displays report NaN.
@@ -363,6 +389,13 @@ void BenchmarkRunner::finish() {
     render["primitives_p95"] = prims.p95;
     render["primitives_max"] = prims.max;
     render["video_mem_max_mb"] = video_mem_max_ / (1024.0 * 1024.0);
+    // Pipelines the renderer compiled, by source: "draw" ones stalled the
+    // frame that needed them; any in the capture were not warmed up.
+    const std::array<uint64_t, 5> pipelines_now = pipeline_counts();
+    Dictionary pipelines;
+    pipelines["before_capture"] = pipeline_delta(pipelines_at_start_, pipelines_at_capture_);
+    pipelines["during_capture"] = pipeline_delta(pipelines_at_capture_, pipelines_now);
+    render["pipeline_compilations"] = pipelines;
 
     // Frames not paced by the display cannot be display-limited.
     const bench::BudgetSpec spec = bench::budget_for_tier(tier_.utf8().get_data(), tolerance_, budget_ms_);

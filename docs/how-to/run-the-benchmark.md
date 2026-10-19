@@ -85,6 +85,31 @@ godot --path game res://scenes/bench/bench.tscn -- --quality=desktop-high --benc
 python3 tools/bench/check_run.py /tmp/bench.json --size 2560x1440
 ```
 
+### Check what one effect or edit costs, in seconds
+
+To see where GPU time goes, or what a small change did, run a short
+capture with Godot's per-pass profile instead of the full minute:
+
+```sh
+cmake -DTIER=desktop-high -DSIZE=2560x1440 -DVSYNC=off -DSECONDS=3 -DWARMUP=3 -DGPU_PROFILE=ON -P tools/bench/run_bench.cmake
+```
+
+The run takes about 10 s. Each `GPU PROFILE` block it prints gives the
+GPU time of every render pass in one frame (depth pre-pass, opaque pass,
+SSAO, glow, FSR2 and so on), and `gpu_ms` in `benchmark.json` gives the
+whole frame. Add `-DQUALITY_OFF=glow` (any
+[feature ids](../reference/quality-tiers.md#feature-ids), comma-separated)
+and compare `gpu_ms` p50 with a run without it to get that effect's cost;
+the feature check then fails for those rows, which is expected. Compare
+`gpu_ms` with vsync off: with vsync on the GPU clocks down between frames.
+
+On Metal, Godot 4.7.2 returns no GPU timestamps, so the profile prints
+zeros there: judge by `frame_ms` or use Apple's Metal tools.
+
+`render.pipeline_compilations.during_capture` in the report counts
+shaders compiled inside the timed window; `draw` above 0 means frames
+stalled on a compile.
+
 ## On an Android or iOS phone
 
 Phones take no command-line arguments, so the benchmark scene becomes the
