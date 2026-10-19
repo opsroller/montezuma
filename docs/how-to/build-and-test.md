@@ -11,13 +11,27 @@ cd montezuma
 git submodule update --init --recursive    # godot-cpp in thirdparty/
 ```
 
-## Build and test the core only
+Configure with Ninja (`-G Ninja`, as below) and build without `-j`: Ninja
+already runs one job per core plus two. Do not pass a bare `-j` to a Make
+build: Make then starts every compile at once, and godot-cpp alone has about
+a thousand, which runs a 16 GB machine out of memory with the compilers
+stalled in swap. To build one thing, name it with `--target`.
 
-Needs CMake 3.22+ and a C++20 compiler. No Godot needed.
+CMake will not switch an existing build folder to another generator. If a
+folder was configured with Make (the old default), delete it before
+configuring it with Ninja, for example:
 
 ```sh
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DMONTEZUMA_WERROR=ON -DMONTEZUMA_BUILD_EXTENSION=OFF
-cmake --build build -j
+cmake -E rm -rf build-ext
+```
+
+## Build and test the core only
+
+Needs CMake 3.22+, Ninja and a C++20 compiler. No Godot needed.
+
+```sh
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DMONTEZUMA_WERROR=ON -DMONTEZUMA_BUILD_EXTENSION=OFF
+cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
@@ -28,9 +42,9 @@ add `-DMONTEZUMA_BUILD_SIM=OFF` to skip it. Running it is in
 ## Run the tests under sanitizers
 
 ```sh
-cmake -S . -B build-asan -DCMAKE_BUILD_TYPE=Debug -DMONTEZUMA_WERROR=ON -DMONTEZUMA_BUILD_EXTENSION=OFF \
+cmake -S . -B build-asan -G Ninja -DCMAKE_BUILD_TYPE=Debug -DMONTEZUMA_WERROR=ON -DMONTEZUMA_BUILD_EXTENSION=OFF \
   -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer"
-cmake --build build-asan -j
+cmake --build build-asan
 ctest --test-dir build-asan --output-on-failure
 ```
 
@@ -42,8 +56,8 @@ build folder: CMake caches options, so reusing the core-only `build/`
 would keep the extension off. The library lands in `game/bin/`.
 
 ```sh
-cmake -S . -B build-ext -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON
-cmake --build build-ext -j
+cmake -S . -B build-ext -G Ninja -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON
+cmake --build build-ext
 ctest --test-dir build-ext --output-on-failure   # every test, as CI's extension job
 godot --headless --path game --import
 godot --headless --path game --quit-after 120    # errors show here
@@ -54,7 +68,7 @@ On macOS, build the universal (arm64 and x86_64) library: the game's
 single-architecture build does not load. Configure with:
 
 ```sh
-cmake -S . -B build-ext -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON \
+cmake -S . -B build-ext -G Ninja -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON \
   -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
 ```
 
