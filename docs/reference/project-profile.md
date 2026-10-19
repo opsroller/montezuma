@@ -184,6 +184,18 @@ A finding raised in two or more reviews is listed here as a rule.
   its own package's row. On rebase it keeps `main`'s text for every other
   row; a PR that edits another package's row drops that edit or moves it
   to the owning PR.
+- Names in project files (#83, #91). Prose, headings, titles, citations,
+  bibliographies and credits carry no individual's name other than the
+  owner's: a source is cited by title, publisher or holder, year and a
+  stable identifier (DOI, ISBN, ISSN, handle, accession number or URL),
+  and an image credit belongs in `game/assets/PROVENANCE.md`, not the
+  page. A surname inside a URL path the publisher set is allowed. A
+  historical figure who is the subject of the material, such as
+  Moctezuma II, is not an individual's name in this rule's sense; a
+  person used only as a label (an author line, a stage named after a
+  ruler) is replaced by the holder's title, accession number or a dated
+  stage number. A citation left without an identifier once names are
+  removed moves to the page's Not used list.
 - Docs rules (#80, #81). A new rule uses only terms the docs define where
   they belong (the plan's status key, `benchmark-results.md`), contradicts
   no rule already written down, and holds for the project's own existing
