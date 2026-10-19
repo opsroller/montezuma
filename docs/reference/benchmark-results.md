@@ -365,6 +365,22 @@ fog grid's size, not the shader, sets the fog's cost. The runs used an earlier
 tuning of the veil (1.5 per metre, 0.3 m, 14 m tiles); its parameters do
 not change the work per froxel.
 
+**Mac mini M4** (Metal, Forward+, full screen at native 5120×2880 with
+3D at 1.0 and no upscaler, through a local, uncommitted patch in both
+builds since this branch has no native switch, TAA off; vsync off, seed
+52, 5 s warm-up and one 10 s capture per build, back to back with no
+other Godot process, textures and fire generated and lightmaps baked in
+both, 2026-10-19), against the merge base with `main` (c0f387e):
+
+| Build | `frame_ms` p50 | p95 | p99 | Frames in 10 s | `cpu_ms` p95 | Video memory max |
+|---|---|---|---|---|---|---|
+| Merge base c0f387e | 113.9 | 116.0 | 117.6 | 88 | 2.01 | 2107 MB |
+| Veil f8dd0d1 | 114.0 | 116.5 | 117.9 | 88 | 1.81 | 2107 MB |
+
+Every frame rendered at 5120×2880 and the replay matched its plan in
+both runs. At native 5K the veil costs nothing measurable either (0.1 ms
+at p50, 0.5 ms at p95, inside the spread of one 10 s run).
+
 Readability on the same machine, `readability.tscn`, shipped veil values:
 
 | Capture | Rule 2 (worst cell contrast loss, clear cells; pass ≤ 40%, ≥ 25%) | Rule 4 (worst change; pass ≤ 10%) |
