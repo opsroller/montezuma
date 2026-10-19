@@ -154,10 +154,8 @@ uncapped runs set `display/window/vsync/vsync_mode=3` (mailbox) in an
 
 With vsync on, the GPU clocks down between frames, so `gpu_ms` there is
 not a measure of the work. Uncapped, `main` stopped with
-`VK_ERROR_DEVICE_LOST` both times; in a nested gamescope compositor on
-the same machine it ran, at `frame_ms` p50 11.99 against 2.10 with the
-pieces out of GI, while `gpu_ms` stayed near 2 ms in both: the
-per-frame voxelization showed up as a stall, not as measured GPU work.
+`VK_ERROR_DEVICE_LOST` in warm-up both times, while the pieces out of GI
+ran at `frame_ms` p50 2.15 ms.
 The M4 re-run is pending.
 
 ## Feature rows
