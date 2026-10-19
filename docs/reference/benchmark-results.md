@@ -131,6 +131,27 @@ The two `main` runs differ by 0.5 ms at p50, so the p50 change is within
 run-to-run noise. With the haze, 14 of 17 `desktop-high` feature rows are
 met; volumetric fog is now one of them.
 
+## Ground mist rework
+
+Cost of reworking the WP-51 fog into ground mist (`SH_AtmosphereFog`,
+`MI_AtmosphereFog` and `PF_Environment.tscn` from this change) against the
+same three files from `main` at b67b96a, everything else equal. RTX 4080
+SUPER, Vulkan, Forward+, Linux (GNOME on Wayland), `desktop-high`,
+2560×1440, bench scene, 6 s warm-up and 20 s capture, 2026-10-19. The two
+builds ran alternately, three runs each, holding the shared GPU lock so no
+other run overlapped. The desktop presents at 60 Hz whatever the vsync
+setting, so `frame_ms` is the refresh interval (16.7 ms) and GPU time is
+the measure.
+
+| `gpu_ms` p50 | Run 1 | Run 2 | Run 3 |
+|---|---|---|---|
+| `main` | 1.95 | 3.09 | 3.10 |
+| Ground mist | 3.10 | 3.10 | 3.09 |
+
+`main` run 1 is an outlier (its CPU time rose from 0.7 to 1.2 ms too); without it the
+two builds differ by under 0.01 ms. Video memory max is 1459 MB on both
+and draw calls p95 differ by at most 2, within run-to-run noise.
+
 ## Feature rows
 
 `check_features.py` on the same reports. Rows that fail are the

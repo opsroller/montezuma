@@ -1,9 +1,9 @@
 <!-- SPDX-License-Identifier: GPL-2.0-or-later -->
 # About the atmosphere
 
-*Explanation. Why the temple's dusty air is one fog volume that is empty
-over the board, why its shafts come from stretched noise, and why mobile
-and web get cards. The parameters are in
+*Explanation. Why the temple's mist is one fog volume that is empty over
+the board, why it lies in banks on the plaza and is lit as brightly as it
+is, and why mobile and web get cards. The parameters are in
 [Board themes: Atmosphere](../reference/board-themes.md#atmosphere).*
 
 ## What it has to do
@@ -40,22 +40,58 @@ seen from a camera nearly straight above, rays to the board's edge pass
 over the platform at a height that grows with distance from the board;
 low air beside the platform is never in their way.
 
-## Shafts from above
+## Why the first pass looked like dirty glass
 
-Shafts in fog come from shadow: lit air beside air that something shades.
-From the game camera, looking almost straight down, a shaft is not a beam
-coming at you but a streak along the ground in the sun's direction. The
-temple's tiers, pillars and ferns cast some, but they are short. The fog
-shader adds the rest by stretching its noise eight times along the
-direction to the sun: thicker and thinner air line up into slanted
-columns, which the camera sees as streaks, and which the dust in them
-catches. The noise drifts slowly with a wind, so the streaks move a
-little, as dust does.
+The first pass (WP-51) filled the plaza with an even layer of cream air,
+2.4 m deep, lit by single scattering. From a camera looking almost
+straight down, an even layer is just a tint over the floor: nothing in it
+changes from place to place, so the eye reads it as a filter on the
+picture rather than as something lying in the scene. It was also dim.
+Godot lights fog by single scattering, and an isotropic droplet layer lit
+that way returns less light than the sunlit floor under it, so the "fog"
+made the plaza greyer and browner rather than whiter. And because auto
+exposure meters the whole frame, the brighter haze pulled the board
+darker too.
 
-The phase function is isotropic. Fog that scatters forward (the usual
-choice for god rays seen against the sun) would send the sunlight down,
-away from a camera that looks down with the sun behind it, and the fog
-would only darken the ground.
+## Mist in banks
+
+Real mist (see [Fog references](art-direction.md#fog-references)) is
+read from how its thickness changes: floor crisp in a gap, floor gone
+under a bank, a fern sinking into it. So the shader builds the mist from
+the floor up. A large, slowly drifting noise decides where banks lie and
+how tall each is, with a narrow mapping so there is clear floor between
+them; a finer noise drawn out along the wind breaks up their tops and
+edges. Density is full at the floor and fades out over the top of each
+bank. Banks next to the platform are half as tall as those 7 m out, so
+the mist deepens away from the temple, which from above reads as depth.
+
+The fog volume now stops at the board's height. Nothing above the plaza
+needs fog any more, and the smaller volume leaves fewer froxels for the
+shader to fill.
+
+## Lit like mist, not like dust
+
+Mist droplets scatter almost all light and absorb almost none, at every
+colour, so the albedo is near white; the warm late sun gives the mist its
+colour. Since Godot's fog only scatters once, the sun's
+`light_volumetric_fog_energy` is raised to 7 to stand in for the many
+scatterings in mist this thick, which is what makes real mist about as
+bright as a white wall in the same light. Ambient and GI injection are
+low, so mist in shade is dim and slightly cool, and the shadows of the
+temple and ferns stay dark lanes through it: that is where shafts of light
+come from in real fog. Godot's fog does not shadow itself either, so the
+lower part of each bank scatters three quarters of the light its top
+does, which gives the banks lit tops.
+
+The phase function stays isotropic. The sun is behind and above the
+camera, so a forward-scattering phase function would send the light away
+from the camera and darken the mist.
+
+Auto exposure, which only the desktop tiers have, as they alone have the
+fog, still meters the brighter frame. The theme's `auto_scale` goes from
+0.4 to 0.45 so the board renders as bright as it does with no fog at all
+(mean RGB (162, 135, 114) against (163, 136, 114) without fog, 1920×1080,
+`e1-l01`, frame 150, RTX 4080 SUPER).
 
 ## Dust
 
@@ -100,3 +136,9 @@ and leaves CPU time unchanged. The haze does not wash the board out: the
 frame's saturation rises from 58.8 to 72.2 and its mean luma falls from
 133.3 to 131.1. The runs and their conditions are in
 [Benchmark results](../reference/benchmark-results.md#wp-51-atmosphere).
+
+The ground mist rework (banks on the floor, a volume that stops at the
+board's height) costs the same: on an RTX 4080 SUPER the GPU time per
+frame at `desktop-high`, 2560×1440, is 3.09 to 3.10 ms with and without
+it, and video memory is unchanged
+([Benchmark results](../reference/benchmark-results.md#ground-mist-rework)).
