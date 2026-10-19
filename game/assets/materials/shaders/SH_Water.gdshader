@@ -37,7 +37,7 @@ uniform float edge_softness : hint_range(0.0, 0.3, 0.001) = 0.08;
 // The channel's stone (MI_StoneDark): its base colour map, tint and
 // triplanar scale. Clamped sampler, wrapped by hand (see the Metal note in
 // SH_Triplanar.gdshaderinc).
-uniform sampler2D texture_albedo : source_color, filter_linear_mipmap_anisotropic, repeat_disable;
+uniform sampler2D texture_albedo : source_color, filter_linear_mipmap, repeat_disable;
 uniform vec4 floor_tint : source_color = vec4(0.361, 0.322, 0.275, 1.0);
 uniform float floor_scale = 0.9;
 // The channel in world metres: a square ring between the half-widths
@@ -99,7 +99,8 @@ float slab_tone(vec2 p, vec2 size, float fw) {
 	q.x += 0.5 * floor(q.y);
 	vec2 f = min(fract(q), 1.0 - fract(q)) * size;
 	float joint = smoothstep(0.006, 0.018 + fw, min(f.x, f.y));
-	float h = fract(sin(dot(floor(q), vec2(127.1, 311.7))) * 43758.5453);
+	uvec2 c = uvec2(ivec2(floor(q)) + ivec2(32768));
+	float h = float(((c.x * 1664525u) ^ (c.y * 1013904223u)) * 2654435761u >> 24u) / 255.0;
 	return mix(joint_level, 1.0, joint) * (0.86 + 0.28 * h);
 }
 
@@ -151,10 +152,11 @@ void fragment() {
 
 	// The stone there, mapped like SH_TriplanarPBR's projection for that face.
 	vec2 uv = face == 1 ? hit.xz : (face == 0 ? vec2(hit.z * sign(rd.x), -hit.y) : vec2(-hit.x * sign(rd.z), -hit.y));
-	float fw = length(fwidth(uv));
-	float slabs = slab_tone(uv, face == 1 ? floor_slab : wall_block, fw);
+	vec2 uv_dx = dFdx(uv);
+	vec2 uv_dy = dFdy(uv);
+	float slabs = slab_tone(uv, face == 1 ? floor_slab : wall_block, length(abs(uv_dx) + abs(uv_dy)));
 	uv *= floor_scale;
-	vec3 stone = floor_tint.rgb * slabs * textureGrad(texture_albedo, fract(uv), dFdx(uv), dFdy(uv)).rgb;
+	vec3 stone = floor_tint.rgb * slabs * textureGrad(texture_albedo, fract(uv), uv_dx * floor_scale, uv_dy * floor_scale).rgb;
 
 	// Caustics: brighter where the floor lies a little under the surface,
 	// fading in from the edge and out with depth.
