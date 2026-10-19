@@ -4,7 +4,7 @@
 
     python3 design/keyart/gen/build.py [--only STAGE[,STAGE...]] [--res N]
 
-Stages: temple, precinct, paving, props, sky, skyline, ground (default: all).
+Stages: temple, precinct, paving, props, sky, skyline, ground, wordmark (default: all).
 Writes design/keyart/meshes/*.obj and design/keyart/textures/*.png, and next
 to each file the Godot .import file with its import settings (textures:
 lossless with mipmaps, normal maps flagged; meshes: lightmap UV2 at a texel
@@ -25,7 +25,7 @@ from pathlib import Path
 KEYART = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(KEYART))
 
-from gen import temple, precinct, paving, props, sky, mountains, ground  # noqa: E402
+from gen import temple, precinct, paving, props, sky, mountains, ground, wordmark  # noqa: E402
 from gen.atlas import autopack, write_obj  # noqa: E402
 
 HDR = '# SPDX-License-Identifier: GPL-2.0-or-later\n# Copyright (C) 2026 Charles (opsroller) and Montezuma contributors\n'
@@ -109,6 +109,7 @@ STAGES = {
     'sky': lambda res: sky.make(str(KEYART)),
     'skyline': lambda res: mountains.make(str(KEYART)),
     'ground': lambda res: ground.make(str(KEYART)),
+    'wordmark': lambda res: wordmark.make(str(KEYART)),
 }
 
 

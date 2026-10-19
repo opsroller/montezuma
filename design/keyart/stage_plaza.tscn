@@ -254,7 +254,7 @@ mesh = ExtResource("wa")
 surface_material_override/0 = SubResource("m_precinct")
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
-transform = Transform3D(0.46947, 0.13812, -0.87208, -0.00000, 0.98769, 0.15643, 0.88295, -0.07344, 0.46369, -0.87208, 50.15643, 0.46369)
+transform = Transform3D(0.46947, 0.12288, -0.87435, -0.00000, 0.99027, 0.13917, 0.88295, -0.06534, 0.46490, -0.87435, 50.13917, 0.46490)
 light_color = Color(1, 0.76, 0.52, 1)
 light_energy = 5.0
 light_angular_distance = 0.6
@@ -267,7 +267,7 @@ directional_shadow_max_distance = 700.0
 [node name="Lightmap" type="LightmapGI" parent="."]
 quality = 3
 bounces = 4
-bounce_indirect_energy = 1.0
+bounce_indirect_energy = 1.4
 use_denoiser = true
 denoiser_strength = 0.1
 use_texture_for_bounces = true

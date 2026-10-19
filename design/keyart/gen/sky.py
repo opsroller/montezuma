@@ -89,7 +89,7 @@ def _pano_rows(args):
 
 
 CLOUDS_IN_PANO = True
-SUN_AZ, SUN_EL = 62.0, 9.0
+SUN_AZ, SUN_EL = 62.0, 8.0
 
 
 def pano(path, az, el, W=4096, H=2048, scale=0.5):

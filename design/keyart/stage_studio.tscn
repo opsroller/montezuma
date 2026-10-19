@@ -85,7 +85,7 @@ directional_shadow_max_distance = 700.0
 [node name="Lightmap" type="LightmapGI" parent="."]
 quality = 3
 bounces = 4
-bounce_indirect_energy = 1.0
+bounce_indirect_energy = 1.4
 use_denoiser = true
 denoiser_strength = 0.1
 use_texture_for_bounces = true

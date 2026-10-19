@@ -323,44 +323,31 @@ def bake_group(g, info, hfloor):
     is_tread = kind == KIND['tread']
     is_int = kind == KIND['interior']
 
-    # paint application: gentle mottling, brush direction horizontal
-    m1 = fbm3(P, 0.35, 4, seed=3)
-    m2 = fbm3(P, 2.2, 3, seed=5, scale=(1.0, 3.0, 1.0))
-    m0 = fbm3(P, 0.05, 3, seed=2)
-    base = base * (1 + 0.16 * m0[..., None] + 0.07 * m1[..., None] + 0.025 * m2[..., None])
-    # repainted patches: hard-edged tone shifts, warmer/browner or fresher
-    rp = fbm3(P, 0.12, 4, seed=81)
-    rpm = smoothstep(0.16, 0.19, rp) - smoothstep(-0.19, -0.16, rp) * 0.0
-    rpd = smoothstep(-0.16, -0.19, rp)
-    base = base * (1 + 0.09 * rpm[..., None]) * (1 - 0.10 * rpd[..., None])
-    base = base + (base * np.array([0.92, 0.85, 0.9]) - base) * rpd[..., None]
-    # fading: chalky and paler higher up and on exposed faces
-    fadeh = smoothstep(2.0, 30.0, P[..., 1]) * 0.18 + 0.08 * up
-    # per-step / per-course repair tone (stairs)
-    stp = hash01(_hash(np.floor(P[..., 1] / RISE + 0.01).astype(np.int64), np.zeros(P.shape[:2], np.int64), seed=77))
-    base = np.where((is_tread | (kind == KIND['riser']))[..., None], base * (0.97 + 0.04 * stp[..., None]), base)
-    # sun bleaching of exposed upper parts and top faces
-    bleach = 0.10 * up + 0.04 + fadeh
+    # paint: flat, with only slow large-scale fading. Lime paint chalks and pales
+    # where sun and rain reach it most: tops, sun-facing (west and south) faces, high up.
+    m0 = fbm3(P, 0.04, 3, seed=2)
+    m1 = fbm3(P, 0.3, 3, seed=3)
+    base = base * (1 + 0.06 * m0[..., None] + 0.025 * m1[..., None])
+    sunward = np.clip(N[..., 2] * 0.6 + N[..., 0] * 0.3 + N[..., 1] * 0.8, 0, 1)
+    fade = 0.06 + 0.16 * sunward + 0.12 * smoothstep(2.0, 34.0, P[..., 1]) + 0.05 * (0.5 + 0.5 * m0)
     lum = base.mean(-1, keepdims=True)
-    base = base + (lum * 1.08 - base) * bleach[..., None] * 0.6
+    base = base + (lum * 1.12 - base) * fade[..., None] * 0.55
+    base = base * (1 + 0.10 * fade[..., None])
 
-    # wear mask: edges, base abrasion, traffic
-    nw = fbm3(P, 1.6, 5, seed=7)
-    nw2 = fbm3(P, 6.0, 3, seed=8)
-    edge = np.exp(-dconv / 0.045)
+    # wear: crisp chips on convex edges and arrises only, never mid-face
+    nw = fbm3(P, 1.6, 4, seed=7)
+    nw2 = fbm3(P, 9.0, 3, seed=8)
+    edge = np.exp(-dconv / 0.04)
     traffic = np.zeros(sh)
-    if is_tread.any():
+    if is_tread.any() or (kind == KIND['chamfer']).any():
         xs = P[..., 0]
         for (xa, xb) in g.extra.get('stairs', STAIRS):
             c = (xa + xb) / 2
-            traffic += np.exp(-((xs - c) / 3.2) ** 2) * ((xs > xa) & (xs < xb))
-    patch = smoothstep(0.30, 0.45, fbm3(P, 0.22, 4, seed=71)) * np.exp(-np.minimum(hfloor, 9) / 2.5) * vert
-    w = edge * (0.62 + 0.7 * nw) + 0.28 * np.exp(-np.minimum(hfloor, 9) / 0.4) * vert + 0.20 * nw + 0.08 * nw2 \
-        + 0.25 * traffic * (is_tread | (kind == KIND['chamfer'])) + 0.08 * patch
-    paint_loss = smoothstep(0.46, 0.52, w)
-    spall_n = fbm3(P, 0.9, 4, seed=9)
-    spall = smoothstep(0.60, 0.63, w + 0.35 * spall_n - 0.08)
-    spall = np.where(is_int, 0, spall)
+            traffic += np.exp(-((xs - c) / 2.4) ** 2) * ((xs > xa) & (xs < xb))
+    stairish = is_tread | (kind == KIND['riser']) | ((kind == KIND['chamfer']) & (traffic > 0))
+    w = edge * (0.5 + 0.9 * (0.5 + nw2) + 0.25 * nw) + 0.35 * traffic * edge * (kind == KIND['chamfer'])
+    paint_loss = smoothstep(0.80, 0.86, w)
+    spall = np.zeros(sh)
     paint_loss = np.where(is_int, paint_loss * 0.3, paint_loss)
 
     plaster = PLASTER + (PLASTER_D - PLASTER) * (0.5 + 0.5 * fbm3(P, 3.0, 3, seed=12))[..., None]
@@ -383,38 +370,33 @@ def bake_group(g, info, hfloor):
     pl = 0.4 * paint_loss
     alb = base * (1 - pl[..., None]) + plaster * pl[..., None]
     alb = alb * (1 - spall[..., None]) + stone * spall[..., None]
-    # small chips on convex edges show the tezontle core
-    chip = smoothstep(0.62, 0.70, np.exp(-dconv / 0.03) * (0.45 + 0.9 * (0.5 + nw2)) + 0.2 * nw)
-    chip = np.where(is_int, 0, chip)
+    # small crisp chips through to the tezontle core, on the sharpest arrises
+    chip = smoothstep(0.98, 1.02, w + 0.25 * np.exp(-dconv / 0.02)) * (~is_int)
     alb = alb * (1 - chip[..., None]) + stone * 0.85 * chip[..., None]
-    spall = np.maximum(spall, chip * 0.6)
+    spall = chip * 0.6
 
-    # runoff streaks on vertical faces: darker grime and pale lime leaching
-    st = fbm3(P, 1.0, 4, seed=11, scale=(2.6, 0.16, 2.6)) + 0.4 * fbm3(P, 1.0, 3, seed=13, scale=(9.0, 0.3, 9.0))
-    dark_st = smoothstep(0.10, 0.50, st) * vert
-    pale_st = smoothstep(0.15, 0.55, -st) * vert * (paint == PAINT['red'])
+    # runoff: vertical grime streaks that start under the moulding drip lines
     wallish = np.isin(kind, [KIND['talud'], KIND['alf_side'], KIND['shrine_wall'], KIND['wall'], KIND['plinth'], KIND['frieze']])
-    under = np.exp(-np.minimum(info['s_rem'], 30) / 1.8) * wallish  # just below the moulding drip line
-    run = smoothstep(-0.05, 0.45, st + 0.25 * fbm3(P, 3.0, 2, seed=15, scale=(4.0, 0.3, 4.0))) * (0.35 + 0.65 * under) * vert
-    alb = alb * (1 - 0.30 * dark_st[..., None]) + GRIME * 0.12 * dark_st[..., None]
-    alb = alb + (GRIME * 0.9 - alb) * (0.42 * run)[..., None]
-    alb = alb + (PLASTER - alb) * (0.28 * pale_st)[..., None]
+    under = np.exp(-np.minimum(info['s_rem'], 30) / 2.5) * wallish
+    st = fbm3(P, 1.0, 4, seed=11, scale=(3.2, 0.12, 3.2))
+    run = smoothstep(0.05, 0.40, st) * (0.25 + 0.75 * under) * vert
+    alb = alb + (GRIME * 0.85 - alb) * (0.38 * run)[..., None]
 
-    # splash-back dirt at the foot of walls
+    # damp grime at the foot of every wall, about 0.5 m deep, with a soft ragged top
     hf = np.clip(hfloor, 0, 50)
-    splash = (0.7 * np.exp(-hf / 0.30) + 0.3 * np.exp(-hf / 1.2)) * (0.65 + 0.35 * fbm3(P, 4.0, 3, seed=17)) * vert
-    alb = alb + (hexlin('#5c4c3e') - alb) * (0.7 * splash)[..., None]
-    # dust on up-facing surfaces, heavier near inner corners
-    dn = fbm3(P, 1.2, 4, seed=19)
-    dust = up * np.clip(0.18 + 0.5 * np.exp(-dconc / 0.35) + 0.15 * dn - 0.3 * traffic * is_tread, 0, 0.85)
+    damp = smoothstep(0.62, 0.28, hf + 0.10 * fbm3(P, 2.5, 3, seed=17)) * vert
+    alb = alb + (hexlin('#43382f') - alb) * (0.62 * damp)[..., None]
+    splash = damp
+
+    # dust on up-facing surfaces: smooth, heavier in inner corners and at the sides
+    # of the stairs, swept clean along the central walking line
+    dn = fbm3(P, 0.12, 3, seed=19)
+    dust = up * np.clip(0.14 + 0.4 * np.exp(-dconc / 0.3) + 0.06 * dn - 0.22 * traffic * is_tread, 0, 0.8)
     alb = alb + (DUST - alb) * dust[..., None]
+    # walked line: worn smoother and slightly paler on treads and nosings
+    alb = np.where(stairish[..., None], alb + (PLASTER * 1.05 - alb) * (0.18 * traffic)[..., None], alb)
     alb = np.where(is_int[..., None], alb * 0.9, alb)
-    # steps: a grime line where tread meets the riser above, worn pale nosings
-    riser = kind == KIND['riser']
-    gl = np.exp(-dconc / 0.035) * riser
-    alb = alb * (1 - 0.35 * gl[..., None])
-    nos = (kind == KIND['chamfer']) & (g.extra.get('stairs') is not None or g.name.startswith('stair'))
-    alb = np.where(nos[..., None], alb * 1.08 + 0.02, alb)
+    rpm = np.zeros(sh)
 
     # roughness
     rough = 0.84 + 0.05 * fbm3(P, 5.0, 2, seed=23) + 0.08 * fbm3(P, 0.4, 3, seed=24)
@@ -432,7 +414,7 @@ def bake_group(g, info, hfloor):
     f1, f2, _ = worley2(uvx / 1.6, uvy / 1.1, seed=31)
     crack = smoothstep(0.03, 0.0, f2 - f1) * smoothstep(0.2, 0.5, fbm3(P, 0.6, 3, seed=33)) * (~(is_tread | (kind == KIND['riser'])))
     h = h - 0.0025 * crack
-    alb = alb * (1 - 0.25 * crack[..., None])
+    alb = alb * (1 - 0.12 * crack[..., None])
 
     ao = 1 - 0.45 * np.exp(-dconc / 0.25) - 0.25 * spall * 0.5
     ao = np.where(is_int, ao * 0.7, ao)

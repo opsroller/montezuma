@@ -9,4 +9,3 @@ textures/
 stage_*.exr
 stage_*.exr.import
 __pycache__/
-fonts/*.import
