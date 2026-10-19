@@ -45,6 +45,12 @@ surface; they start 0.8 cell above the tiles, their lowest edge about
 0.5 m up, and the veil is gone by 0.25 m, so the rays from the camera to a
 label never pass through it. That is why `veil_height` stops at 0.4 m.
 
+The veil is lit like the top of a bank, with all the light it scatters,
+not shaded like a bank's base: it is a thin layer in full sun. Where a
+bank and the veil overlap, the shading follows each one's share of the
+density, so a bank reaching into the veil has no seam where one gives way
+to the other.
+
 The fog stays low (it thins to nothing 2.4 m above the board), because
 seen from a camera nearly straight above, rays to the board's edge pass
 over the platform at a height that grows with distance from the board;
@@ -67,7 +73,10 @@ mist. So the check takes each cell's luma standard deviation with every
 effect off and with the atmosphere alone, and measures the share of it
 the atmosphere removes. On the `main` capture before the veil every cell
 lost between −3% and 3%; under an even 15% blend toward grey every cell
-loses 15%.
+loses 15%. A cell that gains contrast counts as clear: fog only ever
+pulls a cell toward the mist's colour, so a gain comes from something
+else, such as exposure scaling the board up. The thresholds and options
+are in [Readability checks](../reference/benchmark.md#readability-checks).
 
 The thresholds rest on those captures and on what the eye still reads:
 
