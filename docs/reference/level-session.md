@@ -89,7 +89,11 @@ cell off the board.
 `frenzy` (doubled), `frenzy_bar_after`, `frenzy_started`,
 `power_ups_triggered` and `power_up_effects`, `falls`, `spawns`,
 `steel_spawned`, `gems_placed`, `power_ups_placed`, `chains_broken`,
-`steel_removed`.
+`steel_removed`. `chains_broken` lists the chained pieces the step
+reached: their chains go but the pieces stay, so they are not in
+`cleared`, score nothing and keep their gems and power-ups (`OBS-05`).
+A view replaying a report drops those chain marks before the step's
+clear.
 
 `MoveReport`: `swap`, the board's own `result`, `steps`, `totem_charges`
 (each owned totem: 0, 0.5, or 1 for one that fired), `totems_fired` (each

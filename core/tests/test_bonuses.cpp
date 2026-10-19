@@ -867,6 +867,23 @@ void test_board_hooks() {
     check(r && r->cascades[0].cleared == std::vector<Cell>{{0, 7}, {7, 7}} && r->steps[0].size() >= 1 &&
               r->cascades[0].runs.empty(),
           "extend_clear cells are cleared once, out-of-bounds ignored");
+    // keep: cells left in place are not emptied, recorded or counted.
+    Board k = plain_board();
+    const int kept_kind = k.at(7, 7);
+    StepHooks keep;
+    keep.settle_shuffle = false;  // the board has no move left
+    keep.extend_clear = [](const Board&, const std::vector<Cell>&, int step) {
+        return step == 0 ? std::vector<Cell>{{7, 7}} : std::vector<Cell>{};
+    };
+    keep.keep = [](const Board&, int step) {
+        return step == 0 ? std::vector<Cell>{{7, 7}, {-1, 0}, {3, 3}} : std::vector<Cell>{};
+    };
+    const auto kr = k.clear_cells({{0, 7}}, &keep);
+    int counted = 0;
+    if (kr)
+        for (const auto& [kind, n] : kr->steps[0]) counted += n;
+    check(kr && kr->cascades[0].cleared == std::vector<Cell>{{0, 7}} && counted == 1 && k.at(7, 7) == kept_kind,
+          "keep leaves its cells in place, out-of-bounds and uncleared cells ignored");
 }
 
 // --- random play ---------------------------------------------------------------

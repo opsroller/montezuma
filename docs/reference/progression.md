@@ -349,13 +349,13 @@ human time at 3.5 s a move, and the level table adds an Obstacles column.
 
 ### e3-l01: Locked in
 
-- **Idea:** Chains: a chained piece cannot be swapped but still matches when a run forms through it, and the chain goes with it.
+- **Idea:** Chains: a chained piece cannot be swapped; the first run or blast that reaches it breaks the chain and leaves the piece, and the next one clears it.
 - **Feeling:** curiosity.
 - **Duration:** Sim `greedy` 75 to 90 mean moves on normal (65 gems), about 112 to 135 on hard (100 gems); about 262 to 315 s of play at 3.5 s a move.
 - **Target success rate:** Normal: at least 75 % of players win on the first try; hard: at least 60 %. Human rates are provisional until a playtest ([why](../explanation/about-the-episode-3-levels.md#human-time-against-the-clock)). Simulator: the e3 row of [balance](balance.md). It introduces chains after e2-l06, which wins every greedy run, so `greedy` must win every run here too (the 100 % tie); that also makes it at least as easy as e3-l03.
 - **Takeaway:** The player knows a chained piece can't be moved but can be freed by lining up its colour next to it, and that it then plays like any piece.
 - **Role and levers:** introduce; goal size: 65 gems; complexity: 6 chained cells, all on the bottom row.
-- **First contact:** Chains only stop swaps: they cost no time or gems and still match. On the bottom row nothing lies below them, so they stay where the player first sees them, a fixed and readable lock, until a run through them or a blast clears them; the rest of the board plays as in episode 2. tnt tier 2 (a diamond of radius 2) becomes buyable here; it helps but is optional (PROG-04).
+- **First contact:** Chains stop swaps and hold: each takes two hits, the first to break the chain and the second to clear the piece and any gem on it. On the bottom row nothing lies below them, so they stay where the player first sees them, a fixed and readable lock, until runs or blasts break and then clear them; the rest of the board plays as in episode 2. tnt tier 2 (a diamond of radius 2) becomes buyable here; it helps but is optional (PROG-04).
 
 ### e3-l02: Falling locks
 
@@ -467,7 +467,7 @@ after two moves in a row whose swap match is blue (`TOT-02`, `TOT-03`).
 - **Takeaway:** The player knows two blue matches in a row fire the ward, and that it clears every steel piece on the board, once a level.
 - **Role and levers:** introduce; goal size: 105 gems; complexity: steel_rate 0.04, no chains.
 - **First contact:** Safe because the level does not need it: steel at 0.04 is lighter than e3-l08's 0.05, which players beat without ward, so a ward spent early by accident costs nothing but the chance to watch it work. No chains, so the player meets one thing at a time. As an introducing level after e3-l08 it must win every greedy run (the 100 % tie) and be at least as easy as e4-l03 ([balance](balance.md): the curve rule ties each episode opener to its third level). Lightning tier 3 becomes buyable here; optional.
-- **Clock:** Normal 480 s (137.2 draft mean moves x 3.5), hard 748 s (213.6 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. The first level with ward; the human time here is the episode's lowest.
+- **Clock:** Normal 480 s (137.2 draft mean moves x 3.5), hard 749 s (214.0 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. The first level with ward; the human time here is the episode's lowest.
 
 ### e4-l02: Iron rain
 
@@ -478,7 +478,7 @@ after two moves in a row whose swap match is blue (`TOT-02`, `TOT-03`).
 - **Takeaway:** The player knows to avoid two blue matches in a row until several steel pieces stand, then fire the ward on purpose.
 - **Role and levers:** develop; goal size: 110 gems; complexity: steel_rate 0.06 (guidance maximum), no chains.
 - **First contact:** Builds on e4-l01: the same single ward, now with enough steel (up to 8 can stand, OBS-02) that firing it early wastes it. Steel left after the ward goes to fire, tnt, lightning and color_clear (its colour, from tier 2) as in episode 3. Clock tier 2 becomes buyable here; optional.
-- **Clock:** Normal 503 s (143.7 draft mean moves x 3.5), hard 749 s (214.1 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Most steel of the first half; the clock covers it from the rule's margin.
+- **Clock:** Normal 503 s (143.7 draft mean moves x 3.5), hard 752 s (215.0 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Most steel of the first half; the clock covers it from the rule's margin.
 
 ### e4-l03: The chains stay
 
@@ -489,7 +489,7 @@ after two moves in a row whose swap match is blue (`TOT-02`, `TOT-03`).
 - **Takeaway:** The player knows ward clears only steel, and chains still need a run through them or a blast.
 - **Role and levers:** twist; goal size: 115 gems; complexity: steel_rate 0.02 and 8 chained cells in the four centre columns of the bottom two rows.
 - **First contact:** The first level of the episode with chains. On e4-l01 and e4-l02 the ward cleared every obstacle on the board, because steel was the only one; here the first ward meets chains and leaves them. The chains sit in the centre of the bottom two rows, where the bottom-row links cannot fall and the row above only falls when a link under it clears, so they are still there when steel has gathered and the ward fires. Hint tier 2 and gold tier 3 become buyable here; optional. Steel stays light (0.02) so the chains, not the steel, are what the player watches, and so the twist is no harder than e4-l02.
-- **Clock:** Normal 517 s (147.7 draft mean moves x 3.5), hard 795 s (227.2 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Bottom-row chains barely change the simulated length ([about the episode 3 levels](../explanation/about-the-episode-3-levels.md#what-the-simulator-measures-here)).
+- **Clock:** Normal 542 s (155.0 draft mean moves x 3.5), hard 831 s (237.4 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Since chains hold (WP-59) its eight chains add about 7 simulated moves on normal (147.7 to 155.0 mean), and the `base_clock` rose with them ([about the episode 3 levels](../explanation/about-the-episode-3-levels.md#what-the-simulator-measures-here)).
 
 ### e4-l04: Locked floor
 
@@ -500,7 +500,7 @@ after two moves in a row whose swap match is blue (`TOT-02`, `TOT-03`).
 - **Takeaway:** The player knows how to split their tools: the ward for steel, runs and blasts for chains, with a floor of locks that never moves on its own.
 - **Role and levers:** test; goal size: 120 gems; complexity: steel_rate 0.05 and 8 chained cells filling the bottom row.
 - **First contact:** Mixes ward, steel and chains; a chained bottom row has nothing below it, so it stays until matched or blasted. Obstacles stay below the episode's maximums so the spike (e4-l08) and the finale (e4-l10) can ask more. Fire tier 3 becomes buyable here; optional.
-- **Clock:** Normal 544 s (155.5 draft mean moves x 3.5), hard 811 s (231.8 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. First test of the episode.
+- **Clock:** Normal 560 s (160.1 draft mean moves x 3.5), hard 844 s (241.1 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. First test of the episode.
 
 ### e4-l05: Open ground
 
@@ -511,7 +511,7 @@ after two moves in a row whose swap match is blue (`TOT-02`, `TOT-03`).
 - **Takeaway:** The player knows a light board leaves room to set up runs of 4 or more, so power-ups are already on the board when the few obstacles arrive.
 - **Role and levers:** rest; goal size: 125 gems (the progression curve); complexity: steel_rate 0.02 and 2 chained cells (guidance minimums).
 - **First contact:** Mixes everything so far at the lightest obstacle load of the episode; the relief is in fewer obstacles, not a shorter level (the +5 goal still rises). Score Frenzy tier 3 becomes buyable here; optional.
-- **Clock:** Normal 546 s (155.9 draft mean moves x 3.5), hard 842 s (240.5 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. A rest by load, not by length.
+- **Clock:** Normal 547 s (156.2 draft mean moves x 3.5), hard 841 s (240.4 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. A rest by load, not by length.
 
 ### e4-l06: Pillars
 
@@ -521,8 +521,8 @@ after two moves in a row whose swap match is blue (`TOT-02`, `TOT-03`).
 - **Target success rate:** Normal: at least 68 % of players win on the first try; hard: at least 53 %. Human rates are provisional until a playtest. Simulator: the e4 row of balance.md (`random` informational from e4 on) and the curve rules as `--check` runs them; `greedy` wins 100 % on the draft, within 10 points of its neighbours.
 - **Takeaway:** The player knows a column of chains cannot be swapped, so it splits the board, but its links still match, so runs through them and blasts beside them open the wall.
 - **Role and levers:** twist; goal size: 130 gems; complexity: steel_rate 0.03 and 10 chained cells in two columns, five cells each, on the bottom five rows.
-- **First contact:** Chains are familiar; the new shape is a line of them: chained pieces cannot be swapped, so the column splits the lower board. Chained pieces still match normally (OBS-05), so a run that lines up with a link clears it, and the links above a cleared one drop down the column. Steel stays light so the columns are the point. Timer tier 3 and paint tier 3 become buyable here; optional.
-- **Clock:** Normal 584 s (166.8 draft mean moves x 3.5), hard 880 s (251.3 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Moves per gem barely change from e4-l05 (1.25 to 1.28): the columns shape the play more than the length.
+- **First contact:** Chains are familiar; the new shape is a line of them: chained pieces cannot be swapped, so the column splits the lower board. Chained pieces still match (OBS-05), so a run that lines up with a link breaks it, the next run clears the freed piece, and the links above it drop down the column. Steel stays light so the columns are the point. Timer tier 3 and paint tier 3 become buyable here; optional.
+- **Clock:** Normal 596 s (170.4 draft mean moves x 3.5), hard 905 s (258.5 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Moves per gem barely change from e4-l05 (1.25 to 1.28): the columns shape the play more than the length.
 
 ### e4-l07: Scattered locks
 
@@ -533,7 +533,7 @@ after two moves in a row whose swap match is blue (`TOT-02`, `TOT-03`).
 - **Takeaway:** The player knows scattered chains are freed mostly one at a time, by runs through them, so blasts go further on steel; a blast frees two only when chains have drifted close or happen to share its reach.
 - **Role and levers:** develop; goal size: 135 gems; complexity: steel_rate 0.05 and 4 chained cells, no two in the same row or column and each more than four cells (row plus column) from any other, on the bottom five rows.
 - **First contact:** Develops e4-l03 and e4-l06 with a new spacing, not a new rule: packed chains rewarded blasts (e3-l03), spread ones reward runs. At the start no two chains share a row or column and each pair is more than four cells apart, so a blast seldom reaches two; chains fall like any piece (OBS-05), so the spacing loosens as the level goes on, and fire, a lightning cross or color_clear can still catch two. Gift tier 3 becomes buyable here; optional.
-- **Clock:** Normal 600 s (171.3 draft mean moves x 3.5), hard 922 s (263.4 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Fewer chains than e4-l06 but more steel.
+- **Clock:** Normal 609 s (173.9 draft mean moves x 3.5), hard 934 s (266.8 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Fewer chains than e4-l06 but more steel.
 
 ### e4-l08: The forge
 
@@ -544,7 +544,7 @@ after two moves in a row whose swap match is blue (`TOT-02`, `TOT-03`).
 - **Takeaway:** The player knows that after the one ward, every blast has to be shared between steady steel and three clusters of chains, and that a blast on a cluster frees several chains at once.
 - **Role and levers:** test; goal size: 140 gems; complexity: steel_rate 0.06 and 10 chained cells (guidance maximums) in three clusters on the bottom two rows.
 - **First contact:** Tests everything in episode 4 at its heaviest: the first level with both obstacles at their maximums, so one ward cannot cover the level: after it, steel goes to fire, tnt, lightning and color_clear (its colour, from tier 2), the same tools the chain clusters want. Clusters let a blast free several chains at once (e3-l03's lesson). Tnt tier 3 and time tier 3 become buyable here; optional.
-- **Clock:** Normal 616 s (176.1 draft mean moves x 3.5), hard 929 s (265.3 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. The spike; the longest level of the episode in simulated moves.
+- **Clock:** Normal 641 s (183.1 draft mean moves x 3.5), hard 961 s (274.5 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. The spike; the longest level of the episode in simulated moves.
 
 ### e4-l09: Quiet before
 
@@ -555,7 +555,7 @@ after two moves in a row whose swap match is blue (`TOT-02`, `TOT-03`).
 - **Takeaway:** The player knows that on a light board one well-timed ward does most of the work: at tier 1 fire it once steel has gathered and blast the few that follow, or with tier 2 (buyable here) fire it early to stop new steel for good.
 - **Role and levers:** rest; goal size: 145 gems (the progression curve); complexity: steel_rate 0.03 and 4 chained cells on the bottom row.
 - **First contact:** A rest at e3-l07's obstacle load, now with ward to answer the steel, after the e4-l08 spike. Ward tier 2 and color_clear tier 3 become buyable here; optional, and the takeaway holds at either ward tier.
-- **Clock:** Normal 565 s (161.3 draft mean moves x 3.5), hard 855 s (244.3 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Simulated moves fall here from e4-l08 because the obstacles are lighter and the simulator buys ward tier 2 (no new steel after the ward) and color_clear tier 3 as they become available; a player who skipped them takes longer ([about level clocks](../explanation/about-level-clocks.md#which-player)).
+- **Clock:** Normal 569 s (162.7 draft mean moves x 3.5), hard 878 s (251.0 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Simulated moves fall here from e4-l08 because the obstacles are lighter and the simulator buys ward tier 2 (no new steel after the ward) and color_clear tier 3 as they become available; a player who skipped them takes longer ([about level clocks](../explanation/about-level-clocks.md#which-player)).
 
 ### e4-l10: Falling iron
 
@@ -566,7 +566,7 @@ after two moves in a row whose swap match is blue (`TOT-02`, `TOT-03`).
 - **Takeaway:** The player knows they can handle falling locks and heavy steel together: the ward for the steel, runs and blasts for the chains as they land.
 - **Role and levers:** test; goal size: 150 gems; complexity: steel_rate 0.06 and 10 chained cells spread over the upper half.
 - **First contact:** Mixes chains, steel, ward and every totem and power-up so far. Unlike e4-l08's fixed floor locks, these chains start high and fall (e3-l02's falling locks) into a board crowded with steel. A player who bought ward tier 2 (e4-l09) stops steel after the ward and one who buys harvest tier 3 here can clear every chain at once: those purchases make the finale lighter, which is their reward; the brief's targets are for a player who skipped them. Multiplier tier 3 and harvest tier 3 become buyable here; optional.
-- **Clock:** Normal 579 s (165.4 draft mean moves x 3.5), hard 873 s (249.3 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Simulated moves stay below e4-l08 because the simulator owns ward tier 2 and buys harvest tier 3 (removes every chain) here; the human targets are for a player who skipped them.
+- **Clock:** Normal 575 s (164.4 draft mean moves x 3.5), hard 870 s (248.6 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Simulated moves stay below e4-l08 because the simulator owns ward tier 2 and buys harvest tier 3 (removes every chain) here; the human targets are for a player who skipped them.
 
 | Level | File | Gems normal / hard | Totems | Power-ups | Obstacles | Seed |
 |---|---|---|---|---|---|---|
@@ -607,7 +607,7 @@ simulator measures here are in
 - **Takeaway:** The player knows the episode 4 play still wins at a bigger goal: one ward once steel has gathered, and blasts or runs through the bottom-row links.
 - **Role and levers:** rest; goal size: 155 gems; complexity: steel_rate 0.03 and 4 chained cells on the bottom two rows (two on the bottom row near the edges, two above the centre).
 - **First contact:** Mixes every totem, power-up and both obstacles from episodes 1 to 4 at a light load (steel 0.03, 4 chains on the bottom two rows, well below e4-l10's maximums) after the Memory 2 bonus level. As the episode opener it is a rest by obstacle load, not by length: its goal is the curve's next step, and it must be at least as easy as e5-l03 (the curve rule ties each opener to its third level). Gold tier 4 becomes buyable here; optional.
-- **Clock:** Normal 593 s (169.5 draft mean moves x 3.5), hard 905 s (258.6 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. The opener; moves sit above e5-l02's because the simulator buys gems on board tier 3 (8 gems) only at e5-l02.
+- **Clock:** Normal 598 s (171.0 draft mean moves x 3.5), hard 915 s (261.3 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. The opener; moves sit above e5-l02's because the simulator buys gems on board tier 3 (8 gems) only at e5-l02.
 
 ### e5-l02: The stair
 
@@ -618,7 +618,7 @@ simulator measures here are in
 - **Takeaway:** The player knows a link falls each time a piece under it clears, so the upper links of the diagonal, with the most pieces under them, drift down first and the stair flattens toward the floor.
 - **Role and levers:** develop; goal size: 160 gems; complexity: steel_rate 0.04 and 6 chained cells, one in each of columns 2 to 7, on a diagonal that rises one row per column from the bottom row.
 - **First contact:** Develops falling chains (e3-l02, e4-l10) with a new shape: one link in each of columns 2 to 7 on a diagonal from the bottom row up to row 2, so no column has more than one lock. The bottom link cannot fall; the upper ones have more pieces under them and drift first. Steel at 0.04 stays below the episode's maximum. Fire tier 4 and gems on board tier 3 (8) become buyable here; optional.
-- **Clock:** Normal 539 s (154.1 draft mean moves x 3.5), hard 822 s (235.0 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Simulated moves drop from e5-l01: 8 gems on the board (gems on board tier 3, bought here by the simulator) bring each gem goal closer.
+- **Clock:** Normal 542 s (155.0 draft mean moves x 3.5), hard 817 s (233.3 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Simulated moves drop from e5-l01: 8 gems on the board (gems on board tier 3, bought here by the simulator) bring each gem goal closer.
 
 ### e5-l03: Falling crown
 
@@ -629,7 +629,7 @@ simulator measures here are in
 - **Takeaway:** The player knows chains that start on the top row fall through the whole board and land at different heights, so they are freed where they land, by runs and blasts in the lower half.
 - **Role and levers:** twist; goal size: 165 gems; complexity: steel_rate 0.03 and 8 chained cells filling the top row (y = 0).
 - **First contact:** Twists falling chains: e3-l02 had a single link on the top row; here the whole top row is chained, so every link has seven pieces under it and the row breaks up within the first moves. Steel stays light (0.03) so the falling links are the point, and so the twist is no harder than e5-l04's test. Hint tier 3 becomes buyable here; optional.
-- **Clock:** Normal 550 s (157.1 draft mean moves x 3.5), hard 848 s (242.4 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Top-row chains barely change the simulated length; the simulator owns harvest tier 3, which removes every chain.
+- **Clock:** Normal 556 s (159.0 draft mean moves x 3.5), hard 846 s (241.7 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Top-row chains barely change the simulated length; the simulator owns harvest tier 3, which removes every chain.
 
 ### e5-l04: The middle wall
 
@@ -640,7 +640,7 @@ simulator measures here are in
 - **Takeaway:** The player knows a full row of chained pieces cannot be swapped, so no swap moves a piece into or along row 4 until a link is matched, blasted or drops, and that blasts on the row open it faster than single runs.
 - **Role and levers:** test; goal size: 170 gems; complexity: steel_rate 0.05 and 8 chained cells filling row 4 (y = 4).
 - **First contact:** Tests the episode so far: a full row of chains across the middle of the board (row 4) with steel at 0.05. Chained pieces cannot be swapped (OBS-05), so no swap can move a piece into or along row 4 until links clear; a vertical run through a link still clears it, and links fall when a piece under them clears. Obstacles stay below the maximums so the spike (e5-l08) can ask more. Clock tier 3 becomes buyable here; optional. The Reaction 2 bonus level follows.
-- **Clock:** Normal 565 s (161.4 draft mean moves x 3.5), hard 861 s (246.0 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. First test of the episode.
+- **Clock:** Normal 571 s (163.2 draft mean moves x 3.5), hard 871 s (248.9 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. First test of the episode.
 
 ### e5-l05: Open court
 
@@ -651,7 +651,7 @@ simulator measures here are in
 - **Takeaway:** The player knows that with gems on board at tier 3 (8 gems) a run of 4 or more that includes gems both collects them and leaves a power-up, so on a light board those runs are worth waiting for.
 - **Role and levers:** rest; goal size: 175 gems; complexity: steel_rate 0.02 and 2 chained cells, the two bottom corners.
 - **First contact:** A rest after the first test and the Reaction 2 bonus level: the lightest load of the episode (guidance minimums: steel 0.02, 2 chains in the bottom corners) at the curve's next goal, so the relief is in fewer obstacles, not a shorter level. Unlike e4-l05's open board, the board now carries 8 gems for a player who bought gems on board tier 3 at e5-l02 (the simulator does), so gem-carrying runs of 4 come up often. Time tier 4 becomes buyable here; optional.
-- **Clock:** Normal 573 s (163.8 draft mean moves x 3.5), hard 885 s (252.8 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. A rest by load, not by length.
+- **Clock:** Normal 572 s (163.4 draft mean moves x 3.5), hard 883 s (252.3 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. A rest by load, not by length.
 
 ### e5-l06: The cradle
 
@@ -662,7 +662,7 @@ simulator measures here are in
 - **Takeaway:** The player knows a link in a side column has no neighbour on its outer side, so it is freed by a vertical run along the edge, a run reaching in from the board, or a blast next to it.
 - **Role and levers:** twist; goal size: 180 gems; complexity: steel_rate 0.04 and 10 chained cells: the bottom four cells of both side columns (x = 0 and x = 7) and the bottom-row cells next to each corner.
 - **First contact:** Twists the chained columns of e4-l06: the columns move to the board's edges, where a link has no partner on its outer side and fewer runs can reach it; the bottom-row cells next to each corner are chained too. Steel at 0.04. Paint tier 4 becomes buyable here; optional.
-- **Clock:** Normal 602 s (172.1 draft mean moves x 3.5), hard 927 s (264.9 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Edge links barely change the simulated length.
+- **Clock:** Normal 607 s (173.5 draft mean moves x 3.5), hard 922 s (263.4 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Edge links barely change the simulated length.
 
 ### e5-l07: Iron neighbours
 
@@ -673,7 +673,7 @@ simulator measures here are in
 - **Takeaway:** The player knows to hold the ward until steel sits beside the chains, because with ward tier 3 that ward frees those chains too, and without it a tnt or lightning on that steel does the same.
 - **Role and levers:** develop; goal size: 185 gems; complexity: steel_rate 0.06 and 6 chained cells spread over rows 3 to 7, no two orthogonally adjacent.
 - **First contact:** Develops ward with its optional tier 3 (buyable here, TOT-14: the ward also clears every piece orthogonally next to a destroyed steel piece): steel at the maximum 0.06 lands among six chains spread over rows 3 to 7, so steel often ends beside a link. At tier 3 the ward has two uses a level (TOT-06), but tier 2's effect stays (no new steel after the first ward), so only the first ward meets real steel and the lesson is timing: fire it when steel crowds the chains, not at the first steel. A player without tier 3 meets the same choice with tnt (its 3x3 and more) and lightning, which clear steel and the cells around or in line with it. Ward tier 3 and Score Frenzy tier 4 (30 s) become buyable here; optional.
-- **Clock:** Normal 620 s (177.1 draft mean moves x 3.5), hard 950 s (271.5 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. The simulator buys ward tier 3 here as it becomes available.
+- **Clock:** Normal 619 s (176.9 draft mean moves x 3.5), hard 956 s (273.1 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. The simulator buys ward tier 3 here as it becomes available.
 
 ### e5-l08: Chessboard floor
 
@@ -684,7 +684,7 @@ simulator measures here are in
 - **Takeaway:** The player knows that with both obstacles at their maximums the blasts must be shared, and that a blast on the floor frees several links while a run of 3 or 4 frees at most two.
 - **Role and levers:** test; goal size: 190 gems; complexity: steel_rate 0.06 and 10 chained cells on one colour of a chessboard over the bottom three rows: alternate cells of rows 7 and 6, and two cells of row 5 (x = 0 and x = 6), so no two links are side by side.
 - **First contact:** The episode spike: both obstacles at the guidance maximums (steel 0.06, 10 chains) on one colour of a chessboard over the bottom three rows, before the Attention 2 bonus level. No two links are side by side, so a run of 3 or 4 frees at most two links (a run of 5 along a row can free three), but a blast on the floor frees several. One ward cannot cover the level for a player without ward tier 2. Timer tier 4 (+120 s) becomes buyable here; optional.
-- **Clock:** Normal 627 s (179.2 draft mean moves x 3.5), hard 959 s (274.1 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. The spike; timer tier 4 (+120 s) arrives on top for a player who buys it.
+- **Clock:** Normal 646 s (184.6 draft mean moves x 3.5), hard 984 s (281.0 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. The spike; timer tier 4 (+120 s) arrives on top for a player who buys it.
 
 ### e5-l09: Still water
 
@@ -695,7 +695,7 @@ simulator measures here are in
 - **Takeaway:** The player knows that two swaps in a row whose own matches both have runs of the same two colours fire both of those totems (TOT-03, TOT-04), and that a light board is where they can afford to look for them.
 - **Role and levers:** rest; goal size: 195 gems; complexity: steel_rate 0.03 and 4 chained cells in the centre of rows 3 and 4.
 - **First contact:** A rest after the e5-l08 spike and the Attention 2 bonus level, at e4-l09's obstacle load (steel 0.03, 4 chains) with the chains in the centre of rows 3 and 4 instead of the floor, and the curve's next goal. With the obstacles light, the level leaves room, without setting it up, for the hardest totem plan in the rules: a swap whose step 0 has runs of two kinds charges both totems (TOT-04), and a second swap in a row with runs of the same two kinds fires both (TOT-03, TOT-05). Gift tier 4 and harvest tier 4 become buyable here; optional.
-- **Clock:** Normal 646 s (184.6 draft mean moves x 3.5), hard 998 s (285.1 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. A rest by load at the curve's next goal; simulated moves still rise with the goal.
+- **Clock:** Normal 649 s (185.5 draft mean moves x 3.5), hard 1003 s (286.7 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. A rest by load at the curve's next goal; simulated moves still rise with the goal.
 
 ### e5-l10: The locked heart
 
@@ -706,7 +706,7 @@ simulator measures here are in
 - **Takeaway:** The player knows the game's largest goal (200 gems) can be met with the board's centre locked: runs below the block make its links fall, and runs through it or blasts on it clear them.
 - **Role and levers:** test; goal size: 200 gems; complexity: steel_rate 0.05 and 10 chained cells in a centre block: a 4 x 2 block over rows 3 and 4 plus the two centre cells of row 5.
 - **First contact:** Tests the episode at the gem goal's cap (200 normal, 300 hard): a block of 10 chains in the centre of the board with steel at 0.05. The centre is where most runs happen, so the block takes those cells away, and its links fall as pieces under them clear. Every tier is now buyable; nothing new unlocks.
-- **Clock:** Normal 662 s (189.2 draft mean moves x 3.5), hard 1025 s (292.8 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. The gem goal reaches its cap; the longest level of the episode in simulated moves.
+- **Clock:** Normal 679 s (194.1 draft mean moves x 3.5), hard 1030 s (294.4 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. The gem goal reaches its cap; the longest level of the episode in simulated moves.
 
 ### e5-l11: Last light
 
@@ -717,7 +717,7 @@ simulator measures here are in
 - **Takeaway:** The player knows to spend a light 200-gem level building power-ups on the lower half instead of chasing the two top-row links, which fall to them anyway.
 - **Role and levers:** rest; goal size: 200 gems; complexity: steel_rate 0.03 and 3 chained cells: two on the top row (x = 1 and x = 6) and one in the centre of row 5.
 - **First contact:** A rest between the e5-l10 test and the finale, at the same 200 / 300 goal: light obstacles (steel 0.03, 3 chains, two on the top row that fall and one low in the centre), so the relief is in the load and the goal stays the cap. It mixes everything at its lightest since e5-l05.
-- **Clock:** Normal 658 s (188.1 draft mean moves x 3.5), hard 1005 s (287.2 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Same goal as e5-l10 at a lighter load, so slightly fewer simulated moves.
+- **Clock:** Normal 658 s (187.9 draft mean moves x 3.5), hard 1012 s (289.0 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. Same goal as e5-l10 at a lighter load, so slightly fewer simulated moves.
 
 ### e5-l12: The treasure
 
@@ -728,7 +728,7 @@ simulator measures here are in
 - **Takeaway:** The player knows they can win the campaign's last level, at the game's largest goal and heaviest load, with chains falling from five rows at once: the Explorer trophy on normal and Legend on hard.
 - **Role and levers:** test; goal size: 200 gems; complexity: steel_rate 0.06 and 10 chained cells, two in each of rows 1, 2, 4, 5 and 7, mirrored left to right.
 - **First contact:** The finale and the campaign's last level (the Explorer and Legend trophies are for winning it on normal and hard): both obstacles at the guidance maximums with chains in five rows from row 1 to the bottom row, so the upper links fall into the steel while the bottom ones hold. It mixes every lesson of episodes 3 to 5 at the capped goal (200 / 300).
-- **Clock:** Normal 661 s (188.8 draft mean moves x 3.5), hard 1018 s (290.9 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. The finale; the simulator's owned obstacle removers keep it close to e5-l10 in moves, and the human targets carry the step up.
+- **Clock:** Normal 682 s (194.8 draft mean moves x 3.5), hard 1032 s (294.9 x 3.5) of human play; the `base_clock` in the level file is the [clock rule](balance.md#clock)'s fixed point. The finale; the simulator's owned obstacle removers keep it close to e5-l10 in moves, and the human targets carry the step up.
 
 | Level | File | Gems normal / hard | Totems | Power-ups | Obstacles | Seed |
 |---|---|---|---|---|---|---|
@@ -748,5 +748,5 @@ simulator measures here are in
 Every episode 5 level has all seven totems and six power-ups unlocked.
 `chained_cells` and `steel_rate` are defined in [level data](level-data.md);
 y = 0 is the top row. Each sets `base_clock` from the
-[clock rule](balance.md#clock): 630 to 770 s on normal and 950 to 1180 s
-on hard, peaking at e5-l10 (and e5-l12 on hard).
+[clock rule](balance.md#clock): 630 to 790 s on normal and 950 to 1190 s
+on hard, peaking at e5-l10 and e5-l12.

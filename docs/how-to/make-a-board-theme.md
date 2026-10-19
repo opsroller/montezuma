@@ -64,7 +64,7 @@ With a Blender install instead of `bpy`, run the mesh step as
 1. Add a recipe to `tools/assets/gen_theme_textures.py`: a function
    `(rng, n)` that returns base colour, height, occlusion, roughness and
    metallic arrays for an `n`×`n` tile. Build it from the periodic helpers
-   (`fbm`, `voronoi`, `cavity`) so it tiles. Keep base colour free of
+   (`fbm`, `voronoi`, `warp`, `blur`, `cavity`, `leaves`) so it tiles. Keep base colour free of
    light and shadow; put roughness variation where the surface story is.
    Register it in `RECIPES`.
 2. Add the set under `textures.sets` in the parameter file, for example

@@ -182,6 +182,10 @@ struct StepClear {
     // In the order they went off: first those on run cells (row-major), then
     // those each later effect reached.
     std::vector<TriggeredPowerUp> triggered;
+    // Pieces the clear reached that stay in place, row-major: chained
+    // pieces lose their chain instead (OBS-05). Not in `cells`; a power-up
+    // on one does not go off.
+    std::vector<Cell> held;
     // Parallel to `triggered`.
     std::vector<PowerUpEffect> effects;
 };
@@ -230,8 +234,10 @@ struct PowerUpLayer {
     // cleared piece, and repeats for power-ups those cells reach until none
     // is new. `step` is recorded in each TriggeredPowerUp. Does not change
     // the layer or the board; apply_step removes the power-ups.
+    // `holds`, row-major like the board, marks pieces a clear only unchains
+    // (OBS-05): they go to StepClear::held. Empty: none.
     StepClear expand_clear(const Board& board, std::span<const Cell> run_cells, int step,
-                           const PieceMarks& marks = {}) const;
+                           const PieceMarks& marks = {}, const std::vector<bool>& holds = {}) const;
 
     // rule: PWR-03 moves power-ups with their pieces: the swap exchanges two
     // cells' entries; a step removes power-ups on cleared cells and moves

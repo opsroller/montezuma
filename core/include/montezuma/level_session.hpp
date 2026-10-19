@@ -81,7 +81,7 @@ struct StepReport {
     std::vector<Cell> steel_spawned;
     std::vector<Cell> gems_placed;
     std::vector<PowerUpPlacement> power_ups_placed;
-    std::vector<Cell> chains_broken;
+    std::vector<Cell> chains_broken;  // OBS-05: unchained, the piece stayed (not in cleared)
     std::vector<Cell> steel_removed;
 };
 

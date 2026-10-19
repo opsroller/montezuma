@@ -6,7 +6,7 @@
   "theme": "temple",
   "board": { "width": 8, "height": 8, "kinds": 7 },
   "gem_goal": { "normal": 65, "hard": 100 },
-  "base_clock": { "normal": 340, "hard": 520 },
+  "base_clock": { "normal": 340, "hard": 530 },
   "totems_unlocked": ["fire", "time", "gold", "gift", "harvest", "paint"],
   "powerups_unlocked": ["tnt", "color_clear", "lightning", "clock", "multiplier", "hint"],
   "chained_cells": [[0, 7], [1, 7], [2, 7], [5, 7], [6, 7], [7, 7]],

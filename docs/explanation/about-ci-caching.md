@@ -40,9 +40,36 @@ runs one compiler call per file, through the launcher, on every OS.
 ## What is not cached, and why
 
 Downloads that take a second (Godot for the headless load) are left
-alone: restoring a cache costs about as much as the download. The core and
-sanitizer builds take seconds. Caches that do not pay their way are not
-added.
+alone: restoring a cache costs about as much as the download. Caches that
+do not pay their way are not added.
+
+The core, sanitizer and balance-simulator builds were once left uncached
+for that reason. As the core grew they reached 35 to 47 seconds of
+compiling on every run, the longest step in their jobs, so they now go
+through ccache like the extension builds. The Windows core job is the
+exception: it uses the Visual Studio generator, which ignores compiler
+launchers, and runs only on `main` and manual runs.
+
+## Why the jobs run on the stock runner images
+
+The web browser check needs Chromium, Firefox and WebKit plus dozens of
+system libraries; installing them took about 40 seconds of every `web`
+run. Playwright publishes an image with exactly those browsers for each
+release, and running the check in it was tried and measured: starting the
+container took about 26 seconds, and the browsers ran slower inside it
+(WebKit alone took about as long as all three on the runner), so the
+check took longer than installing on the runner, even split into one job
+per browser. Caching the browser downloads with `actions/cache` was
+measured too: the install step still took 40 seconds on a cache hit,
+because installing the system libraries is most of it, so that cache was
+not added either. The browsers are installed on the runner on each run.
+
+The compile jobs stay on the stock runner images for the same reason.
+Those already carry CMake, Ninja and the compilers (the cache action adds
+ccache), so a build container would only add an image pull. Godot and
+Emscripten come from pinned, checksummed downloads restored from
+`actions/cache`, which keeps the version in one file,
+`tools/release/godot.env`.
 
 ## Cache safety
 

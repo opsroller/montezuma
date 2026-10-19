@@ -73,7 +73,7 @@ empty at once, `falls` move down at once, `spawns` drop in.
   two runs (L, T and plus shapes) appears in both runs but once in
   `cleared`. A 4-run or 5-run is one run of that length. For a match step,
   `cleared` is exactly the union of the runs, plus any cells an
-  `extend_clear` hook added. For step 0 of `clear_cells`,
+  `extend_clear` hook added, minus any a `keep` hook left in place. For step 0 of `clear_cells`,
   `runs` is empty and `cleared` is the effect's cells.
 - **Falls.** `from.x == to.x` and `to.y > from.y`, always. No two falls
   share a `from` or a `to`. Apply them simultaneously: every `to` is empty
@@ -94,6 +94,7 @@ interprets them.
 ```cpp
 struct StepHooks {
     std::function<std::vector<Cell>(const Board&, const std::vector<Cell>& cleared, int step)> extend_clear;
+    std::function<std::vector<Cell>(const Board&, int step)> keep;
     std::function<void(const Board&, const CascadeStep& step, int index)> after_refill;
     std::function<bool(const Board&, Cell)> matchable;  // null: every piece
     std::function<bool(const Board&, Cell)> movable;    // null: every piece
@@ -105,6 +106,7 @@ struct StepHooks {
 | Hook | Called | Effect |
 |---|---|---|
 | `extend_clear` | once per step, before its cells empty, with the pieces still on the board; `cleared` is the step's cells so far (row-major), `step` its index in `cascades` | the returned cells are cleared in the same step: added to `cleared` and counted in `steps`. Out-of-bounds, empty and duplicate cells are ignored. `runs` stays as found, so for a match step `cleared` is then a superset of the runs' union |
+| `keep` | once per step, right after `extend_clear`, with the same `step` | the returned cells stay in place: not emptied, not in `cleared`, not counted in `steps` (chains, `OBS-05`). Cells the step would not clear are ignored. A step may then clear nothing |
 | `after_refill` | once per step, after its falls and spawns | none on the board; the hook sees the step as recorded |
 | `matchable` | by run finding, legality and shuffles | a piece it rejects ends a run (steel, `OBS-01`, `RES-01`) |
 | `movable` | by legality and shuffles | a piece it rejects cannot be swapped and keeps its cell in a shuffle (`MOVE-03`, `OBS-06`) |

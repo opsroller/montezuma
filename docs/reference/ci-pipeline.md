@@ -52,6 +52,9 @@ shows up on `main` after merge, and the next PR fixes it.
 | Compiler cache | `extension (ubuntu-latest)` | ccache | `tests-extension-godot-cpp-10-ubuntu-latest` + timestamp | 500 MB |
 | Compiler cache | `extension (windows-latest)` on `main`; `build and test (windows)` in the `windows` workflow | sccache | `tests-extension-godot-cpp-10-windows-latest` + timestamp | 500 MB |
 | Lightmaps | `extension (ubuntu-latest)`; also the `build` export job and the `web` job | `.github/actions/lightmaps` | `lightmaps-` plus a hash of the bake inputs (see below) | about 1 MB per theme |
+| Compiler cache | `core (ubuntu-latest)`, `core (macos-latest)` | ccache | `tests-core-<os>` + timestamp | 200 MB |
+| Compiler cache | `sanitizers` | ccache | `tests-sanitizers` + timestamp | 200 MB |
+| Compiler cache | `balance` in the `levels` workflow | ccache | `levels-sim` + timestamp | 200 MB |
 
 - The newest cache with the key prefix is restored, and a new one is saved
   at the end of every run.
@@ -76,7 +79,9 @@ shows up on `main` after merge, and the next PR fixes it.
   (about 4 minutes for the temple on a runner without a GPU). See
   [Board themes: Lighting](board-themes.md#lighting).
 
-The `core` and `sanitizers` jobs build in seconds and use no cache.
+`core (windows-latest)` uses no cache: it builds with the Visual Studio
+generator, which ignores compiler launchers, and runs only on `main` and
+manual runs.
 
 See [About CI caching](../explanation/about-ci-caching.md) for why the
 caches are set up this way.
