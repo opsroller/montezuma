@@ -85,6 +85,15 @@ the real-GPU run on the M4 replaces these.
 | `web`, after | 540×1170 | pass, 0.0 | pass, 0.4% | pass, 0% |
 | `mobile`, before | 540×1170 | pass, 0.007 | pass, 0.2% | pass, 0% |
 | `mobile`, after | 540×1170 | pass, 0.0 | pass, 0.1% | pass, 0% |
+| `desktop-high`, lighting fold-in, after main's mist | 1280×720 | pass, 0.019 | pass, 6.5% | pass, 0% |
+| `web`, first grade, after main's mist | 540×1170 | pass, 0.0 | pass, 3.4% | fail, 1.76% |
+| `web`, lighting fold-in, after main's mist | 540×1170 | pass, 0.0 | pass, 3.5% | fail, 1.97% |
+| `mobile`, lighting fold-in, after main's mist | 540×1170 | pass, 0.0 | pass, 0.0% | pass, 0% |
+
+The last four rows are on an RTX 4080 SUPER, each window held at its
+size by gamescope. `web`'s rule 6 failure came in with main's ground
+mist (#79): it fails with the first grade too, and the lighting
+fold-in adds 0.2 points. The frames below are these captures.
 
 `desktop-high` at phone size keeps a capture noise floor of about 0.09%
 from the FSR 2 upscaler's jitter at 540 internal lines, so its rule 6 is
