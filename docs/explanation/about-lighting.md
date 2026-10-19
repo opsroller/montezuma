@@ -212,8 +212,13 @@ is captured on load.
 - Board and backdrop are static and lightmapped: their `.obj.import`
   files carry `generate_lightmap_uv2=true` at 0.2 m per texel; a theme's
   lightmap must fit one 2048² layer (`max_texture_size`).
-- Pieces and anything else that moves are dynamic GI objects
-  (`gi_mode = 2`).
+- Pieces and anything else that moves stay out of GI (`gi_mode = 0`):
+  they receive the lightmap's probes and `VoxelGI`, but never feed them.
+  A dynamic GI object (`gi_mode = 2`) is voxelized into `VoxelGI` again on
+  every frame; with 64 pieces that took the frame from 2.1 ms to 12.4 ms
+  and video memory from 711 MB to 1459 MB on an RTX 4080 SUPER at
+  1440p, for no visible bounce, because lightmapped surfaces take their
+  indirect light from the lightmap and SSIL.
 - `VoxelGI` while the scene fits one volume of about 20 m; SDFGI only for
   a theme that does not, and that theme then has to fit its cost.
 - Shadow-casting braziers per theme: the budget above is for 4. Up to the
@@ -238,8 +243,8 @@ is captured on load.
 
 - Every new theme gets `LD_<Theme>_Bake.tscn` and a bake in CI; its board
   and backdrop `.obj.import` files are committed with lightmap UV2.
-- Pieces are dynamic GI objects (`gi_mode = 2`); any new moving content
-  must be too.
+- Pieces stay out of GI (`gi_mode = 0`); any new moving content must
+  too, so its cost does not grow with the number of things on screen.
 - A theme whose emissive material is new needs its `lo/` copy (the scene
   generator writes it).
 - The M4 benchmark re-run after this package confirms or moves the

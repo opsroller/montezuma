@@ -10,4 +10,4 @@
 [node name="Mesh" type="MeshInstance3D" parent="."]
 mesh = ExtResource("1")
 surface_material_override/0 = ExtResource("2")
-gi_mode = 2
+gi_mode = 0

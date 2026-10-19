@@ -131,6 +131,27 @@ The two `main` runs differ by 0.5 ms at p50, so the p50 change is within
 run-to-run noise. With the haze, 14 of 17 `desktop-high` feature rows are
 met; volumetric fog is now one of them.
 
+## Pieces out of GI
+
+Pieces were dynamic GI objects (`gi_mode = 2`) after WP-47, so Godot
+voxelized all 64 into `VoxelGI` on every frame; they now stay out of GI
+(`gi_mode = 0`) and only receive it. Measured on an RTX 4080 SUPER
+(Ryzen 9 7950X3D, NixOS, Godot 4.7.2 from nixpkgs, Vulkan, Forward+),
+`desktop-high`, vsync off, 60 s capture after 10 s warm-up, inside a
+nested gamescope compositor (no desktop session was logged in). GPU
+timing is available on this driver.
+
+| Build | Output | `frame_ms` p50 | p95 | `gpu_ms` p50 | Video memory max |
+|---|---|---|---|---|---|
+| Before WP-47 (83feede^), 20 s | 2560×1440, native, TAA | 2.07 | 2.19 | 1.97 | 553 MB |
+| `main` at b67b96a | 2560×1440, FSR 2 at 0.5 | 11.99 | 16.62 | 1.92 | 1467 MB |
+| Pieces out of GI | 2560×1440, FSR 2 at 0.5 | 2.10 | 2.20 | 1.95 | 711 MB |
+| Pieces out of GI, 30 s | 7680×4320, FSR 2 at 0.5 | 14.53 | 14.81 | 13.91 | 3483 MB |
+
+On `main` the GPU's own time stayed near 2 ms while the frame took 12:
+the per-frame voxelization showed up as a stall, not as measured GPU
+work. The M4 re-run is pending.
+
 ## Feature rows
 
 `check_features.py` on the same reports. Rows that fail are the
