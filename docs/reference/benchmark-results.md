@@ -172,6 +172,38 @@ frame there is shorter than 16.67 ms and p50 sits near that floor; the
 miss is in the tail. The follow-up is the M4's p95 tail (hitches and
 frames that miss a present), not the mean cost. The budget is unchanged.
 
+## Ground mist rework
+
+Cost of reworking the WP-51 fog into ground mist (`SH_AtmosphereFog`,
+`MI_AtmosphereFog` and `PF_Environment.tscn`) against `main`,
+`desktop-high`, bench scene, 2026-10-19.
+
+**Mac mini M4** (Metal, native 5K with no upscaler, vsync off, seed 52,
+10 s per run, both orders):
+
+| Build | `frame_ms` p50 | p95 | Video memory max |
+|---|---|---|---|
+| `main` at b67b96a | 140.3 | 146.2 | 2813 MB |
+| Ground mist (8bf141d) | 139.9 | 146.2 | 2813 MB |
+
+**RTX 4080 SUPER** (Vulkan, Forward+, NixOS, GNOME on Wayland, live
+desktop, exclusive full screen at native 3840×2160 with no upscaler,
+uncapped with the mailbox `override.cfg`, 6 s warm-up and 20 s capture,
+one run each with no other GPU work running). `desktop-high` normally hands
+anything above 720 lines to FSR 2; for these runs both builds used the
+same local, uncommitted build with `kHighInternalHeight` raised to 2160,
+so the 3D view rendered at native resolution. The `main` build is `main`
+at 791a680 with this change's three files swapped back.
+
+| Build | `frame_ms` p50 | p95 | `gpu_ms` p50 | p95 | Video memory max |
+|---|---|---|---|---|---|
+| `main` | 9.96 | 10.13 | 9.78 | 9.91 | 1459 MB |
+| Ground mist | 10.01 | 10.22 | 9.85 | 10.00 | 1459 MB |
+
+The mist adds about 0.07 ms of GPU time at native 4K (under 1%). It
+samples its 3D noise twice per froxel instead of once, over a fog volume
+half as tall.
+
 ## Feature rows
 
 `check_features.py` on the same reports. Rows that fail are the

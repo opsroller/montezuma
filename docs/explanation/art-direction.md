@@ -119,6 +119,57 @@ every few metres around the board, so it is darker (base colour about 0.35
 against the stone's 0.65) and lower in contrast, and the board stays in
 front.
 
+## Fog references
+
+The first atmosphere pass (WP-51) read as a cream filter over the plaza,
+like looking through dirty sunglasses, not as fog. What real mist and
+haze look like, and so what the fog has to do:
+
+- **Mist is white, light gives it colour.** Fog and mist are water
+  droplets a few micrometres across. They scatter almost all the light
+  they meet and absorb next to none (single-scattering albedo close to
+  1), the same at every visible wavelength, so mist itself is neutral
+  white-grey. It looks gold in sunlight and blue-grey in shade because of
+  the light falling on it, never because it is tinted
+  ([Copernicus EGUsphere, radiation fog microphysics](https://egusphere.copernicus.org/preprints/2025/egusphere-2024-4074/egusphere-2024-4074.pdf);
+  [International Journal of Optics, fog optical properties](https://doaj.org/article/30d6ef1c005c417c8cb7aabd8744f863)).
+  The fog's albedo is therefore neutral, and its ambient light is low and
+  cool, so mist in shadow is dim rather than glowing.
+- **It scatters forward, but thick mist looks diffuse.** A single
+  droplet that size sends most light on in roughly the direction it was
+  travelling (asymmetry around 0.8), which is why a thin haze glows when
+  you look toward the sun. Mist thick enough to hide the ground scatters
+  each ray many times, and the light leaving it comes out nearly evenly
+  in every direction: a bank looks white from any side, even with the sun
+  behind you. That is the temple's case: the sun is behind and above the
+  game camera (light reaches the camera after turning through about 144
+  degrees), so the fog is lit as diffuse mist, not as forward-scattering
+  haze ([About the atmosphere](about-the-atmosphere.md#lit-like-mist-not-like-dust)).
+  Shadows of the pillars, steps and ferns falling through it stay dark,
+  and those lanes are what make it read as air with light in it.
+- **It pools and breaks up.** Dawn mist in the Maya plazas of Tikal and
+  Palenque forms in still, damp air on the ground and lies in the low
+  places, with a soft top and the ruins rising out of it; as it lifts it
+  breaks into drifting banks and wisps with clear ground between them
+  ([Dawn over Tikal](https://wheresmybackpack.com/2011/12/18/dawn-over-tikal/);
+  [Palenque ruins guide](https://www.mexicotravelandleisure.com/blog/palenque-ruins-guide/)).
+  An even layer seen from above is only a tint; the eye reads fog from
+  how its thickness changes: crisp floor in the gaps, floor gone under a
+  bank.
+- **It shows depth.** Mist hides more the more of it a ray crosses, so
+  ground further away and lower down fades more. Here the plaza falls
+  away from the platform, so the mist thickens toward the edges of the
+  frame and the low ground, and the raised platform stands clear of it.
+- **Haze shows light, not a wash.** Inside a temple, incense smoke and
+  dust are seen only where a shaft of sun passes through dark air; the
+  rest of the room stays dark and sharp. The haze's job is to make the
+  light visible, not to lighten the picture.
+
+None of these sources is copied; they only set what the fog shader and
+its lighting model. The parameters are in
+[Board themes: Atmosphere](../reference/board-themes.md#atmosphere) and
+the reasoning in [About the atmosphere](about-the-atmosphere.md).
+
 ## Light
 
 Late-afternoon sun from the far left at about 42 degrees, warm white, with

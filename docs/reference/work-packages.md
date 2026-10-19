@@ -16,8 +16,10 @@ code reviewer, squash-merge when green, tell dependants. Each package
 also updates the docs its change needs, by Diataxis kind (see the
 project profile).
 
-**Status:** `todo` · `active` · `review` · `done`. A thread updates its own
-row in the PR that finishes the package.
+**Status:** `todo` · `active` · `review` · `blocked` · `done`. A thread updates its own
+row in the PR that finishes the package. A package whose dependencies are not
+done is `todo`; `blocked` means it cannot start or continue for a reason
+outside its Depends on column, named in brackets. A draft PR is `active`.
 
 ## Wave 0: foundations
 
@@ -26,14 +28,14 @@ row in the PR that finishes the package.
 | 00 | Project profile, contracts, this plan | project-manager | `CLAUDE.md`, `.claude/`, `docs/README.md`, `docs/reference/project-profile.md`, `docs/reference/contracts.md`, `docs/reference/work-packages.md`, `CONTRIBUTING.md` | — | merged | done (#2) |
 | 01 | C++ core: board, moves, cascades, level state | gameplay-programmer (port thread) | `core/` | — | rules from the spec in C++20 with CTest tests | done (#1, #4) |
 | 02 | GDExtension scaffold, core bindings and Godot project | gameplay-programmer (port thread) | `extension/`, `game/`, `thirdparty/` | 01 | `Match3Board` and `BoardView3D` load in Godot headless on desktop CI | done (#3) |
-| 03 | Settle the rules spec | game-designer | `docs/reference/rules-*.md`, `docs/reference/progression.md`, `docs/explanation/about-the-rules.md`, `docs/explanation/about-rule-sets-and-themes.md`, `docs/reference/balance.md` | — | no **[verify]** left; totems, bonuses, mini-games and intro levels written; contract ids confirmed | review (#14) |
-| 04 | Visual identity | graphic-designer | `design/` | — | logo, palette, type, style guide and tokens | active |
+| 03 | Settle the rules spec | game-designer | `docs/reference/rules-*.md`, `docs/reference/progression.md`, `docs/explanation/about-the-rules.md`, `docs/explanation/about-rule-sets-and-themes.md`, `docs/reference/balance.md` | — | no **[verify]** left; totems, bonuses, mini-games and intro levels written; contract ids confirmed | done (#14) |
+| 04 | Visual identity | graphic-designer | `design/` | — | logo, palette, type, style guide and tokens | todo |
 
 ## Wave 1: build in parallel (17 at once)
 
 | WP | Package | Role | Owns | Depends on | Done when | Status |
 |---|---|---|---|---|---|---|
-| 05 | Level data parser | gameplay-programmer | `core/src/level_data.*`, `core/include/montezuma/level_data.hpp`, `core/tests/test_level_data.cpp` | 01 | parses and validates the LevelData contract with clear errors | review |
+| 05 | Level data parser | gameplay-programmer | `core/src/level_data.*`, `core/include/montezuma/level_data.hpp`, `core/tests/test_level_data.cpp` | 01 | parses and validates the LevelData contract with clear errors | done (#7) |
 | 06 | Power Totems | gameplay-programmer | `core/**/totems.*`, `core/tests/test_totems.cpp` | 01, 03 | each totem charges from streaks and returns a tested effect result | done |
 | 07 | Bonuses | gameplay-programmer | `core/**/bonuses.*`, `core/tests/test_bonuses.cpp` | 01, 03 | power-ups placed from runs of 4 and 5+, carried with their pieces, set off in the step that clears them, with each tier's effect per spec, tested | done |
 | 08 | Progress, save and trophies | gameplay-programmer | `core/**/progress.*`, `core/**/trophies.*`, tests | 05 | unlocks, best scores and 9 trophies serialise; tested | todo |
@@ -55,7 +57,7 @@ row in the PR that finishes the package.
 
 | WP | Package | Role | Owns | Depends on | Done when | Status |
 |---|---|---|---|---|---|---|
-| 22 | Balance simulator | gameplay-programmer | `tools/sim/` | 05, 06, 07 | C++ CLI reports win rate and time left per level and difficulty | review |
+| 22 | Balance simulator | gameplay-programmer | `tools/sim/` | 05, 06, 07 | C++ CLI reports win rate and time left per level and difficulty | done (#34) |
 | 56 | Simulator moves floor | gameplay-programmer | `tools/sim/` | 22 | `--check` fails a level from e2 on whose `greedy`/normal mean moves are under its [balance](balance.md) floor (50, 70, 90, 110); episode 1 has none. Gates 24-27 | done (#42) |
 | 58 | Level clocks | gameplay-programmer + game-designer | `base_clock` in `core/` level data and session, `tools/sim/` clock check, `base_clock` in `game/data/levels/` | 22, 25 | `time_limit` replaced by `base_clock`, which the timer tier adds to (`GOAL-03`); `--check` fails a level and difficulty whose base clock is under the [clock rule](balance.md#clock); every level's clock set from it | done (#53) |
 | 59 | Chains that hold | game-designer + gameplay-programmer, graphics-programmer for the view | `OBS-05` in the rules spec, chain rules in `core/`, chain effects in `extension/src/board/effects/` | 58 | chains are a lever the simulator measures: a level's chains move `greedy`'s win rate or moves more than the 1.5 points and 8 s that e3-l04's ten chains do today (see [balance](balance.md)), for example a run that breaks a chain but leaves its piece in place | done |
@@ -72,7 +74,7 @@ row in the PR that finishes the package.
 | 36 | Android build | devops-engineer | Android job in `.github/workflows/build.yml` | 20 | debug APK as a CI artifact | todo |
 | 37 | iOS build | devops-engineer | iOS job in `.github/workflows/build.yml` | 20 | builds on a macOS runner; signing documented | todo |
 | 38 | App icons and store art | graphic-designer | `design/icons/`, `design/store/` | 04, 28 | icons at every size, store graphics and captioned screenshots per store spec | todo |
-| 39 | License notices and credits | devops-engineer | `CREDITS.md` structure, `tools/release/notices*` | 20 | every dependency's notice ships in-app and in releases; GPL source link per release | todo |
+| 39 | License notices and credits | devops-engineer | `CREDITS.md` structure, `tools/release/notices*` | 20 | every dependency's notice ships in-app and in releases; GPL source link per release | todo (in-game notices done in #31; release notices need WP-42) |
 
 ## Wave V: high-end visual target
 
@@ -94,7 +96,7 @@ except the optional WP-54: nothing goes public until it looks finished.
 | 49 | Fire VFX | technical-artist | `game/assets/models/<theme>/fx/fire/`, `game/assets/textures/<theme>/fx/`, `tools/assets/fx/` (fluid sim) | 45, 47 | brazier flame from our own fluid simulation (numpy; Blender's solver does not run headless, see `game/assets/PROVENANCE.md`) as motion-vector flipbooks on GPU particles, smoke, embers with turbulence and trails, flickering shadowed lights, heat haze and fog contribution on desktop; mobile and web substitutes per the target; sim settings and a script that re-runs the sims committed, recorded in `PROVENANCE.md` | done (#57) |
 | 50 | Water | technical-artist | `game/assets/models/<theme>/backdrop/water*`, `game/assets/materials/shaders/SH_Water*` | 45, 47 | water channels or pool beside the platform with normals, depth colour, refraction, caustics and SSR on desktop, probe reflections on mobile and web; never inside the board rectangle | done ([Water](water.md); on-device cost from the WP-46 benchmark) |
 | 51 | Volumetrics and atmosphere | technical-artist | `FogVolume`s and dust in `game/assets/models/<theme>/backdrop/`, light-shaft cards | 47 | sun shafts and dust through volumetric fog on desktop, card substitutes on mobile and web, zero density over the board | done ([Atmosphere](board-themes.md#atmosphere)) |
-| 52 | Post-processing and colour grade | technical-artist + graphic-designer | theme `WorldEnvironment` and `CameraAttributes`, `game/assets/textures/<theme>/grade/`, grade notes in `design/` | 47 | glow, LUT grade, backdrop-only depth of field and per-tier anti-aliasing and upscaling set per the target; grade checked against the palette and readability rules; re-check glow on Forward+ first: WP-44 compared 4.4.1 and 4.7.2 on Compatibility only (same exposure, cleaner shadows), not the 4.6 glow-before-tonemap change | todo |
+| 52 | Post-processing and colour grade | technical-artist + graphic-designer | theme `WorldEnvironment` and `CameraAttributes`, `game/assets/textures/<theme>/grade/`, grade notes in `design/` | 47 | glow, LUT grade, backdrop-only depth of field and per-tier anti-aliasing and upscaling set per the target; grade checked against the palette and readability rules; re-check glow on Forward+ first: WP-44 compared 4.4.1 and 4.7.2 on Compatibility only (same exposure, cleaner shadows), not the 4.6 glow-before-tonemap change | active (draft #72) |
 | 53 | Realistic match, power-up and totem effects | technical-artist | `game/assets/models/<theme>/fx/`, effect scenes for `fx_*` manifest names | 45, 29 | every board effect rebuilt on GPU particles (sparks, stone dust, shards, light) with mobile and web variants, inside rule 3 of the target | todo |
 | 54 | Hardware ray-tracing spike (optional) | graphics-programmer | `extension/src/render/rt/` (behind a build option) | 44, 46 | ray-traced reflections or shadows on gems and gold via the 4.7 `RenderingDevice` ray-tracing API as a compositor effect on Vulkan desktop; benchmark numbers and a written keep-or-drop decision; never required by any tier | todo |
 | 55 | High-detail asset pass | technical-artist | `game/assets/models/<theme>/`, `tools/assets/gen_theme_meshes.py` | 48 | pieces, board, frame and backdrop rebuilt to the desktop budgets with LOD chains down to the mobile budgets; silhouettes and sizes unchanged; validator checks every LOD; mobile and web export presets strip LOD0 and desktop-only files; mobile install under 150 MB and web demo under 40 MB checked | todo |
@@ -115,3 +117,14 @@ example sets the pattern.
 
 Code review: every PR is reviewed by the code-reviewer role before its
 author squash-merges it.
+
+## Risks
+
+As of 2026-10-19 (status sweep).
+
+| Risk | Effect | Owner |
+|---|---|---|
+| Desktop frame time far from the goal: M4 at native 5K with no upscaler, frame p50 140 ms ([benchmark results](benchmark-results.md#ground-mist-rework)) | Wave V effects merge only once each fits its budget; tracked in #78 and each effect PR | graphics-programmer, technical-artist |
+| Role plugins not available on the owner's build machine | review sessions run in the cloud | Charles |
+| WP-04 not staffed | WP-38 store art and the ship path wait | project-manager |
+| Plan rows drift from reality | status reports can be wrong; checked at every status sweep | project-manager |

@@ -422,7 +422,7 @@ def atmosphere(r, p, models):
     vol, dust, shafts = a["volumes"], a["dust"], a["shafts"]
     half = p["board"]["width"] * p["cell_size"] / 2 + p["board"]["frame_width"]
     keep_out = half + a["board_clearance"]
-    top = p["materials"]["MI_AtmosphereFog"]["params"]["height_top"]
+    top = vol["top"]
     # By path, not as a resource: QualityTiers loads it only on tiers with volumetric
     # fog, since Compatibility errors on any fog shader it is handed.
     fog_mat = f'"res://assets/materials/{theme}/MI_AtmosphereFog.tres"'
@@ -521,7 +521,6 @@ def main():
         board_half = p["board"]["width"] * p["cell_size"] / 2 + p["board"]["frame_width"]
         fog_params = p["materials"]["MI_AtmosphereFog"]["params"]
         fog_params["clear_half"] = round(board_half + p["lighting"]["atmosphere"]["volumes"]["clearance"], 3)
-        fog_params["sun_direction"] = [round(v, 5) for v in sun_toward(p["environment"]["sun"]["transform"])]
     if "water" in p:
         WATER.update(water_channel(p), stone=p["materials"]["MI_StoneDark"],
                      sun=sun_toward(p["environment"]["sun"]["transform"]))
@@ -642,8 +641,11 @@ def main():
                "", '[node name="Sun" type="DirectionalLight3D" parent="."]', f"transform = {env['sun']['transform']}",
                f"light_intensity_lux = {sun['lux']}", f"light_temperature = {sun['kelvin']}",
                f"light_color = {color(sun['color'])}",
-               f"light_angular_distance = {sun['angular_distance']}", "shadow_enabled = true",
-               "directional_shadow_max_distance = 40.0"]
+               f"light_angular_distance = {sun['angular_distance']}",
+               # How strongly the sun lights the volumetric fog (WP-51): it stands
+               # in for the multiple scattering Godot's single-scattering fog leaves out.
+               *([f"light_volumetric_fog_energy = {sun['fog_energy']}"] if "fog_energy" in sun else []),
+               "shadow_enabled = true", "directional_shadow_max_distance = 40.0"]
     # A fire in each brazier (the braziers stand on pillars at the corners,
     # gen_theme_meshes.py); each carries its own flickering light.
     half = p["board"]["width"] * p["cell_size"] / 2 + p["board"]["frame_width"] + 0.95

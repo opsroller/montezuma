@@ -302,3 +302,24 @@ notes: >
   so an engine upgrade can change it. Regenerate with
   .venv/bin/python tools/assets/gen_theme_scenes.py.
 ```
+
+## Board theme `temple`: ground mist rework of the atmosphere fog
+
+```yaml
+asset: themes.temple atmosphere fog, reworked from an even dust layer into ground mist in banks
+files:
+  - game/assets/materials/shaders/SH_AtmosphereFog.gdshader    # rewritten by hand
+  - game/assets/materials/temple/MI_AtmosphereFog.tres
+  - game/assets/models/temple/backdrop/PF_Environment.tscn     # fog volume size, fog settings, sun fog energy, auto exposure scale
+  - docs/images/lookdev/temple-atmosphere-desktop-high.jpg     # our own capture of the running game
+origin: generated (same generator and noise as the WP-51 record above)
+authors: [technical-artist (Claude)]
+created: 2026-10-19
+source:
+  - tools/assets/gen_theme_scenes.py
+  - tools/assets/themes/temple.json (lighting.sun.fog_energy, lighting.exposure.auto_scale, lighting.atmosphere, MI_AtmosphereFog)
+references: docs/explanation/art-direction.md#fog-references (looked at, not copied or traced)
+inputs: []
+license: GPL-2.0-or-later
+attribution: ""
+```

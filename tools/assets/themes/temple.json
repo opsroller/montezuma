@@ -430,7 +430,7 @@
       }
     },
     "MI_AtmosphereFog": {
-      "_comment": "gen_theme_scenes.py sets clear_half from the board size and lighting.atmosphere.volumes.clearance, and sun_direction from environment.sun.",
+      "_comment": "gen_theme_scenes.py sets clear_half from the board size and lighting.atmosphere.volumes.clearance. ground_y is the plaza floor (gen_theme_meshes.py: platform top -0.42 less three 0.5 m tiers).",
       "shader": "res://assets/materials/shaders/SH_AtmosphereFog.gdshader",
       "noise_textures_3d": {
         "density_texture": {
@@ -440,15 +440,21 @@
         }
       },
       "params": {
-        "density": 0.4,
-        "albedo": "#f2dcb0",
+        "density": 6.0,
+        "albedo": "#ebedf0",
         "fade": 1.2,
-        "height_top": 2.4,
-        "top_fade": 2.4,
-        "noise_scale": 6.0,
-        "shaft_stretch": 8.0,
-        "contrast": [0.35, 0.75],
-        "wind": [0.12, 0.0, -0.05]
+        "ground_y": -1.92,
+        "bank_height": 1.4,
+        "top_soft": 0.6,
+        "thicken_over": 7.0,
+        "near_amount": 0.5,
+        "bank_scale": 9.0,
+        "wisp_scale": 4.0,
+        "wisp_stretch": 3.0,
+        "wisp_amount": 0.35,
+        "coverage": [0.56, 0.64],
+        "wind": [0.12, 0.0, -0.05],
+        "base_shade": 0.75
       }
     },
     "MI_Dust": {
@@ -485,7 +491,7 @@
     "exposure": {
       "sensitivity": 440,
       "multiplier": 1.0,
-      "auto_scale": 0.4,
+      "auto_scale": 0.45,
       "auto_speed": 0.5,
       "auto_min_sensitivity": 300,
       "auto_max_sensitivity": 640
@@ -494,7 +500,8 @@
       "lux": 11000,
       "kelvin": 4500,
       "color": "#ffffff",
-      "angular_distance": 0.6
+      "angular_distance": 0.6,
+      "fog_energy": 7.0
     },
     "torch": {
       "lumens": 60000,
@@ -549,16 +556,17 @@
       "_comment": "Volumetric fog, dust and light-shaft cards around the temple, never over the board (WP-51). Keys: docs/reference/board-themes.md#atmosphere.",
       "fog": {
         "anisotropy": 0.0,
-        "length": 40.0,
-        "detail_spread": 2.0,
-        "gi_inject": 0.4,
-        "ambient_inject": 0.3,
+        "length": 30.0,
+        "detail_spread": 1.0,
+        "gi_inject": 0.05,
+        "ambient_inject": 0.2,
         "temporal_amount": 0.9
       },
       "volumes": {
         "clearance": 1.6,
         "outer": 19.0,
-        "bottom": -2.6
+        "bottom": -2.6,
+        "top": 0.0
       },
       "dust": {
         "amount": 320,
