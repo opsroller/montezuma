@@ -20,7 +20,8 @@ synthesis; there are no recordings, samples or presets. The scripts are
 the source, so only the rendered delivery files are committed beside
 them. `tools/audio/synth.py` holds the shared instruments and the
 physical models behind the contact sounds (`impact`, `friction`,
-`debris`, `stone_room`, `fit`, `soft_limit`).
+`debris`, `stone_room`) with their finishing helpers (`fit` cuts a
+sound to length, `soft_limit` rounds off its sharpest peaks).
 
 ## Levels
 

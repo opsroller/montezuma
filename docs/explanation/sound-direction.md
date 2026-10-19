@@ -26,8 +26,9 @@ the score:
 - A match is a single clean chime in D minor pentatonic. Every cascade
   step plays the next note up the same scale and adds sparkle, so a long
   chain is heard climbing even when you are not watching it.
-- Frequent sounds (swap, landing, menu ticks) are short, nearly dry and quiet,
-  with several variations so the hundredth one does not grate.
+- Frequent sounds (swap, landing, menu ticks) are short, nearly dry
+  and quiet, with several variations so the hundredth one does not
+  grate.
 - Warnings use the log drum, which nothing else in a level plays alone,
   so the time warning cuts through music at a lower level than a louder
   sound would need.
@@ -78,8 +79,8 @@ imitated. Its sound cues informed only which events need a sound.
 ## Physical models for contact sounds
 
 A stone piece sliding, landing or bumping, a steel band smashed, a
-chain snapping and a charge blowing the board apart should sound like those objects, because the board shows
-them as real objects. A few fixed sine tones read as "a sound effect";
+chain snapping and a charge blowing the board apart should sound like
+what they are, because the board shows them as real things. A few fixed sine tones read as "a sound effect";
 a real knock on stone has dozens of partials that each ring and fade at
 their own rate. So these cues are built the way the sound is made in
 the world:
@@ -105,6 +106,6 @@ the world:
 Each design is also cut to its length budget, and the sharpest ones
 (the illegal swap, the steel break and the blast) have their highest
 transient peaks rounded off, as a recording chain would, so the realism
-costs nothing in loudness or voice time. Because the models are seeded, each variation
-is a different strike on a slightly different object, and the files
-still rebuild exactly from the script.
+costs nothing in loudness or voice time. Because the models are
+seeded, each variation is a different strike on a slightly different
+object, and the files still rebuild exactly from the script.
