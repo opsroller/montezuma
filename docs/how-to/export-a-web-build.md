@@ -36,7 +36,7 @@ To build a branch, run the **web** workflow from the Actions tab with
      -DCMAKE_TOOLCHAIN_FILE=~/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
      -DMONTEZUMA_BUILD_EXTENSION=ON -DMONTEZUMA_BUILD_TESTS=OFF -DMONTEZUMA_WERROR=ON \
      -DGODOTCPP_TARGET=template_release -DGODOTCPP_THREADS=OFF
-   cmake --build build/web -j 4
+   cmake --build build/web
    ```
 
    The library lands in `game/bin/` as

@@ -33,7 +33,7 @@ Python 3 (godot-cpp generates its bindings with it) and Godot 4.7.2.
 
 ```sh
 git submodule update --init --recursive
-cmake -S . -B build
+cmake -S . -B build -G Ninja
 cmake --build build
 ctest --test-dir build --output-on-failure
 godot --path game        # play; the extension is built into game/bin/

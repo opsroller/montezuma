@@ -16,8 +16,8 @@ or a cloud machine without a GPU do not count against the
    and import the project once:
 
    ```sh
-   cmake -S . -B build-ext -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON
-   cmake --build build-ext -j 4
+   cmake -S . -B build-ext -G Ninja -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON
+   cmake --build build-ext
    godot --headless --path game --import
    ```
 
