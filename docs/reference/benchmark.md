@@ -123,7 +123,7 @@ graphics-programmer owns the tolerance; a change to it is a change to this
 section. `over_budget` counts frames above the p95 limit (budget plus
 tolerance). A display slower than 60 Hz less the tolerance (a 50 Hz panel)
 cannot show the target, so with vsync on the verdict fails as
-`display-limited`; with vsync off, or when the refresh is unknown, it is
+`display-limited`; with vsync off or mailbox, or when the refresh is unknown, it is
 not held against the run.
 
 The verdict also fails, with its numbers still in the report, when the
@@ -149,8 +149,9 @@ command line:
 | `budget_ms` | `--bench-budget=MS` | 0: the tier's p95 budget, two 60 Hz periods (33.333) for `web`, else one (16.667); a value replaces the p95 budget |
 | `tolerance` | `--bench-tolerance=F` | 0.05; clamped to 0 to 0.5, a non-number stops the run |
 | `render_size` | `--bench-size=WxH` | (0, 0): not locked, but the size must not change |
-| `disable_vsync` | `--bench-vsync=off` sets it true | false: the project's vsync |
+| `disable_vsync` | `--bench-vsync=off` sets it true | false: the project's vsync. True turns vsync off unless the window already uses mailbox (as `run_bench.cmake` sets with `VSYNC=off`), which also never waits for the display |
 | `quit_when_done` | `--bench-stay` sets it false | true |
+| — | `--bench-fullscreen` | off: windowed. On: exclusive full screen at the screen's size, replacing `--bench-size` (`resolution.fullscreen` true, `requested` null) |
 
 The runner quits with status 1 when the replay diverged, the render size
 did not hold or `--bench-size` is malformed, else 0. An over-budget run
@@ -172,14 +173,14 @@ reach):
 | `schema` | 2 (1 had no `budget`, `resolution`, `display`, `timing`, `process_ms`, `render_cpu_ms`) |
 | `tier`, `budget_ms` | as resolved above; `budget_ms` is the p95 budget before the tolerance |
 | `budget` | `metric` (`frame_ms`), `target_hz` (60), `period_ms`, `tolerance`, `limits` (each `percentile`, `budget_ms`, `limit_ms`, `value_ms`, `pass`), `pass`, `reason` (empty on a pass) |
-| `resolution` | `requested` [w, h] or null, `locked`, `render` (first frame), `min`, `max`, `mismatched_frames`, `window` (`first`, `min`, `max`, `changed_frames`), `pass` |
+| `resolution` | `requested` [w, h] or null (null with `--bench-fullscreen`: the screen sets the size and `--bench-size` is ignored), `locked`, `fullscreen`, `render` (first frame), `min`, `max`, `mismatched_frames`, `window` (`first`, `min`, `max`, `changed_frames`), `pass` |
 | `display` | `refresh_hz` (-1 when unknown), `vsync` (`disabled`, `enabled`, `adaptive`, `mailbox`) |
 | `timing` | `gpu` (as `gpu_timing`), `gpu_note` (why, when false), `gpu_frames` (frames with a GPU timestamp), `render_cpu_includes_display_wait` (true on Metal) |
 | `warmup_seconds`, `measure_seconds` | as run |
 | `device` | `os`, `model`, `godot`, `rendering_method` (`forward_plus`, `mobile`, `gl_compatibility`), `rendering_driver`, `adapter`, `vendor`, `api_version`, `resolution` [w, h], `headless`, `software` (a CPU rasteriser adapter) |
 | `gpu_timing` | false when no frame had a GPU timestamp (headless, or a driver without timer queries: Metal in Godot 4.7.2); then `gpu_ms` is null and no verdict uses GPU time |
 | `process_ms`, `render_cpu_ms`, `cpu_ms`, `gpu_ms`, `frame_ms` | each `{frames, mean, p50, p95, p99, max, over_budget}`; `over_budget` counts frames over the p95 limit |
-| `render` | `draw_calls_p95`, `draw_calls_max`, `draw_calls_by_pass` (`scene_p95`, `shadow_p95`, `canvas_p95`), `piece_draws` (the board view's `get_piece_draws()` at the end of the run), `primitives_p95`, `primitives_max`, `video_mem_max_mb` |
+| `render` | `draw_calls_p95`, `draw_calls_max`, `draw_calls_by_pass` (`scene_p95`, `shadow_p95`, `canvas_p95`), `piece_draws` (the board view's `get_piece_draws()` at the end of the run), `primitives_p95`, `primitives_max`, `video_mem_max_mb`, `pipeline_compilations` (`before_capture` and `during_capture`, each `canvas`, `mesh`, `surface`, `draw`, `specialization`: the render pipelines Godot compiled in that window, from `RenderingServer.get_rendering_info`; `draw` ones stalled the frame that needed them, the others compiled in the background while an ubershader drew) |
 | `replay` | `scenario` (`busiest-board`), `seed`, `beats`, `loops`, `deep_cascades` (beats of 4+ steps played), `max_cascade_steps`, `diverged` |
 | `features` | the feature list below, read when the capture starts |
 | `quality_features` | `QualityTiers.get_active_features()`: the feature ids the active tier switches on ([Quality tiers](quality-tiers.md#feature-ids)) |
@@ -190,7 +191,7 @@ the run was locked at that size) and the replay. It does not take the
 runner's pass flags on trust: it re-derives the budget from the tier's
 rules and the report's percentiles (an unknown tier, a missing rule, a
 budget looser than the tier's, a tolerance outside 0 to 0.5, fewer than
-30 frames, a display below 57 Hz with vsync on, a headless or software
+30 frames, a display below 57 Hz with vsync on (not off or mailbox), a headless or software
 run all fail), and the size from the
 min, max and mismatch counts. It also fails a `process_ms` median above
 the `frame_ms` median (not per-frame data). NOTE lines give the adapter,
@@ -230,7 +231,7 @@ attributes and the visible nodes of the scene tree.
 
 `check_features.py REPORT [--tier NAME]` (the tier defaults to the report's; a readability `layout.json` needs it) compares these, plus
 `device.rendering_method`, with the tier's rows in `tiers.json` and exits 1
-when a row is not met. Rows cover what the features can show; resolution
+when a row is not met. The `desktop-standard` anti-aliasing row accepts TAA at native size as well as a temporal upscaler, since benchmarks run with `--quality-native` by default. Rows cover what the features can show; resolution
 of SSR, volumetric fog quality, HDR output and flipbook sizes are not in
 the list.
 

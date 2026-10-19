@@ -19,6 +19,11 @@ principles (stone noise, stepped forms, a step-fret border), which is
 easier to prove clean than hand-made art and lets a theme be rebuilt or
 varied from one parameter file.
 
+Since 2026-10-19 the owner's direction is that sourced history of the
+late Mexica empire leads the look and setting, and the original is a
+reference ([project profile](../reference/project-profile.md#product)).
+Where the remembered feel and the sources differ, the sources win.
+
 The 3D move is about light, not about camera tricks. The camera stays high
 and nearly top-down like the original, so the board keeps its readability;
 depth shows in raking sunlight across carved tiles, shadows under pieces,

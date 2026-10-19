@@ -37,7 +37,7 @@
       {"row": "Glow", "key": "glow", "eq": true},
       {"row": "Colour grade (LUT)", "key": "color_grade_lut", "eq": true},
       {"row": "Depth of field", "key": "depth_of_field", "eq": true},
-      {"row": "Anti-aliasing temporal upscaler", "key": "scaling_3d_mode", "in": ["fsr2", "metalfx_temporal"]},
+      {"row": "Anti-aliasing temporal upscaler, or TAA at native size", "any": [{"key": "taa", "eq": true}, {"key": "scaling_3d_mode", "in": ["fsr2", "metalfx_temporal"]}]},
       {"row": "Visible GPU particles", "key": "gpu_particle_amount", "max": 20000}
     ],
     "mobile": [
