@@ -222,6 +222,23 @@ def type_specimen(fonts):
 
 
 # ---------------------------------------------------------------- applications
+# The applications use the 3D key art (design/keyart/renders): the identity is
+# shown as the realistic lit temple and the bevelled gold wordmark, not as the
+# flat vector mark, which stays for favicons, one-colour and small sizes.
+KEYART = os.path.join(DESIGN, "keyart", "renders")
+# Lift for the gold title over photographic grounds (the render is lit for soot).
+GOLD = "filter:brightness(1.45) contrast(1.08) drop-shadow(0 3px 8px rgba(0,0,0,.75));"
+
+
+def ka(name):
+    return "file://" + os.path.join(KEYART, name)
+
+
+GLASS = ("background:rgba(20,16,13,0.62);backdrop-filter:blur(18px) saturate(1.2);"
+         "-webkit-backdrop-filter:blur(18px) saturate(1.2);"
+         "box-shadow:0 30px 80px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(232,200,128,0.28);")
+
+
 def app_home(fonts, dark):
     wall = "#111214" if dark else "#e8e6ef"
     label = "#f2f2f2" if dark else "#1b1b1f"
@@ -232,7 +249,8 @@ def app_home(fonts, dark):
     cells = []
     for i in range(12):
         if i == 5:
-            icon = sized("icons/app-icon.svg", 60, 60, "border-radius:13.4px;overflow:hidden")
+            icon = (f'<img src="{ka("app-icon-3d.png")}" style="width:60px;height:60px;border-radius:13.4px;'
+                    f'display:block;box-shadow:0 1px 3px rgba(0,0,0,.35)">')
             name = "Montezuma's"
         else:
             t = tiles[i if i < 5 else i - 1]
@@ -246,70 +264,67 @@ def app_home(fonts, dark):
 
 
 def app_capsule():
-    lock, lh = svg_w("logo/lockup-horizontal-reversed.svg", 380)
-    return (f'<div style="width:460px;height:215px;background:{build.ICON_FIELD};position:relative;overflow:hidden">'
-            f'<div style="position:absolute;left:40px;top:{(215 - 36 - lh) / 2:.1f}px">{lock}</div>'
-            f'<div style="position:absolute;left:0;right:0;bottom:0;{band_css(36)}"></div></div>')
+    return (f'<div style="width:460px;height:215px;position:relative;overflow:hidden;'
+            f'background:url({ka("mark-on-plaza.png")}) 50% 38%/120% auto no-repeat">'
+            f'<div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(10,8,6,.9) 100%)"></div>'
+            f'<img src="{ka("title-wordmark.png")}" style="position:absolute;left:50%;bottom:6px;width:380px;'
+            f'transform:translateX(-50%);{GOLD}"></div>')
 
 
 def app_site(width, fonts):
     mobile = width < 600
-    lock, _ = svg_w("logo/lockup-horizontal.svg", 190 if mobile else 250)
-    nav = "" if mobile else (f'<nav style="display:flex;gap:28px;font:700 16px \'Atkinson Hyperlegible Next\',sans-serif">'
-                             f'<a style="color:{RL["accent"]}">Play</a><a style="color:{RL["accent"]}">Download</a>'
-                             f'<a style="color:{RL["accent"]}">Credits</a></nav>')
-    h1 = 27 if mobile else 46
-    pad = 16 if mobile else 64
-    disp = "font-family:'Archivo',sans-serif;font-weight:800;font-stretch:125%;letter-spacing:0.02em;text-transform:uppercase"
-    stage_h = 190 if mobile else 360
-    stage = (f'<div style="background:{RL["stage"]};height:{stage_h}px;border-radius:4px;display:grid;place-items:center;'
-             f'color:{RL["stage-text"]};font:400 16px \'Atkinson Hyperlegible Next\',sans-serif;position:relative">'
-             f'<div style="display:grid;justify-items:center;gap:14px">'
-             f'{sized("logo/mark-on-dark.svg", 72 if mobile else 110, round((72 if mobile else 110) * 74 / 92))}'
-             f'<span style="border:2px solid {RL["stage-text"]};border-radius:4px;padding:8px 18px;font-weight:700">Play the first level</span>'
-             f'</div></div>')
-    hero = (f'<div style="padding:{pad // 2 + 8}px {pad}px {pad}px;display:grid;gap:18px;'
-            f'{"" if mobile else "grid-template-columns:1fr 1fr;align-items:center;gap:56px"}">'
-            f'<div style="min-width:0"><h1 style="{disp};font-size:{h1}px;line-height:1.05;margin:0 0 14px;color:{RL["text"]}">'
-            f'Match the stones of Tenochtitlan</h1>'
-            f'<p style="font:400 {17 if mobile else 19}px/1.55 \'Atkinson Hyperlegible Next\',sans-serif;color:{RL["text-muted"]};margin:0 0 20px">'
-            f'A free, open-source remake of a classic match-three, set in the city of Motecuhzoma in 1519.</p>'
-            f'<span style="background:{RL["accent"]};color:{RL["text-on-accent"]};border-radius:4px;padding:12px 22px;'
-            f'font:700 17px \'Atkinson Hyperlegible Next\',sans-serif;display:inline-block">Download</span></div>{stage}</div>')
-    header = (f'<div style="{band_css(18)}"></div>'
-              f'<header style="display:flex;justify-content:space-between;align-items:center;padding:14px {pad}px;'
-              f'border-bottom:1px solid {RL["outline"]}">{lock}{nav}</header>')
-    return f'<div style="width:{width}px;background:{RL["surface"]};overflow:hidden">{header}{hero}</div>'
+    h = 560
+    pad = 18 if mobile else 64
+    body = "font-family:'Atkinson Hyperlegible Next',sans-serif"
+    nav = "" if mobile else (f'<nav style="display:flex;gap:30px;{body};font-weight:700;font-size:16px">'
+                             f'<a style="color:#f4ecdc">Play</a><a style="color:#f4ecdc">Download</a>'
+                             f'<a style="color:#f4ecdc">Credits</a></nav>')
+    header = (f'<header style="position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;'
+              f'align-items:center;padding:{14 if mobile else 20}px {pad}px;'
+              f'background:linear-gradient(180deg,rgba(10,8,6,.88),rgba(10,8,6,0))">'
+              f'<img src="{ka("title-wordmark.png")}" style="height:{46 if mobile else 60}px;margin:-6px 0;display:block;{GOLD}">{nav}</header>')
+    btn = (f'display:inline-block;{body};font-weight:700;font-size:{16 if mobile else 18}px;padding:13px 24px;border-radius:6px')
+    copy = (f'<div style="position:absolute;left:{pad}px;right:{pad}px;bottom:{28 if mobile else 56}px;max-width:620px">'
+            f'<h1 style="font-family:\'Archivo\',sans-serif;font-weight:800;font-stretch:112%;color:#f4ecdc;'
+            f'font-size:{30 if mobile else 54}px;line-height:1.04;margin:0 0 14px;text-shadow:0 2px 18px rgba(0,0,0,.5)">'
+            f'Match the treasures of Tenochtitlan</h1>'
+            f'<p style="{body};font-size:{16 if mobile else 19}px;line-height:1.55;color:#e8dcc6;margin:0 0 22px;'
+            f'text-shadow:0 1px 10px rgba(0,0,0,.6)">A free, open-source match-three, set in the city of Motecuhzoma.</p>'
+            f'<span style="{btn};background:linear-gradient(180deg,#e9a63a,#c9821b);color:#1e1916;'
+            f'box-shadow:0 8px 24px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,240,200,.6)">Play the first level</span> '
+            f'<span style="{btn};margin-left:10px;color:#f4ecdc;box-shadow:inset 0 0 0 1.5px rgba(244,236,220,.7)">Download</span></div>')
+    bgpos = "52% 30%/auto 118%" if mobile else "50% 40%/cover"
+    return (f'<div style="width:{width}px;height:{h}px;position:relative;overflow:hidden;'
+            f'background:url({ka("mark-on-plaza.png")}) {bgpos} no-repeat">'
+            f'<div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,8,6,0) 30%,rgba(10,8,6,.85) 100%)"></div>'
+            f'{header}{copy}</div>')
 
 
 def app_menu(fonts):
-    """A game menu screen: dark panel framed by the band over a stand-in board."""
-    cell = 64
-    board = "".join(
-        f'<div style="background:{"#8a7556" if (x + y) % 2 else "#6f5e46"}"></div>'
-        for y in range(12) for x in range(20))
-    word, _ = svg_w("logo/lockup-stacked-reversed.svg", 300)
+    """Game title menu: glass panel over the key art."""
     ff = "font-family:'Atkinson Hyperlegible Next',sans-serif"
 
     def button(text, primary=False, focus=False):
-        bg = R["accent"] if primary else R["surface-raised"]
-        fg = R["text-on-accent"] if primary else R["text"]
+        if primary:
+            look = ("background:linear-gradient(180deg,#e9a63a,#c9821b);color:#1e1916;"
+                    "box-shadow:0 6px 18px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,240,200,.6)")
+        else:
+            look = ("background:rgba(244,236,220,.06);color:#f4ecdc;"
+                    "box-shadow:inset 0 0 0 1px rgba(244,236,220,.18)")
         ring = f"outline:3px solid {R['focus']};outline-offset:4px;" if focus else ""
-        return (f'<div style="background:{bg};color:{fg};{ring}border-radius:4px;padding:12px 16px;'
-                f'{ff};font-weight:700;font-size:22px;text-align:center">{text}</div>')
-    panel = (f'<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:440px;'
-             f'background:{R["surface"]};border:2px solid {B["soot"]};border-radius:8px;overflow:hidden">'
-             f'<div style="{band_css(36)}"></div>'
-             f'<div style="padding:28px 40px 32px;display:grid;gap:14px;justify-items:stretch">'
-             f'<div style="display:grid;justify-items:center;margin-bottom:12px">{word}</div>'
+        return (f'<div style="{look};{ring}border-radius:6px;padding:13px 16px;'
+                f'{ff};font-weight:700;font-size:21px;text-align:center;letter-spacing:.01em">{text}</div>')
+    panel = (f'<div style="position:absolute;right:96px;top:50%;transform:translateY(-50%);width:400px;'
+             f'{GLASS}border-radius:14px;padding:30px 34px 30px;display:grid;gap:12px">'
              f'{button("Play", True)}{button("Level map", focus=True)}{button("Settings")}{button("Credits")}'
-             f'<div style="{ff};font-size:16px;color:{R["text-muted"]};text-align:center;margin-top:6px">'
-             f'Inspired by The Treasures of Montezuma (Visual Shape, Alawar)</div></div>'
-             f'<div style="{band_css(36)};transform:scaleY(-1)"></div></div>')
-    return (f'<div style="width:1280px;height:720px;position:relative;overflow:hidden">'
-            f'<div style="position:absolute;inset:0;display:grid;grid-template-columns:repeat(20,{cell}px);'
-            f'grid-auto-rows:{cell}px">{board}</div>'
-            f'<div style="position:absolute;inset:0;background:rgba(0,0,0,{build.SCRIM[1]})"></div>{panel}</div>')
+             f'<div style="{ff};font-size:15px;color:#cbbda6;text-align:center;margin-top:8px">'
+             f'Inspired by The Treasures of Montezuma (Visual Shape, Alawar)</div></div>')
+    title = (f'<img src="{ka("title-wordmark.png")}" style="position:absolute;left:60px;bottom:52px;width:660px;{GOLD}">')
+    return (f'<div style="width:1280px;height:720px;position:relative;overflow:hidden;'
+            f'background:url({ka("mark-on-plaza.png")}) 30% 40%/cover no-repeat">'
+            f'<div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(10,8,6,.05) 0%,'
+            f'rgba(10,8,6,.25) 55%,rgba(10,8,6,.6) 100%),linear-gradient(180deg,rgba(0,0,0,0) 50%,rgba(10,8,6,.9) 100%)"></div>'
+            f'{title}{panel}</div>')
 
 
 def applications(fonts):
@@ -330,7 +345,7 @@ def applications(fonts):
              f'<div>{lab("Store capsule, 460 x 215")}{img("app-store-capsule.png", 460)}</div>'
              f'<div>{lab("Website at 1280 px")}{img("app-site-desktop.png", 900)}</div>'
              f'<div>{lab("Website at 360 px")}{img("app-site-mobile.png", 360)}</div>'
-             f'<div style="grid-column:1 / span 2">{lab("Game menu: dark panel framed by the step-fret band")}'
+             f'<div style="grid-column:1 / span 2">{lab("Game title menu: glass panel over the key art")}'
              f'{img("app-game-menu.png", 1100)}</div></div>')
     shoot(page(sheet, bg=B["lime"]), "applications.png", 1460, 1720)
 
