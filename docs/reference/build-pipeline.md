@@ -245,6 +245,7 @@ release. How to cut one: [Cut a release](../how-to/cut-a-release.md).
 | Concurrency | One run per tag, never cancelled |
 | Token | `contents: read`, except `publish`: `contents: write` |
 | Secrets | None; `publish` uses the run's `GITHUB_TOKEN` |
+| Time limits | `tag is vX.Y.Z on main` 5 min; `build` and `web` as their own jobs (longest path 80 min); `publish` 30 min, because finishing a draft takes up to three `gh` calls of at most 600 s each. A whole run ends within 115 min. Releases run only for tags, so no PR or branch run waits on them |
 
 | Job | What it does | Red means |
 |---|---|---|
