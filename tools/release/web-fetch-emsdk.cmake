@@ -10,7 +10,7 @@
 # Usage: cmake -DDIR=<dir> -P tools/release/web-fetch-emsdk.cmake
 # Then configure with the SDK's toolchain file and its config, no shell
 # environment needed:
-#   EM_CONFIG=<dir>/.emscripten cmake -S . -B build \
+#   EM_CONFIG=<dir>/.emscripten cmake -S . -B build -G Ninja \
 #     -DCMAKE_TOOLCHAIN_FILE=<dir>/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake ...
 include("${CMAKE_CURRENT_LIST_DIR}/steps.cmake")
 montezuma_load_env()
