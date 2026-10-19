@@ -166,15 +166,29 @@ budgets, frame times and the look each tier must show are in
 
 A finding raised in two or more reviews is listed here as a rule.
 
-- Performance figures (#35, #75, #79, #80). An absolute figure links to
+- Performance figures (#35, #75, #78, #79, #80). An absolute figure links to
   its section of `docs/reference/benchmark-results.md` and names the row
   (machine, tier, date or run); that row gives the tier, Resolution,
   3D scaling and vsync or cap mode, and a capped row says why (for
   example, Metal display sync). A before/after or "costs X ms" claim also
   compares against a run of the merge base on the same machine, tier,
   Resolution, 3D scaling and cap settings, uncapped where the driver
-  allows it. Frame-time numbers come from the benchmark the plan names as
+  allows it, and names the commit of each build it compares. Runs are
+  taken on the live desktop, never headless or in a nested compositor
+  such as gamescope.
+  Frame-time numbers come from the benchmark the plan names as
   their owner (today WP-46's), not from the row's own package.
+- Look evidence (#52, #78). A claim that a change leaves the look
+  unchanged names the capture (size, frame, tier) and gives a statistic
+  that can see local errors, such as the 99.9th-percentile or maximum
+  per-pixel difference, per region, against the difference between two
+  runs of the same build. It adds a crop where the change would show
+  (seams, piece contact, board edge). A whole-frame mean alone is not
+  evidence.
+- Pages the PR does not touch (#14, #20, #33, #69, #78). A change in
+  behaviour, a value or a name updates every page and code comment that
+  states the old one, not only the pages already in the diff. Search
+  `docs/` and the code for the old value before asking for review.
 - Plan dependencies (#35, #80). In the plan
   (`docs/reference/work-packages.md`), every package a `todo` or `active`
   row waits on, needs, or shares owned files or numbers with is in its
