@@ -3,7 +3,7 @@
 
 *Reference. A sourced reference set for the art director, technical
 artists (3D board, pieces, materials, textures) and UI and graphic
-designers: what Mexica art in the reign of Moctezuma II Xocoyotzin (1502
+designers: what Mexica art in the reign of Moctezuma II (1502
 to 1520) looked like, what each piece of evidence shows and does not
 show, and who may reuse it. Why the board looks as it does today:
 [Art direction](../explanation/art-direction.md). The look each tier must
@@ -27,7 +27,7 @@ This page places no image files.
 |---|---|
 | People | The Mexica (Tenochca) of Tenochtitlan and their twin city Tlatelolco (under Tenochca rule from 1473); the Nahua altepetl working for or with them: Texcoco and Tlacopan (the Triple Alliance), Azcapotzalco (metalwork), Amantla (featherwork) |
 | Place | The Basin of Mexico: a highland lake basin at about 2,240 m with volcanoes, reed marsh, chinampa fields, causeways and dry pine and oak slopes. Not jungle |
-| Period | Late Postclassic, reign of Moctezuma II, 1502 to 1520. Earlier work of the same city (Templo Mayor stages about 1440 to 1502) is context and is dated and labelled |
+| Period | Late Postclassic, reign of Moctezuma II (in Nahuatl, Motecuhzoma Xocoyotzin), 1502 to 1520. Earlier work of the same city (Templo Mayor stages about 1440 to 1502) is context and is dated and labelled |
 | Social range | Elite (court, nobles, priests), ritual (sacred precinct, offerings, calendar) and everyday (macehualtin, markets, chinampas, ceramics, obsidian, cloth). Women, artisans and merchants included |
 | Later witnesses | Colonial painted books (Codex Mendoza about 1541, Florentine Codex 1575 to 1577): form and colour conventions only, always with their date |
 | Comparanda | Mixtec gold and the Borgia Group codices, for technique only and labelled as another people's work |
@@ -135,8 +135,8 @@ are used in the brief below. Every item lists its holder's own record.
 17. **Writing labels things.** A place or name glyph sits beside what it
     names (IC-01, IC-03, DR-12). Never invent glyphs or make ornament look
     like writing.
-18. **Label every pre-1502 element** with its stage and ruler (for
-    example AR-06, Stage VI, Ahuitzotl 1486 to 1502). No building item
+18. **Label every pre-1502 element** with its stage and dates (for
+    example AR-06, Stage VI, 1486 to 1502). No building item
     left in the set falls inside Moctezuma II's reign; the one that does,
     the Calmécac Stage VII floor (1502 to 1519), is held out (NU-16).
 
@@ -219,13 +219,13 @@ keeps the rule that the seven kinds read apart by silhouette in greyscale.
 | Roofed interiors | Flat roof on wooden beams over pilasters, benches along the wall (the rooms that show them are held out: NU-16, NU-17) | inferred | None stands to roof height; a recorded decision on the site split |
 | Distant landscape (volcanoes, reed marsh, chinampas, pine and oak) | From geography and the scope brief; only a modern chinampa model was seen (AR-14) | inferred | The Uppsala map (left out until its holder record is read), Florentine Book XI landscapes, Lake Texcoco environmental history |
 | Everyday cloth colour | Undyed pale fawn-grey maguey for commoners; cream cotton with coloured brocade for nobles. No Basin commoner cloth survives | inferred | Textile finds; Florentine Book X dress chapters |
-| Cloak length by rank, sumptuary rules | Commoners to the knee, nobles longer (brief, from Durán and the Codex Mendoza) | unverified | Durán and Codex Mendoza at chapter and folio |
+| Cloak length by rank, sumptuary rules | Commoners to the knee, nobles longer (brief, from the *Historia de las Indias de Nueva España* and the Codex Mendoza) | unverified | *Historia de las Indias de Nueva España* (BNE) and Codex Mendoza at chapter and folio |
 | Tlatoani's turquoise cloak and diadem (xiuhtilmatli, xiuhuitzolli) | Turquoise-blue cotton cloak; pointed turquoise-mosaic diadem, from mosaic facts and painted rulers (DR-12) | inferred | No original survives |
 | Warrior suits (tlahuiztli), quilted cotton armour | Feathers on cloth for high grades, plain dyed cloth for lower ones (DR-12) | inferred | None survives |
 | Women's hair "horns" (married women) | The codex two-tuft form (DR-12), labelled as a later depiction; a sculpture with a wound form is held out (NU-19) | inferred | A holder-checked sculpture |
 | Sandals, nose ornaments, children's dress | Codex conventions only | unknown | Holder records not found |
 | Metates and molcajetes from the Basin | Basalt three-legged metate with mano; ceramic tripod molcajete with a scored interior (OB-23) | inferred | A Basin, Late Postclassic holder record |
-| Rock crystal beyond DR-04, amethyst, carnelian, any purple | Treat rock crystal like greenstone (ground and polished); purple unknown | unknown | Melgar Tísoc 2024 (MA-07); Florentine Book XI stone chapter in the Anderson and Dibble translation |
+| Rock crystal beyond DR-04, amethyst, carnelian, any purple | Treat rock crystal like greenstone (ground and polished); purple unknown | unknown | *La lapidaria del Templo Mayor*, 2024 (MA-07); Florentine Book XI stone chapter in the complete English translation |
 | Court gold of Moctezuma II's own phase | Same silver-rich Basin tradition, surface-enriched (MA-02); no Phase VII offering held gold, and court gold was melted after 1519 | inferred | None survives |
 | Exact Tlaloc blue | A bright turquoise-blue (Maya blue on sculpture and murals: CO-03, CO-04, CO-05) | inferred | Pigment colourimetry |
 | Moctezuma II's own objects | None in the set is proven his | unknown | — |
@@ -243,7 +243,7 @@ keeps the rule that the seven kinds read apart by silhouette in greyscale.
 
 ## Architecture and space
 
-The 1502 to 1520 temple (Stage VII) is almost entirely gone above its platform, so most building evidence is from earlier stages of the same city. Each item is labelled with its stage and ruler. The Templo Mayor, Calmécac, Casa de las Águilas and Tlatelolco sites, whose fabric is bound up with funerary deposits, sacrifice reliefs or a living memorial, are held out whole until a decision is recorded (NU-14 to NU-18 under [Not used, and why](#not-used-and-why)); no item ids are reused for them.
+The 1502 to 1520 temple (Stage VII) is almost entirely gone above its platform, so most building evidence is from earlier stages of the same city. Each item is labelled with its stage and dates. The Templo Mayor, Calmécac, Casa de las Águilas and Tlatelolco sites, whose fabric is bound up with funerary deposits, sacrifice reliefs or a living memorial, are held out whole until a decision is recorded (NU-14 to NU-18 under [Not used, and why](#not-used-and-why)); no item ids are reused for them.
 
 ### AR-03: Monumental Mexica serpent head with about 80 percent of its paint and stucco surviving (ochre, red, blue, black, white)
 
@@ -265,7 +265,7 @@ The 1502 to 1520 temple (Stage VII) is almost entirely gone above its platform, 
 |---|---|
 | What | Templo de Ehécatl-Quetzalcóatl (round-plan temple) and the ballcourt (teotlachtli) |
 | Holder and identifier | INAH; Boletín No. 470, 23 September 2022; <https://www.inah.gob.mx/images/boletines/2022/470/Boletin%20470.pdf> |
-| Date | Visible fabric Stage VI (Ahuitzotl, 1486-1502); ballcourt stairs Stage V (about 1481-1486) |
+| Date | Visible fabric Stage VI (1486-1502); ballcourt stairs Stage V (about 1481-1486) |
 | Place | República de Guatemala 16, Centro Histórico, west of the Templo Mayor on its axis |
 | Kind of evidence | surviving original |
 | Shows | A two-body platform with a talud wall keeping traces of stucco; the ballcourt runs east-west in line with Huitzilopochtli's shrine on basalt slab floors. Use for precinct layout and the round Ehecatl silhouette |
@@ -291,7 +291,7 @@ The 1502 to 1520 temple (Stage VII) is almost entirely gone above its platform, 
 
 | Field | Entry |
 |---|---|
-| What | Codex Mendoza, f. 69r: Moctezuma's palace ('las casas reales de Motecuhzoma') |
+| What | Codex Mendoza, f. 69r: Moctezuma II's palace (gloss: 'las casas reales de Motecuhzoma') |
 | Holder and identifier | Bodleian Libraries, Oxford, MS. Arch. Selden. A. 1 (Medieval Manuscripts catalogue, manuscript_8834); <https://medieval.bodleian.ox.ac.uk/catalog/manuscript_8834> |
 | Date | 1529-1553, perhaps about 1541 (Bodleian) |
 | Place | Mexico City; Nahua painters with Spanish glosses for the viceregal administration |
@@ -308,21 +308,21 @@ The 1502 to 1520 temple (Stage VII) is almost entirely gone above its platform, 
 | What | Florentine Codex, Book XI, f. 240v: a teocalli with two shrines on a stepped base and a paved floor of alternating stones |
 | Holder and identifier | Biblioteca Medicea Laurenziana, Florence, Med. Palat. 218-220; Library of Congress / World Digital Library copy of Book XI, LCCN 2021667856; <https://www.loc.gov/item/2021667856> |
 | Date | 1577 (LoC); made 1575-1577 |
-| Place | Tlatelolco and Mexico City; Sahagún with Nahua informants and painters |
+| Place | Tlatelolco and Mexico City; Nahua informants and painters under Franciscan direction |
 | Kind of evidence | later depiction |
 | Shows | A Nahua painter's colonial convention for the twin-shrine temple. Corroborates the twin top |
 | Does not show | 55 or more years after 1521, under Franciscan direction and European drawing influence. Uncoloured sketch |
 | Rights | LoC states it is unaware of copyright or other restrictions on the World Digital Library collection ('free to use and reuse'), read on the Book XI item page. Use only the LoC copy; the Getty copy is CC BY-NC-ND 4.0. Log any placed image in PROVENANCE.md |
 | Sensitivity | The gloss calls the shrine figures 'diablome' (devils): do not repeat that framing |
 
-### AR-11: Nuremberg map of Tenochtitlan, woodcut in the 1524 Latin edition of Cortés's second letter
+### AR-11: Nuremberg map of Tenochtitlan, woodcut in the 1524 Nuremberg Latin edition of the second letter of the conquest
 
 | Field | Entry |
 |---|---|
-| What | Nuremberg map of Tenochtitlan, woodcut in the 1524 Latin edition of Cortés's second letter |
+| What | Nuremberg map of Tenochtitlan, woodcut in the 1524 Nuremberg Latin edition of the second letter of the conquest |
 | Holder and identifier | Newberry Library copy, via the Library of Congress / World Digital Library record LCCN 2021667098; <https://lccn.loc.gov/2021667098/dc> |
-| Date | Printed 1524, Nuremberg (Friedrich Peypus) |
-| Place | Europe, from a lost sketch sent with Cortés's letters |
+| Date | Printed 1524, Nuremberg |
+| Place | Europe, from a lost sketch sent with the letters of the conquest |
 | Kind of evidence | later depiction |
 | Shows | An island city in a lake joined to shore by causeways, with a walled central precinct. Overall plan only |
 | Does not show | A European printer's image from the conqueror's side, partly imagined: take no building forms from it |
@@ -334,7 +334,7 @@ The 1502 to 1520 temple (Stage VII) is almost entirely gone above its platform, 
 | Field | Entry |
 |---|---|
 | What | Commoner house in La Lagunilla: at least four rooms round a small patio with a possible altar, masonry and adobe walls, stucco floors, a floor hearth (tlecuil) |
-| Holder and identifier | INAH, Dirección de Salvamento Arqueológico; Campos-Varela, Núñez Mejía and Bautista Roquez, 'Un asentamiento mexica en el barrio de La Lagunilla', Ventana Arqueológica no. 4; <https://www.revistas.inah.gob.mx/index.php/ventana/article/download/22416/23937/48644> |
+| Holder and identifier | INAH, Dirección de Salvamento Arqueológico; 'Un asentamiento mexica en el barrio de La Lagunilla', Ventana Arqueológica no. 4 (July to December 2022): 5-8, ISSN 2683-2984; <https://www.revistas.inah.gob.mx/index.php/ventana/article/download/22416/23937/48644> |
 | Date | Mexica occupation 1481-1521, reused 1521-1620 (excavators) |
 | Place | República de Argentina 95, Atzacoalco quarter, northern Tenochtitlan |
 | Kind of evidence | surviving original |
@@ -396,7 +396,7 @@ Portable objects of the court, the temple and the household. Deity images, sacri
 | What | Stone box (tepetlacalli), carved andesite |
 | Holder and identifier | British Museum, Am1982,Q.860; <https://www.britishmuseum.org/collection/object/E_Am1982-Q-860> |
 | Date | Late 15th century (holder) |
-| Place | Mexico; ex-Brasseur de Bourbourg collection, given 1872 |
+| Place | Mexico; from a nineteenth-century private collection, given 1872 |
 | Kind of evidence | surviving original |
 | Shows | A second stone box for size and carving |
 | Does not show | Unregistered on arrival; no excavation context |
@@ -508,18 +508,18 @@ Portable objects of the court, the temple and the household. Deity images, sacri
 | What | Polished obsidian mirror with a suspension hole |
 | Holder and identifier | British Museum, Am1825,1210.16; <https://www.britishmuseum.org/collection/object/E_Am1825-1210-16> |
 | Date | 1325-1521 (holder) |
-| Place | Made in Mexico (Bullock collection 1823) |
+| Place | Made in Mexico (from a private collection, 1823) |
 | Kind of evidence | surviving original |
 | Shows | 28 x 26.3 x 1 cm, polished both sides: a near-black, glassy, highly reflective disc (tezcatl) |
 | Does not show | No findspot |
 | Rights | Reference only, not for reuse (BM copyright) |
 | Sensitivity | Associated with Tezcatlipoca: low risk; avoid occult framing |
 
-### OB-15: 'Dr Dee's magical mirror': obsidian disc in a later leather case
+### OB-15: Obsidian mirror, British Museum 1966,1001.1: obsidian disc in a later leather case
 
 | Field | Entry |
 |---|---|
-| What | 'Dr Dee's magical mirror': obsidian disc in a later leather case |
+| What | Obsidian mirror, British Museum 1966,1001.1: obsidian disc in a later leather case |
 | Holder and identifier | British Museum, 1966,1001.1; <https://www.britishmuseum.org/collection/object/H_1966-1001-1> |
 | Date | 14th-16th century (holder's date queried) |
 | Place | Obsidian sourced by pXRF (2019) to Pachuca, Hidalgo |
@@ -754,7 +754,7 @@ Rank is the costume. Almost no cloth survives; the forms come from ornaments in 
 | Kind of evidence | surviving original |
 | Shows | 75.5 cm shield of wood, reed wickerwork, fleece, feathers and rawhide. The step-fret on elite regalia; holder: feather regalia was reserved for nobles |
 | Does not show | Insignia, not a garment; colours faded; one example |
-| Rights | Image CC BY 4.0 (Landesmuseum Württemberg, photographers P. Frankenstein and H. Zwietasch); metadata CC BY-SA 4.0, both stated on the record. Allowed with attribution and a PROVENANCE.md entry; none is placed by this page |
+| Rights | Image CC BY 4.0 (Landesmuseum Württemberg, photographer credit as stated on the record); metadata CC BY-SA 4.0, both stated on the record. Allowed with attribution and a PROVENANCE.md entry; none is placed by this page |
 | Sensitivity | Mexican heritage held abroad; no restriction known |
 
 ### DR-11: Mass of Saint Gregory
@@ -763,7 +763,7 @@ Rank is the costume. Almost no cloth survives; the forms come from ornaments in 
 |---|---|
 | What | Mass of Saint Gregory: feather mosaic on wood with gold (technique comparandum) |
 | Holder and identifier | Musée des Jacobins, Auch, inventory 986.1.1 (Met loan record); <https://www.metmuseum.org/art/collection/search/722118> |
-| Date | 1539 (dated; inscription names Fray Pedro de Gante and Don Diego Huanitzin) |
+| Date | 1539 (dated; the inscription names a Franciscan friar and the Indigenous governor of Tenochtitlan) |
 | Place | Mexico City; Nahua featherworkers |
 | Kind of evidence | later depiction |
 | Shows | Nahua feather mosaic technique 18 years after the conquest: small iridescent feathers cut and glued in fields, outlined in gold sheet |
@@ -775,7 +775,7 @@ Rank is the costume. Almost no cloth survives; the forms come from ornaments in 
 
 | Field | Entry |
 |---|---|
-| What | Codex Mendoza: history of the rulers, the tribute of Motecuhzoma Xocoyotzin's empire, and the life cycle of men and women |
+| What | Codex Mendoza: history of the rulers, the tribute of Moctezuma II's empire, and the life cycle of men and women |
 | Holder and identifier | Bodleian Libraries, Oxford, MS. Arch. Selden. A. 1, Part A, fols. 1-72; <https://digital.bodleian.ox.ac.uk/objects/2fea788e-2aa2-4f08-b6d9-648c00486220/> |
 | Date | 1529-1553, perhaps c. 1541 (Bodleian) |
 | Place | Mexico City; Indigenous tlacuiloque with Spanish glosses |
@@ -822,7 +822,7 @@ Mostly scholarly analyses of how materials were sourced, worked and finished. Th
 | Field | Entry |
 |---|---|
 | What | Lead and strontium isotope study of turquoise from Tenochtitlan and of Mixtec-style mosaics |
-| Holder and identifier | Thibodeau, López Luján, Killick, Berdan and Ruiz, Science Advances 4, no. 6 (2018): eaas9370, doi:10.1126/sciadv.aas9370; University of Arizona record; <https://experts.arizona.edu/en/publications/was-aztec-and-mixtec-turquoise-mined-in-the-american-southwest/> |
+| Holder and identifier | 'Was Aztec and Mixtec Turquoise Mined in the American Southwest?', Science Advances 4, no. 6 (2018): eaas9370, doi:10.1126/sciadv.aas9370; University of Arizona record; <https://experts.arizona.edu/en/publications/was-aztec-and-mixtec-turquoise-mined-in-the-american-southwest/> |
 | Date | Published 2018; objects Late Postclassic |
 | Place | Templo Mayor and Mixteca-style mosaics |
 | Kind of evidence | modern analysis |
@@ -831,17 +831,17 @@ Mostly scholarly analyses of how materials were sourced, worked and finished. Th
 | Rights | Reference only, not for reuse (cite and paraphrase) |
 | Sensitivity | none known |
 
-### MA-02: The goldsmiths' lost-wax method and colour treatment (Florentine Codex Book IX, ch. 16), read through Easby's analysis
+### MA-02: The goldsmiths' lost-wax method and colour treatment (Florentine Codex Book IX, ch. 16), read through a 1956 Penn Museum analysis
 
 | Field | Entry |
 |---|---|
-| What | The goldsmiths' lost-wax method and colour treatment (Florentine Codex Book IX, ch. 16), read through Easby's analysis |
-| Holder and identifier | Dudley T. Easby Jr., 'Sahagún Reviviscit in the Gold Collection of the University Museum', University Museum Bulletin 20, no. 3 (1956), Penn Museum; <https://penn.museum/documents/publications/bulletin/20-3/sahagun_reviviscit_gold_collections.pdf> |
-| Date | Codex 1575-1577 (colonial); Easby 1956 |
+| What | The goldsmiths' lost-wax method and colour treatment (Florentine Codex Book IX, ch. 16), read through a 1956 Penn Museum analysis |
+| Holder and identifier | Penn Museum, '[...] Reviviscit in the Gold Collection of the University Museum' (title shortened: its first word names the Florentine Codex's Franciscan compiler), University Museum Bulletin 20, no. 3 (1956); <https://penn.museum/documents/publications/bulletin/20-3/sahagun_reviviscit_gold_collections.pdf> |
+| Date | Codex 1575-1577 (colonial); analysis 1956 |
 | Place | Tlatelolco, describing Tenochtitlan practice |
 | Kind of evidence | later depiction (via analysis) |
-| Shows | Core of charcoal and clay; beeswax and copal model; after casting, burnished, bathed in alum, reheated, given a 'gold medicine' and rubbed with clay and salt. Easby: surface enrichment (depletion gilding), not plating, hence the high-karat look |
-| Does not show | Colonial account about 55 years after the conquest; Easby used a provisional Anderson and Dibble translation. Quoted in Easby: the primary text was not read |
+| Shows | Core of charcoal and clay; beeswax and copal model; after casting, burnished, bathed in alum, reheated, given a 'gold medicine' and rubbed with clay and salt. The analysis: surface enrichment (depletion gilding), not plating, hence the high-karat look |
+| Does not show | Colonial account about 55 years after the conquest; the analysis used a provisional English translation. Quoted in the analysis: the primary text was not read |
 | Rights | Reference only, not for reuse |
 | Sensitivity | none known |
 
@@ -878,7 +878,7 @@ Mostly scholarly analyses of how materials were sourced, worked and finished. Th
 | Field | Entry |
 |---|---|
 | What | Archaeometric study of 619 greenstone objects from structures around the Templo Mayor |
-| Holder and identifier | Reyna B. Solís Ciriaco, Revista Española de Antropología Americana 48 (2018): 233-249, doi:10.5209/REAA.63700; objects held by INAH; <https://revistas.ucm.es/index.php/REAA/article/download/63700/4564456549490/4564456563947> |
+| Holder and identifier | 'Esferas de producción de los objetos de piedra verde procedentes de las estructuras aledañas al Templo Mayor de Tenochtitlan', Revista Española de Antropología Americana 48 (2018): 233-249, doi:10.5209/REAA.63700; objects held by INAH; <https://revistas.ucm.es/index.php/REAA/article/download/63700/4564456549490/4564456563947> |
 | Date | 2018 study; Late Postclassic objects |
 | Place | Sacred precinct, Tenochtitlan |
 | Kind of evidence | modern analysis |
@@ -892,7 +892,7 @@ Mostly scholarly analyses of how materials were sourced, worked and finished. Th
 | Field | Entry |
 |---|---|
 | What | Maya and Olmec jadeite 'relics' in the Templo Mayor |
-| Holder and identifier | Monterrosa Desruelles and Melgar Tísoc, in XXX Simposio de Investigaciones Arqueológicas en Guatemala 2016 (2017), 905-916; <https://www.mesoweb.com/Simposio/pdf/30/Monterrosa_y_Melgar.2017.pdf> |
+| Holder and identifier | 'Reliquias mayas y olmecas de jadeíta en el Templo Mayor de Tenochtitlan', in XXX Simposio de Investigaciones Arqueológicas en Guatemala 2016 (2017), 905-916; <https://www.mesoweb.com/Simposio/pdf/30/Monterrosa_y_Melgar.2017.pdf> |
 | Date | 2017 (preliminary) |
 | Place | Templo Mayor; made in the Maya area and on the Gulf Coast |
 | Kind of evidence | modern analysis |
@@ -901,11 +901,11 @@ Mostly scholarly analyses of how materials were sourced, worked and finished. Th
 | Rights | Reference only, not for reuse |
 | Sensitivity | none known |
 
-### MA-07: INAH bulletin on Melgar Tísoc, La lapidaria del Templo Mayor. Estilos y tradiciones tecnológicas (2024)
+### MA-07: INAH bulletin on La lapidaria del Templo Mayor. Estilos y tradiciones tecnológicas (2024)
 
 | Field | Entry |
 |---|---|
-| What | INAH bulletin on Melgar Tísoc, La lapidaria del Templo Mayor. Estilos y tradiciones tecnológicas (2024): 9,612 objects |
+| What | INAH bulletin on La lapidaria del Templo Mayor. Estilos y tradiciones tecnológicas (2024): 9,612 objects |
 | Holder and identifier | INAH, Boletín 166 (4 April 2025); <https://www.inah.gob.mx/images/boletines/2025/166/Boletin%20166.pdf> |
 | Date | 2025 summary of a 2024 book |
 | Place | Templo Mayor offerings |
@@ -938,8 +938,8 @@ Colour evidence is mostly conservation science on monuments. The studies are lis
 | Field | Entry |
 |---|---|
 | What | Templo Mayor sculpture and mural palette: 'Restituciones cromáticas, análisis de pigmentos y estudio simbólico' |
-| Holder and identifier | López Luján, Chiari, Carrizosa, De Anda Rogel, Matadamas and Robles, in El color de los dioses. Policromía en la Antigüedad clásica y Mesoamérica (Mexico City: INBAL / Museo del Palacio de Bellas Artes, 2016); Mesoweb copy; <https://www.mesoweb.com/es/articulos/sub/Escultura.pdf> |
-| Date | Objects Stage II (before 1427) to Ahuitzotl (1486-1502); analyses about 2000-2016 |
+| Holder and identifier | 'Restituciones cromáticas, análisis de pigmentos y estudio simbólico', in El color de los dioses. Policromía en la Antigüedad clásica y Mesoamérica (Mexico City: INBAL / Museo del Palacio de Bellas Artes, 2016); Mesoweb copy; <https://www.mesoweb.com/es/articulos/sub/Escultura.pdf> |
+| Date | Objects Stage II (before 1427) to Stage VI (1486-1502); analyses about 2000-2016 |
 | Place | Tenochtitlan, sacred precinct |
 | Kind of evidence | modern analysis |
 | Shows | Sculpture and murals share 'exactamente la misma paleta cromática y los mismos pigmentos' (p. 96): red, wine red, ochre, blue, white, black. The north serpent is blue, 'color de naturaleza fría y relacionado con las deidades pluviales' (p. 103); the south ones ochre. The authors rejected a codex-colour Coyolxauhqui reconstruction as too saturated (p. 95). On the Coyolxauhqui only 'unos cuantos restos de pigmento rojo y ocre' were recorded after its 1978 washing (p. 94) |
@@ -966,12 +966,12 @@ Colour evidence is mostly conservation science on monuments. The studies are lis
 | Field | Entry |
 |---|---|
 | What | 'Línea y color en Tenochtitlan: escultura policromada y pintura mural' |
-| Holder and identifier | López Luján, Chiari, López Austin and Carrizosa, Estudios de Cultura Náhuatl (UNAM), pp. 16-44 (volume and year not shown in the excerpt read; latest reference 2005: verify); <https://journals.unam.mx/index.php/ecn/article/download/9292/8670/9076> |
-| Date | About 2005; objects Stage II to early 16th century |
+| Holder and identifier | Estudios de Cultura Náhuatl 36 (2005): 15-45, Instituto de Investigaciones Históricas, UNAM; <https://hdl.handle.net/20.500.12525/2293>; copy read: <https://journals.unam.mx/index.php/ecn/article/download/9292/8670/9076> |
+| Date | 2005; objects Stage II to early 16th century |
 | Place | Sacred precinct |
 | Kind of evidence | modern analysis |
 | Shows | 'solamente hemos podido registrar la presencia del rojo, el ocre, el blanco, el negro y el azul' (p. 17), fewer than the codices, which add green, yellow and grey. Red hematite (p. 18); ochre goethite (p. 19); white imported calcite (p. 20); black pine soot (p. 22); blue Maya blue (p. 22). The Casa de las Águilas friezes repeat yellow, red, blue and black top to bottom (p. 32); that building is held out (NU-17), so its band sequence is not copied |
-| Does not show | Sacred precinct only; volume and year unverified |
+| Does not show | Sacred precinct only |
 | Rights | Reference only, not for reuse |
 | Sensitivity | none known beyond deity imagery |
 
@@ -980,7 +980,7 @@ Colour evidence is mostly conservation science on monuments. The studies are lis
 | Field | Entry |
 |---|---|
 | What | Pigment analysis of the Casa de las Águilas murals |
-| Holder and identifier | Ortega et al., 'Analysis of prehispanic pigments from "Templo Mayor" of Mexico City', Journal of Materials Science 36, no. 3 (2001): 751-756, doi:10.1023/A:1004853311627; NAU record; <https://experts.nau.edu/en/publications/analysis-of-prehispanic-pigments-from-templo-mayor-of-mexico-city/> |
+| Holder and identifier | 'Analysis of prehispanic pigments from "Templo Mayor" of Mexico City', Journal of Materials Science 36, no. 3 (2001): 751-756, doi:10.1023/A:1004853311627; NAU record; <https://experts.nau.edu/en/publications/analysis-of-prehispanic-pigments-from-templo-mayor-of-mexico-city/> |
 | Date | Analysis 2001; mural phases not dated in the abstract |
 | Place | Sacred precinct |
 | Kind of evidence | modern analysis |
@@ -994,7 +994,7 @@ Colour evidence is mostly conservation science on monuments. The studies are lis
 | Field | Entry |
 |---|---|
 | What | Painting technique of the Templo Mayor wall paintings |
-| Holder and identifier | Dulce María Grimaldi, in Student Papers from the 26th Conference of ANAGPIC (Smithsonian, 2000), 36-43; Smithsonian MCI bibliography record 284; <https://mci.si.edu/node/1168576> |
+| Holder and identifier | 'Painting Technique of the Wall Paintings at the Great Temple of Tenochtitlan in Mexico City', in Student Papers from the 26th Conference of ANAGPIC (Smithsonian, 2000), 36-43; Smithsonian MCI bibliography record 284; <https://mci.si.edu/node/1168576> |
 | Date | 2000 |
 | Place | Templo Mayor |
 | Kind of evidence | modern analysis |
@@ -1008,8 +1008,8 @@ Colour evidence is mostly conservation science on monuments. The studies are lis
 | Field | Entry |
 |---|---|
 | What | Tlaltecuhtli monolith pigment and conservation study |
-| Holder and identifier | María Barajas Rocha, 'El relieve monumental de la diosa Tlaltecuhtli del Templo Mayor: estudio para la estabilización de su policromía', Intervención 3, no. 5 (2012): 23-33 (Redalyc copy); <https://www.redalyc.org/pdf/3556/355632772004.pdf> |
-| Date | Monument of the Ahuitzotl phase (1486-1502) per the author; study 2012 |
+| Holder and identifier | 'El relieve monumental de la diosa Tlaltecuhtli del Templo Mayor: estudio para la estabilización de su policromía', Intervención 3, no. 5 (2012): 23-33 (Redalyc copy); <https://www.redalyc.org/pdf/3556/355632772004.pdf> |
+| Date | Monument of Stage VI (1486-1502) per the study; study 2012 |
 | Place | Tenochtitlan, foot of the Templo Mayor |
 | Kind of evidence | modern analysis |
 | Shows | Hematite red; hematite with titanomagnetite wine red; goethite ochre (dominant); imported calcite white; pine-soot black; Maya blue. Colour in 'superficies monocromáticas bien delimitadas, saturadas, opacas, uniformes y sin cambios de tonalidad ni sombras'. Consolidated with silica ester in 2010, so today's sheen is not the fresh state |
@@ -1022,7 +1022,7 @@ Colour evidence is mostly conservation science on monuments. The studies are lis
 | Field | Entry |
 |---|---|
 | What | Codex Borbonicus colour study |
-| Holder and identifier | Élodie Dupey García, 'Los colores del Códice borbónico y el atlas en cromotipia de Ernest-Théodore Hamy', Estudios de Cultura Náhuatl 52 (2016): 225-245; <https://nahuatl.historicas.unam.mx/index.php/ecn/article/download/77812/68862> |
+| Holder and identifier | 'Los colores del Códice borbónico y el atlas en cromotipia [...]' (title shortened: it ends with the atlas maker's name), Estudios de Cultura Náhuatl 52 (2016): 225-245; <https://nahuatl.historicas.unam.mx/index.php/ecn/article/download/77812/68862> |
 | Date | 2016; codex date contested (pre- or very early post-conquest) |
 | Place | Basin of Mexico |
 | Kind of evidence | modern analysis |
@@ -1036,7 +1036,7 @@ Colour evidence is mostly conservation science on monuments. The studies are lis
 | Field | Entry |
 |---|---|
 | What | Six buildings in the Templo Mayor zone that keep paint (press report of an INAH restorer's lecture) |
-| Holder and identifier | Quadratín México, 1 August 2017, reporting Michelle De Anda Rogel (INAH); <https://mexico.quadratin.com.mx/conservan-6-edificios-zona-del-templo-mayor-restos-policromia/> |
+| Holder and identifier | Quadratín México, 1 August 2017, reporting a lecture by an INAH restorer; <https://mexico.quadratin.com.mx/conservan-6-edificios-zona-del-templo-mayor-restos-policromia/> |
 | Date | Report 2017; buildings 15th to early 16th century |
 | Place | Sacred precinct |
 | Kind of evidence | secondary (press) |
@@ -1053,9 +1053,9 @@ Signs are drawn from the real Mexica set and carry their stated meaning; nothing
 
 | Field | Entry |
 |---|---|
-| What | Stone of Tizoc: cylinder whose sides show Tizoc seizing captive lords, each labelled with a town glyph; sun disc on top; sky and earth bands |
+| What | Stone of Tizoc: cylinder whose sides show the ruler seizing captive lords, each labelled with a town glyph; sun disc on top; sky and earth bands |
 | Holder and identifier | MNA, INAH; Google Arts & Culture partner record; <https://artsandculture.google.com/asset/piedra-de-tizoc-unknown/oAH4WlVbBeGd_A?hl=en> |
-| Date | 1481/1486, reign of Tizoc (holder): pre-Moctezuma II |
+| Date | 1481/1486 (holder): before Moctezuma II's reign |
 | Place | Tenochtitlan; found 17 December 1791 in the main square |
 | Kind of evidence | surviving original |
 | Shows | Place glyphs used as captions beside the people they name; a star-eye sky band and an earth band framing a frieze: a sourced model for border bands |
@@ -1109,7 +1109,7 @@ for every row here, until a decision on the site split is recorded
 | Id | What | Holder record | Why not used | Facts the brief takes, no likeness |
 |---|---|---|---|---|
 | NU-01 | Huei Tzompantli: skull-rack platform and tower of skulls | INAH, Lugares node 5907 <https://lugares.inah.gob.mx/en/node/5907>; Boletín 98 (2023) | Human remains of men, women and children; funerary and sensitive for descendants | None. Not even as a distant platform without a recorded decision |
-| NU-02 | Funerary deposits: Templo Mayor Stage II cremation urns and offerings with human remains (NU-14, NU-15); Tlatelolco Ehecatl mass burials and child offerings (NU-18); charred cotton cloth from the cremation burial of Offering V, Casa de las Águilas | INAH node 4463, node 4477; López Luján and Guilliem Arroyo 2017 (Mesoweb <https://www.mesoweb.com/es/articulos/sub/Textiles.pdf>) | Funerary | None |
+| NU-02 | Funerary deposits: Templo Mayor Stage II cremation urns and offerings with human remains (NU-14, NU-15); Tlatelolco Ehecatl mass burials and child offerings (NU-18); charred cotton cloth from the cremation burial of Offering V, Casa de las Águilas | INAH node 4463, node 4477; 'Mexica Textiles', PreColumbian Textile Conference VII, Zea Books, 2017 (Mesoweb <https://www.mesoweb.com/es/articulos/sub/Textiles.pdf>) | Funerary | None |
 | NU-03 | Sacrifice and dismemberment imagery and rites: the Calmécac drain slabs (NU-16); the rites of the Casa de las Águilas and its life-size ceramic eagle figures (NU-17) | INAH node 4778, node 4463 | Sacrifice imagery; ritual space. The eagle figures' holder record was also not read and their gathered dates contradict each other | None |
 | NU-04 | Tlatelolco as a place in marketing | INAH node 4477 | Site of the 1968 massacre, a living memorial | None (the site is held, NU-18) |
 | NU-05 | Deity images of a sacred narrative with bodily violence: Coatlicue; Coyolxauhqui disc and colossal head; Tlaltecuhtli monolith and the Met Tlaltecuhtli relief | Coatlicue, MNA (GA&C <https://artsandculture.google.com/asset/coatlicue-unknown/nAFqcycgNYK8_g>); Coyolxauhqui disc, Museo del Templo Mayor Sala 4 <https://www.templomayor.inah.gob.mx/salas-del-museo/sala-4-huitzilopochtli>; head, MNA (GA&C <https://artsandculture.google.com/asset/coyolxauhqui-unknown/pwGsMYS5_7vTNQ>); Met 00.5.36 <https://www.metmuseum.org/art/collection/search/307636> | Deity images; risk of gore and sensationalism | Pigments (CO-01, CO-06). The Coyolxauhqui disc, about 3 m across at the foot of Huitzilopochtli's stair (AR-14 guide), gives floor-relief scale. Only red and ochre traces were recorded on it (CO-01 p. 94): no reconstructed palette is offered |
@@ -1117,13 +1117,13 @@ for every row here, until a decision on the site split is recorded
 | NU-07 | Human remains as objects: skull masks; turquoise-and-lignite mosaic skull; Offering 141 painted skulls | INAH o-35443 <https://repositorio.inah.gob.mx/o-35443>; British Museum Am,St.401 <https://www.britishmuseum.org/collection/object/E_Am-St-401>; Offering 141 via CO-01, CO-02 | Human remains | None |
 | NU-08 | Tlaloc imagery: Olla Tláloc; Tlatelolco effigy brazier; Tlaloc braziers of Stage IVb; Stage II and MNA chacmools; Met rain god pendant | INAH o-35451 <https://repositorio.inah.gob.mx/o-35451>; MNA (GA&C <https://artsandculture.google.com/asset/brasero-efigie-de-tlatelolco-unknown/ewGq8d7BW-w3bQ>, <https://artsandculture.google.com/asset/chac-mool/ogFl8qHbQLKHmw>); INAH element 1261 <https://lugares.inah.gob.mx/en/pagina-de-elemento/1261>; Met 1979.206.1035 <https://www.metmuseum.org/art/collection/search/313228> | Tlaloc is still invoked in Nahua rain petitions | Blue for the north and Tlaloc side; braziers carry blue clouds, green greenstone discs and white feathers (NU-15 record) |
 | NU-09 | Teponaztli slit drums | Met 1979.206.361 <https://www.metmuseum.org/art/collection/search/312583>; Weltmuseum Wien 59894 <https://www.weltmuseumwien.at/en/objects/slit-drum-445809> | Still played in Nahua ceremonies | Carved wood with worn low relief and a dark handled patina; paint lost |
-| NU-10 | Offering deposits, sacrificial vessels and tomb material: the Templo Mayor gold assemblage and Offering 125; gold bells on a wolf and an eagle; the Offering 99 turquoise disk; the reused Teotihuacan mask of Offering 82; a Mezcala figure; cuauhxicalli vessels; tecpatl knives; Monte Albán Tomb 7 pectoral; LACMA eagle pendant; Templo Mayor museum urns | López Luján and Ruvalcaba Sil, 'Mexica Gold' (Mesoweb <https://www.mesoweb.com/es/articulos/sub/MexicaGold.pdf>); Met 760302; INAH o-35444; Met 1978.412.42; BM Am,+.6185, Weltmuseum 59896, NMAI 16/3405; Met 920507 (on loan; lender and accession not stated, and the page gives no findspot for these knives, only that tecpatls were generally placed in Templo Mayor offerings); Met 744283; LACMA M.71.73.249a; INAH node 5284 | Offering deposits with sacrificed animals, sacrificial vessels, objects regarded as living god-embodiments, tomb contexts | Gold: 267 pieces and 1,090 fragments, mostly hammered sheet, 27.7% cast; Au 30 to 95%, Ag 3 to 62%, Cu 0 to 35%; no Phase VII offering held gold; about 500 g in all. The Mexica collected and refitted older greenstone. The Offering 99 disk is also unverified (no INAH record; circulating image is a reconstruction) |
+| NU-10 | Offering deposits, sacrificial vessels and tomb material: the Templo Mayor gold assemblage and Offering 125; gold bells on a wolf and an eagle; the Offering 99 turquoise disk; the reused Teotihuacan mask of Offering 82; a Mezcala figure; cuauhxicalli vessels; tecpatl knives; Monte Albán Tomb 7 pectoral; LACMA eagle pendant; Templo Mayor museum urns | 'Mexica Gold', *Golden Kingdoms*, J. Paul Getty Museum, 2017, ISBN 978-1-60606-548-8 (Mesoweb <https://www.mesoweb.com/es/articulos/sub/MexicaGold.pdf>); Met 760302; INAH o-35444; Met 1978.412.42; BM Am,+.6185, Weltmuseum 59896, NMAI 16/3405; Met 920507 (on loan; lender and accession not stated, and the page gives no findspot for these knives, only that tecpatls were generally placed in Templo Mayor offerings); Met 744283; LACMA M.71.73.249a; INAH node 5284 | Offering deposits with sacrificed animals, sacrificial vessels, objects regarded as living god-embodiments, tomb contexts | Gold: 267 pieces and 1,090 fragments, mostly hammered sheet, 27.7% cast; Au 30 to 95%, Ag 3 to 62%, Cu 0 to 35%; no Phase VII offering held gold; about 500 g in all. The Mexica collected and refitted older greenstone. The Offering 99 disk is also unverified (no INAH record; circulating image is a reconstruction) |
 | NU-11 | The sacred calendar: Codex Borbonicus; the 20 tonalpohualli day signs (Sun Stone, Tlatelolco Templo Calendárico); Codex Magliabechiano | Bibliothèque de l'Assemblée nationale, Paris <https://www2.assemblee-nationale.fr/decouvrir-l-assemblee/patrimoine/la-bibliotheque/le-fonds-ancien-de-la-bibliotheque/autres-tresors/codex-borbonicus-fin-xve-siecle> (holder: 'fin XVe siècle', date contested; '© Assemblée nationale, tous droits réservés'); Magliabechiano: no holder record found | A divinatory calendar still kept by some communities; contested cultural property. Its return status was not verified on any page read, so none is stated. Magliabechiano also frames sacrifice through colonial authors | The painted-book palette and method (CO-07) |
 | NU-20 | Codex Borgia, a divinatory book (tonalamatl) of the Borgia Group | Biblioteca Apostolica Vaticana, Borg.mess.1 <https://digi.vatlib.it/view/MSS_Borg.mess.1> | A sacred divinatory calendar of the same kind as the Codex Borbonicus (NU-11) | None |
 | NU-21 | Templo Mayor offering objects: standard-bearer figures left as an offering at the start of Stage IV (INAH o-35437); pearl-oyster teardrop pendants (oyohualli) probably from Templo Mayor offerings (Museo del Templo Mayor, via a Met loan record) | INAH o-35437 <https://repositorio.inah.gob.mx/o-35437>; Museo del Templo Mayor | Offering deposits, held out with NU-10 | None |
 | NU-12 | The eagle-on-nopal founding image: Teocalli de la Guerra Sagrada; Codex Mendoza f. 2r | Teocalli, MNA (GA&C <https://artsandculture.google.com/asset/teocalli-de-la-guerra-sagrada-unknown/wQEibbbI4U34AQ?hl=en>; holder date 1325/1521; INAH Boletín 316, 30 June 2025, gives about 1507 <https://www.inah.gob.mx/images/boletines/2025/316/Boletin%20316.pdf>); Bodleian MS. Arch. Selden. A. 1 | Mexico's national emblem, whose use is regulated by law; the Teocalli carries deity figures and is part of the 2025 commemoration of Tenochtitlan | That a sculptor of about 1507 rendered a temple as a stepped platform with a stair to a top shrine (Boletín 316) |
-| NU-13 | Featherwork and mosaics under return debate: the feather headdress ('Penacho', not provably Moctezuma's); feather shield with coyote; turquoise mosaics | Weltmuseum Wien 10402 <https://www.weltmuseumwien.at/en/digital/the-feather-headdress> and 43380 <https://www.weltmuseumwien.at/en/objects/feather-shield-with-coyote-531288>; British Museum Am1894,-.634 <https://www.britishmuseum.org/collection/object/E_Am1894-634> and Am,St.400 | Live restitution claim and national symbol (The Art Newspaper, 9 October 2026, reports the debate ongoing); heritage held abroad | Feathers: quetzal, cotinga, roseate spoonbill, squirrel cuckoo, kingfisher on nets, cane and paper with gold plates; restored 1878. Mosaic: cedro core, turquoise and red Spondylus set in pine resin and copal, white conch teeth, hematite-red resin, pyrite eyes |
-| NU-14 | Templo Mayor, Stage IVb platform and west facade: twin stair, serpent heads at the stair foot, Altar of Frogs | INAH, Lugares element 1259 <https://lugares.inah.gob.mx/en/pagina-de-elemento/1259>; Stage IVb, Axayacatl, 1469-1481 (INAH); CC BY-NC-ND 4.0 | Sacred precinct whose offerings include human remains (funerary); held until a decision on the site split is recorded | That the twin stair and north/south division survive in situ; INAH says two serpent heads keep their original colour |
+| NU-13 | Featherwork and mosaics under return debate: the feather headdress ('Penacho', not provably Moctezuma II's); feather shield with coyote; turquoise mosaics | Weltmuseum Wien 10402 <https://www.weltmuseumwien.at/en/digital/the-feather-headdress> and 43380 <https://www.weltmuseumwien.at/en/objects/feather-shield-with-coyote-531288>; British Museum Am1894,-.634 <https://www.britishmuseum.org/collection/object/E_Am1894-634> and Am,St.400 | Live restitution claim and national symbol (The Art Newspaper, 9 October 2026, reports the debate ongoing); heritage held abroad | Feathers: quetzal, cotinga, roseate spoonbill, squirrel cuckoo, kingfisher on nets, cane and paper with gold plates; restored 1878. Mosaic: cedro core, turquoise and red Spondylus set in pine resin and copal, white conch teeth, hematite-red resin, pyrite eyes |
+| NU-14 | Templo Mayor, Stage IVb platform and west facade: twin stair, serpent heads at the stair foot, Altar of Frogs | INAH, Lugares element 1259 <https://lugares.inah.gob.mx/en/pagina-de-elemento/1259>; Stage IVb, 1469-1481 (INAH); CC BY-NC-ND 4.0 | Sacred precinct whose offerings include human remains (funerary); held until a decision on the site split is recorded | That the twin stair and north/south division survive in situ; INAH says two serpent heads keep their original colour |
 | NU-15 | Templo Mayor zone overview: seven stages, Stage II shrines, Buildings A-C, the Red Temples, the Stage VI patio | INAH, Lugares node 4463 <https://lugares.inah.gob.mx/en/node/4463> (with element 1265); Stage II 1376-1427 to Stage VI 1486-1502 (INAH); CC BY-NC-ND 4.0 | Stage II cremation urns and offerings with human remains (funerary); held | Seven enlargements, each encasing the last; the final temple about 150 ft (about 46 m) high; nothing of Stage VII stands above its platform; Building A keeps its stucco skin; Tlaloc braziers with blue clouds, green greenstone discs and white feathers; the Red Temples copy Teotihuacan style on purpose |
 | NU-16 | Calmécac remains: Stage VII basalt slab floor and stair start; Stage VI room with stucco floor, pilaster bases and a bench; two clay almenas in cut-snail-shell form | INAH, Lugares node 4778 <https://lugares.inah.gob.mx/en/node/4778>; Stage VII 1502-1519, Stage VI 1486-1502 (INAH); CC BY-NC-ND 4.0 | Engraved drain slabs show dismemberment (sacrifice imagery); held | Basalt slab floors; tezontle walls set in mud; stucco floors |
 | NU-17 | Casa de las Águilas (House of the Eagles): bench-lined rooms with processional relief, portico column bases, life-size ceramic eagle figures | INAH, Lugares node 4463 <https://lugares.inah.gob.mx/en/node/4463>; built and enlarged between about 1430 and 1500, stage on view about 1470 (node 4463); CC BY-NC-ND 4.0 | A ritual space used for private rites including sacrifice; the eagle figures' own record was not read; held | That it is a deliberate Toltec revival, not the everyday Mexica style. Pigment chemistry of its murals (CO-04) only; no room, bench, band sequence or figure is modelled on it |
@@ -1133,10 +1133,10 @@ for every row here, until a decision on the site split is recorded
 ### Left out because the holder record was not verified
 
 Primeros Memoriales f. 269r (Real Biblioteca, Madrid; folio known only
-from a blog post); the basalt courtyard of Axayacatl's palace (news report
-only); the Marquina precinct model in Zócalo Metro station (news report
-only); Codex Telleriano-Remensis (Gallica record did not load); Durán's
-*Historia* (Biblioteca Nacional de España record did not load); a general
+from a blog post); the basalt courtyard of a Mexica royal palace (news report
+only); the scale model of the sacred precinct in Zócalo Metro station (news report
+only); Codex Telleriano-Remensis (Gallica record did not load); the
+*Historia de las Indias de Nueva España* (Biblioteca Nacional de España record did not load); a general
 Florentine Codex entry (replaced by the folio items AR-10, DR-14, DR-15,
 MA-03, MA-04); Florentine Codex Book VIII (LoC 2021667853: the
 item page did not load, so its date, contents and rights were not read);
@@ -1147,9 +1147,11 @@ gives no date or place, so nothing shows it is Mexica or from the Basin);
 INAH's Templo Mayor site guide no. 115 (not read; the base dimension and
 the 'hacia 1480' date attributed to it in the gathering notes are not
 used). The Mapa de Uppsala (Uppsala University Library: only a news page was
-found, with no Alvin catalogue record or shelfmark) and Florentine Codex
+found, with no Alvin catalogue record or shelfmark), Florentine Codex
 Book 11 fol. 216v on cochineal (read only through the Visual Lexicon of
-Aztec Hieroglyphs, not the Getty or LoC copy) are also left out. Each can
+Aztec Hieroglyphs, not the Getty or LoC copy) and a 2014 abstract on
+Templo Mayor lapidary work (its title and identifier were not recorded,
+so it cannot be cited) are also left out. Each can
 return once its holder's own record is read.
 
 ### Consultation and decisions held open
@@ -1210,12 +1212,12 @@ uses non-figural precious materials and plain ornament.
 | North and Tlaloc blue, south and Huitzilopochtli ochre | attested | CO-01 p. 103, CO-09 | Shrine colour bands: unknown |
 | Blue is Maya blue on sculpture and murals | attested | CO-03, CO-04, CO-05 | Offering 141 blue differs (CO-02) |
 | Floors and courts of basalt slabs; walls of tezontle in mud; stucco floors | attested | AR-06; NU-16 fact | |
-| Almenas in cut-shell form | attested | NU-16 (held) | Not modelled until the site split is decided; other crest forms from López Luján (gathering notes), not read here |
+| Almenas in cut-shell form | attested | NU-16 (held) | Not modelled until the site split is decided; other crest forms from a Templo Mayor Project publication named in the gathering notes, not read here |
 | Greenstone mostly serpentine; jadeite rare and often heirloom | attested | MA-05, MA-06 | |
 | Mexica lapidaries did not facet stone | inferred | MA-05, MA-07 | No faceted piece in any record read |
 | Most Mexica turquoise was Mesoamerican, not from the US Southwest | attested | MA-01 | 43 samples |
 | Templo Mayor gold mostly sheet; alloys silver-rich and low in copper | attested | NU-10 facts | Offering material, facts only |
-| Gold finished by surface enrichment | attested (colonial witness) | MA-02 | Quoted in Easby |
+| Gold finished by surface enrichment | attested (colonial witness) | MA-02 | Quoted in the 1956 Penn Museum analysis |
 | Gold and feathers reserved for rulers and nobles | attested | DR-01, DR-02, DR-10 | Holders' statements |
 | Commoners wore wood or bone ornaments | attested (one holder) | DR-07 | Needs a second source |
 | Women wore cueitl and huipilli | attested (later witness) | DR-12, DR-14 | Colonial |
@@ -1246,8 +1248,8 @@ Gathered on 2026-10-19 by six category passes, then checked item by item.
 - Onboarding: `CLAUDE.md`, the project profile, `art-direction.md`; the
   historian skills visual-and-material-reference, history-for-design,
   heritage-ethics, citation-and-evidence, source-criticism and
-  latin-american-history. Chicago is used because the profile names no
-  style.
+  latin-american-history. Sources are cited by title, publisher or
+  journal, year and identifier, with no personal names (project rule).
 - INAH: Lugares element pages 1259, 1261, 1265 and nodes 4463, 4477,
   4778, 5284, 5907; site guide 120 (guide 115 was not read); Boletines 98/2023,
   166/2025, 316/2025, 470/2022, 681/2023; Repositorio Institucional
@@ -1273,9 +1275,11 @@ Gathered on 2026-10-19 by six category passes, then checked item by item.
   Assemblée nationale Borbonicus page; DigiVatLib Borg.mess.1. Blocked or
   failed: Gallica, BNE, codicemendoza.inah.gob.mx, swisscollections.
 - Scholarship read in full or at the pages cited: CO-01, CO-03, CO-06,
-  CO-07, MA-02, MA-05, MA-06, López Luján and Guilliem Arroyo 2017,
-  López Luján and Ruvalcaba Sil. Abstracts only: MA-01, CO-04, CO-05,
-  Parry 2001, Taube 1991, Melgar Tísoc and Solís Ciriaco 2014.
+  CO-07, MA-02, MA-05, MA-06, 'Mexica Textiles' (2017) and 'Mexica
+  Gold' (2017). Abstracts only: MA-01, CO-04, CO-05, 'Production and
+  Exchange of Obsidian Tools in Late Aztec City-States' (2001) and
+  'Obsidian Polyhedral Cores and Prismatic Blades in the Writing and Art
+  of Ancient Mexico' (1991).
 - Revision on 2026-10-19 after an independent check: the Templo Mayor,
   Calmécac, Casa de las Águilas and Tlatelolco site items moved to
   NU-14 to NU-18 and the Met deity sculptures to NU-19, pending the
@@ -1292,68 +1296,80 @@ Gathered on 2026-10-19 by six category passes, then checked item by item.
 ## Bibliography
 
 Holder records are cited in each item with their identifier and URL,
-consulted 2026-10-19. Where the gathering recorded surnames only, only
-surnames are given.
+consulted 2026-10-19. Under the project rule, sources are cited by
+title, publisher or journal, year and identifier, with no personal
+names, and are listed by title.
 
-Barajas Rocha, María. "El relieve monumental de la diosa Tlaltecuhtli
-del Templo Mayor: estudio para la estabilización de su policromía."
-*Intervención* 3, no. 5 (2012): 23-33.
+"Analysis of Prehispanic Pigments from 'Templo Mayor' of Mexico City."
+*Journal of Materials Science* 36, no. 3 (2001): 751-756.
+https://doi.org/10.1023/A:1004853311627.
 
-Campos-Varela, Núñez Mejía and Bautista Roquez. "Un asentamiento mexica
-en el barrio de La Lagunilla." *Ventana Arqueológica*, no. 4. INAH.
-(Authors' first names, year and pages not recorded: verify.)
+"El relieve monumental de la diosa Tlaltecuhtli del Templo Mayor:
+estudio para la estabilización de su policromía." *Intervención* 3,
+no. 5 (2012): 23-33. Redalyc copy:
+https://www.redalyc.org/pdf/3556/355632772004.pdf.
 
-Dupey García, Élodie. "Los colores del Códice borbónico y el atlas en
-cromotipia de Ernest-Théodore Hamy." *Estudios de Cultura Náhuatl* 52
-(2016): 225-245.
+"Esferas de producción de los objetos de piedra verde procedentes de las
+estructuras aledañas al Templo Mayor de Tenochtitlan." *Revista Española
+de Antropología Americana* 48 (2018): 233-249.
+https://doi.org/10.5209/REAA.63700.
 
-Easby, Dudley T., Jr. "Sahagún Reviviscit in the Gold Collection of the
-University Museum." *University Museum Bulletin* 20, no. 3 (1956).
+"Línea y color en Tenochtitlan. Escultura policromada y pintura mural en
+el recinto sagrado de la capital mexica." *Estudios de Cultura Náhuatl*
+36 (2005): 15-45. Instituto de Investigaciones Históricas, UNAM.
+https://hdl.handle.net/20.500.12525/2293.
 
-Grimaldi, Dulce María. "Painting Technique of the Wall Paintings at the
-Great Temple of Tenochtitlan in Mexico City." In *Student Papers from the
-26th Conference of ANAGPIC*, 36-43. Washington, DC: Smithsonian Center
-for Materials Research and Education, 2000.
+"Los colores del Códice borbónico y el atlas en cromotipia [...]."
+*Estudios de Cultura Náhuatl* 52 (2016): 225-245.
+https://nahuatl.historicas.unam.mx/index.php/ecn/article/download/77812/68862.
+(Title shortened: it ends with the atlas maker's name.)
 
-López Luján, Leonardo, Chiari, López Austin and Carrizosa. "Línea y color en Tenochtitlan: escultura policromada y
-pintura mural." *Estudios de Cultura Náhuatl*, 16-44. (Volume and year
-not verified.)
+"Mexica Gold." In *Golden Kingdoms: Luxury Arts in the Ancient
+Americas*, 111-121. J. Paul Getty Museum and Getty Research Institute,
+2017. ISBN 978-1-60606-548-8. Mesoweb copy:
+https://www.mesoweb.com/es/articulos/sub/MexicaGold.pdf.
 
-López Luján, Leonardo, Chiari, Carrizosa, Michelle De Anda Rogel,
-Matadamas and Robles. "Restituciones
-cromáticas, análisis de pigmentos y estudio simbólico." In *El color de
-los dioses. Policromía en la Antigüedad clásica y Mesoamérica*. Mexico
-City: INBAL / Museo del Palacio de Bellas Artes, 2016. (Pages about
-93-108, from running heads; verify. Co-authors' first names not recorded.)
+"Mexica Textiles: Archaeological Remains from the Sacred Precincts of
+Tenochtitlan and Tlatelolco." In *PreColumbian Textile Conference VII*,
+141-161. Lincoln, NE: Zea Books, 2017. Mesoweb copy:
+https://www.mesoweb.com/es/articulos/sub/Textiles.pdf.
 
-López Luján, Leonardo, and Salvador Guilliem Arroyo. "Mexica Textiles:
-Archaeological Remains from the Sacred Precincts of Tenochtitlan and
-Tlatelolco." In *PreColumbian Textile Conference VII*, edited by Lena
-Bjerregaard and Ann Peters, 141-161. Lincoln, NE: Zea Books, 2017.
+"Obsidian Polyhedral Cores and Prismatic Blades in the Writing and Art of
+Ancient Mexico." *Ancient Mesoamerica* 2, no. 1 (1991): 61-70.
+https://doi.org/10.1017/S0956536100000377. (Abstract read.)
 
-López Luján, Leonardo, and Ruvalcaba Sil. "Mexica Gold." In
-an exhibition catalogue not named in the copy read, 111-121.
+"Painting Technique of the Wall Paintings at the Great Temple of
+Tenochtitlan in Mexico City." In *Student Papers from the 26th Conference
+of ANAGPIC*, 36-43. Washington, DC: Smithsonian Center for Materials
+Research and Education, 2000. https://mci.si.edu/node/1168576.
 
-Monterrosa Desruelles and Melgar Tísoc. "Reliquias
-mayas y olmecas de jadeíta en el Templo Mayor de Tenochtitlan." In *XXX
-Simposio de Investigaciones Arqueológicas en Guatemala, 2016*, 905-916.
-2017.
+"Production and Exchange of Obsidian Tools in Late Aztec City-States."
+*Ancient Mesoamerica* 12, no. 1 (2001): 101-111.
+https://doi.org/10.1017/S0956536101121085. (Abstract read.)
 
-Ortega, Ascencio, San-Germán, Fernández, López and José-Yacamán. "Analysis of Prehispanic Pigments from 'Templo Mayor'
-of Mexico City." *Journal of Materials Science* 36, no. 3 (2001):
-751-756. https://doi.org/10.1023/A:1004853311627.
+"Reliquias mayas y olmecas de jadeíta en el Templo Mayor de
+Tenochtitlan." In *XXX Simposio de Investigaciones Arqueológicas en
+Guatemala, 2016*, 905-916. 2017.
+https://www.mesoweb.com/Simposio/pdf/30/Monterrosa_y_Melgar.2017.pdf.
 
-Parry. "Production and Exchange of Obsidian Tools in Late
-Aztec City-States." *Ancient Mesoamerica* 12 (2001): 101-111. (Abstract
-read.)
+"Restituciones cromáticas, análisis de pigmentos y estudio simbólico."
+In *El color de los dioses. Policromía en la Antigüedad clásica y
+Mesoamérica*. Mexico City: INBAL / Museo del Palacio de Bellas Artes,
+2016. (Pages about 93-108, from running heads; verify.) Mesoweb copy:
+https://www.mesoweb.com/es/articulos/sub/Escultura.pdf.
 
-Solís Ciriaco, Reyna B. "Esferas de producción de los objetos de piedra
-verde procedentes de las estructuras aledañas al Templo Mayor de
-Tenochtitlan." *Revista Española de Antropología Americana* 48 (2018):
-233-249. https://doi.org/10.5209/REAA.63700.
+"[...] Reviviscit in the Gold Collection of the University Museum."
+*University Museum Bulletin* 20, no. 3 (1956). Penn Museum.
+https://penn.museum/documents/publications/bulletin/20-3/sahagun_reviviscit_gold_collections.pdf.
+(Title shortened: its first word names the Florentine Codex's
+Franciscan compiler.)
 
-Thibodeau, López Luján, Killick, Berdan and Ruiz. "Was Aztec and Mixtec Turquoise Mined in the
-American Southwest?" *Science Advances* 4, no. 6 (2018): eaas9370.
+"Un asentamiento mexica en el barrio de La Lagunilla." *Ventana
+Arqueológica*, no. 4 (July to December 2022): 5-8. INAH. ISSN 2683-2984.
+https://www.revistas.inah.gob.mx/index.php/ventana/article/download/22416/23937/48644.
+
+"Was Aztec and Mixtec Turquoise Mined in the American Southwest?"
+*Science Advances* 4, no. 6 (2018): eaas9370.
 https://doi.org/10.1126/sciadv.aas9370.
 
 Instituto Nacional de Antropología e Historia. *Museo del Templo Mayor*.
@@ -1369,8 +1385,8 @@ polícroma de Tenochtitlan*. Exhibition labels. Mexico City: INAH, 2017.
 Codex Mendoza. Bodleian Libraries, Oxford, MS. Arch. Selden. A. 1.
 Mexico City, 1529-1553.
 
-Sahagún, Bernardino de, with Nahua informants and painters. *Historia
-general de las cosas de Nueva España* (Florentine Codex). Biblioteca
+*Historia general de las cosas de Nueva España* (Florentine Codex).
+Nahua informants and painters under Franciscan direction. Biblioteca
 Medicea Laurenziana, Florence, Med. Palat. 218-220. 1575-1577.
 
 Codex Borbonicus. Bibliothèque de l'Assemblée nationale, Paris.
