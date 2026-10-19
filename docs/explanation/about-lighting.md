@@ -215,10 +215,10 @@ is captured on load.
 - Pieces and anything else that moves stay out of GI (`gi_mode = 0`):
   they receive the lightmap's probes and `VoxelGI`, but never feed them.
   A dynamic GI object (`gi_mode = 2`) is voxelized into `VoxelGI` again on
-  every frame; with 64 pieces that took the frame from 2.1 ms to 12.4 ms
-  and video memory from 711 MB to 1459 MB on an RTX 4080 SUPER at
-  1440p, for no visible bounce, because lightmapped surfaces take their
-  indirect light from the lightmap and SSIL.
+  every frame; with 64 pieces that more than doubled video memory (711 MB
+  to 1467 MB) and stalled every frame on an RTX 4080 SUPER at 1440p, for
+  no visible bounce, because lightmapped surfaces take their indirect
+  light from the lightmap and SSIL ([numbers](../reference/benchmark-results.md#pieces-out-of-gi)).
 - `VoxelGI` while the scene fits one volume of about 20 m; SDFGI only for
   a theme that does not, and that theme then has to fit its cost.
 - Shadow-casting braziers per theme: the budget above is for 4. Up to the

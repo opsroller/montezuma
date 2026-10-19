@@ -135,22 +135,30 @@ met; volumetric fog is now one of them.
 
 Pieces were dynamic GI objects (`gi_mode = 2`) after WP-47, so Godot
 voxelized all 64 into `VoxelGI` on every frame; they now stay out of GI
-(`gi_mode = 0`) and only receive it. Measured on an RTX 4080 SUPER
-(Ryzen 9 7950X3D, NixOS, Godot 4.7.2 from nixpkgs, Vulkan, Forward+),
-`desktop-high`, vsync off, 60 s capture after 10 s warm-up, inside a
-nested gamescope compositor (no desktop session was logged in). GPU
-timing is available on this driver.
+(`gi_mode = 0`) and only receive it. Machine: RTX 4080 SUPER, Ryzen 9
+7950X3D, NixOS, GNOME on Wayland, Godot 4.7.2 from nixpkgs, Vulkan,
+Forward+, `desktop-high` at 2560×1440 (FSR 2 at 0.5), 60 s capture after
+10 s warm-up, on the live desktop. GPU timing is available on this
+driver.
 
-| Build | Output | `frame_ms` p50 | p95 | `gpu_ms` p50 | Video memory max |
-|---|---|---|---|---|---|
-| Before WP-47 (83feede^), 20 s | 2560×1440, native, TAA | 2.07 | 2.19 | 1.97 | 553 MB |
-| `main` at b67b96a | 2560×1440, FSR 2 at 0.5 | 11.99 | 16.62 | 1.92 | 1467 MB |
-| Pieces out of GI | 2560×1440, FSR 2 at 0.5 | 2.10 | 2.20 | 1.95 | 711 MB |
-| Pieces out of GI, 30 s | 7680×4320, FSR 2 at 0.5 | 14.53 | 14.81 | 13.91 | 3483 MB |
+GNOME keeps FIFO presentation when Godot asks for vsync off, so the
+uncapped runs set `display/window/vsync/vsync_mode=3` (mailbox) in an
+`override.cfg`.
 
-On `main` the GPU's own time stayed near 2 ms while the frame took 12:
-the per-frame voxelization showed up as a stall, not as measured GPU
-work. The M4 re-run is pending.
+| Build | Presentation | `frame_ms` p50 | p95 | p99 | `gpu_ms` p50 | Video memory max |
+|---|---|---|---|---|---|---|
+| `main` at b67b96a | vsync, 60 Hz | 16.74 | 17.86 | 20.71 | 3.08 | 1467 MB |
+| Pieces out of GI | vsync, 60 Hz | 16.70 | 16.83 | 20.08 | 4.75 | 711 MB |
+| `main` at b67b96a | mailbox, uncapped | lost the Vulkan device in warm-up, 2 runs of 2 | | | | |
+| Pieces out of GI | mailbox, uncapped | 2.15 | 5.35 | 6.32 | 1.98 | 711 MB |
+
+With vsync on, the GPU clocks down between frames, so `gpu_ms` there is
+not a measure of the work. Uncapped, `main` stopped with
+`VK_ERROR_DEVICE_LOST` both times; in a nested gamescope compositor on
+the same machine it ran, at `frame_ms` p50 11.99 against 2.10 with the
+pieces out of GI, while `gpu_ms` stayed near 2 ms in both: the
+per-frame voxelization showed up as a stall, not as measured GPU work.
+The M4 re-run is pending.
 
 ## Feature rows
 
