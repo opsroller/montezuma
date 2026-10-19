@@ -57,6 +57,9 @@ TEXTURE_SETS = {}
 # The theme's water channel in Godot units (water_channel()), or empty.
 WATER = {}
 WATER_STRIPS = ("WaterEast", "WaterWest", "WaterNear", "WaterFar")
+# The scene light SH_Water (unshaded) lights itself with, from the theme's
+# environment (scene_light()), or empty.
+LIGHT = {}
 
 
 def water_channel(p):
@@ -139,6 +142,8 @@ def shader_material(spec, theme, hi):
     params = dict(spec.get("params", {}))
     if spec.get("water") and WATER and spec["shader"].endswith("SH_WaterSimple.gdshader"):
         params["floor_height"] = round(WATER["floor"], 4)
+    if spec.get("water") and LIGHT and spec["shader"].endswith("SH_Water.gdshader"):
+        params |= LIGHT
     for key, value in params.items():
         if isinstance(value, str):
             v = color(value)
@@ -322,6 +327,17 @@ def brazier_fire(p, theme):
     return r.text("[gd_scene load_steps={steps} format=3]")
 
 
+def scene_light(env):
+    """SH_Water's copy of the scene light: sky colours, the sun (direction
+    towards it, colour, energy) and the sky's ambient energy."""
+    m = [float(x) for x in env["sun"]["transform"].split("(")[1].rstrip(")").split(",")]
+    # Basis rows; a light shines along its -Z, so +Z (the third column) points at the sun.
+    to_sun = [round(m[2], 4), round(m[5], 4), round(m[8], 4)]
+    return {"sky_top": env["sky_top"], "sky_horizon": env["sky_horizon"], "sun_direction": to_sun,
+            "sun_color": env["sun"]["color"], "sun_energy": env["sun"]["energy"],
+            "ambient_energy": env["ambient_energy"]}
+
+
 def write(path, text):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text)
@@ -334,6 +350,7 @@ def main():
     TEXTURE_SETS.update(p["textures"]["sets"])
     if "water" in p:
         WATER.update(water_channel(p))
+        LIGHT.update(scene_light(p["environment"]))
     assets = ROOT / "game/assets"
     models = f"res://assets/models/{theme}"
     entry = {}

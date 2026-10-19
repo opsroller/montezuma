@@ -4,14 +4,16 @@
 // Temple water for desktop (Forward+): the channel floor seen through the
 // surface, bent by the ripples (refraction) and fading to the water's own
 // colour with depth (absorption over the true path length, from the depth
-// texture), caustic lines on that floor, and the sky reflected through the
-// engine's own specular. No screen-space reflection march: on the
-// benchmark Mac it cost several times the water's whole budget. Mobile and
-// web use SH_WaterSimple (no refraction). Cost per pixel: 2 depth and 1
-// screen sample; 3 noise octaves, and 2 caustic layers where they can
-// show; no material textures.
+// texture), caustic lines on that floor, and the sky and sun reflected.
+// Unshaded: the water lights itself from a copy of the scene's sky and sun
+// (written by the theme generator), so the engine's per-pixel lights,
+// shadows and GI do not run a second time over the floor already lit
+// under it. No screen-space reflection march. Mobile and web use
+// SH_WaterSimple (no refraction). Cost per pixel: 2 depth and 1 screen
+// sample; 3 noise octaves, and 2 caustic layers where they can show; no
+// material textures.
 shader_type spatial;
-render_mode blend_mix, depth_draw_always, cull_back, diffuse_burley, specular_schlick_ggx;
+render_mode blend_mix, depth_draw_always, cull_back, unshaded;
 
 #include "res://assets/materials/shaders/SH_Water.gdshaderinc"
 
@@ -34,6 +36,15 @@ uniform float caustic_strength : hint_range(0.0, 4.0, 0.01) = 2.2;
 uniform float caustic_scale : hint_range(0.2, 4.0, 0.01) = 1.3;
 // Width of the soft line where the water meets stone, metres of water.
 uniform float edge_softness : hint_range(0.0, 0.3, 0.001) = 0.08;
+// The scene's light, copied from its environment: the sky's zenith and
+// horizon colours, the direction towards the sun (world), its colour and
+// energy, and the energy of the sky's ambient light.
+uniform vec3 sky_top : source_color = vec3(0.141, 0.337, 0.431);
+uniform vec3 sky_horizon : source_color = vec3(0.718, 0.682, 0.525);
+uniform vec3 sun_direction = vec3(-0.426, 0.669, 0.609);
+uniform vec3 sun_color : source_color = vec3(1.0, 0.863, 0.682);
+uniform float sun_energy : hint_range(0.0, 8.0, 0.01) = 1.15;
+uniform float ambient_energy : hint_range(0.0, 4.0, 0.01) = 0.4;
 
 varying vec3 w_pos;
 
@@ -52,6 +63,8 @@ void fragment() {
 	vec3 n = normalize((VIEW_MATRIX * vec4(n_w, 0.0)).xyz);
 	float ndv = clamp(dot(n, VIEW), 0.0, 1.0);
 	float fresnel = wt_fresnel(ndv);
+	vec3 to_sun = normalize(sun_direction);
+	vec3 sun = sun_color * sun_energy;
 
 	// Floor behind the surface. Reversed Z: a smaller depth is farther.
 	float d0 = textureLod(depth_texture, SCREEN_UV, 0.0).r;
@@ -86,11 +99,22 @@ void fragment() {
 	vec3 transmitted = seen * trans * (1.0 - fresnel);
 	float edge = 1.0 - smoothstep(0.0, max(edge_softness, 0.001), len);
 
-	ALBEDO = water_color.rgb * (1.0 - dot(trans, vec3(0.3333))) + vec3(0.35) * edge * caustic;
-	ROUGHNESS = roughness;
-	METALLIC = 0.0;
-	// F0 0.02 is Godot's specular 0.354.
-	SPECULAR = 0.354;
-	NORMAL = n;
-	EMISSION = transmitted * EXPOSURE;
+	// Light the water scatters back: its colour under the sun and the
+	// sky's ambient light, more of it the deeper the water.
+	vec3 ambient = mix(sky_horizon, sky_top, 0.5) * ambient_energy;
+	vec3 lit = sun * max(to_sun.y, 0.0) + ambient;
+	vec3 scatter = (water_color.rgb * (1.0 - dot(trans, vec3(0.3333))) + vec3(0.35) * edge * caustic) * lit;
+
+	// The sky in the reflected direction, and the sun's highlight: a
+	// normalized Blinn-Phong lobe as wide as the roughness, kept finite.
+	vec3 dir = normalize(w_pos - CAMERA_POSITION_WORLD);
+	vec3 r = reflect(dir, n_w);
+	vec3 sky = mix(sky_horizon, sky_top, sqrt(clamp(r.y, 0.0, 1.0)));
+	float a2 = max(roughness * roughness, 0.0004);
+	float shine = 2.0 / a2 - 2.0;
+	vec3 h = normalize(to_sun - dir);
+	float glint = min(pow(max(dot(n_w, h), 0.0), shine) * (shine + 2.0) / 8.0, 64.0);
+	vec3 reflected = (sky + sun * glint * max(to_sun.y, 0.0)) * fresnel;
+
+	ALBEDO = transmitted + scatter + reflected;
 }
