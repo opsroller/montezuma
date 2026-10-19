@@ -68,8 +68,9 @@ def luma8(img):
 def rule_2(off, atmosphere, layout, args):
     """Persistent effects (fog, haze, shafts, DOF, dust) stay see-through
     over the board and never cover all of it. Measured per cell as the share
-    of its luma contrast (standard deviation) they take away, which a
-    change of exposure alone leaves about as it is: no cell may lose more
+    of its luma contrast (standard deviation) they take away. An exposure
+    shift by a constant leaves it at 0, a scale up reads as a gain (clear)
+    and a scale down as loss in proportion. No cell may lose more
     than rule2_cell_max, and at least rule2_clear_share of the cells must
     lose no more than rule2_clear."""
     a, o = luma8(atmosphere), luma8(off)
