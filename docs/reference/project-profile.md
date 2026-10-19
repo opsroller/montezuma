@@ -63,6 +63,7 @@ Each role loads `engineering-practices` plus its own plugin from
 | `devops-engineer` | `.github/`, `game/export_presets.cfg`, `tools/release/`, `docs/stores/` | Builds every target including the wasm demo; store checklists in `docs/stores/` |
 | `frontend-web-developer` | `site/` | Site shell around the web demo, downloads, credits page; deploys to GitHub Pages |
 | `graphic-designer` | `design/` (identity, icons, store art, UI and site visuals) | Style guide in `design/README.md`; exports tokens for `game/ui/theme/` and `site/` |
+| `historian` | `docs/reference/history-*.md`, the "Historical references" section of `docs/explanation/art-direction.md` | Drives design and art direction from sourced Mexica history of Moctezuma II's era; the original game is only a reference |
 | `project-manager` | `docs/reference/work-packages.md` status, plan changes | Coordinator: staffs packages, holds the owner's standing rules |
 | `code-reviewer` | — (reviews every PR) | Uses the review notes below |
 
