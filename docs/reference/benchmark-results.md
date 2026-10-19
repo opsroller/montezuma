@@ -342,6 +342,57 @@ The mist adds about 0.07 ms of GPU time at native 4K (under 1%). It
 samples its 3D noise twice per froxel instead of once, over a fog volume
 half as tall.
 
+## Water (WP-50)
+
+Cost of the temple's water channel (WP-50, #61) against `main` without
+it, `desktop-high`, bench scene (busiest-board replay, seed 52), vsync
+off, on the Mac mini M4 (Metal, no GPU timestamps, so `frame_ms` is the
+GPU measure; CPU p95 stays under 1.5 ms on every row except the 7513ba2 head at 2.06 ms). Each row is one
+version of the water; later versions replaced the earlier ones, whose
+rows stay as the record of why.
+
+| Water version | Against | Resolution | Runs | `frame_ms` p50 | p95 | Video memory max | Status |
+|---|---|---|---|---|---|---|---|
+| 49cc220: transparent, 4 box reflection probes | `main` 1d09592 | 2560×1440 | 1 each, not alternated | 6.90 → 25.63 | 21.34 → 28.07 | 578 → 1095 MB | superseded: probes removed in 603894a; presentation differed between the two runs, so only the memory figure stands |
+| 74921d9: transparent, screen-space reflection march | `main` 1d09592 | 2560×1440 | 2 each, alternated | 20.85 → 24.73 (+3.88) | 22.50 → 26.36 (+3.86) | 578 → 586 MB | superseded: march removed in a19d3d7 |
+| a19d3d7: transparent, march removed | `main` 1d09592 | 2560×1440 | 2 each, alternated | 18.86 → 22.66 (+3.81) | 19.71 → 23.59 (+3.87) | 607 → 615 MB | superseded: the march was 0.1 ms of it |
+| e9baff1: transparent, unshaded | `main` 1d09592 | 2560×1440 | 3 each, alternated | 18.0 → 21.2 (+3.2) | 18.6 → 21.7 (+3.1) | | superseded: the screen and depth copies, not the shading, were the cost; replaced by the opaque water in c91c03a |
+| 38f1b84: opaque traced channel | `main` ba0e7c6 | 5120×2880 native, no upscaler | 1 each, one after the other | 113.6 → 116.3 (+2.7) | 114.9 → 117.4 (+2.5) | 2106.3 → 2106.3 MB | superseded by 7513ba2; noise about 0.5 ms |
+| 7513ba2: opaque, cheaper stone sampling and slab hash (head, measured at c2e600f, docs-only after it) | `main` ba0e7c6 | 5120×2880 native, no upscaler | 1 each, one after the other | 113.9 → 116.5 (+2.6) | 115.6 → 119.4 (+3.8) | 2106.4 → 2163.7 MB | current; budget is `SH_Water` ≤ 0.5 ms (set at 2560×1440), so +2.6 ms p50 at 5120×2880 is over it as measured; single 10 s runs, earlier noise about 0.5 ms; CPU p95 1.44 → 2.06 ms |
+
+The 5120×2880 rows render at native size through a local, uncommitted
+`--native-render` patch in `quality_tiers.cpp`, applied to both builds;
+3 s warm-up and 10 s capture. The 2560×1440 rows use 10 s warm-up and
+60 s capture.
+
+**Web tier** (`SH_WaterSimple`, budget ≤ 0.3 ms at 1280×720):
+
+| Build | `frame_ms` p50 | p95 | p99 | Frames in 10 s |
+|---|---|---|---|---|
+| 7513ba2, the four `Water*` nodes hidden | 1.30 | 1.70 | 4.70 | 1737 |
+| 7513ba2, water shown | 1.30 | 1.60 | 3.50 | 1744 |
+
+Chromium 155 on Linux (Wayland), WebGL 2 through ANGLE on the RTX 4080
+SUPER, not the budget's UHD 620 class GPU; `web` tier (Compatibility),
+canvas fixed at 1280×720, `--disable-gpu-vsync --disable-frame-rate-limit`,
+3 s warm-up and one 10 s capture each. Both exports use the pinned 4.7.2
+`web_dlink_nothreads_release` template, CI's extension build from `main`
+ba0e7c6 (the extension and core are the same at 7513ba2), and the bench
+as the web main scene for this export only; CI's release artifact cannot
+open the bench, because release templates take no scene path. WebGL has
+no GPU timestamps and the browser times frames to 0.1 ms, so the water's
+cost here is below 0.1 ms. Both captures hold one startup hitch of about
+7.2 s, so their means are not used.
+
+**Supplementary, RTX 4080 SUPER** (Vulkan, Linux, `desktop-high`, full
+screen 3840×2160 with FSR 2 at 0.5, one 10 s run each, aedb61d with the
+four water nodes shown and hidden; not the budget's machine): GPU time p50
+4.27 ms with the water, 4.30 ms without it. At native 3840×2160 with
+`--gpu-profile` on 38f1b84, the opaque pass is 0.16 ms cheaper with the
+water (it hides the parallax stone under it), the depth pre-pass costs
+0.03 ms more, and `SH_Water`'s own shading costs 0.08 ms against a flat
+shader on the same strips, about half of it the ripple normal.
+
 ## Feature rows
 
 `check_features.py` on the same reports. Rows that fail are the

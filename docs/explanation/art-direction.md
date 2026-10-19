@@ -184,6 +184,57 @@ bloom slightly. The same scene runs on all three renderers the profile
 names (Forward+, Mobile, Compatibility for the web demo); Compatibility
 looks a little flatter and brighter, which we accept.
 
+## Water
+
+The temple stands in a stone-lined moat. Still water is the cheapest way
+to say "real place" in a top-down view: it carries the sky, shows a floor under it, and moves when nothing else does. It
+sits round the lowest tier because that is where the game camera looks
+past the platform (left and right on a wide screen, top and bottom on a
+tall one), and it never comes near the board, so it adds place without
+taking the eye.
+
+It stays a backdrop. The water is darker than the tiles, green-teal from
+real absorption (red light dies first, so the floor fades as the channel
+deepens), and slow: a drift of a few centimetres a second and small
+swells. Nothing in it is emissive or fast enough to pull attention while
+a cascade plays.
+
+Choices behind the [reference](../reference/water.md):
+
+- **Ripples are computed, not textured.** Gradient noise with its exact
+  slope, plus two long swells, gives normals without a texture, so the
+  ripples add no sampler (the Metal limit that bit the stone shaders) and
+  no generated texture to the build, and they never show a tile repeat.
+- **Desktop traces the channel, phones and web blend.** The channel is a
+  known stone box, so the desktop shader bends the view ray at the
+  surface, follows it to the floor or wall it reaches and draws that
+  stone itself, with its slab joints, the walls' shadow and darker
+  corners, then absorbs it over the true path. It is opaque and reads no
+  screen or depth texture: on the benchmark Mac those copies cost several
+  times the water's budget. Mobile and web blend a cheaper surface over
+  the real floor and take the path length from the known floor height,
+  which is exact for a flat channel.
+- **Caustics belong to the floor point.** Both shaders find the floor
+  point the eye sees through the water and draw the caustic lines there,
+  so they sit on the stone and move with it, not with the surface.
+- **Sky reflections only.** Box reflection probes per strip, and then a
+  screen-space reflection march in the desktop shader, were both tried to
+  reflect the temple into the water. The probes kept re-rendering and
+  doubled video memory. The march turned out to cost only about 0.1 ms:
+  most of the transparent water's 3.2 to 3.9 ms at 1440p on the benchmark
+  Mac came from reading the screen and depth textures, which make a
+  tile-based GPU copy the frame and resolve the depth. So the desktop water
+  is opaque and traces its refraction through the known channel instead,
+  and from the game camera the strips sit at the edge of the frame, so the
+  water reflects through the engine's own specular: the sky, plus on
+  desktop the scene's reflection probe.
+
+- **Cost decision.** The opaque water still measures over its 0.5 ms
+  budget on the M4 (+2.6 ms p50 at native 5120×2880, about 0.65 ms at
+  1440p by pixel count; see [Water (WP-50)](../reference/benchmark-results.md#water-wp-50)).
+  On 2026-10-19 the owner chose to merge it over that overage. The budget
+  is unchanged, and a fix for the M4 cost follows as its own change.
+
 ## Why a theme, not a scene
 
 Montezuma's will host mini games with other looks. The board view asks the
