@@ -141,7 +141,7 @@ ambient alone changed nothing on the static stone. The sky fill area light
 and the ambient energy added more on top.
 
 So the lightmap now bakes the theme's sky at a reduced energy
-(`lighting.lightmap.sky_energy`, 0.3), the ambient energy drops from 0.4
+(`lighting.lightmap.sky_energy`, 0.3 at the time, 0.5 since the [sun and sky balance](#sun-and-sky-balance) fix), the ambient energy drops from 0.4
 to 0.15 and the sky fill from 20,000 to 6,000 lm. The braziers go up to
 90,000 lm so their pools of light show against the darker shadows, and
 SSAO goes to intensity 3 (power 1.5, light affect 0.3) so the creases
@@ -203,7 +203,7 @@ own tuning (the veil) owns that rule.
 | Atlas | one 1024² layer (measured), 0.6 MB EXR plus a 42 KB `.lmbake`; max texture size 2048 | Fits every tier's texture budget; on web it loads as an uncompressed half-float texture of about 8 MB in memory |
 | Probes | subdivision 2 | Enough density over the board for the pieces; probes are cheap to sample |
 | Camera attributes | the theme's | Required with physical units, or the bake overflows |
-| Sky | the theme's sky as a custom sky at `lighting.lightmap.sky_energy` (temple 0.3) | Lightmapped surfaces take indirect light only from the bake, so the scene's full sky would light every shadow (WP-60) |
+| Sky | the theme's sky as a custom sky at `lighting.lightmap.sky_energy` (temple 0.5) | Lightmapped surfaces take indirect light only from the bake, so the scene's full sky would light every shadow (WP-60) |
 | Where | `tools/assets/bake_lightmaps.cmake`, editor only (the bake needs RenderingDevice, so it runs on Vulkan, never under Compatibility); the result serves every tier, web included | Godot exposes the bake only through the editor |
 
 ## Costs

@@ -482,7 +482,7 @@
     "sky_horizon": "#b4c6d6",
     "ground_bottom": "#1d2a16",
     "ambient_energy": 0.15,
-    "saturation": 1.12,
+    "saturation": 1.08,
     "sun": {
       "transform": "Transform3D(0.819152, 0.383798, -0.426250, 0.000000, 0.743145, 0.669131, 0.573576, -0.548120, 0.608749, 0, 8, 0)"
     }
