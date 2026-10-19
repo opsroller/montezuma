@@ -285,3 +285,19 @@ inputs: []
 license: GPL-2.0-or-later
 attribution: ""
 ```
+
+## Triplanar and gem shader cost cuts, GI half-resolution capture
+
+```yaml
+asset: cheaper sampling in the temple's desktop shaders, and the capture that checks GI at half resolution
+files:
+  - game/assets/materials/shaders/SH_Triplanar.gdshaderinc     # edited by hand: skip projections under 2% weight
+  - game/assets/materials/shaders/SH_TriplanarPBR.gdshader     # edited by hand: gradients for parallax, cost comment
+  - game/assets/materials/shaders/SH_Gem.gdshader              # edited by hand: no screen-texture mipmaps
+  - docs/images/lookdev/temple-gi-half-resolution-crops.jpg    # our own capture of the running game
+origin: original (edits to our own shaders; capture of our own build)
+authors: [graphics-programmer (Claude)]
+created: 2026-10-19
+inputs: []
+license: GPL-2.0-or-later
+```

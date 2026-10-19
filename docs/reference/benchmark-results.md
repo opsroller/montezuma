@@ -243,8 +243,26 @@ A capture of the same frame (1920×1080, frame 80) differs from
 **GI at half resolution.** `rendering/global_illumination/gi/use_half_resolution`
 is on in `project.godot`: VoxelGI is traced at half resolution and
 upscaled. Back to back on the same setup: `gpu_ms` p50 11.40 before,
-10.81 after; the same frame differs by 0.38 of 255 on average, against
-0.32 between two runs of one build. The gem shader also stopped asking
+10.81 after. Frame 25 of the replay captured at native 2160×3840
+(`--write-movie`, 30 fps fixed), twice with full-resolution GI and once
+with half:
+
+| Region | Full vs full: mean, p99.9, max | Full vs half: mean, p99.9, max |
+|---|---|---|
+| Whole frame | 0.15, 41, 172 | 0.47, 45, 172 |
+| Piece contact (720, 1700, 480×480) | 0.02, 1, 8 | 0.68, 1, 4 |
+| Board edge (80, 2560, 480×480) | 0.07, 5, 7 | 0.71, 3, 5 |
+| Brazier wall (0, 860, 480×480) | 1.30, 90, 164 | 2.45, 98, 163 |
+
+Differences are per-pixel maximum over the channels, in 0 to 255. Half
+resolution lifts the whole frame by under 1 level evenly and leaves no
+edge: no pixel at piece contact or the board edge moves more than 5.
+The large values at the brazier are its flames and sparks, which differ
+between any two runs. The crops, with the difference amplified 8 times:
+
+![Full- and half-resolution GI at piece contact, the brazier wall and the board edge](../images/lookdev/temple-gi-half-resolution-crops.jpg)
+
+The gem shader also stopped asking
 for the screen texture's mip chain it never read (copy screen texture
 0.20 to 0.17 ms).
 

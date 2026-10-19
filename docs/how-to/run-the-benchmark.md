@@ -111,8 +111,9 @@ two back to back: run-to-run spread is a few tenths of a millisecond.
 Compare `gpu_ms` with vsync off: with vsync on the GPU clocks down
 between frames. With `-DVSYNC=off` the script also asks for mailbox
 presentation, because some compositors (GNOME) keep vsync on otherwise;
-`display.vsync` in the report then reads `disabled` and frames are not
-held to the display's rate.
+`display.vsync` in the report then reads `mailbox`, or `disabled` where
+the driver started the window without mailbox and the runner turned
+vsync off; either way frames are not held to the display's rate.
 
 On Metal, Godot 4.7.2 returns no GPU timestamps, so the profile prints
 zeros there: judge by `frame_ms` or use Apple's Metal tools.
