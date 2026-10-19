@@ -13,7 +13,8 @@ this way is in
 Tests: `core/tests/test_progress.cpp`.
 
 Nothing engine-side calls it yet: the episode map's unlock stub, the
-trophies screen and `Match3Game`'s upgrades are wired in a later package.
+trophies screen and `Match3Game`'s upgrades are wired in a follow-up,
+[#104](https://github.com/opsroller/montezuma/issues/104).
 
 ## Campaign and bonus levels
 

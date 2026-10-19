@@ -11,9 +11,11 @@ Why the player's profile works the way it does. The interface is in the
 
 The save stores what the player did: wins, best scores, bonus results,
 tiers bought, totems fired, trophies held. What is open, and which free
-tiers are owned, is worked out from those every time. A save can't then
-claim a level is open that was never earned, and a change to the unlock
-tables applies to old saves at once.
+tiers are owned, is worked out from those every time. The save has no
+list of open levels to get out of step with the wins, and a change to the
+unlock tables applies to old saves at once. (The loader checks each value
+on its own, so a hand-edited save that claims a win still loads as
+written.)
 
 ## Choices the spec left open
 

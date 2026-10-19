@@ -121,8 +121,10 @@ reports and builds the `LevelPlay`. Details:
 [progress.md](progress.md).
 
 Trophy ids: `first_find`, `chain_reaction`, `demolition`, `totem_keeper`,
-`quick_hands`, `frenzy`, `sharp_eye`, `explorer`, `legend` (string table
-keys `trophy.<id>.name` and `.desc`). Bonus level ids: `<game>-<tier>`, for
+`quick_hands`, `frenzy`, `sharp_eye`, `explorer`, `legend`. The string
+table keys are to become `trophy.<id>.name` and `.desc`; today
+`game/ui/strings.csv` and `TrophiesScreen` still use `t01` to `t09`
+until the wiring follow-up ([#104](https://github.com/opsroller/montezuma/issues/104)). Bonus level ids: `<game>-<tier>`, for
 example `bg_accuracy-1`.
 
 ## Game signals (owner: graphics-programmer, WP-10/WP-26) — implemented
