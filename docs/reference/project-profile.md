@@ -188,3 +188,15 @@ A finding raised in two or more reviews is listed here as a rule.
   they belong (the plan's status key, `benchmark-results.md`), contradicts
   no rule already written down, and holds for the project's own existing
   rows.
+- Docs left describing the old value, rule or metric (#69, #78, #86,
+  #88). A PR that changes a figure, a rule, a metric or what a shader
+  samples greps the whole `docs/` tree for the old wording and numbers
+  and fixes every page that states them, including pages outside the
+  diff and figures measured with an old metric (re-measure them or say
+  which check they come from). A reference row that describes a check or
+  shader matches the code at head: its formula, units and defaults.
+- A decision with no explanation (#86, #88). A choice a reader would
+  question (a feature on for some tiers only, a new metric and where its
+  thresholds come from) is explained on an explanation page under
+  `docs/explanation/` in the same PR; a reference row states what, not
+  why.
