@@ -69,8 +69,8 @@ private:
     int set_index_ = 0;
     int frames_in_set_ = 0;
     int averaged_ = 0;
-    int64_t frame_width_ = 0;
-    int64_t frame_height_ = 0;
+    int32_t frame_width_ = 0;
+    int32_t frame_height_ = 0;
     std::vector<std::uint32_t> sum_;  // per-channel RGB sums of the averaged frames
     bool running_ = false;
 };

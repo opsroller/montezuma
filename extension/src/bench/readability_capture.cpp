@@ -50,7 +50,7 @@ constexpr std::array<EffectSet, 4> kSets{{
 // captures reads as one of them.
 void hold_flicker(Node* node) {
     if (auto* light = Object::cast_to<FlickerLight3D>(node)) light->set_process(false);
-    for (int64_t i = 0; i < node->get_child_count(); ++i) hold_flicker(node->get_child(i));
+    for (int32_t i = 0; i < node->get_child_count(); ++i) hold_flicker(node->get_child(i));
 }
 
 Array rect(Vector2 a, Vector2 b) {
