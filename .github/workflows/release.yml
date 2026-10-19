@@ -44,6 +44,13 @@ jobs:
             echo "::error::$TAG is not on main. Tag a commit of main; see docs/how-to/cut-a-release.md"
             exit 1
           fi
+          # The packages are named after this version; another tag on the
+          # same commit could win it and make every package the wrong name.
+          version="$(cmake -P tools/release/version.cmake)"
+          if [ "$version" != "${TAG#v}" ]; then
+            echo "::error::the build version of $TAG is $version. Remove the other release tag on this commit"
+            exit 1
+          fi
           python3 tools/release/changelog.py notes --ref "$TAG" | tee -a "$GITHUB_STEP_SUMMARY"
 
   build:
@@ -57,7 +64,7 @@ jobs:
   publish:
     needs: [build, web]
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30
     permissions:
       contents: write # create the release and upload its files
     steps:

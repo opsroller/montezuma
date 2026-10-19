@@ -41,13 +41,22 @@ git push origin vX.Y.Z
 ```
 
 The **release** workflow builds all four targets, smoke-tests them and
-publishes the release. A tag that is not `vX.Y.Z` or not on `main` stops
-at its first job and builds nothing.
+publishes the release. A tag that matches `v*.*.*` but is not a plain
+`vX.Y.Z` (such as `v1.2.3-rc.1`), or is not on `main`, stops at its first
+job and builds nothing; a tag like `v1.2` starts no run at all.
+
+If `publish` fails on something passing, such as a network error, re-run
+the failed jobs from the run's page. A draft release an interrupted run left behind is
+finished, not duplicated. A release that is already published is never
+changed; the job says how to delete it first.
 
 ## Publish from your own machine
 
-When GitHub Actions cannot run, build the packages yourself and publish
-them with the same script.
+Only when GitHub Actions cannot run: build the packages yourself and
+publish them with the same script. Pushing the tag still queues the
+**release** workflow, so cancel that run if Actions comes back
+(`gh run list --workflow release.yml`, then `gh run cancel <id>`);
+otherwise both try to publish and the second one fails.
 
 1. Build the packages of the tagged commit into `dist/` as in
    [Export a desktop build](export-a-desktop-build.md) and

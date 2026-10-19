@@ -58,12 +58,20 @@ class ChangelogTest(unittest.TestCase):
         )
 
     def test_breaking_changes_come_first(self):
+        self.commit("feat: first release")
+        self.git("tag", "v0.1.0")
         self.commit("feat(core)!: new level format")
         self.commit("fix: old saves\n\nBREAKING CHANGE: saves from 0.x no longer load")
         self.commit("feat: plain")
         out = self.run_script("notes").stdout
         self.assertTrue(out.startswith("### Breaking changes\n\n- **core:** new level format\n- old saves\n"), out)
         self.assertIn("### Features\n\n- plain\n", out)
+
+    def test_first_release_has_no_breaking_changes(self):
+        self.commit("feat(core)!: new level format")
+        self.commit("fix: old saves\n\nBREAKING CHANGE: saves from 0.x no longer load")
+        out = self.run_script("notes").stdout
+        self.assertEqual(out, "### Features\n\n- **core:** new level format\n\n### Fixes\n\n- old saves\n")
 
     def test_release_commit_is_left_out(self):
         self.commit("feat: kept")

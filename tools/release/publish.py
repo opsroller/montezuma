@@ -9,8 +9,10 @@ Looks in each DIR (recursively) for montezuma-<X.Y.Z>-<target>.<ext> and its
 .sha256, checks every checksum, refuses a missing target or a package of
 another version, writes SHA256SUMS and the release notes (changelog.py notes
 for the tag, plus the source and checksum footer) into --out (default
-dist/release), then runs `gh release create`. With --dry-run it stops before
-gh and prints what it would publish.
+dist/release), then runs `gh release create`. A release left as a draft by
+an earlier, interrupted run is finished instead: its files are replaced and
+it is published. A published release for the tag is never changed. With
+--dry-run it stops before gh and prints what it would publish.
 
 Release targets, all required unless --only narrows them:
   linux    montezuma-X.Y.Z-linux-x86_64.tar.gz
@@ -106,6 +108,17 @@ def collect(version, targets, dirs):
     return [(found[n], check_package(found[n])) for n in expected]
 
 
+def gh(*args, check=True):
+    """Runs gh; exits with its error unless check is False."""
+    try:
+        result = subprocess.run(["gh", *args], capture_output=True, text=True, timeout=600)
+    except subprocess.TimeoutExpired:
+        sys.exit(f"gh {args[0]} {args[1]}: timed out after 600 s")
+    if check and result.returncode != 0:
+        sys.exit(f"gh {' '.join(args[:3])} failed: {result.stderr.strip()}")
+    return result
+
+
 def notes(tag, repo):
     return changelog.notes(tag, changelog.release_tags()) + FOOTER.format(tag=tag, repo=repo)
 
@@ -142,15 +155,24 @@ def main(argv):
         f.write(notes(args.tag, args.repo))
 
     assets = [p for path, _ in packages for p in (path, path + ".sha256")] + [sums]
-    command = ["gh", "release", "create", args.tag, "--repo", args.repo, "--verify-tag",
-               "--title", f"Montezuma's {version}", "--notes-file", notes_path, *assets]
+    title = f"Montezuma's {version}"
     if args.dry_run:
-        print("Would run:", " ".join(command))
+        print("Would publish:", " ".join(assets))
+        print(f"Title: {title}")
         print(f"Notes: {notes_path}")
         return
-    result = subprocess.run(command, timeout=1800)
-    if result.returncode != 0:
-        sys.exit(f"gh release create failed ({result.returncode})")
+    state = gh("release", "view", args.tag, "--repo", args.repo, "--json", "isDraft", "--jq", ".isDraft", check=False)
+    if state.returncode == 0 and state.stdout.strip() == "false":
+        sys.exit(f"{args.tag} is already published; nothing changed. To redo it: "
+                 f"gh release delete {args.tag} --repo {args.repo} --yes (keeps the tag), then re-run")
+    if state.returncode == 0:
+        print(f"Finishing the draft release {args.tag} left by an earlier run")
+        gh("release", "upload", args.tag, "--repo", args.repo, "--clobber", *assets)
+        gh("release", "edit", args.tag, "--repo", args.repo, "--title", title, "--notes-file", notes_path,
+           "--draft=false")
+    else:
+        gh("release", "create", args.tag, "--repo", args.repo, "--verify-tag", "--title", title,
+           "--notes-file", notes_path, *assets)
 
 
 if __name__ == "__main__":

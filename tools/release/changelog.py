@@ -85,8 +85,10 @@ def commits(since, ref):
     return entries
 
 
-def classify(subject, body):
-    """(section key, line) for one commit, or None when it is left out."""
+def classify(subject, body, first=False):
+    """(section key, line) for one commit, or None when it is left out.
+
+    In the first release nothing came before, so nothing is breaking."""
     m = SUBJECT_RE.match(subject)
     if not m:
         return "other", subject
@@ -95,16 +97,16 @@ def classify(subject, body):
     if kind == "chore" and scope == "release":
         return None
     line = f"**{scope}:** {desc}" if scope else desc
-    if m["bang"] or BREAKING_RE.search(body):
+    if not first and (m["bang"] or BREAKING_RE.search(body)):
         return "breaking", line
     return (kind if kind in ("feat", "fix", "perf") else "other"), line
 
 
-def render(entries):
+def render(entries, first=False):
     """Markdown sections for a list of (subject, body)."""
     grouped = {key: [] for key, _ in SECTIONS}
     for subject, body in entries:
-        item = classify(subject, body)
+        item = classify(subject, body, first)
         if item:
             grouped[item[0]].append(item[1])
     parts = []
@@ -119,7 +121,8 @@ def tag_date(tag):
 
 
 def notes(ref, tags):
-    return render(commits(previous_tag(ref, tags), ref))
+    since = previous_tag(ref, tags)
+    return render(commits(since, ref), first=since is None)
 
 
 def changelog(tags, next_version=None):

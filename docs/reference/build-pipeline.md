@@ -187,7 +187,7 @@ stamps `game/project.godot`, `run_bench.cmake` writes
 | `changelog.py notes [--ref REF]` | Release notes for `REF` (default `HEAD`): commit titles since the previous release tag that is an ancestor of it |
 | `changelog.py changelog [--next X.Y.Z] [--out FILE]` | The whole `CHANGELOG.md`, one section per release tag, newest first; `--next` adds the untagged commits as `X.Y.Z` |
 | `changelog.py check-tag TAG` | Exits 1 unless `TAG` is `vX.Y.Z` |
-| `publish.py --tag vX.Y.Z [--only T,...] [--repo R] [--out DIR] [--dry-run] DIR...` | Finds each target's package of that version under the `DIR`s, verifies its `.sha256`, writes `SHA256SUMS` and `notes.md` to `--out` (default `dist/release`) and runs `gh release create`; `--dry-run` stops before `gh` |
+| `publish.py --tag vX.Y.Z [--only T,...] [--repo R] [--out DIR] [--dry-run] DIR...` | Finds each target's package of that version under the `DIR`s, verifies its `.sha256`, writes `SHA256SUMS` and `notes.md` to `--out` (default `dist/release`) and runs `gh release create`, or finishes a draft release for the tag; refuses a published one; `--dry-run` stops before `gh`; each `gh` call stops after 600 s |
 | `tests/` | Tests for `changelog.py` and `publish.py` against throwaway repositories (CTest `release_tools_tests`) |
 | `web-requirements.txt` | Hash-pinned Python packages for `web-smoke.py` (Playwright), for CPython 3.12 and 3.13 on Linux x86_64 |
 
@@ -248,10 +248,10 @@ release. How to cut one: [Cut a release](../how-to/cut-a-release.md).
 
 | Job | What it does | Red means |
 |---|---|---|
-| `tag is vX.Y.Z on main` | `changelog.py check-tag`, then checks the tagged commit is on `main`; prints the notes to the run summary | The tag is not `vX.Y.Z` or not on `main`; nothing is built |
+| `tag is vX.Y.Z on main` | `changelog.py check-tag`, checks the tagged commit is on `main` and that `version.cmake` gives it the tag's version; prints the notes to the run summary | The tag is not `vX.Y.Z`, not on `main`, or another release tag on the same commit wins the version; nothing is built |
 | `build / ...` | `build.yml` for the tag: all three extensions, exports and smoke tests ([Jobs](#jobs)) | As in [Jobs](#jobs) |
 | `web / web` | `web.yml` for the tag ([Web demo](#web-demo)) | As in [Web demo](#web-demo) |
-| `publish` | Downloads the `montezuma-*` artifacts and runs `publish.py` | A package or its checksum is missing or wrong, or the release could not be created (for example it already exists) |
+| `publish` | Downloads the `montezuma-*` artifacts and runs `publish.py`: creates the release, or finishes a draft an earlier run left | A package or its checksum is missing or wrong, the release for the tag is already published, or `gh` failed |
 
 The version of every package is the tag's (`X.Y.Z`, see
 [Versions](#versions)).
@@ -277,7 +277,8 @@ Conventional Commit titles since the previous release tag:
 | Other changes | Every other type, and titles that are not Conventional Commits |
 
 `chore(release): ...` commits are left out. A scope is shown in bold
-before the description. The notes end with how to check the downloads
+before the description. The first release (no earlier release tag) has
+no Breaking changes section: those commits go under their type. The notes end with how to check the downloads
 and a link to the tag's source.
 
 ## Not yet covered
