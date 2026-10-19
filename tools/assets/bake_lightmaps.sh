@@ -38,26 +38,31 @@ done
 # What a theme's bake depends on: its static meshes and their import
 # settings (lightmap UV2), materials, shaders, generated textures (by their
 # stamp), the scenes, the bake driver and the Godot release.
-inputs_hash() {  # inputs_hash <theme>
-  local t="$1"
+inputs_hash() {  # inputs_hash <theme> <bake scene path relative to the root>
+  local t="$1" scene="$2"
   (
     cd "$root"
     {
       find "game/assets/models/$t/board" "game/assets/models/$t/backdrop" \
         -maxdepth 1 \( -name '*.obj' -o -name '*.obj.import' -o -name 'PF_*.tscn' \) -print
       find "game/assets/materials/$t" game/assets/materials/shaders \( -name '*.tres' -o -name '*.gdshader*' \) -print
-      ls "game/assets/textures/$t/.inputs" "game/assets/lookdev/LD_${t^}_Bake.tscn" \
+      ls "game/assets/textures/$t/.inputs" "$scene" \
         extension/src/render/lightmap_baker.cpp tools/release/godot.env game/project.godot
-    } | grep -v '\.uid$' | LC_ALL=C sort | xargs sha256sum | sha256sum | cut -d' ' -f1
+    } | grep -v '\.uid$' | LC_ALL=C sort | xargs "${sha256[@]}" | "${sha256[@]}" | cut -d' ' -f1
   )
 }
+
+# Stay within macOS's bash 3.2 and BSD tools: no ${var,,} or ${var^}, and
+# shasum where coreutils' sha256sum is missing (same output format).
+sha256=(sha256sum)
+command -v sha256sum > /dev/null || sha256=(shasum -a 256)
 
 scenes=() stamps=()
 for scene in "$root"/game/assets/lookdev/LD_*_Bake.tscn; do
   [[ -e "$scene" ]] || continue
-  name="$(basename "$scene" .tscn)"; name="${name#LD_}"; theme="${name%_Bake}"; theme="${theme,,}"
+  name="$(basename "$scene" .tscn)"; name="${name#LD_}"; theme="$(printf '%s' "${name%_Bake}" | tr '[:upper:]' '[:lower:]')"
   stamp="$root/game/assets/models/$theme/backdrop/.lightmap-inputs"
-  hash="$(inputs_hash "$theme")"
+  hash="$(inputs_hash "$theme" "${scene#"$root/"}")"
   if [[ "$force" == 0 && -f "$stamp" && "$(cat "$stamp")" == "$hash" \
         && -f "$root/game/assets/models/$theme/backdrop/PF_Environment.lmbake" ]]; then
     echo "$theme: lightmap up to date"
@@ -91,7 +96,8 @@ done
 # On a failure, the engine's own errors say why (the driver only relays the
 # editor's dialog text). The editor colours its output; strip that first.
 if [[ "$status" != 0 ]]; then
-  sed 's/\x1b\[[0-9;]*m//g' "$log" | grep -E -A1 '^ *(ERROR|WARNING|SCRIPT ERROR):' | tail -60 >&2 || true
+  esc="$(printf '\033')"
+  sed "s/${esc}\[[0-9;]*m//g" "$log" | grep -E -A1 '^ *(ERROR|WARNING|SCRIPT ERROR):' | tail -60 >&2 || true
 fi
 rm -f "$log"
 if [[ "$status" == 0 ]]; then
