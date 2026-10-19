@@ -444,10 +444,9 @@ def atmosphere(r, p, models):
             f"material_override = {dust_mat}",
             # Shown only where the tier has no volumetric fog.
             "", '[node name="LightShaftCards" type="Node3D" parent="." groups=["quality_fallback:volumetric_fog"]]']
-    # One plain mesh per card, not a MultiMesh: ANGLE's Metal backend aborts
-    # on paravirtual Macs drawing the instanced cards. On the effects layer:
-    # the cards read the depth texture, which the reflection probe must not
-    # draw (WebKit rejects the probe's depth blit).
+    # One plain mesh per card, not a MultiMesh: ANGLE's Metal backend aborted
+    # on the CI's virtual Mac GPU drawing the instanced cards. On the effects
+    # layer, with the fire, so the reflection probe leaves them out.
     for i, t in enumerate(cards, 1):
         body += ["", f'[node name="Card{i:02d}" type="MeshInstance3D" parent="LightShaftCards"]',
                  f"transform = Transform3D({t})", f"layers = {FX_LAYER}", "cast_shadow = 0", "gi_mode = 0",

@@ -198,6 +198,11 @@ void QualityTiers::_ready() {
     adapter_.type = adapter_type(rs->get_video_adapter_type());
     adapter_.name = to_std(rs->get_video_adapter_name());
     adapter_.vendor = to_std(rs->get_video_adapter_vendor());
+    if (RenderingDevice* rd = rs->get_rendering_device()) {
+        atomic_storage_ = rd->texture_is_format_supported_for_usage(
+            RenderingDevice::DATA_FORMAT_R32_UINT,
+            RenderingDevice::TEXTURE_USAGE_STORAGE_BIT | RenderingDevice::TEXTURE_USAGE_STORAGE_ATOMIC_BIT);
+    }
 
     load_choice();
     // `-- --quality=<tier>` forces a tier for this run without saving it
@@ -268,14 +273,14 @@ PackedStringArray QualityTiers::get_available_tiers() const {
 
 bool QualityTiers::has_feature(const String& feature) const {
     const std::optional<q::Feature> f = q::feature_from_id(to_std(feature));
-    return f && get_profile().has(*f);
+    return f && active(*f);
 }
 
 PackedStringArray QualityTiers::get_active_features() const {
     PackedStringArray out;
     for (std::size_t i = 0; i < q::kFeatureCount; ++i) {
         const auto f = static_cast<q::Feature>(i);
-        if (get_profile().has(f)) out.push_back(to_godot(q::feature_id(f)));
+        if (active(f)) out.push_back(to_godot(q::feature_id(f)));
     }
     return out;
 }
@@ -381,7 +386,7 @@ void QualityTiers::apply_node(Node* node) {
     // only where the tier has volumetric fog: Compatibility cannot compile a
     // fog shader and prints an error as soon as one loads.
     if (auto* fog = Object::cast_to<FogVolume>(node); fog && fog->has_meta("fog_material_path")) {
-        if (!p.has(q::Feature::VolumetricFog)) {
+        if (!active(q::Feature::VolumetricFog)) {
             fog->set_material(Ref<Material>());
         } else if (fog->get_material().is_null()) {
             const String path = fog->get_meta("fog_material_path");
@@ -413,7 +418,7 @@ void QualityTiers::apply_node(Node* node) {
                                            "', which names no quality feature.");
             continue;
         }
-        node->set("visible", p.has(*f) != fallback);
+        node->set("visible", active(*f) != fallback);
     }
 }
 
@@ -571,7 +576,7 @@ void QualityTiers::apply_environment(const Ref<Environment>& env) {
     e->set_ssil_enabled(p.has(q::Feature::Ssil) && authored(e, "ssil", e->is_ssil_enabled()));
     e->set_ssr_enabled(p.has(q::Feature::Ssr) && authored(e, "ssr", e->is_ssr_enabled()));
     e->set_sdfgi_enabled(p.has(q::Feature::Sdfgi) && authored(e, "sdfgi", e->is_sdfgi_enabled()));
-    e->set_volumetric_fog_enabled(p.has(q::Feature::VolumetricFog) &&
+    e->set_volumetric_fog_enabled(active(q::Feature::VolumetricFog) &&
                                   authored(e, "volumetric_fog", e->is_volumetric_fog_enabled()));
     e->set_glow_enabled(p.has(q::Feature::Glow) && authored(e, "glow", e->is_glow_enabled()));
 }
@@ -740,13 +745,13 @@ void QualityTiers::run_self_test() {
         check(env->is_ssil_enabled() == p.has(q::Feature::Ssil), id, "SSIL");
         check(env->is_ssr_enabled() == p.has(q::Feature::Ssr), id, "SSR");
         check(!env->is_sdfgi_enabled(), id, "SDFGI turned on though the theme left it off");
-        check(env->is_volumetric_fog_enabled() == p.has(q::Feature::VolumetricFog), id, "volumetric fog");
+        check(env->is_volumetric_fog_enabled() == active(q::Feature::VolumetricFog), id, "volumetric fog");
         check(env->is_glow_enabled() == p.has(q::Feature::Glow), id, "glow");
         check(attrs->is_auto_exposure_enabled() == p.has(q::Feature::AutoExposure), id, "auto exposure");
         check(attrs->is_dof_blur_far_enabled() == p.has(q::Feature::DepthOfField), id, "depth of field");
         check(voxel->is_visible() == p.has(q::Feature::VoxelGi), id, "quality:voxel_gi node");
-        check(cards->is_visible() == !p.has(q::Feature::VolumetricFog), id, "fog fallback node");
-        check(fog->get_material().is_valid() == p.has(q::Feature::VolumetricFog), id, "fog volume material");
+        check(cards->is_visible() == !active(q::Feature::VolumetricFog), id, "fog fallback node");
+        check(fog->get_material().is_valid() == active(q::Feature::VolumetricFog), id, "fog volume material");
         check(trails->is_trail_enabled() == p.has(q::Feature::ParticleTrails), id, "particle trails");
         if (p.has(q::Feature::ParticleTrails))
             check(trails->get_draw_pass_mesh(0) == trail_mesh, id, "particle trail mesh not attached");

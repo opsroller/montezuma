@@ -119,7 +119,7 @@ target names.
 | `ssr` | `Environment.ssr_enabled` (half size on standard) | ✔ | ✔ | — | — |
 | `sdfgi` | `Environment.sdfgi_enabled` (only if WP-47 picks SDFGI over VoxelGI) | ✔ | — | — | — |
 | `voxel_gi` | nodes in `quality:voxel_gi` | ✔ | — | — | — |
-| `volumetric_fog` | `Environment.volumetric_fog_enabled` | ✔ | ✔ | — | — |
+| `volumetric_fog` | `Environment.volumetric_fog_enabled`; also off, with its fallback nodes shown, on a GPU without atomic `R32_UINT` storage images (Godot's fog needs them; some virtual GPUs lack them and crash) | ✔ | ✔ | — | — |
 | `fog_fire_light` | volumetric fog energy of lights in `quality_fog_light` | ✔ | — | — | — |
 | `auto_exposure` | `CameraAttributes.auto_exposure_enabled` | ✔ | ✔ | — | — |
 | `depth_of_field` | `CameraAttributesPractical` far and near blur | ✔ | ✔ | — | — |

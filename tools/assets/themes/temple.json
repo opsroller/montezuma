@@ -416,8 +416,7 @@
       "shader": "res://assets/materials/shaders/SH_LightShaft.gdshader",
       "params": {
         "shaft_color": "#ffdba0",
-        "intensity": 0.25,
-        "soft_distance": 0.6
+        "intensity": 0.25
       }
     }
   },
