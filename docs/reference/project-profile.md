@@ -10,6 +10,10 @@ to do the job; this file says with what, and where.
   iOS 2009; sources in `docs/reference/rules-sources.md`). It plays like
   the original and looks new. Rules are in
   `docs/reference/rules-spec.md`.
+- Design direction (owner, 2026-10-19): look, setting and design follow
+  sourced history of the late Mexica empire (about 1502 to 1520), led by
+  the historian; the original game is a reference, not the target. The
+  rules above still come from the original.
 - Targets: Windows, macOS, Linux, Android, iOS, plus a web demo. The
   website's entry is a playable intro level (the game's opening levels,
   compiled to WebAssembly); finishing it opens the download and store
@@ -63,7 +67,7 @@ Each role loads `engineering-practices` plus its own plugin from
 | `devops-engineer` | `.github/`, `game/export_presets.cfg`, `tools/release/`, `docs/stores/` | Builds every target including the wasm demo; store checklists in `docs/stores/` |
 | `frontend-web-developer` | `site/` | Site shell around the web demo, downloads, credits page; deploys to GitHub Pages |
 | `graphic-designer` | `design/` (identity, icons, store art, UI and site visuals) | Style guide in `design/README.md`; exports tokens for `game/ui/theme/` and `site/` |
-| `historian` | `docs/reference/history-*.md`, the "Historical references" section of `docs/explanation/art-direction.md` | Drives design and art direction from sourced Mexica history of Moctezuma II's era; the original game is only a reference |
+| `historian` | `docs/reference/history-*.md` | Sourced history briefs and reference sets for look, setting and design; game-designer and technical-artist apply them in their own files, and the technical-artist links them from `art-direction.md`. Cites and paraphrases; images or long excerpts only under an allowed license, logged in `game/assets/PROVENANCE.md`. Commits use the `docs` scope |
 | `project-manager` | `docs/reference/work-packages.md` status, plan changes | Coordinator: staffs packages, holds the owner's standing rules |
 | `code-reviewer` | — (reviews every PR) | Uses the review notes below |
 
