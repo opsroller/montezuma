@@ -168,3 +168,9 @@ budgets, frame times and the look each tier must show are in
   does not list (#35, #80). Check: every package named in a row's status
   note or `Done when` is in its `Depends on` column, and frame-time numbers
   stay with the package that owns them (WP-46).
+- Two open PRs change the same row of `docs/reference/work-packages.md`
+  (#7, #13, #80). If the second PR resolves the conflict by taking `main`,
+  the row reads `review` or `active` after the package has merged. Check:
+  in the cross-PR pass, list each open PR that touches the same rows, say
+  which one merges first, and ask the one that rebases to keep its own
+  status text.
