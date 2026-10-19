@@ -188,3 +188,18 @@ A finding raised in two or more reviews is listed here as a rule.
   they belong (the plan's status key, `benchmark-results.md`), contradicts
   no rule already written down, and holds for the project's own existing
   rows.
+- Old wording left in pages the PR does not touch (#20, #32, #56, #61,
+  #88). A PR that changes a value, metric, rule, name or behaviour also
+  changes every page under `docs/` that still states the old one,
+  including pages outside its diff; a grep of `docs/` for the old term or
+  figure finds none left. A figure measured under an old check is
+  re-measured or labelled as from that check.
+- PR body out of date with the head (#40, #61, #88). The body becomes the
+  squash commit, so before merge it matches the head: versions, the
+  measurement conditions (for example FSR 2 or native size), what the
+  code reads or costs, and the state of other packages. A figure from
+  removed code is dropped or marked as superseded.
+- New tuned values with no reason written down (#86, #88). A new
+  threshold, per-tier setting or check limit has an explanation page
+  that says why it has that value or differs by tier, and what
+  measurement it rests on; the reference row alone is not enough.
