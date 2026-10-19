@@ -128,8 +128,10 @@ def bonus_earned(r, v):
 def tnt(r):
     """A charge goes off on the board: a crackling fuse, the blast's
     pressure wave and low body, then stone debris raining down in the
-    temple hall."""
-    fuse_len = 0.28
+    temple hall. The fuse is only a 20 ms flicker so the blast lands with
+    the board's burst (kPowerUpBurstSeconds in extension/src/board/feel.hpp
+    starts when the piece clears)."""
+    fuse_len = 0.02
     n = int(fuse_len * s.RATE)
     sparks = (r.uniform(0, 1, n) < 0.05) * np.minimum(r.pareto(2.0, n), 3.0)
     fuse = s.highpass(sparks, 2500) * 0.25 + s.bandpass(s.noise(n, r), 6000, 0.7) * 0.03

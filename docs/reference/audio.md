@@ -75,7 +75,7 @@ Measured values from `tools/audio/reports/sfx_loudness.json`.
 | `cascade_8` | `cascade_8.wav` | feedback | 1.83 | -19.0 | -10.4 |
 | `piece_land` | `piece_land_01` … `_04.wav` | frequent | 0.15 | -24.1 | -5.5 |
 | `bonus_earned` | `bonus_earned.wav` | feedback | 1.29 | -19.0 | -8.4 |
-| `bonus_use_tnt` | `bonus_use_tnt.wav` | feedback | 2.14 | -19.0 | -7.7 |
+| `bonus_use_tnt` | `bonus_use_tnt.wav` | feedback | 2.09 | -19.0 | -8.5 |
 | `bonus_use_color_clear` | `bonus_use_color_clear.wav` | feedback | 2.36 | -19.0 | -8.1 |
 | `bonus_use_lightning` | `bonus_use_lightning.wav` | feedback | 2.10 | -19.0 | -5.4 |
 | `bonus_use_clock` | `bonus_use_clock.wav` | feedback | 1.57 | -19.0 | -8.9 |

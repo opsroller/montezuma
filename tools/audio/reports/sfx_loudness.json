@@ -45,8 +45,8 @@
     "category": "feedback",
     "cue": "bonus_use_tnt",
     "momentary_lufs": -19.0,
-    "seconds": 2.142,
-    "true_peak_dbtp": -7.7
+    "seconds": 2.085,
+    "true_peak_dbtp": -8.5
   },
   "cascade_1.wav": {
     "category": "feedback",
