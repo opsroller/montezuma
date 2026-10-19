@@ -166,7 +166,7 @@ budgets, frame times and the look each tier must show are in
 
 A finding raised in two or more reviews is listed here as a rule.
 
-- Performance figures (#35, #75, #79, #80). An absolute figure links to
+- Performance figures (#35, #75, #78, #79, #80). An absolute figure links to
   its section of `docs/reference/benchmark-results.md` and names the row
   (machine, tier, date or run); that row gives the tier, Resolution,
   3D scaling and vsync or cap mode, and a capped row says why (for
@@ -174,7 +174,28 @@ A finding raised in two or more reviews is listed here as a rule.
   compares against a run of the merge base on the same machine, tier,
   Resolution, 3D scaling and cap settings, uncapped where the driver
   allows it. Frame-time numbers come from the benchmark the plan names as
-  their owner (today WP-46's), not from the row's own package.
+  their owner (today WP-46's), not from the row's own package. Every run
+  in a claim names its build by commit, including the `main` run.
+- Measurement conditions on the RTX 4080 (#75, #78, #79). Runs are taken
+  on the live desktop, never headless or in a nested compositor such as
+  gamescope. A `gpu_ms` cost claim comes from uncapped runs: with vsync
+  on the GPU clocks down between frames. Vsync off means mailbox through
+  `display/window/vsync/vsync_mode=3` in an `override.cfg` (see
+  `benchmark-results.md#pieces-out-of-gi`), and the section names the
+  command that produced its rows. A runtime call that sets vsync after
+  startup can replace mailbox with FIFO, so check that the command's path
+  through the runner keeps mailbox.
+- One fact, one place (#75, #78, #79). An explanation links to the
+  reference row instead of restating its numbers. A new figure or claim
+  agrees with what the same page or another page already states, such as
+  the M4's 16.67 ms present floor in `benchmark-results.md`; when it does
+  not, the PR corrects one of them and says which is right.
+- Reference rows after a code change (#61, #69, #78). A PR that changes a
+  shader, a tool or a command-line argument updates every reference row
+  that describes it, in the same PR: sample counts in shader tables
+  (`board-themes.md`), the Command line table in
+  `quality-tiers.md`, and pages that say a data file follows another page.
+  Search `docs/` for the changed file's name and its old figures.
 - Plan dependencies (#35, #80). In the plan
   (`docs/reference/work-packages.md`), every package a `todo` or `active`
   row waits on, needs, or shares owned files or numbers with is in its
