@@ -72,14 +72,20 @@ loses 15%.
 The thresholds rest on those captures and on what the eye still reads:
 
 - **0.40, the most any cell may lose.** With the veil at its shipped
-  values the worst cell loses 33 to 34% on the 4K and phone captures,
-  and the gems in it stay plainly readable in colour; at 1.5 extinction
-  per metre the worst cell lost 61% and pieces in it looked washed out.
+  values the worst cell loses 18 to 26% across both desktop tiers on the
+  4K and phone captures, and the gems in it stay plainly readable in
+  colour; at 1.5 extinction per metre the worst cell lost 61% and pieces
+  in it looked washed out. A cell loses more than the veil's own optical
+  depth suggests, because a 0.25 m layer is thinner than one depth slice
+  of the fog grid (about 0.5 m on `desktop-high`, 0.9 m on
+  `desktop-standard`) and the slice spreads it.
 - **0.05, what counts as clear.** About twice the largest loss on `main`,
   so run-to-run noise does not make a clear cell look fogged.
-- **0.25, the share of cells that must stay clear.** The veil leaves 36
-  to 38% clear; a veil whose patches are too small to leave clear cells
+- **0.25, the share of cells that must stay clear.** The veil leaves 34
+  to 56% clear; a veil whose patches are too small to leave clear cells
   (the first try, at a 4 m noise tile) left 12%, and an even haze none.
+  `desktop-standard`'s coarser grid smears patches sideways, so its
+  share is the lower one and set how sparse the patches are.
   A quarter of the board is clear enough that the board is never covered
   as a whole.
 

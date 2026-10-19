@@ -267,10 +267,10 @@ The material's parameters:
 | `wisp_scale`, `wisp_stretch`, `wisp_amount` | 4 m, 3, 0.35 | finer noise drawn out along the wind that breaks up the banks' tops and edges |
 | `wind` | (0.12, 0, −0.05) m/s | drift of the banks (the wisps drift 1.6 times faster) |
 | `base_shade` | 0.75 | share of the light the bottom of a bank scatters against its top; Godot's fog does not shadow itself, so this gives the banks lit tops |
-| `veil_density` | 0.9 | extinction per metre on the tiles in the core of a patch: thin enough to read the tiles and pieces through |
-| `veil_height` | 0.25 m | height above the tiles where the veil has thinned to nothing; keep it under the score labels' bottom edge (about 0.5 m) |
-| `veil_scale`, `veil_coverage` | 14 m, (0.5, 0.72) | size of one tile of veil noise, and the noise values mapped to no veil and full veil: patches a few cells across with clear cells between them |
-| `veil_spread` | 1 m | how far past the board edge the veil fades out |
+| `veil_density` | 1.0 (0 to 2) | extinction per metre on the tiles in the core of a patch: thin enough to read the tiles and pieces through |
+| `veil_height` | 0.25 m (0.05 to 0.4) | height above the tiles where the veil has thinned to nothing; the range stops under the score labels' bottom edge (about 0.5 m) |
+| `veil_scale`, `veil_coverage` | 12 m (2 to 24), (0.58, 0.78) | size of one tile of veil noise, and the noise values mapped to no veil and full veil: patches a few cells across with clear cells between them. Keep `wind` × 3600 s (Godot's `TIME` rollover) a whole number of `veil_scale` tiles, or the patches jump once an hour |
+| `veil_spread` | 1 m (0 to 2) | how far past the board edge the veil fades out |
 | `density_texture` | `NoiseTexture3D`, 64³, seed 51, frequency 0.08 | from `noise_textures_3d`, built by Godot at load |
 
 The sun's `fog_energy` (7) makes up for Godot lighting the fog by single

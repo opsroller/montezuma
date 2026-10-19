@@ -361,15 +361,19 @@ rounds alternating `main` and the veil, lightmaps rebaked for each; the
 | Veil, round 2 | 5.00 | 7.05 | 4.15 | 6.10 | 1151 MB |
 
 The veil's third noise sample per froxel costs nothing measurable: the
-fog grid's size, not the shader, sets the fog's cost.
+fog grid's size, not the shader, sets the fog's cost. The runs used an earlier
+tuning of the veil (1.5 per metre, 0.3 m, 14 m tiles); its parameters do
+not change the work per froxel.
 
-Readability on the same machine, `desktop-high`, `readability.tscn`:
+Readability on the same machine, `readability.tscn`, shipped veil values:
 
 | Capture | Rule 2 (worst cell contrast loss, clear cells) | Rule 4 (worst change) |
 |---|---|---|
-| `main`, 3840×2160 | 3%, 100% | 15.2% |
-| Veil, 540×1170 | 34%, 36% | 7.8 to 8.1% |
-| Veil, 3840×2160 | 33%, 36 to 38% | 11.0 to 12.0% |
+| `main`, `desktop-high`, 3840×2160 | 3%, 100% | 15.2% |
+| Veil, `desktop-high`, 540×1170 | 23%, 56% | 7.7% |
+| Veil, `desktop-high`, 3840×2160 | 26%, 53% | 11.8% |
+| Veil, `desktop-standard`, 540×1170 | 18%, 34% | 7.9% |
+| Veil, `desktop-standard`, 3840×2160 | 23%, 38% | 10.3% |
 
 Rule 4's worst group at 4K is the same on both builds: kind 2 on the
 light tile, whose contrast rises with glow (+5.7% alone) and with auto
