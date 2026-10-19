@@ -14,7 +14,7 @@ class Node;
 
 namespace montezuma::godot_binding {
 
-// Editor-only driver for the lightmap bake step (tools/assets/bake_lightmaps.sh,
+// Editor-only driver for the lightmap bake step (tools/assets/bake_lightmaps.cmake,
 // docs/reference/board-themes.md#lighting). Godot bakes LightmapGI only from
 // the editor's "Bake Lightmaps" button, so this plugin presses it: started as
 //

@@ -19,7 +19,7 @@ Every texture under game/assets/textures has a .import beside it that turns
 mipmaps on (or off on purpose), sets its compression and turns detect_3d off;
 texture maps carry exactly the settings of tools/assets/texture_import.py.
 Lighting: every static board and backdrop mesh imports with a lightmap UV2,
-and every theme has the bake scene tools/assets/bake_lightmaps.sh bakes.
+and every theme has the bake scene tools/assets/bake_lightmaps.cmake bakes.
 Needs only the standard library and Pillow.
 """
 

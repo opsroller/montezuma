@@ -31,7 +31,7 @@ void attach_lightmap(LightmapGI* lightmap) {
         if (!ResourceLoader::get_singleton()->exists(path)) {
             // The game still runs, without baked light; say why it looks flat.
             UtilityFunctions::push_warning("No lightmap at ", path,
-                                           ": run tools/assets/bake_lightmaps.sh (docs/how-to/build-and-test.md)");
+                                           ": run cmake -P tools/assets/bake_lightmaps.cmake (docs/how-to/build-and-test.md)");
             return;
         }
         data = ResourceLoader::get_singleton()->load(path);

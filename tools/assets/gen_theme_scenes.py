@@ -10,7 +10,7 @@ parameters and writes, as Godot text resources:
 - game/assets/materials/<theme>/MI_*.tres   one per entry in "materials"
 - game/assets/models/<theme>/**/PF_*.tscn    the scenes the manifest names
 - game/assets/lookdev/LD_<Theme>.tscn        look-dev scene: whole board, game camera
-- game/assets/lookdev/LD_<Theme>_Bake.tscn   what tools/assets/bake_lightmaps.sh bakes
+- game/assets/lookdev/LD_<Theme>_Bake.tscn   what tools/assets/bake_lightmaps.cmake bakes
 - game/assets/manifest.json                  this theme's entry (others kept)
 """
 
@@ -605,7 +605,7 @@ def main():
                f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, {', '.join(map(str, vgi['position']))})",
                f"subdiv = {vgi['subdiv']}", f"size = Vector3({', '.join(map(str, vgi['size']))})",
                'camera_attributes = SubResource("camera")']
-    # Static lighting baked by tools/assets/bake_lightmaps.sh into the file the
+    # Static lighting baked by tools/assets/bake_lightmaps.cmake into the file the
     # metadata names (a build output); the board view attaches it when present.
     lm = light["lightmap"]
     r.body += ["", '[node name="Lightmap" type="LightmapGI" parent="."]', f"quality = {lm['quality']}",
@@ -698,7 +698,7 @@ def main():
 
     # Lightmap bake scene: the theme backdrop and board under one root with the
     # node names BoardView3D gives them, so the paths the bake records from the
-    # backdrop's LightmapGI resolve the same in game. tools/assets/bake_lightmaps.sh bakes it.
+    # backdrop's LightmapGI resolve the same in game. tools/assets/bake_lightmaps.cmake bakes it.
     r = Resource()
     r.body = ['[node name="View" type="Node3D"]', "",
               f'[node name="Environment" parent="." instance={r.ext_id("PackedScene", entry["environment"])}]', "",

@@ -116,7 +116,7 @@ byte-identical files.
 | `python3 tools/assets/gen_theme_meshes.py [params]` | `SM_*.obj`, prints triangle counts, fails over budget | Blender 4.2+ as `bpy` (`pip install bpy`) or `blender -b --factory-startup -P <script> -- [params]` |
 | `python3 tools/assets/gen_theme_textures.py [params]` | `T_*_{BC,N,ORM,H}.png` (tiling), base and `hi/`, each with its `.import` | numpy, Pillow |
 | `python3 tools/assets/gen_theme_scenes.py [params]` | `MI_*.tres`, `hi/MI_*.tres` and `lo/MI_*.tres`, `PF_*.tscn`, `LD_*.tscn` (with `LD_<Theme>_Bake.tscn`), the theme's manifest entry, `design/tokens/<theme>-board.json` | standard library |
-| `tools/assets/bake_lightmaps.sh [--godot PATH] [--xvfb] [--force] [--check]` | each theme's `PF_Environment.lmbake` and `.exr`, and a `.lightmap-inputs` stamp; skips themes whose stamp matches (`--check` only reports, exit 3 when stale) | Godot 4.7.2 editor, the native extension built, the textures generated, a Vulkan driver (Mesa lavapipe works without a GPU) |
+| `cmake [-DGODOT=PATH] [-DXVFB=ON] [-DFORCE=ON] [-DCHECK=ON [-DCHECK_OUTPUT=FILE]] -P tools/assets/bake_lightmaps.cmake` | each theme's `PF_Environment.lmbake` and `.exr`, and a `.lightmap-inputs` stamp; skips themes whose stamp matches (`CHECK` only lists the stale ones, and with `CHECK_OUTPUT` appends `stale=true` or `stale=false` to that file); the import is stopped after 900 s and the editor after 900 s per scene | Godot 4.7.2 editor, the native extension built, the textures generated, a Vulkan driver (Mesa lavapipe works without a GPU) |
 | `python3 tools/assets/validate_assets.py` | nothing; exits 1 on errors | Pillow |
 
 `params` defaults to `tools/assets/themes/temple.json`
@@ -206,7 +206,7 @@ take indirect light only from the lightmap; SSIL adds the moving bounce
 on them.
 
 **Baking.** `LightmapGI` bakes only inside the editor, so
-`tools/assets/bake_lightmaps.sh` starts the editor with
+`tools/assets/bake_lightmaps.cmake` imports the project, then starts the editor with
 `--bake-lightmaps=res://assets/lookdev/LD_<Theme>_Bake.tscn`. The
 extension's editor plugin (`extension/src/render/lightmap_baker.cpp`)
 opens each scene, selects its `Lightmap` node, presses Bake, saves to the

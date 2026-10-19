@@ -32,25 +32,26 @@ To build a branch, run the **build** workflow from the Actions tab with
    ```
 
 2. Fetch the pinned Godot and the templates you need (the templates
-   archive is 1.2 GB; the script reuses it once downloaded):
+   archive is 1.2 GB; the step reuses it once downloaded):
 
    ```sh
-   tools/release/fetch-godot.sh ~/godot-dl linux_release.x86_64
+   cmake -DDIR=~/godot-dl -DTEMPLATES=linux_release.x86_64 -P tools/release/fetch-godot.cmake
    ```
 
-   For Windows add `windows_release_x86_64.exe windows_release_x86_64_console.exe`,
+   `TEMPLATES` is a `;`-separated list (quote it in the shell). For
+   Windows add `windows_release_x86_64.exe;windows_release_x86_64_console.exe`,
    for macOS add `macos.zip`.
 
 3. Export and package:
 
    ```sh
-   GODOT=~/godot-dl/godot tools/release/export-desktop.sh linux "$(tools/release/version.sh)" dist/linux
+   cmake -DGODOT=~/godot-dl/godot -DPLATFORM=linux -DOUT=dist/linux -P tools/release/export-desktop.cmake
    ```
 
 4. Check it runs:
 
    ```sh
-   tools/release/smoke-test.sh dist/linux/montezuma-*.tar.gz
+   cmake -DARCHIVE=dist/linux -P tools/release/smoke-test.cmake
    ```
 
 If the export fails, Godot's output is in `dist/linux/logs/`.

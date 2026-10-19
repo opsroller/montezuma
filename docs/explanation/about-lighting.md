@@ -117,7 +117,7 @@ benchmark on the reference Mac mini M4 replaces them.
 | Atlas | one 1024² layer (measured), 0.6 MB EXR plus a 42 KB `.lmbake`; max texture size 2048 | Fits every tier's texture budget; on web it loads as an uncompressed half-float texture of about 8 MB in memory |
 | Probes | subdivision 2 | Enough density over the board for the pieces; probes are cheap to sample |
 | Camera attributes | the theme's | Required with physical units, or the bake overflows |
-| Where | `tools/assets/bake_lightmaps.sh`, editor only (the bake needs RenderingDevice, so it runs on Vulkan, never under Compatibility); the result serves every tier, web included | Godot exposes the bake only through the editor |
+| Where | `tools/assets/bake_lightmaps.cmake`, editor only (the bake needs RenderingDevice, so it runs on Vulkan, never under Compatibility); the result serves every tier, web included | Godot exposes the bake only through the editor |
 
 ## Costs
 
