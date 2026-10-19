@@ -61,6 +61,10 @@ constexpr float kDepthTolerance = 0.01f;
 constexpr float kMaxRayDistance = 64.0f;
 // The self-test checks after this many drawn frames.
 constexpr uint64_t kSelfTestFrames = 90;
+// ... after rebuilding the board at this frame, long enough before the
+// checks for the old board's meshes to be evicted (rt::kEvictFrames).
+constexpr uint64_t kSelfTestRebuildFrame = 20;
+static_assert(kSelfTestFrames - kSelfTestRebuildFrame > rt::kEvictFrames + 5);
 
 const StringName& context() {
     static const StringName name("rt_reflections");
@@ -91,6 +95,7 @@ struct Shared {
     std::mutex mutex;
     std::vector<InstanceCpu> instances;
     std::unordered_map<uint64_t, std::shared_ptr<const MeshCpu>> meshes;
+    std::unordered_map<uint64_t, uint64_t> last_seen;  // mesh -> gathered frame it was last on the board
     uint64_t gathered_frames = 0;
     uint64_t last_traced_frame = 0;
     bool connected = false;
@@ -245,7 +250,9 @@ void add_instance(std::vector<InstanceCpu>& out, const Ref<Mesh>& mesh, const Tr
 
 void gather_node(Node* node, std::vector<InstanceCpu>& out,
                  std::unordered_map<uint64_t, std::shared_ptr<const MeshCpu>>& meshes) {
-    if (auto* geometry = Object::cast_to<GeometryInstance3D>(node); geometry && geometry->is_visible_in_tree()) {
+    // A layer mask of 0 is how the piece batcher hides a mesh it draws itself.
+    if (auto* geometry = Object::cast_to<GeometryInstance3D>(node);
+        geometry && geometry->is_visible_in_tree() && geometry->get_layer_mask() != 0) {
         if (auto* mi = Object::cast_to<MeshInstance3D>(geometry)) {
             const Ref<Mesh> mesh = mi->get_mesh();
             const std::optional<MaterialInfo> info = material_info(surface_material(mi, mesh));
@@ -293,9 +300,17 @@ void gather() {
     }
     {
         std::lock_guard<std::mutex> lock(s.mutex);
+        ++s.gathered_frames;
+        for (const InstanceCpu& inst : instances) s.last_seen[inst.mesh] = s.gathered_frames;
+        // Meshes read this frame but never placed (rejected materials) age out too.
+        for (const auto& [key, mesh] : meshes) s.last_seen.try_emplace(key, s.gathered_frames);
+        // Boards rebuilt for a new level or theme leave their old meshes behind.
+        for (uint64_t key : rt::meshes_to_evict(s.last_seen, s.gathered_frames)) {
+            meshes.erase(key);
+            s.last_seen.erase(key);
+        }
         s.instances = std::move(instances);
         s.meshes = std::move(meshes);
-        ++s.gathered_frames;
     }
     // The board view copies its moved pieces into their batches on this same
     // signal; reconnecting keeps this gather after every other handler, so
@@ -304,7 +319,24 @@ void gather() {
     const Callable self = callable_mp_static(&gather);
     rs->disconnect("frame_pre_draw", self);
     rs->connect("frame_pre_draw", self);
+    if (RtReflections::options().self_test && s.gathered_frames == kSelfTestRebuildFrame) {
+        // Rebuild every board once, as a new level does, so the checks below
+        // see whether meshes from the old board are freed.
+        const TypedArray<Node> views = tree->get_root()->find_children("*", "BoardView3D", true, false);
+        for (int64_t i = 0; i < views.size(); ++i) {
+            if (Object* view = views[i]) view->call("set_cell_size", view->call("get_cell_size"));
+        }
+        UtilityFunctions::print("RtReflections self-test: rebuilt ", views.size(), " board(s)");
+    }
     if (RtReflections::options().self_test && s.gathered_frames == kSelfTestFrames) run_self_test(tree);
+}
+
+// --rt-selftest where the effect cannot run: fail now rather than play on.
+void fail_self_test(SceneTree* tree, const String& why) {
+    UtilityFunctions::print("RtReflections self-test:");
+    UtilityFunctions::print("  FAIL ", why);
+    UtilityFunctions::print("RtReflections self-test FAILED");
+    if (tree) tree->call_deferred("quit", 1);
 }
 
 // ---------------------------------------------------------------------------
@@ -536,8 +568,10 @@ void run_self_test(SceneTree* tree) {
     if (drawing) {
         check(drawing->get_instance_count() == static_cast<int>(instances),
               "TLAS instances " + String::num_int64(drawing->get_instance_count()) + " == pieces gathered");
-        check(drawing->get_blas_count() >= static_cast<int>(distinct.size()),
-              "BLASes " + String::num_int64(drawing->get_blas_count()) + " cover the " +
+        // Meshes that left the board are freed, so the count is exact once
+        // the board has been the same for kEvictFrames frames.
+        check(drawing->get_blas_count() == static_cast<int>(distinct.size()),
+              "BLASes " + String::num_int64(drawing->get_blas_count()) + " == the " +
                   String::num_int64(static_cast<int64_t>(distinct.size())) + " meshes on the board");
     }
     check(RtReflections::tracing(), "traced in the last frames");
@@ -566,7 +600,9 @@ const rt::Options& RtReflections::options() {
 bool RtReflections::is_supported() {
     RenderingServer* rs = RenderingServer::get_singleton();
     RenderingDevice* rd = rs ? rs->get_rendering_device() : nullptr;
+    // Vulkan only, as decided, even should another driver gain the feature.
     return rd && rs->get_current_rendering_method() == "forward_plus" &&
+           rs->get_current_rendering_driver_name() == "vulkan" &&
            rd->has_feature(RenderingDevice::SUPPORTS_RAYTRACING_PIPELINE);
 }
 
@@ -594,10 +630,13 @@ Ref<Compositor> RtReflections::attach(Ref<Compositor> compositor) {
     const bool ray_tracing = is_supported();
     Shared& s = shared();
     if (!rt::should_attach(true, o, method.utf8().get_data(), ray_tracing)) {
+        const String why = "--rt-reflections needs Forward+ on Vulkan with ray-tracing pipelines (" + method + ", " +
+                           rs->get_current_rendering_driver_name() + ")";
         if (!s.warned_unsupported) {
-            UtilityFunctions::push_warning("RtReflections: --rt-reflections needs Forward+ on a GPU with ray-tracing pipelines (",
-                                           method, "); running without it");
+            UtilityFunctions::push_warning("RtReflections: ", why, "; running without it");
             s.warned_unsupported = true;
+            if (rt::self_test_exit_now(o, false) == 1)
+                fail_self_test(Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop()), why);
         }
         return compositor;
     }
@@ -630,8 +669,8 @@ void RtReflections::set_strength(float strength) { strength_ = std::clamp(streng
 void RtReflections::compile_on_render_thread() { ensure_pipelines(); }
 
 bool RtReflections::ensure_pipelines() {
-    if (trace_pipeline_.is_valid()) return true;
-    if (failed_) return false;
+    if (failed_) return false;  // a failed step turns it off for good
+    if (rt::may_trace(trace_pipeline_.is_valid(), failed_)) return true;
     RenderingDevice* rd = RenderingServer::get_singleton()->get_rendering_device();
     if (!rd) return false;
     const String common(kTraceCommon);
@@ -682,12 +721,33 @@ bool RtReflections::ensure_pipelines() {
 bool RtReflections::upload_meshes() {
     RenderingDevice* rd = RenderingServer::get_singleton()->get_rendering_device();
     std::vector<std::pair<uint64_t, std::shared_ptr<const MeshCpu>>> missing;
+    std::vector<uint64_t> gone;
     {
         Shared& s = shared();
         std::lock_guard<std::mutex> lock(s.mutex);
         for (const auto& [key, mesh] : s.meshes) {
             if (mesh && !meshes_.count(key)) missing.emplace_back(key, mesh);
         }
+        for (const auto& [key, gpu] : meshes_) {
+            if (!s.meshes.count(key)) gone.push_back(key);
+        }
+    }
+    // Free what left the board. The TLAS that used them is rebuilt below
+    // before anything traces; a BLAS goes before the buffers it depends on.
+    for (uint64_t key : gone) {
+        GpuMesh& gpu = meshes_[key];
+        for (RID* rid : {&gpu.blas, &gpu.indices, &gpu.vertices}) {
+            if (rid->is_valid()) rd->free_rid(*rid);
+        }
+        meshes_.erase(key);
+    }
+    if (!gone.empty()) {
+        normals_.clear();
+        for (auto& [key, gpu] : meshes_) {
+            gpu.first_triangle = static_cast<uint32_t>(normals_.size() / rt::kFloatsPerTriangle);
+            normals_.insert(normals_.end(), gpu.normals.begin(), gpu.normals.end());
+        }
+        normals_dirty_ = true;
     }
     for (const auto& [key, mesh] : missing) {
         GpuMesh gpu;
@@ -719,6 +779,7 @@ bool RtReflections::upload_meshes() {
             failed_ = true;
             return false;
         }
+        gpu.normals = mesh->triangle_normals;
         gpu.first_triangle = static_cast<uint32_t>(normals_.size() / rt::kFloatsPerTriangle);
         normals_.insert(normals_.end(), mesh->triangle_normals.begin(), mesh->triangle_normals.end());
         normals_dirty_ = true;
@@ -750,7 +811,10 @@ void RtReflections::_render_callback(int32_t p_effect_callback_type, RenderData*
         frame = s.gathered_frames;
     }
     instance_count_ = static_cast<int>(instances.size());
-    if (instances.empty() || !upload_meshes()) return;
+    if (instances.empty()) return;
+    // Before any GPU work, so --gpu-profile bills the builds and uploads to this pass.
+    if (rd->get_captured_timestamps_count() > 0) rd->capture_timestamp("RT Reflections");
+    if (!upload_meshes()) return;
 
     // The acceleration structure for this frame's pieces.
     TypedArray<RDAccelerationStructureInstance> tlas_instances;
@@ -784,8 +848,6 @@ void RtReflections::_render_callback(int32_t p_effect_callback_type, RenderData*
     const std::vector<float> packed = rt::pack_instances(materials);
     const PackedByteArray instance_bytes = bytes_of(packed.data(), packed.size());
     rd->buffer_update(instance_buffer_, 0, instance_bytes.size(), instance_bytes);
-
-    if (rd->get_captured_timestamps_count() > 0) rd->capture_timestamp("RT Reflections");
 
     const Vector2i internal = buffers->get_internal_size();
     if (internal.x <= 0 || internal.y <= 0) return;

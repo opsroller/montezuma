@@ -45,8 +45,10 @@ Options parse_options(const std::vector<std::string>& args) {
         if (arg.rfind(kStrength, 0) == 0 && arg.size() > kStrength.size()) {
             const std::string value = arg.substr(kStrength.size());
             char* end = nullptr;
-            const float s = std::strtof(value.c_str(), &end);
-            if (end && *end == '\0' && std::isfinite(s)) o.strength = std::clamp(s, 0.0f, kMaxStrength);
+            // strtod saturates to +-HUGE_VAL out of range, which then clamps.
+            const double s = std::strtod(value.c_str(), &end);
+            if (end && *end == '\0' && !std::isnan(s))
+                o.strength = static_cast<float>(std::clamp(s, 0.0, static_cast<double>(kMaxStrength)));
         }
     }
     return o;
@@ -54,6 +56,22 @@ Options parse_options(const std::vector<std::string>& args) {
 
 bool should_attach(bool built, const Options& options, std::string_view rendering_method, bool ray_tracing) {
     return built && options.enabled && rendering_method == "forward_plus" && ray_tracing;
+}
+
+int self_test_exit_now(const Options& options, bool attached) {
+    if (!options.self_test) return 0;
+    return attached ? -1 : 1;
+}
+
+bool may_trace(bool pipelines_ready, bool failed) { return !failed && pipelines_ready; }
+
+std::vector<std::uint64_t> meshes_to_evict(const std::unordered_map<std::uint64_t, std::uint64_t>& last_seen_frame,
+                                           std::uint64_t frame, std::uint64_t keep_frames) {
+    std::vector<std::uint64_t> out;
+    for (const auto& [mesh, seen] : last_seen_frame) {
+        if (frame > seen && frame - seen > keep_frames) out.push_back(mesh);
+    }
+    return out;
 }
 
 float dielectric_f0(float ior) {

@@ -125,7 +125,8 @@ godot --headless --path game --quit-after 600 -- --start-level=e1-l01 --quit-aft
 
 The optional ray-traced reflections on the pieces
 ([Ray-traced reflections](../reference/ray-traced-reflections.md)) need
-a Vulkan GPU with ray-tracing pipelines (on Linux or Windows) and a
+a Vulkan GPU with ray-tracing pipelines (on Linux, or on Windows with
+`--rendering-driver vulkan` before `--`) and a
 window; they do not run headless or on macOS.
 
 1. Configure the extension with the option on, and build:

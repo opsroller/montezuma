@@ -6,7 +6,9 @@
 // `-- --rt-selftest` (docs/reference/ray-traced-reflections.md).
 #include <cmath>
 #include <cstdio>
+#include <algorithm>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "rt/rt_math.hpp"
@@ -47,6 +49,9 @@ void test_options() {
     check(near(parse_options({"--rt-strength=lots"}).strength, kDefaultStrength), "bad strength keeps default");
     check(near(parse_options({"--rt-strength="}).strength, kDefaultStrength), "empty strength keeps default");
     check(!parse_options({"--rt-strength=1"}).enabled, "strength alone does not turn it on");
+    check(near(parse_options({"--rt-strength=1e40"}).strength, kMaxStrength), "an overflowing strength clamps high");
+    check(near(parse_options({"--rt-strength=-1e40"}).strength, 0.0f), "an overflowing negative strength clamps low");
+    check(near(parse_options({"--rt-strength=nan"}).strength, kDefaultStrength), "nan keeps the default");
 }
 
 void test_attach() {
@@ -59,6 +64,27 @@ void test_attach() {
     check(!should_attach(true, on, "mobile", true), "Mobile renderer");
     check(!should_attach(true, on, "gl_compatibility", true), "Compatibility renderer");
     check(!should_attach(true, on, "", true), "no renderer");
+
+    // --rt-selftest must fail at once where it cannot attach, not hang.
+    const Options test = parse_options({"--rt-selftest"});
+    check(self_test_exit_now(test, false) == 1, "self-test without the effect quits with 1");
+    check(self_test_exit_now(test, true) == -1, "attached self-test waits for its frames");
+    check(self_test_exit_now(on, false) == 0, "no self-test asked: keep running without it");
+}
+
+void test_failure_latches_off() {
+    check(may_trace(true, false), "ready and healthy traces");
+    check(!may_trace(false, false), "no pipelines, no trace");
+    check(!may_trace(true, true), "a failed acceleration-structure build turns it off for good");
+    check(!may_trace(false, true), "a failed pipeline build turns it off for good");
+}
+
+void test_mesh_eviction() {
+    const std::unordered_map<std::uint64_t, std::uint64_t> seen{{1, 100}, {2, 10}, {3, 99}};
+    const std::vector<std::uint64_t> gone = meshes_to_evict(seen, 100, 30);
+    check(gone.size() == 1 && gone[0] == 2, "a mesh no longer on the board is evicted");
+    check(meshes_to_evict(seen, 100, 1000).empty(), "recent meshes are kept");
+    check(meshes_to_evict(seen, 5, 1).empty(), "a frame counter behind the record evicts nothing");
 }
 
 void test_reflectance() {
@@ -130,7 +156,8 @@ void test_packing() {
     const std::vector<float> fixed = pack_triangle_normals(pos, broken, idx);
     check(near(std::fabs(fixed[1]), 1.0f), "zero normal replaced");
 
-    // Out-of-range indices and a trailing partial triangle are dropped.
+    // A triangle with an out-of-range index keeps its slot (face normal from
+    // zero positions) so primitive ids still line up; a trailing partial one is dropped.
     const std::vector<float> bad = pack_triangle_normals(pos, up, {0, 2, 9, 0, 3, 2, 1});
     check(bad.size() == kFloatsPerTriangle * 2, "one entry per whole triangle, bad ones included");
 }
@@ -140,6 +167,8 @@ void test_packing() {
 int main() {
     test_options();
     test_attach();
+    test_failure_latches_off();
+    test_mesh_eviction();
     test_reflectance();
     test_packing();
     std::printf("%d checks, %d failures\n", checks, failures);

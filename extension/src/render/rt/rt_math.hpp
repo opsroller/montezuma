@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <vector>
 
 // The Godot-free half of the ray-traced reflections spike (WP-54): run
@@ -30,6 +31,8 @@ inline constexpr float kMaxStrength = 2.0f;
 inline constexpr float kOffscreenAmbient = 0.25f;
 // Most piece instances in the scene; more are left out with a warning.
 inline constexpr std::uint32_t kMaxInstances = 4096;
+// A mesh not gathered for this many frames is freed (BLAS, buffers, normals).
+inline constexpr std::uint64_t kEvictFrames = 30;
 
 struct Options {
     bool enabled = false;   // --rt-reflections (or --rt-selftest)
@@ -47,6 +50,19 @@ Options parse_options(const std::vector<std::string>& args);
 // it reads) and the GPU has ray-tracing pipelines. (Godot 4.7.2 never
 // turns on Vulkan ray queries, so pipelines are the only way in.)
 bool should_attach(bool built, const Options& options, std::string_view rendering_method, bool ray_tracing);
+
+// What --rt-selftest does once the attach decision is known: -1 keep
+// running and check after its frames; 1 quit now with failure (the effect
+// cannot run here); 0 no self-test was asked for.
+int self_test_exit_now(const Options& options, bool attached);
+
+// Whether a frame may trace: never again after any step failed, even
+// where the pipelines it built still exist.
+bool may_trace(bool pipelines_ready, bool failed);
+
+// Meshes last gathered more than `keep_frames` frames before `frame`.
+std::vector<std::uint64_t> meshes_to_evict(const std::unordered_map<std::uint64_t, std::uint64_t>& last_seen_frame,
+                                           std::uint64_t frame, std::uint64_t keep_frames = kEvictFrames);
 
 struct Rgb {
     float r = 0.0f;

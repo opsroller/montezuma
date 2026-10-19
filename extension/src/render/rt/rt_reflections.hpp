@@ -69,6 +69,7 @@ private:
         godot::RID indices;
         godot::RID blas;
         std::uint32_t first_triangle = 0;
+        std::vector<float> normals;  // its packed triangle normals, to repack after an eviction
     };
 
     bool ensure_pipelines();
