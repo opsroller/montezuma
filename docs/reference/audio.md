@@ -53,8 +53,8 @@ Measured values from `tools/audio/reports/sfx_loudness.json`.
 
 | Cue | Files | Category | Longest (s) | Momentary (LUFS) | True peak (dBTP) |
 |---|---|---|---|---|---|
-| `swap` | `swap_01` … `_03.wav` | frequent | 0.30 | -24.0 | -8.2 |
-| `swap_illegal` | `swap_illegal.wav` | feedback | 0.40 | -19.0 | -4.0 |
+| `swap` | `swap_01` … `_03.wav` | frequent | 0.29 | -24.0 | -6.0 |
+| `swap_illegal` | `swap_illegal.wav` | feedback | 0.40 | -19.0 | -5.6 |
 | `match` | `match_01` … `_04.wav` | feedback | 1.40 | -19.0 | -6.2 |
 | `cascade_1` | `cascade_1.wav` | feedback | 1.24 | -19.0 | -9.3 |
 | `cascade_2` | `cascade_2.wav` | feedback | 1.33 | -19.0 | -8.4 |
@@ -64,7 +64,7 @@ Measured values from `tools/audio/reports/sfx_loudness.json`.
 | `cascade_6` | `cascade_6.wav` | feedback | 1.36 | -19.0 | -9.0 |
 | `cascade_7` | `cascade_7.wav` | feedback | 1.80 | -19.0 | -9.7 |
 | `cascade_8` | `cascade_8.wav` | feedback | 1.83 | -19.0 | -10.4 |
-| `piece_land` | `piece_land_01` … `_04.wav` | frequent | 0.15 | -24.1 | -2.9 |
+| `piece_land` | `piece_land_01` … `_04.wav` | frequent | 0.15 | -24.1 | -5.5 |
 | `bonus_earned` | `bonus_earned.wav` | feedback | 1.29 | -19.0 | -8.4 |
 | `bonus_use_tnt` | `bonus_use_tnt.wav` | feedback | 2.14 | -19.0 | -7.7 |
 | `bonus_use_color_clear` | `bonus_use_color_clear.wav` | feedback | 2.36 | -19.0 | -8.1 |

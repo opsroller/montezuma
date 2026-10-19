@@ -184,30 +184,30 @@
   "piece_land_01.wav": {
     "category": "frequent",
     "cue": "piece_land",
-    "momentary_lufs": -24.2,
+    "momentary_lufs": -24.1,
     "seconds": 0.15,
-    "true_peak_dbtp": -3.5
+    "true_peak_dbtp": -6.4
   },
   "piece_land_02.wav": {
     "category": "frequent",
     "cue": "piece_land",
     "momentary_lufs": -24.1,
     "seconds": 0.15,
-    "true_peak_dbtp": -3.1
+    "true_peak_dbtp": -6.4
   },
   "piece_land_03.wav": {
     "category": "frequent",
     "cue": "piece_land",
-    "momentary_lufs": -24.3,
+    "momentary_lufs": -24.2,
     "seconds": 0.15,
-    "true_peak_dbtp": -2.9
+    "true_peak_dbtp": -5.5
   },
   "piece_land_04.wav": {
     "category": "frequent",
     "cue": "piece_land",
-    "momentary_lufs": -24.2,
+    "momentary_lufs": -24.1,
     "seconds": 0.15,
-    "true_peak_dbtp": -3.7
+    "true_peak_dbtp": -6.9
   },
   "quota_done.wav": {
     "category": "alert",
@@ -234,29 +234,29 @@
     "category": "frequent",
     "cue": "swap",
     "momentary_lufs": -24.0,
-    "seconds": 0.299,
-    "true_peak_dbtp": -8.2
+    "seconds": 0.29,
+    "true_peak_dbtp": -6.0
   },
   "swap_02.wav": {
     "category": "frequent",
     "cue": "swap",
     "momentary_lufs": -24.0,
-    "seconds": 0.299,
-    "true_peak_dbtp": -9.6
+    "seconds": 0.295,
+    "true_peak_dbtp": -8.9
   },
   "swap_03.wav": {
     "category": "frequent",
     "cue": "swap",
     "momentary_lufs": -24.0,
-    "seconds": 0.299,
-    "true_peak_dbtp": -10.4
+    "seconds": 0.292,
+    "true_peak_dbtp": -9.2
   },
   "swap_illegal.wav": {
     "category": "feedback",
     "cue": "swap_illegal",
     "momentary_lufs": -19.0,
-    "seconds": 0.396,
-    "true_peak_dbtp": -4.0
+    "seconds": 0.397,
+    "true_peak_dbtp": -5.6
   },
   "time_warning.wav": {
     "category": "alert",

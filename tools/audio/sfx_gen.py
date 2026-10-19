@@ -52,13 +52,15 @@ def rng_for(name: str, variation: int) -> np.random.Generator:
 def swap(r, v):
     """Two carved stone pieces slide past each other: stick-slip grit that
     speeds up and slows down, then a small stone settle as they stop."""
-    slide_len = 0.17 + 0.01 * v
-    vel = np.sin(np.linspace(0, np.pi, 32)) ** 0.8
-    a = s.friction(slide_len, r, f0=1900 + 180 * v, rate=700, velocity=vel)
-    b = s.friction(slide_len, r, f0=2600 - 150 * v, rate=500, velocity=vel) * 0.6
-    settle = s.impact(900 + 70 * v, "stone", r, contact_ms=0.5, count=16) * 0.7
-    body = s.impact(240, "stone", r, contact_ms=1.6, count=8) * 0.35
-    dry = s.mix((a, 0.0), (b, 0.005), (settle, slide_len - 0.01), (body, slide_len - 0.01))
+    # The slide ends and the settle lands when the board's swap animation
+    # stops (kSwapSeconds, 0.12 s, in extension/src/board/feel.hpp).
+    slide_len = 0.11
+    vel = np.sin(np.linspace(0, np.pi, 32)) ** [0.8, 0.5, 1.2][v]
+    a = s.friction(slide_len, r, f0=[1700, 2200, 1500][v], rate=[700, 900, 550][v], velocity=vel)
+    b = s.friction(slide_len, r, f0=[2600, 1900, 3000][v], rate=500, velocity=vel) * 0.6
+    settle = s.impact([850, 1050, 760][v], "stone", r, contact_ms=0.5, count=16) * 0.7
+    body = s.impact([240, 280, 210][v], "stone", r, contact_ms=1.6, count=8) * 0.35
+    dry = s.mix((a, 0.0), (b, 0.005), (settle, 0.115), (body, 0.115))
     return s.fit(s.stone_room(dry, r, 0.35, 0.08, size=0.5), 0.3)
 
 
@@ -66,12 +68,14 @@ def swap_illegal(r, v):
     """The pieces bump into each other and slide back: a short shove, a
     heavy stone knock, the scrape back and a dull settle."""
     vel = np.sin(np.linspace(0, np.pi, 16))
-    push = s.friction(0.07, r, f0=1600, rate=600, velocity=vel) * 0.6
+    # Bump at the end of the first leg (kIllegalLegSeconds, 0.09 s, in
+    # extension/src/board/feel.hpp), settle at the end of the return leg.
+    push = s.friction(0.09, r, f0=1600, rate=600, velocity=vel) * 0.6
     bump = s.impact(620, "stone", r, contact_ms=0.9, count=18, crack=0.15)
     thud = s.impact(170, "stone", r, contact_ms=2.5, count=8) * 0.6
-    back = s.friction(0.11, r, f0=1400, rate=500, velocity=vel) * 0.5
+    back = s.friction(0.085, r, f0=1400, rate=500, velocity=vel) * 0.5
     settle = s.impact(520, "stone", r, contact_ms=1.1, count=14) * 0.6
-    dry = s.mix((push, 0.0), (bump, 0.065), (thud, 0.065), (back, 0.09), (settle, 0.2), (thud * 0.5, 0.2))
+    dry = s.mix((push, 0.0), (bump, 0.088), (thud, 0.088), (back, 0.095), (settle, 0.178), (thud * 0.5, 0.178))
     return s.soft_limit(s.fit(s.stone_room(dry, r, 0.4, 0.1, size=0.5), 0.4), 4.0)
 
 
@@ -106,7 +110,9 @@ def piece_land(r, v):
     f0 = [1150, 1320, 980, 1500][v]
     click = s.impact(f0, "stone", r, contact_ms=[0.35, 0.3, 0.45, 0.25][v], count=20)
     board = s.impact(210 + 20 * v, "stone", r, contact_ms=1.8, count=8) * 0.45
-    return s.fit(s.stone_room(s.mix((click, 0.0), (board, 0.0)), r, 0.2, 0.06, size=0.4), 0.15, 0.05)
+    # Soft-limited so the cue's random gain and stacked landings keep
+    # clear of the Master limiter.
+    return s.soft_limit(s.fit(s.stone_room(s.mix((click, 0.0), (board, 0.0)), r, 0.2, 0.06, size=0.4), 0.15, 0.05), 3.0)
 
 
 def bonus_earned(r, v):
@@ -129,7 +135,7 @@ def tnt(r):
     # Friedlander pressure wave: sharp rise, decay through a negative phase.
     t = s.t_axis(0.12)
     wave = (1 - t / 0.018) * np.exp(-2.2 * t / 0.018)
-    wave = s.lowpass(wave, 3500)
+    wave = s.lowpass(s.pad(wave, len(wave) * 4), 3500)[:len(wave)]   # padded: no wrap-around click
     m = int(1.2 * s.RATE)
     crack = s.noise(int(0.08 * s.RATE), r) * s.env_ad(int(0.08 * s.RATE), 0.0003, 0.015)
     body = s.lowpass(s.noise(m, r, "brown"), 160, 2) * s.env_ad(m, 0.004, 0.32)
