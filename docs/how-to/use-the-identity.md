@@ -6,25 +6,23 @@ identity's, vendor the two fonts, and place the logo in a new layout. The
 rules and values: [Style guide](../../design/README.md). Why:
 [About the visual identity](../explanation/about-the-visual-identity.md).*
 
-## Change an identity file
+You need Python 3. Regenerating previews also needs `chromium` on `PATH`.
 
-1. Edit the SVG or token file directly. Keep the mark's coordinates as
-   the style guide's construction table gives them, and change
-   `design/tokens/montezuma.tokens.json` and `design/tokens/tokens.css`
-   together.
-2. For any new or changed colour pair, measure it with the WCAG 2.2
-   contrast formula (any contrast checker) and add it to the style
-   guide's [approved pairs](../../design/README.md#approved-pairs) only
-   if it passes.
-3. Replace the matching PNG in `design/previews/` with a fresh snapshot.
-   Chromium draws an SVG at its own size, so put it in a page that scales
-   it, then screenshot the page. For the 180 px icon:
+## Regenerate and check the identity files
 
-   ```sh
-   echo "<body style='margin:0'><img src='$PWD/design/icons/app-icon.svg' width=180 height=180>" > /tmp/icon.html
-   chromium --headless --no-sandbox --hide-scrollbars --allow-file-access-from-files \
-     --window-size=180,180 --screenshot=design/previews/icon-180.png /tmp/icon.html
-   ```
+Do this after any change to `design/identity/build.py`, and before
+copying tokens anywhere.
+
+```sh
+python3 design/identity/build.py          # SVGs and both token files
+python3 design/identity/check_contrast.py # must print "all checks pass"
+python3 design/identity/render.py         # PNG previews (downloads fonts to a cache)
+```
+
+`render.py` downloads Archivo and Atkinson Hyperlegible Next to
+`~/.cache/montezuma/fonts` (or `$MONTEZUMA_FONT_CACHE`) and checks their
+sha256; it never copies them into the repository. Offline, add
+`--no-fonts`.
 
 ## Swap the game's tokens (ui-developer)
 
@@ -126,9 +124,12 @@ rules and values: [Style guide](../../design/README.md). Why:
    x = 0.048 x the horizontal lockup's width). Keep 1 x empty on every
    side.
 4. Check the ground: the soot outline (light grounds) or the lime keyline
-   (dark grounds) must reach 3 : 1 against it. Measure the outline colour
-   (`#1e1916` or `#f4ecdc`) against the ground with any WCAG contrast
-   checker.
+   (dark grounds) must reach 3 : 1 against it. Test a colour with:
+
+   ```sh
+   python3 -c "import sys; sys.path.insert(0, 'design/identity'); import check_contrast as c; print(c.ratio('#1e1916', '#RRGGBB'))"
+   ```
+
 5. Compare the result with the
    [misuse sheet](../../design/previews/misuse.png): not mirrored,
    recoloured, stretched, rotated or given effects.
