@@ -29,6 +29,7 @@ lights_and_shadows/directional_shadow/size.web=1024
 textures/vram_compression/import_etc2_astc=true
 lights_and_shadows/use_physical_light_units=true
 reflections/reflection_atlas/reflection_count=8
+global_illumination/gi/use_half_resolution=true
 
 [autoload]
 
