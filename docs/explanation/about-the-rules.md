@@ -85,5 +85,6 @@ numbers within the same rules.
   `multiplier`, `hint`.
 - The HUD shows a gem counter, seven totem meters and a Frenzy bar;
   quota counters only when a level has quotas.
-- Footage of the original would let the [chosen] numbers be checked; the
-  spec stays playable without it.
+- The [chosen] numbers are not checked against footage of the original:
+  the owner stopped study of the original on 2026-10-19, so the feel pass
+  (WP-40) sets them from our own targets and playtests.

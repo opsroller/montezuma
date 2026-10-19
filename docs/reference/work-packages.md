@@ -106,8 +106,8 @@ except the optional WP-54: nothing goes public until it looks finished.
 
 | WP | Package | Role | Owns | Depends on | Done when | Status |
 |---|---|---|---|---|---|---|
-| 40 | Feel pass | game-designer + graphics-programmer | `extension/src/board/feel.hpp`, spec feel section | 28 | timings in the spec feel section set from our own targets and checked in playtests (the original is not studied: owner, 2026-10-19) | todo |
-| 41 | Performance pass | graphics-programmer | with owners | 28, 46 | 60 fps mid-range Android and older iPhones; demo under 40 MB compressed | todo |
+| 40 | Feel pass | game-designer + graphics-programmer | `extension/src/board/feel.hpp`, [Feel constants](board-view.md#feel-constants) | 28 | timings in the spec feel section set from our own targets and checked in playtests (the original is not studied: owner, 2026-10-19) | todo |
+| 41 | Performance pass | graphics-programmer | with owners | 28, 46, 53, 55 | 60 fps mid-range Android and older iPhones; demo under 40 MB compressed | todo |
 | 42 | Releases and changelog | devops-engineer | `.github/workflows/release.yml`, `tools/release/` | 20 | tag `vX.Y.Z` builds every target and publishes notes from Conventional Commits | todo |
 | 43 | Store submissions | devops-engineer | `docs/stores/` | 36, 37, 38, 39, 42 | App Store, Google Play and desktop listings prepared; steps needing Charles's accounts listed for him | todo |
 
@@ -126,11 +126,12 @@ As of 2026-10-19 16:15 UTC (status sweep).
 |---|---|---|
 | K-1 Desktop frame time far from the goal: M4 at native 5K with no upscaler, frame p50 112.8 ms ([benchmark results](benchmark-results.md#gpu-time-per-pass-and-per-effect)) | Wave V effects merge only once each fits its budget; tracked in each effect PR | graphics-programmer, technical-artist |
 | K-2 Review and CI queue backing up on technical-artist: #61, #72, #86 and #88 open at once on the same lit scene | whichever merges first forces rebases of the others; each still merges as soon as its own checks pass | project-manager |
-| K-3 CI runners starved or hung: macOS extension, levels balance and export queued or running over 30 min on #86 and #72; the web job hits a WebKit `Out of bounds memory access` wasm trap, not yet diagnosed | PRs wait on CI, not review | devops-engineer |
+| K-3 CI runners starved or hung: macOS extension, levels balance and export queued or running over 30 min on #86 and #72 | PRs wait on CI, not review | devops-engineer |
 | K-4 WP-04 unassigned (role available since opsroller/graphic-designer#1) | placeholder tokens stay in the game UI and site; WP-38 and WP-43 wait | project-manager |
 | K-5 Ship path unstarted: WP-42 → WP-39 → WP-43 and WP-36/37 → WP-43 | nothing can be released or submitted | devops-engineer |
 | K-6 Phone performance never measured: WP-41 needs a mid-range Android and an older iPhone, none run | the mobile 60 fps goal is unverified | graphics-programmer |
 | K-7 Store and signing accounts (Apple Developer, App Store Connect, Play Console) needed for WP-37 signing and WP-43 | those steps wait on the account holder; asked when the packages reach them | devops-engineer (account holder Charles) |
 | K-8 WP-54 may rest on a `RenderingDevice` ray-tracing API that 4.7.2 lacks; About lighting and About the visual target disagree on it | WP-54 blocked until checked; opportunity: drop the optional spike | graphics-programmer |
+| K-10 Unexplained WebKit `Out of bounds memory access` wasm trap in the web smoke job | possible memory-safety bug in shipped code; a passing re-run does not count as green for it until it is explained | gameplay-programmer, devops-engineer |
 | Role plugins not available on the owner's build machine | review sessions run in the cloud | Charles |
 | Plan rows drift from reality | status reports can be wrong; checked at every status sweep | project-manager |
