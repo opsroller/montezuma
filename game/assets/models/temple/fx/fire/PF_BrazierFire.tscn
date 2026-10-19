@@ -176,7 +176,7 @@ surface_material_override/0 = ExtResource("5")
 
 [node name="Light" type="FlickerLight3D" parent="." groups=["quality_shadow_light", "quality_fog_light"]]
 transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0.42, 0)
-light_intensity_lumens = 60000
+light_intensity_lumens = 90000
 light_temperature = 1900
 light_color = Color(1.0000, 1.0000, 1.0000, 1.0000)
 light_size = 0.12

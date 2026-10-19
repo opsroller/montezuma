@@ -31,7 +31,9 @@ enum EffectGroup : std::uint32_t {
     // Persistent effects rule 2 names: depth and volumetric fog, FogVolumes,
     // depth of field, and persistent particles (dust, smoke, flame).
     kAtmosphere = 1u << 0,
-    // Bloom (rule 6).
+    // Bloom (rule 6). Switched off by glow intensity 0, not by disabling
+    // glow: on Compatibility, enabling glow also moves the 3D render to an
+    // HDR buffer, which changes specular highlights by itself.
     kGlow = 1u << 1,
     // Screen-space and real-time GI passes: SSR, SSAO, SSIL, SDFGI.
     kScreenSpace = 1u << 2,
@@ -53,7 +55,7 @@ private:
     struct Env {
         bool fog = false;
         bool volumetric_fog = false;
-        bool glow = false;
+        double glow_intensity = 0.0;
         bool ssr = false;
         bool ssao = false;
         bool ssil = false;
@@ -65,9 +67,8 @@ private:
     };
     godot::Ref<godot::Environment> env_;
     Env base_;
-    godot::ObjectID camera_attributes_;
-    bool dof_far_ = false;
-    bool dof_near_ = false;
+    godot::ObjectID blur_;  // the BackdropBlur drawing depth of field
+    bool dof_ = false;
     std::vector<Visible> atmosphere_nodes_;
 };
 

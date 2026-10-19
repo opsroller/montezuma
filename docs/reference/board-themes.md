@@ -53,6 +53,7 @@ to the view's placeholder.
 | `game/assets/materials/shaders/` | `SH_*.gdshader` and `SH_*.gdshaderinc`, shared by all themes |
 | `game/assets/textures/<theme>/` | `T_<Set>_{BC,N,ORM,H}.png` base texture sets, at most 1024²; build outputs, ignored by git (see below) |
 | `game/assets/textures/<theme>/hi/` | desktop variants of the hero sets, same file names, at most 2048²; build outputs too |
+| `game/assets/textures/<theme>/grade/` | `T_Grade_LUT.png`, the colour grade as a 3D LUT (see [Colour grade](#colour-grade)); build output too |
 | `game/assets/lookdev/` | `LD_*.tscn` look-dev scenes (game camera, line-up) and `LD_<Theme>_Bake.tscn`, the scene each lightmap is baked from |
 | `game/assets/models/<theme>/backdrop/PF_Environment.lmbake` and `.exr` | the baked lightmap; build output, ignored by git (see [Lighting](#lighting)) |
 | `game/assets/PROVENANCE.md` | one record per theme or asset family |
@@ -69,6 +70,7 @@ to the view's placeholder.
 | `T_` + `_ORM` | occlusion, roughness, metallic in R, G, B: linear |
 | `T_` + `_H` | height: linear, greyscale, white is high (parallax) |
 | `T_` + `_R` | roughness: linear, greyscale (legacy; new sets pack it in `_ORM`) |
+| `T_Grade_LUT` | colour grade lookup table in `grade/`: display-space RGB, imported as a 3D texture |
 
 Names use `A-Z a-z 0-9 _` only. Code refers to logical names in the
 manifest, never to these paths.
@@ -96,6 +98,7 @@ texture budget.
 | Ruby, amethyst | `ORMMaterial3D`, `Gem_01` tinted, opaque, Fresnel from the real index of refraction, rim | `SH_Gem`: refraction of the scene behind with dispersion and absorption by the body colour |
 | Carnelian, jade, moonstone | `ORMMaterial3D` with backlight for cheap translucency | sub-surface scattering with a transmittance colour; moonstone adds a stronger clearcoat |
 | Lapis | `ORMMaterial3D`, `Lapis_01` (blue, calcite, metallic pyrite flecks) | none; the base is used everywhere |
+| Water (`MI_Water`) | `SH_WaterSimple`: blended, absorption to the flat floor height, caustics, sky reflections | `SH_Water`: opaque; the refracted ray traced through the channel to its stone, absorption, caustics, the engine's reflections ([Water](water.md)) |
 
 Texture filtering: the `ORMMaterial3D` set uses Godot's default trilinear
 filter with repeat. `SH_TriplanarPBR` and `SH_Gem` filter anisotropically
@@ -114,22 +117,25 @@ byte-identical files.
 | Command | Writes | Needs |
 |---|---|---|
 | `python3 tools/assets/gen_theme_meshes.py [params]` | `SM_*.obj`, prints triangle counts, fails over budget | Blender 4.2+ as `bpy` (`pip install bpy`) or `blender -b --factory-startup -P <script> -- [params]` |
-| `python3 tools/assets/gen_theme_textures.py [params]` | `T_*_{BC,N,ORM,H}.png` (tiling), base and `hi/`, each with its `.import` | numpy, Pillow |
+| `python3 tools/assets/gen_theme_textures.py [params]` | `T_*_{BC,N,ORM,H}.png` (tiling), base and `hi/`, each with its `.import`; `grade/T_Grade_LUT.png` and its `.import` for a theme with a `grade` ([Colour grade](#colour-grade)) | numpy, Pillow |
 | `python3 tools/assets/gen_theme_scenes.py [params]` | `MI_*.tres`, `hi/MI_*.tres` and `lo/MI_*.tres`, `PF_*.tscn`, `LD_*.tscn` (with `LD_<Theme>_Bake.tscn`), the theme's manifest entry, `design/tokens/<theme>-board.json` | standard library |
 | `cmake [-DGODOT=PATH] [-DXVFB=ON] [-DFORCE=ON] [-DCHECK=ON [-DCHECK_OUTPUT=FILE]] -P tools/assets/bake_lightmaps.cmake` | each theme's `PF_Environment.lmbake` and `.exr`, and a `.lightmap-inputs` stamp; skips themes whose stamp matches (`CHECK` only lists the stale ones, and with `CHECK_OUTPUT` appends `stale=true` or `stale=false` to that file); the import is stopped after 900 s and the editor after 900 s per scene | Godot 4.7.2 editor, the native extension built, the textures generated, a Vulkan driver (Mesa lavapipe works without a GPU) |
-| `python3 tools/assets/validate_assets.py` | nothing; exits 1 on errors | Pillow |
+| `python3 tools/assets/validate_assets.py` | nothing; exits 1 on errors | Pillow, numpy (colour grade) |
+| `python3 tools/assets/grade_lut.py [params]` | nothing; prints each theme's palette check ([Colour grade](#colour-grade)) | numpy, Pillow |
 
 `params` defaults to `tools/assets/themes/temple.json`
 (`gen_theme_textures.py` with no argument does every theme in
 `tools/assets/themes/`).
 
 The `T_*` texture sets are build outputs, not committed: git ignores
-`game/assets/textures/*/T_*.png`, `*/hi/T_*.png` and the `.inputs` stamp.
+`game/assets/textures/*/T_*.png`, `*/hi/T_*.png`, `*/grade/T_*.png` and the `.inputs` stamp.
 Hand-made textures elsewhere in `game/assets/textures/` are still
 committed. `gen_theme_textures.py` writes a theme's `.inputs` stamp, a
 SHA-256 of the script, the theme's parameters and the numpy and Pillow
 versions, and skips drawing the theme when the stamp matches and every
-file exists (it still writes any missing or wrong `.import` file). Three things run it: the CMake target `textures` (part of `all`
+file exists (it still writes any missing or wrong `.import` file). The
+grade LUT takes milliseconds, so it is compared and rewritten on every
+run, stamp or not. Three things run it: the CMake target `textures` (part of `all`
 when CMake finds Python 3 with numpy and Pillow; otherwise configure
 prints how to run it), the CI action `.github/actions/textures` (see
 [CI pipeline](ci-pipeline.md#assets-workflow)), and you, before opening
@@ -168,11 +174,14 @@ Git ignores every `.import`, so a hand-made texture under
 | `artifacts.piece_width` | piece footprint as a fraction of a cell |
 | `artifacts.kinds[]` | `index`, `name` (file names), `shape` (a function in `gen_theme_meshes.py`: `round_gem`, `pyramid`, `sun`, `leaf`, `diamond`, `hex_crystal`, `crescent`), `material` |
 | `backdrop` | `tiers`, `foliage_clumps`, `ground_size` |
+| `water` | optional moat round the lowest tier: `inset`, `width`, `depth`, `level`, `coping_width`, `coping_height`, `causeway_width` ([Water](water.md#parameters)); without it the ground is unbroken |
 | `textures.size`, `textures.hi_size` | base and desktop texture edge in pixels (powers of two, ≤ 1024 and ≤ 2048) |
 | `textures.sets.<Set>` | one PBR set `T_<Set>_*`: `recipe` (a function in `gen_theme_textures.py`: `stone`, `ground`, `gold`, `gem`, `lapis`, `jade`, `moonstone`), `normal_strength` (slope at 1024 px), `hi` (also write a `hi/` set at `hi_size`; the base is filtered down from it), `height` (also write `_H`) |
-| `materials.<MI_name>` | `albedo` (the colour the kind reads as; also the HUD token), optional `albedo_tint` (multiplies the texture instead, for sets that carry their own colour), `set` (a texture set: makes an `ORMMaterial3D` whose roughness, metallic and occlusion come from `_ORM`) with `triplanar_scale`, `normal_scale`, `world_triplanar`; without `set`, `metallic` and `roughness`; `ior` (index of refraction; sets the dielectric reflectance) or `specular`; `emission` + `emission_energy`, `rim` + `rim_tint`, `clearcoat` + `clearcoat_roughness`, `anisotropy`, `subsurface` (`strength`, `transmittance`, `depth`, `boost`), `backlight`, `double_sided`. Or a ShaderMaterial: `shader` + `params`, optional `textures` (uniform to a path under `textures/<theme>/`; the `hi` variant takes the file's `hi/` copy), `noise_textures` (uniform to a `NoiseTexture2D`: `seed`, `frequency`, `size`) and `render_priority` (with `set`, the shader gets `texture_albedo`, `texture_normal`, `texture_orm`, `texture_height`, `albedo`, `triplanar_scale`, `normal_scale`). `hi`: keys that replace these for the desktop variant in `hi/` |
+| `materials.<MI_name>` | `albedo` (the colour the kind reads as; also the HUD token), optional `albedo_tint` (multiplies the texture instead, for sets that carry their own colour), `set` (a texture set: makes an `ORMMaterial3D` whose roughness, metallic and occlusion come from `_ORM`) with `triplanar_scale`, `normal_scale`, `world_triplanar`; without `set`, `metallic` and `roughness`; `ior` (index of refraction; sets the dielectric reflectance) or `specular`; `emission` + `emission_energy`, `rim` + `rim_tint`, `clearcoat` + `clearcoat_roughness`, `anisotropy`, `subsurface` (`strength`, `transmittance`, `depth`, `boost`), `backlight`, `double_sided`. Or a ShaderMaterial: `shader` + `params` (a hex string is a colour, a list of numbers a `Vector2`/`Vector3`; `water: true` adds the channel's geometry for the water shaders), optional `textures` (uniform to a path under `textures/<theme>/`; the `hi` variant takes the file's `hi/` copy), `noise_textures` (uniform to a `NoiseTexture2D`: `seed`, `frequency`, `size`) and `render_priority` (with `set`, the shader gets `texture_albedo`, `texture_normal`, `texture_orm`, `texture_height`, `albedo`, `triplanar_scale`, `normal_scale`). `hi`: keys that replace these for the desktop variant in `hi/` |
 | `environment` | sky colours, `ambient_energy`, `saturation`, `sun.transform` (as written in a `.tscn`, basis rows first) |
 | `lighting` | physical light values, see [Lighting](#lighting); `lighting.torch` also sets each brazier's fire light |
+| `grade` | the colour grade and its palette limits, see [Colour grade](#colour-grade) |
+| `post` | glow and depth of field, see [Post-processing](#post-processing) |
 | `lookdev` | game camera `camera_transform` and `fov`, `highlight_cell`; `fire_camera_transform` and `fire_fov` for the brazier close-up `LD_<Theme>_Fire` |
 | `fire` | brazier fire: `rim_height` and the `flame`, `smoke`, `embers`, `light` and `haze` settings of `PF_BrazierFire` ([Fire](fire.md#pf_brazierfire)) |
 | `surface_tokens`, `extra_tokens` | palette entries exported to `design/tokens/<theme>-board.json`: token name to material (its `albedo`) or to a hex value |
@@ -189,14 +198,14 @@ the parameter file's `lighting` section:
 
 | Node | Type | Tiers | Parameters (`lighting.*`) | Temple |
 |---|---|---|---|---|
-| `WorldEnvironment` | sky, AgX tonemapper, SSAO, SSIL, glow, optional height fog | all (switches per [Quality tiers](quality-tiers.md)) | `sky_nits`, `agx_white`, `agx_contrast`, optional `fog` (`color`, `height`, `height_density`, `sky_affect`) | 15,000 nits; white 16, contrast 1.25; no height fog. Volumetric fog on, with no density of its own: see [Atmosphere](#atmosphere) |
-| `camera` (`CameraAttributesPractical`) | exposure, on the environment, `LightmapGI` and `VoxelGI` | auto exposure on desktop only | `exposure` (`sensitivity`, `multiplier`, `auto_scale`, `auto_speed`, `auto_min_sensitivity`, `auto_max_sensitivity`) | ISO 440 (auto 300 to 640), `auto_scale` 0.45 (raised from 0.4 so the bright mist does not pull the board darker; auto exposure and the fog are both desktop-only) |
+| `WorldEnvironment` | sky, AgX tonemapper, SSAO, SSIL, optional height fog; glow and the grade LUT from [Post-processing](#post-processing) and [Colour grade](#colour-grade) | all (switches per [Quality tiers](quality-tiers.md)) | `sky_nits`, `agx_white`, `agx_contrast`, `ssao` (`intensity`, `power`, `light_affect`), optional `fog` (`color`, `height`, `height_density`, `sky_affect`) | 15,000 nits; white 16, contrast 1.25; SSAO intensity 3, power 1.5, light affect 0.3; no height fog. Volumetric fog on, with no density of its own: see [Atmosphere](#atmosphere) |
+| `camera` (`CameraAttributesPractical`) | exposure, on the environment, `LightmapGI` and `VoxelGI` | auto exposure on desktop only | `exposure` (`sensitivity`, `multiplier`, `auto_scale`, `auto_speed`, `auto_min_sensitivity`, `auto_max_sensitivity`) | ISO 440 (auto 400 to 480), `auto_scale` 0.32 (darker sunlit stone, WP-60). The narrow auto range keeps the plaza mist from moving the board's exposure: from 300 to 640 it failed readability rules 2 and 4 at 4K ([`design/grade/temple.md`](../../design/grade/temple.md)). Auto exposure and the fog are both desktop-only |
 | `Sun` | `DirectionalLight3D`, shadows | all | `sun` (`lux`, `kelvin`, `color`, `angular_distance`, optional `fog_energy` → `light_volumetric_fog_energy`) | 11,000 lux, 4500 K, 0.6°, fog energy 7 (see [Atmosphere](#atmosphere)) |
-| `Fire1`…`Fire4/Light` | `FlickerLight3D` in each brazier's `PF_BrazierFire` ([Fire](fire.md)), dual paraboloid shadows (seam flat above the board), group `quality_shadow_light` | all; shadows on the nearest 8 or 2 | `torch` (`lumens`, `kelvin`, `color`, `size`, `range`) | 60,000 lm, 1900 K, range 4.5 m |
-| `SkyFill` | `AreaLight3D` over the board, group `quality:area_light`, not baked | `desktop-high` | `sky_fill` (`transform`, `lumens`, `color`, `size`, `range`) | 20,000 lm, 10 × 10 m |
+| `Fire1`…`Fire4/Light` | `FlickerLight3D` in each brazier's `PF_BrazierFire` ([Fire](fire.md)), dual paraboloid shadows (seam flat above the board), group `quality_shadow_light` | all; shadows on the nearest 8 or 2 | `torch` (`lumens`, `kelvin`, `color`, `size`, `range`) | 90,000 lm, 1900 K, range 4.5 m |
+| `SkyFill` | `AreaLight3D` over the board, group `quality:area_light`, not baked | `desktop-high` | `sky_fill` (`transform`, `lumens`, `color`, `size`, `range`) | 6,000 lm, 10 × 10 m |
 | `ReflectionProbe` | box-projected probe; leaves out render layer 2 (fire effects, [Fire](fire.md#pf_brazierfire), and the light-shaft cards) | all | `reflection_probe` (`position`, `size`) | 12 × 4 × 12 m |
 | `VoxelGI` | real-time bounce received by the moving pieces, group `quality:voxel_gi`, baked at run time | `desktop-high` | `voxel_gi` (`position`, `size`, `subdiv`) | 14 × 4 × 14 m, 64 cells |
-| `Lightmap` | `LightmapGI` with probes | all | `lightmap` (`quality`, `bounces`, `texel_scale`, `max_texture_size`, `probes_subdiv`) | medium, 3 bounces |
+| `Lightmap` | `LightmapGI` with probes | all | `lightmap` (`quality`, `bounces`, `texel_scale`, `max_texture_size`, `probes_subdiv`, optional `sky_energy`: bake the theme's sky at this energy instead of the scene's) | medium, 3 bounces, sky 0.3 |
 
 Static meshes (board and backdrop) bake into the lightmap: their
 `.obj.import` files set `generate_lightmap_uv2=true` and are committed.
@@ -229,11 +238,59 @@ emission in nits (`emission_intensity`, or the `emission_energy` of
 theme's sensitivity); each emissive material also gets a `lo/` copy at
 1 nit for web, which `QualityTiers` loads there.
 
+## Colour grade
+
+A theme's `grade` section is an ASC CDL applied in display space after
+tonemapping: per channel `out = clamp(in × slope + offset) ^ power`, then
+`saturation` around Rec. 709 luma. `gen_theme_textures.py` bakes it with
+`tools/assets/grade_lut.py` into
+`game/assets/textures/<theme>/grade/T_Grade_LUT.png`, a `lut_size`³ table
+laid out as `lut_size` slices side by side (red across, green down, blue
+by slice, each texel holding the grade at its centre, `(i + 0.5) / lut_size`,
+since Godot samples the table with no half-texel remap), and writes its `.import` (`importer="3d_texture"`, lossless,
+no mipmaps, `slices/horizontal` = `lut_size`). The theme's
+`WorldEnvironment` uses it as `adjustment_color_correction` on every tier.
+Why a CDL and a LUT: [About post-processing](../explanation/about-post-processing.md).
+
+| Key (`grade.*`) | Meaning | Temple |
+|---|---|---|
+| `lut_size` | texels per axis | 32 (a 1024 × 32 PNG, 96 KB in memory) |
+| `slope`, `offset`, `power` | CDL per channel, sRGB-encoded values in 0 to 1 | slope 1.0712, 1.04, 0.9984; offset −0.02, −0.02, −0.0096; power 1 (the warm grade below a contrast of 1.04 around 0.5) |
+| `saturation` | CDL saturation, 1 keeps it | 1.04 |
+| `check.max_shift_pieces`, `check.max_shift_surfaces` | most a piece colour (`materials.<kind>.albedo`) or palette colour (`surface_tokens`, `extra_tokens`) may move, OKLab distance | 0.04, 0.05 |
+| `check.max_separation_drop` | most the closest pair of piece colours may come closer, OKLab distance, in normal vision, greyscale, protanopia, deuteranopia and tritanopia (Machado et al. 2009, severity 1) | 0.005 |
+
+`python3 tools/assets/grade_lut.py` prints the check for each theme;
+`validate_assets.py` fails a grade outside its limits, a LUT that does
+not match the parameters, and a LUT that does not import as a 3D
+texture.
+
+## Post-processing
+
+`gen_theme_scenes.py` writes the theme environment's glow and depth of
+field from the `post` section. The quality tier turns them off where the
+tier has no `glow` or `depth_of_field` ([Quality tiers](quality-tiers.md#feature-ids)).
+
+| Key (`post.*`) | Writes | Temple |
+|---|---|---|
+| `glow.levels` | `glow_levels/1` to `/7` (mip weights; higher levels spread wider) | 0, 1, 0.5, 0, 0, 0, 0 |
+| `glow.intensity`, `glow.strength`, `glow.bloom` | `glow_intensity`, `glow_strength`, `glow_bloom` | 0.5, 1.0, 0 |
+| `glow.blend` | `glow_blend_mode`: `additive`, `screen`, `softlight`, `replace` or `mix` | additive |
+| `glow.hdr_threshold`, `glow.hdr_scale`, `glow.hdr_luminance_cap` | the exposed scene value glow starts at (before tonemapping, Godot 4.6+), its gain, its cap | 8, 2, 12 |
+| `glow.hdr_threshold_by_tier` | tier id to its own threshold, written as `glow_hdr_threshold_<tier>` metadata (dashes as underscores) that `QualityTiers` applies; other tiers use `hdr_threshold` | `mobile` 0.6, `web` 0.6 |
+| `depth_of_field.beyond_board` | far blur start, metres past the board's far edge; written as `dof_blur_far_distance` and as the `dof_far_beyond_board` metadata `BoardCamera3D` reads ([Board view](board-view.md#camera-fit)) | 0.5 |
+| `depth_of_field.transition`, `depth_of_field.amount` | `dof_blur_far_transition`, `dof_blur_amount` | 2.0 m, 0.1 |
+
+Leave `depth_of_field` out for a theme without backdrop blur. Glow and
+blur are checked by readability rules 6 and 2 with the readability
+capture ([Benchmark](benchmark.md#readability-checks)).
+
 ## Atmosphere
 
 Ground mist and dust around the temple: volumetric fog lying in banks on
 the plaza, cut by the shadows of the temple and ferns, and dust on the desktop tiers, light-shaft cards in its place on mobile and web.
-Nothing of it is ever over the board (readability rule 2 in the
+Over the board lies only a thin, patchy veil of the mist that the tiles
+and pieces read through (readability rule 2 in the
 [Visual target](visual-target.md#readability-rules-every-tier)). Why it is
 built this way: [About the atmosphere](../explanation/about-the-atmosphere.md).
 
@@ -244,29 +301,37 @@ parameter file's `lighting.atmosphere` section and the `MI_AtmosphereFog`,
 | Node | Type | Tiers | Parameters | Temple |
 |---|---|---|---|---|
 | `WorldEnvironment` | volumetric fog on, global density 0 | `desktop-high` (64 × 64 froxels), `desktop-standard` (32 × 32) | `atmosphere.fog` (`anisotropy`, `length`, `detail_spread`, `gi_inject`, `ambient_inject`, `temporal_amount`) | isotropic; 30 m, detail spread 1 (even slices, so the low mist far below the camera is as finely sliced as the air near it); GI 0.05, ambient 0.2 (mist in shade is dim and lit by the sky, not glowing) |
-| `AtmosphereFog` | box `FogVolume` around the temple, group `quality:volumetric_fog`; its material path in `metadata/fog_material_path` | desktop | `atmosphere.volumes` (`clearance`, `outer`, `bottom`, `top`); `MI_AtmosphereFog` (below) | 38 × 38 m, from 2.6 m below the board to the board's height |
+| `AtmosphereFog` | box `FogVolume` around the temple, group `quality:volumetric_fog`; its material path in `metadata/fog_material_path` | desktop | `atmosphere.volumes` (`outer`, `bottom`, `top`); `MI_AtmosphereFog` (below) | 38 × 38 m, from 2.6 m below the board to 0.45 m above it |
 | `Dust` | `GPUParticles3D`, ring around the platform, `MI_Dust`, group `quality:volumetric_fog` | desktop | `atmosphere.dust` (`amount`, `lifetime`, `inner_radius`, `outer_radius`, `bottom`, `top`, `size`, `speed`, `turbulence`) | 320 motes, 8.5 to 13 m from the centre, 5 cm, at most 5 cm/s |
 | `LightShaftCards` | `Node3D` holding one `MeshInstance3D` quad per card (`Card01`…), along the sun, `MI_LightShaft`, group `quality_fallback:volumetric_fog`; the cards are on render layer 2 so the reflection probe leaves them out | `mobile`, `web` | `atmosphere.shafts` (`count`, `inner_radius`, `outer_radius`, `length`, `width`, `ground`) | 12 cards, 3.5 to 5.5 m long, 12 draw calls |
 
-The fog volume covers the board too; its shader keeps it empty there.
-`SH_AtmosphereFog` gives zero density inside a square of half-side
-`clear_half` around the board centre (board plus `volumes.clearance`) and
-fades in over `fade` metres outside it. The material's parameters:
+The fog volume covers the board too. Over it `SH_AtmosphereFog` lays only
+a thin veil: drifting patches on the tile tops (y = 0) that thin to nothing
+by `veil_height`, below the floating score labels (0.8 cell and up), with
+clear tiles between them. The banks lie on the plaza around the platform.
+The material's parameters:
 
 | Parameter | Temple | Meaning |
 |---|---|---|
-| `density` | 6 | extinction per metre in the core of a bank: the floor all but disappears under one |
+| `density` | 6 (0 to 8) | extinction per metre in the core of a bank: the floor all but disappears under one |
 | `albedo` | `#ebedf0` | scattering colour; mist is water and scatters every colour alike, so it is near white and the light gives it its colour |
-| `clear_half` | 6.15 (set by the generator) | half the side of the fog-free square: board half-size 4.55 + clearance 1.6 |
-| `fade` | 1.2 m | ramp from no fog to full fog outside that square |
+| `board_half` | 4.55 (set by the generator) | half the side of the board, frame included; the veil lies inside it and the banks thicken with distance outside it |
 | `ground_y` | −1.92 m | the plaza floor the mist lies on (platform top −0.42 m less three 0.5 m tiers) |
-| `bank_height`, `top_soft` | 1.4 m, 0.6 m | tallest a bank gets above the floor, and how far its top fades out |
-| `thicken_over`, `near_amount` | 7 m, 0.5 | banks next to the platform are `near_amount` as tall as those `thicken_over` metres out: more mist further away |
-| `bank_scale`, `coverage` | 9 m, (0.56, 0.64) | size of one tile of bank noise, and the noise values mapped to no bank and a full bank; the narrow range leaves clear floor between banks |
-| `wisp_scale`, `wisp_stretch`, `wisp_amount` | 4 m, 3, 0.35 | finer noise drawn out along the wind that breaks up the banks' tops and edges |
+| `bank_height`, `top_soft` | 1.4 m, 0.6 m (0.05 to 2) | tallest a bank gets above the floor, and how far its top fades out |
+| `thicken_over`, `near_amount` | 7 m, 0.5 (0 to 1) | banks next to the platform are `near_amount` as tall as those `thicken_over` metres out: more mist further away |
+| `bank_scale`, `coverage` | 9 m (1 to 40), (0.56, 0.64) | size of one tile of bank noise, and the noise values mapped to no bank and a full bank; the narrow range leaves clear floor between banks |
+| `wisp_scale`, `wisp_stretch`, `wisp_amount` | 4 m (0.5 to 20), 3 (1 to 8), 0.35 (0 to 1) | finer noise drawn out along the wind that breaks up the banks' tops and edges |
 | `wind` | (0.12, 0, −0.05) m/s | drift of the banks (the wisps drift 1.6 times faster) |
-| `base_shade` | 0.75 | share of the light the bottom of a bank scatters against its top; Godot's fog does not shadow itself, so this gives the banks lit tops |
+| `base_shade` | 0.75 (0 to 1) | share of the light the bottom of a bank scatters against its top; Godot's fog does not shadow itself, so this gives the banks lit tops |
+| `veil_density` | 1.0 (0 to 2) | extinction per metre on the tiles in the core of a patch: thin enough to read the tiles and pieces through |
+| `veil_height` | 0.25 m (0.05 to 0.4) | height above the tiles where the veil has thinned to nothing; the range stops under the score labels' bottom edge (about 0.5 m) |
+| `veil_scale`, `veil_coverage` | 12 m (2 to 24), (0.58, 0.78) | size of one tile of veil noise, and the noise values mapped to no veil and full veil: patches a few cells across with clear cells between them. Keep `wind` × 3600 s (Godot's `TIME` rollover) a whole number of `veil_scale` tiles, or the patches jump once an hour: with the temple's wind, (432, −180) m, that is 2, 3, 4, 6, 9, 12 or 18 m. The wisps that shade the veil still shift a little at the rollover |
+| `veil_spread` | 1 m (0 to 2) | how far past the board edge the veil fades out |
 | `density_texture` | `NoiseTexture3D`, 64³, seed 51, frequency 0.08 | from `noise_textures_3d`, built by Godot at load |
+
+The veil scatters all the light it receives (it is not darkened by
+`base_shade`); where it overlaps a bank, the shade follows each one's
+share of the density. To retune it: [Tune the fog veil](../how-to/tune-the-fog-veil.md).
 
 The sun's `fog_energy` (7) makes up for Godot lighting the fog by single
 scattering only: mist this thick scatters light many times, and with
@@ -297,12 +362,15 @@ random (seed + 51) until they pass.
 | `SH_HeatHaze` | heat haze (`MI_HeatHaze`), desktop | screen-texture distortion, drawn before the flame | 2 noise and 1 screen sample |
 | `SH_CellHighlight` | `cell_highlight` | unshaded, additive | one 1×1 quad; no texture samples |
 | `SH_Spark` | `fx_match` | unshaded, additive; fades by `INSTANCE_CUSTOM.y` | 16 tiny spheres per burst |
-| `SH_AtmosphereFog` | the temple's `FogVolume` (`MI_AtmosphereFog`), desktop | fog shader | 1 3D-noise sample per froxel in the volume |
+| `SH_AtmosphereFog` | the temple's `FogVolume` (`MI_AtmosphereFog`), desktop (64 × 64 froxels on `desktop-high`, 32 × 32 on `desktop-standard`); mobile and web show the light-shaft cards and no veil | fog shader; no static switches, 1 variant | 3 3D-noise samples per froxel in the volume (banks, wisps, veil); no measurable cost against the clear-square version ([Benchmark results](benchmark-results.md#fog-veil-over-the-board)) |
 | `SH_Dust` | dust motes (`MI_Dust`), desktop | lit, additive, no depth write, camera-facing | no texture samples |
 | `SH_LightShaft` | light-shaft cards (`MI_LightShaft`), mobile and web | unshaded, additive, no depth write; fades out toward the ground in UV | no texture samples |
 | `SH_TriplanarPBR` | desktop stone (`hi/MI_Stone*`) | opaque, Burley diffuse, GGX; object-space triplanar PBR set; parallax occlusion on upward faces (`height_depth` metres, 8 to 24 layers by view angle) | 3 texture samples where one projection carries the surface (most pixels; projections under 2% weight are skipped), up to 9 on edges, plus up to 25 height samples on upward faces |
 | `SH_Gem` | desktop ruby and amethyst (`hi/MI_Ruby`, `hi/MI_Amethyst`) | transparent pass (reads the screen texture), depth write; refraction with `ior` and `dispersion`, absorption by the body colour over `thickness` | 3 to 9 texture samples (as `SH_TriplanarPBR`), 4 screen samples at LOD 0 (no screen mip chain) and 3 depth samples |
 | `SH_Triplanar.gdshaderinc` | included by the two above | object-space triplanar sampling, normal-map blending, Y-face parallax | none of its own |
+| `SH_Water` | desktop water (`hi/MI_Water`) | opaque; refracted ray traced through the channel box, absorption, caustics | 1 texture sample (the channel stone), no screen or depth texture ([Water](water.md#shaders)) |
+| `SH_WaterSimple` | mobile and web water (`MI_Water`) | blended; absorption to the floor height, caustics | no texture samples |
+| `SH_Water.gdshaderinc` | included by the two above | ripple noise and slope, caustics, absorption, Fresnel | none |
 
 `SH_CellHighlight` and `SH_Spark` run on Forward+, Mobile and
 Compatibility (checked in Godot 4.4.1 on all three); the fire shaders on
@@ -312,6 +380,8 @@ tiers show. `SH_TriplanarPBR` and
 mobile and web get the base materials. `SH_Dust` and `SH_LightShaft`
 compile on all three renderers in Godot 4.7.2; `SH_AtmosphereFog` only
 on Forward+ and Mobile, so it is loaded only on tiers with volumetric fog.
+`SH_Water` serves the desktop tiers on Forward+; `SH_WaterSimple` runs on
+Mobile and Compatibility (both checked in Godot 4.7.2).
 
 ## Budgets and the temple theme's numbers
 
@@ -362,12 +432,24 @@ look packages compare against these.
 | [temple-lineup-before-wp48.jpg](../images/lookdev/temple-lineup-before-wp48.jpg) | `LD_Temple_LineUp` | Forward+ | first pass, before WP-48 |
 | [temple-lineup-base-forward.jpg](../images/lookdev/temple-lineup-base-forward.jpg) | `LD_Temple_LineUp` | Forward+ | base PBR |
 | [temple-lineup-desktop.jpg](../images/lookdev/temple-lineup-desktop.jpg) | `LD_Temple_LineUp_Hi` | Forward+ | desktop `hi/` |
+| [temple-board-water-desktop.jpg](../images/lookdev/temple-board-water-desktop.jpg) | `LD_Temple` | Forward+ | desktop `hi/`, with the water channel (WP-50) |
+| [temple-water-desktop.jpg](../images/lookdev/temple-water-desktop.jpg), [-mobile](../images/lookdev/temple-water-mobile.jpg), [-compatibility](../images/lookdev/temple-water-compatibility.jpg) | `LD_Temple_Water` | Forward+, Mobile, Compatibility | water close-up ([Water](water.md)) |
 | [temple-board-lit-web.jpg](../images/lookdev/temple-board-lit-web.jpg) | game, benchmark board | Compatibility (`web`) | WP-47 lighting, lightmap baked |
 | [temple-board-lit-desktop-high.jpg](../images/lookdev/temple-board-lit-desktop-high.jpg) | game, benchmark board | Forward+ (`desktop-high`) | WP-47 lighting, lightmap and `VoxelGI` |
+| [temple-board-before-wp52-desktop-high.jpg](../images/lookdev/temple-board-before-wp52-desktop-high.jpg) | `readability.tscn`, 540×1170 | Forward+ (`desktop-high`) | WP-47 lighting, old glow (before WP-52) |
+| [temple-board-post-desktop-high.jpg](../images/lookdev/temple-board-post-desktop-high.jpg) | `readability.tscn`, 1280×720 | Forward+ (`desktop-high`) | WP-52 glow, grade and depth of field |
+| [temple-board-post-web.jpg](../images/lookdev/temple-board-post-web.jpg) | `readability.tscn`, 540×1170 | Compatibility (`web`) | WP-52 glow and grade |
+| [temple-board-post-mobile.jpg](../images/lookdev/temple-board-post-mobile.jpg) | `readability.tscn`, 540×1170 | Mobile (`mobile`) | WP-52 glow and grade |
 | [temple-atmosphere-before-mist.jpg](../images/lookdev/temple-atmosphere-before-mist.jpg) | `LD_Temple_Hi` | Forward+ (`desktop-high`) | WP-51 volumetric fog and dust as first built (an even cream layer), no lightmap |
 | [temple-atmosphere-desktop-high.jpg](../images/lookdev/temple-atmosphere-desktop-high.jpg) | game, benchmark board | Forward+ (`desktop-high`), RTX 4080 SUPER | ground mist in banks and dust, lightmap and `VoxelGI` |
 | [temple-atmosphere-mobile.jpg](../images/lookdev/temple-atmosphere-mobile.jpg) | `LD_Temple` | Mobile (`mobile`) | WP-51 light-shaft cards, no lightmap |
 | [temple-atmosphere-web.jpg](../images/lookdev/temple-atmosphere-web.jpg) | `LD_Temple` | Compatibility (`web`) | WP-51 light-shaft cards, no lightmap |
+| [temple-board-contrast-before-desktop-high.jpg](../images/lookdev/temple-board-contrast-before-desktop-high.jpg) | game, first level | Forward+ (`desktop-high`), RTX 4080 SUPER | before WP-60: `main` with the ground mist |
+| [temple-board-contrast-desktop-high.jpg](../images/lookdev/temple-board-contrast-desktop-high.jpg) | game, first level | Forward+ (`desktop-high`), RTX 4080 SUPER | WP-60 lighting: darker shadows, 90,000 lm braziers, SSAO 3 |
+| [temple-board-contrast-before-mobile.jpg](../images/lookdev/temple-board-contrast-before-mobile.jpg) | game, first level | Mobile (`mobile`), RTX 4080 SUPER | before WP-60: `main` with the ground mist |
+| [temple-board-contrast-mobile.jpg](../images/lookdev/temple-board-contrast-mobile.jpg) | game, first level | Mobile (`mobile`), RTX 4080 SUPER | WP-60 lighting: darker shadows, 90,000 lm braziers, SSAO 3 |
+| [temple-board-contrast-before-web.jpg](../images/lookdev/temple-board-contrast-before-web.jpg) | game, first level | Compatibility (`web`), RTX 4080 SUPER | before WP-60: `main` with the ground mist |
+| [temple-board-contrast-web.jpg](../images/lookdev/temple-board-contrast-web.jpg) | game, first level | Compatibility (`web`), RTX 4080 SUPER | WP-60 lighting: darker shadows, 90,000 lm braziers, SSAO 3 |
 
 ## Validator rules
 
@@ -408,6 +490,10 @@ each as `error: <file>: <rule and fix>`:
   filtering above.
 - Every file in a `hi/` folder has a base file of the same name; a `hi/`
   texture is the same map at the same or a larger size.
+- A theme's `grade` keeps its palette within its `check` limits, its
+  `grade/T_Grade_LUT.png` matches the parameters, and its `.import`
+  imports it as a 3D texture ([Colour grade](#colour-grade)). Grade LUTs
+  are exempt from the texture map rules above.
 - Android, iOS and Web export presets list `*/hi/*` in `exclude_filter`;
   desktop presets do not.
 - `PROVENANCE.md` has a record for each theme.

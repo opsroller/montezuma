@@ -26,6 +26,7 @@
 #include <godot_cpp/variant/array.hpp>
 
 #include "frame_stats.hpp"
+#include "render/backdrop_blur.hpp"
 
 using namespace godot;
 
@@ -155,9 +156,8 @@ Dictionary active_features(Viewport* viewport) {
 
     const Ref<CameraAttributes> attrs = camera_attributes_of(viewport);
     f["auto_exposure"] = attrs.is_valid() && attrs->is_auto_exposure_enabled();
-    const Ref<CameraAttributesPractical> practical = attrs;
-    f["depth_of_field"] =
-        practical.is_valid() && (practical->is_dof_blur_far_enabled() || practical->is_dof_blur_near_enabled());
+    const Ref<BackdropBlur> blur = BackdropBlur::drawing(viewport);
+    f["depth_of_field"] = blur.is_valid() && blur->get_enabled();
 
     f["lightmap_gi"] = c.lightmap_gi > 0;
     f["voxel_gi"] = c.voxel_gi > 0;
@@ -218,14 +218,12 @@ void EffectSwitch::capture(Node* root, Viewport* viewport) {
     ERR_FAIL_NULL(viewport);
     env_ = environment_of(viewport);
     if (env_.is_valid()) {
-        base_ = {env_->is_fog_enabled(), env_->is_volumetric_fog_enabled(), env_->is_glow_enabled(),
-                 env_->is_ssr_enabled(), env_->is_ssao_enabled(), env_->is_ssil_enabled(), env_->is_sdfgi_enabled()};
+        base_ = {env_->is_fog_enabled(), env_->is_volumetric_fog_enabled(),
+                 env_->get_glow_intensity(), env_->is_ssr_enabled(), env_->is_ssao_enabled(), env_->is_ssil_enabled(), env_->is_sdfgi_enabled()};
     }
-    const Ref<CameraAttributesPractical> practical = camera_attributes_of(viewport);
-    if (practical.is_valid()) {
-        camera_attributes_ = ObjectID(practical->get_instance_id());
-        dof_far_ = practical->is_dof_blur_far_enabled();
-        dof_near_ = practical->is_dof_blur_near_enabled();
+    if (const Ref<BackdropBlur> blur = BackdropBlur::drawing(viewport); blur.is_valid()) {
+        blur_ = ObjectID(blur->get_instance_id());
+        dof_ = blur->get_enabled();
     }
     atmosphere_nodes_.clear();
     std::vector<Node*> stack{root};
@@ -248,16 +246,13 @@ void EffectSwitch::apply(std::uint32_t on) {
     if (env_.is_valid()) {
         env_->set_fog_enabled(base_.fog && atmosphere);
         env_->set_volumetric_fog_enabled(base_.volumetric_fog && atmosphere);
-        env_->set_glow_enabled(base_.glow && glow);
+        env_->set_glow_intensity(static_cast<real_t>(glow ? base_.glow_intensity : 0.0));
         env_->set_ssr_enabled(base_.ssr && screen);
         env_->set_ssao_enabled(base_.ssao && screen);
         env_->set_ssil_enabled(base_.ssil && screen);
         env_->set_sdfgi_enabled(base_.sdfgi && screen);
     }
-    if (auto* practical = Object::cast_to<CameraAttributesPractical>(ObjectDB::get_instance(camera_attributes_))) {
-        practical->set_dof_blur_far_enabled(dof_far_ && atmosphere);
-        practical->set_dof_blur_near_enabled(dof_near_ && atmosphere);
-    }
+    if (auto* blur = Object::cast_to<BackdropBlur>(ObjectDB::get_instance(blur_))) blur->set_enabled(dof_ && atmosphere);
     for (const Visible& v : atmosphere_nodes_) {
         if (auto* n = Object::cast_to<Node3D>(ObjectDB::get_instance(v.node))) n->set_visible(v.visible && atmosphere);
     }

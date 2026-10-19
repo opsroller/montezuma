@@ -106,7 +106,7 @@ one entry (phones, web).
 | `--quality=<tier id or auto>` | Uses that tier for this run without saving it (benchmark captures) |
 | `--quality-off=<id>[,<id>...]` | Turns those [feature ids](#feature-ids) off for this run, on every tier, so their cost can be measured; an unknown id prints an error and is ignored. `get_active_features()` leaves them out |
 | `--quality-native` | Renders 3D at the output size with no upscaler on every tier: bilinear at 1.0, with TAA where the tier has TAA or a temporal upscaler. `run_bench.cmake` passes it unless `NATIVE=OFF` |
-| `--quality-selftest` | Switches through every available tier on scratch nodes, checks each switch (environment, groups, shadow budget, sun shadow cascades and material variants of `MI_Gold` and `MI_Ground`, also after a node leaves and re-enters the tree), prints `QualityTiers self-test: N checks, F failures` |
+| `--quality-selftest` | Switches through every available tier on scratch nodes, checks each switch (environment, groups, shadow budget, sun shadow cascades, material variants of `MI_Gold` and `MI_Ground`, and the backdrop blur on environments and cameras, also after a node leaves and re-enters the tree), prints `QualityTiers self-test: N checks, F failures` |
 
 ## Feature ids
 
@@ -124,12 +124,12 @@ target names.
 | `volumetric_fog` | `Environment.volumetric_fog_enabled`; also off, with its fallback nodes shown, on a GPU without atomic `R32_UINT` storage images (Godot's fog needs them; some virtual GPUs lack them and crash) | ✔ | ✔ | — | — |
 | `fog_fire_light` | volumetric fog energy of lights in `quality_fog_light` | ✔ | — | — | — |
 | `auto_exposure` | `CameraAttributes.auto_exposure_enabled` | ✔ | ✔ | — | — |
-| `depth_of_field` | `CameraAttributesPractical` far and near blur | ✔ | ✔ | — | — |
-| `glow` | `Environment.glow_enabled` | ✔ | ✔ | ✔ | ✔ |
+| `depth_of_field` | `CameraAttributesPractical` far and near blur (the board camera places the far blur behind the board, [Board view](board-view.md#camera-fit)) | ✔ | ✔ | — | — |
+| `glow` | `Environment.glow_enabled`; the threshold comes from the environment's `glow_hdr_threshold_<tier>` metadata when it has one ([Board themes](board-themes.md#post-processing)) | ✔ | ✔ | ✔ | ✔ |
 | `subsurface_scattering` | nodes in `quality:subsurface_scattering`; SSS quality high, medium, off | ✔ | ✔ | — | — |
 | `parallax_occlusion` | nodes in `quality:parallax_occlusion` | ✔ | ✔ | — | — |
 | `gem_refraction` | nodes in `quality:gem_refraction` | ✔ | ✔ | — | — |
-| `water_refraction` | nodes in `quality:water_refraction` | ✔ | ✔ | — | — |
+| `water_refraction` | the `hi/MI_Water` variant (`SH_Water`, refraction traced through the channel) on the water strips; mobile and web keep `MI_Water` ([Water](water.md#tiers)) | ✔ | ✔ | — | — |
 | `heat_haze` | nodes in `quality:heat_haze` | ✔ | ✔ | — | — |
 | `decals` | nodes in `quality:decals` | ✔ | ✔ | ✔ | — |
 | `area_light` | nodes in `quality:area_light` | ✔ | — | — | — |
@@ -165,6 +165,7 @@ switch. The root viewport re-applies on resize. On every Forward+ tier, `project
 | Temporal upscaler | MetalFX temporal on Metal, FSR 2.2 elsewhere | same | — | — |
 | MSAA (3D) | off | off | 2× | 2× |
 | Anisotropic filtering | 16× | 8× | 4× | 2× |
+| Debanding | On | On | Off | Off |
 | Mesh LOD threshold (px) | 1.0 | 1.0 | 2.0 | 2.0 |
 | Sun shadow atlas | 4096 | 2048 | 2048 | 1024 |
 | Sun shadow cascades (most) | 4 | 4 | 4 | 1 (orthogonal) |
@@ -174,6 +175,7 @@ switch. The root viewport re-applies on resize. On every Forward+ tier, `project
 | SSR half size | no | yes | — | — |
 | Volumetric fog froxels (size × depth) | 64 × 64 | 32 × 32 | — | — |
 | Subsurface scattering quality | high | medium | off | off |
+| Backdrop depth of field (`BackdropBlur`; Godot's own DoF is always off) | on | on | — | — |
 | Texture and material variant folder | `hi/` | `hi/` | base only | `lo/` |
 | Pieces batched (`batch_pieces`, [Board view](board-view.md#draw-calls)) | no | no | yes | yes |
 
@@ -182,6 +184,41 @@ tree: the light uses the fewer of the cascades its scene authored and the
 tier's count (1 orthogonal, 2 or 4 parallel splits), and gets its authored
 mode back on a tier that allows it (`_quality_authored` metadata). Each
 cascade draws every shadow caster again.
+
+### Backdrop depth of field
+
+`BackdropBlur` (`extension/src/render/backdrop_blur.hpp`) is a
+`CompositorEffect` that draws the far depth of field in place of Godot's.
+Why: [About post-processing](../explanation/about-post-processing.md#decision);
+the parameters a theme sets: [Board themes: Post-processing](board-themes.md#post-processing).
+
+- `QualityTiers` turns Godot's far and near depth of field off on every
+  `CameraAttributesPractical` it sees, on every tier.
+- A `WorldEnvironment` whose attributes authored a far blur gets a
+  `BackdropBlur` on its compositor (made if it has none), bound to those
+  attributes. A `Camera3D` with its own attributes or compositor gets one
+  on its own compositor, bound to the attributes it renders with (its own,
+  else the world's), because Godot takes both from the camera first. A
+  camera's own attributes without a far blur get an empty compositor,
+  which hides the world's blur.
+- The effect is enabled where the tier has `depth_of_field` and the
+  attributes authored a far blur. Compatibility has no `RenderingDevice`,
+  so no effect is added there.
+- Each frame it reads `dof_blur_far_distance`, `dof_blur_far_transition`
+  and `dof_blur_amount` from the attributes. It runs after the transparent
+  pass, before TAA and the temporal upscaler, at the internal size: a
+  half-size blur with a radius of `amount` × 64 pixels at the output size,
+  then a full-size blend. Pixels short of the far distance are left as
+  they are.
+- `BackdropBlur::drawing(viewport)` returns the effect a viewport renders
+  with (its camera's, else its world's). The benchmark's `depth_of_field`
+  feature reads its enabled flag.
+- Under `--gpu-profile` it shows as its own `Backdrop Blur` row.
+
+| Measured, RTX 4080, 3840×2160, `--gpu-profile`, `e1-l01` | `desktop-high` | `desktop-standard` |
+|---|---|---|
+| Godot's low box depth of field (before) | 0.63 ms | 0.58 ms |
+| `BackdropBlur` | 0.05 ms | 0.09 ms |
 
 FSR 1 and FSR 2.2 run only on Forward+ in Godot 4.7, so the Mobile
 renderer has no upscaler. Frame-time costs behind these numbers are

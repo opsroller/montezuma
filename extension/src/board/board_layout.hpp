@@ -111,4 +111,12 @@ inline double fit_distance(const Fit& f) {
     return hi;
 }
 
+// View depth (distance along the view axis) of the farthest point of the
+// framed box at board level, for a camera `distance` from the centre. Depth
+// of field that starts beyond it never blurs the board.
+inline double far_depth(const Fit& f, double distance) {
+    const Vec3 back = camera_direction(f.tilt_degrees);
+    return distance + f.half_depth * back.z;  // the far edge; the camera tilts toward +Z only
+}
+
 }  // namespace montezuma::godot_binding::layout

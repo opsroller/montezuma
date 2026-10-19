@@ -3,8 +3,10 @@
 
 #include "board_camera_3d.hpp"
 
+#include <godot_cpp/classes/camera_attributes_practical.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/viewport.hpp>
+#include <godot_cpp/classes/world3d.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/math.hpp>
 
@@ -20,6 +22,11 @@ namespace {
 
 // Tallest piece above the board plane, in cells, including the selection lift.
 constexpr double kPieceTopCells = 0.6;
+
+// Metadata a theme sets on its CameraAttributesPractical: where the far depth
+// of field starts, in metres beyond the board's far edge
+// (docs/reference/board-themes.md, "Post-processing").
+const char* const kDofBeyondBoardMeta = "dof_far_beyond_board";
 
 }  // namespace
 
@@ -82,6 +89,19 @@ void BoardCamera3D::refit() {
     // Straight down needs another up vector than the usual +Y.
     const Vector3 up = Math::is_zero_approx(tilt_degrees_) ? Vector3(0, 0, -1) : Vector3(0, 1, 0);
     look_at_from_position(eye, target, up);
+    fit_depth_of_field(layout::far_depth(fit, distance));
+}
+
+void BoardCamera3D::fit_depth_of_field(double board_far_depth) {
+    // The camera's own attributes win over the environment's, as in Godot.
+    Ref<CameraAttributesPractical> attrs = get_attributes();
+    if (attrs.is_null()) {
+        const Ref<World3D> world = get_world_3d();
+        if (world.is_valid()) attrs = world->get_camera_attributes();
+    }
+    if (attrs.is_null() || !attrs->has_meta(kDofBeyondBoardMeta)) return;
+    const double beyond = attrs->get_meta(kDofBeyondBoardMeta);
+    attrs->set_dof_blur_far_distance(static_cast<real_t>(board_far_depth + beyond));
 }
 
 void BoardCamera3D::_bind_methods() {

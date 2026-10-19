@@ -20,7 +20,9 @@ mipmaps on (or off on purpose), sets its compression and turns detect_3d off;
 texture maps carry exactly the settings of tools/assets/texture_import.py.
 Lighting: every static board and backdrop mesh imports with a lightmap UV2,
 and every theme has the bake scene tools/assets/bake_lightmaps.cmake bakes.
-Needs only the standard library and Pillow.
+Colour grade: a theme's grade LUT matches its "grade" parameters, imports as a
+3D texture, and keeps the palette within the grade's check limits.
+Needs Pillow, and numpy for the colour grade (the assets CI job has both).
 """
 
 import json
@@ -313,6 +315,29 @@ def lighting_errors(theme):
     return errors
 
 
+def grade_errors(params_path):
+    """A theme's colour grade: its LUT is current and imports as a Texture3D, and it keeps the palette."""
+    params = json.loads(params_path.read_text())
+    if "grade" not in params:
+        return []
+    import numpy as np
+    import grade_lut
+    grade, errors = params["grade"], []
+    png = grade_lut.lut_path(ASSETS / "textures" / params["theme"])
+    rel = png.relative_to(ROOT)
+    if not png.exists():
+        return [f"{rel}: missing; run tools/assets/gen_theme_textures.py"]
+    with Image.open(png) as image:
+        if not np.array_equal(np.asarray(image.convert("RGB")), grade_lut.table(grade)):
+            errors.append(f"{rel}: does not match the theme's grade; run tools/assets/gen_theme_textures.py")
+    imp = png.with_name(png.name + ".import")
+    if not imp.exists() or (bad := grade_lut.import_mismatches(grade, imp.read_text())):
+        errors.append(f"{rel}: must import as a 3D texture ({'missing .import' if not imp.exists() else bad}); "
+                      "run tools/assets/gen_theme_textures.py")
+    errors += [f"{params_path.relative_to(ROOT)}: {e}" for e in grade_lut.check(grade, *grade_lut.theme_palette(params))[1]]
+    return errors
+
+
 def main():
     errors, warnings = [], []
     manifest_path = ASSETS / "manifest.json"
@@ -364,7 +389,7 @@ def main():
                     errors.append(f"{rel}: references missing {ref}{hint}")
         if path.suffix in (".gdshader", ".obj", ".tscn", ".tres") and SPDX not in path.read_text()[:400]:
             errors.append(f"{rel}: missing the SPDX header line")
-        if path.suffix == ".png":
+        if path.suffix == ".png" and path.parent.name != "grade":  # grade LUTs: grade_errors
             errors += texture_errors(path, rel)
             if TEXTURES in path.parents:
                 errors += import_errors(path, rel)
@@ -386,6 +411,8 @@ def main():
                                       "a desktop variant is the same map at the same or a larger size")
 
     errors += export_errors()
+    for params_path in sorted((ROOT / "tools/assets/themes").glob("*.json")):
+        errors += grade_errors(params_path)
 
     tokens_path = ROOT / "design/tokens/temple-board.json"
     params_path = ROOT / "tools/assets/themes/temple.json"

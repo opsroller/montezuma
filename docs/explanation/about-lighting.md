@@ -39,7 +39,7 @@ benchmark on the reference Mac mini M4 replaces them.
 1. **Physical light units and AgX on every tier.** Lux for the sun,
    lumens for the braziers and the sky fill, nits for the sky, and a
    camera sensitivity in ISO (`CameraAttributesPractical`). A theme author
-   sets values a lighting reference can check ("a 1900 K flame of 60,000
+   sets values a lighting reference can check ("a 1900 K flame of 90,000
    lm") instead of energies tuned by eye per scene. AgX handles the bright
    sky and fire without the hue shifts of Filmic. Auto exposure only on
    the desktop tiers (the tier table leaves it off on mobile, and
@@ -82,14 +82,16 @@ benchmark on the reference Mac mini M4 replaces them.
 7. **No environment-wide fog.** Depth fog failed rules 2 and 4. Height fog
    that starts below the platform (`fog_height` −0.6 m) passed on web, but
    in the board view on Forward+ it still left a haze over the board (rule
-   2: mean change 11 against a limit of 1 on `desktop-high`). So the
+   2, under the luma-difference check of the time: mean change 11 against
+   a limit of 1 on `desktop-high`). So the
    temple's environment has no fog, and haze in the backdrop comes from
-   WP-51's `FogVolume`s, which are kept off the board. A theme can still
+   WP-51's `FogVolume`s, which leave only a thin, patchy veil over the board. A theme can still
    set `lighting.fog` for height fog if its readability capture passes on
    every tier. Measured afterwards at 1280 × 720 (software rendering, so
-   look only, not speed), with the WP-49 braziers in: on `web` rule 2
-   passes (mean change 0.003) and rule 4 passes (0.9%); on `desktop-high`
-   rule 2 passes (mean 0.72, p99 4) and rule 4 passes for the atmosphere
+   look only, not speed), with the WP-49 braziers in, all under that
+   check: on `web` rule 2 passes (mean change 0.003) and rule 4 passes (0.9%); on `desktop-high`
+   rule 2 passes (mean 0.72,
+   p99 4) and rule 4 passes for the atmosphere
    alone (0.4%), but fails at 12.5% with glow on too, because glow blooms
    the fire and the gold. Glow, and with it rule 6, belongs to WP-52;
    rule 5 to WP-48.
@@ -108,6 +110,69 @@ benchmark on the reference Mac mini M4 replaces them.
    material has a `lo/` copy at 1 nit that `QualityTiers` loads on the
    web tier, the same way it loads `hi/` materials on desktop.
 
+## Revision: darker shadows (WP-60)
+
+The first temple lighting read flat: the sky lit every surface about as
+much as the sun did. Two fills did it. The `LightmapGI` baked the scene's
+full 15,000-nit sky as bounce light, and lightmapped surfaces take their
+indirect light only from the lightmap, so lowering the environment's
+ambient alone changed nothing on the static stone. The sky fill area light
+and the ambient energy added more on top.
+
+So the lightmap now bakes the theme's sky at a reduced energy
+(`lighting.lightmap.sky_energy`, 0.3), the ambient energy drops from 0.4
+to 0.15 and the sky fill from 20,000 to 6,000 lm. The braziers go up to
+90,000 lm so their pools of light show against the darker shadows, and
+SSAO goes to intensity 3 (power 1.5, light affect 0.3) so the creases
+between tiles and pieces darken. On the desktop tiers the auto exposure
+target (`auto_scale`) drops from 0.45 to 0.32 so sunlit stone no longer
+sits near white. A lower exposure multiplier was tried first (0.7), but
+mobile and web have no auto exposure and run at the fixed exposure, and
+there the board went so dark that one kind of piece no longer stood out
+from its tile (readability rule 4); `auto_scale` reaches only the tiers
+that have auto exposure. The colour grade (glow, contrast, saturation) is
+WP-52's.
+
+Luminance of the board view at 1920 × 1080 on the first level (darkest
+5%, median, brightest 5%), `main` against this change:
+
+| Tier | `main` | WP-60 |
+|---|---|---|
+| `desktop-high` | 0.31, 0.50, 0.66 | 0.21, 0.41, 0.59 |
+| `mobile` | 0.04, 0.17, 0.30 | 0.04, 0.16, 0.28 |
+| `web` | 0.22, 0.43, 0.61 | 0.16, 0.42, 0.62 |
+
+Mobile was already the darkest tier and changes least; its brightness is
+a separate question for the mobile tier's own pass.
+
+Darker shadows show banding in smooth gradients on 8-bit output, so the
+desktop tiers turn on the viewport's debanding, which dithers the 3D
+output before it is quantised. Its cost is a few instructions in the
+tonemap pass. Web stays off because the Compatibility renderer ignores
+the flag. Mobile stays off for now: the Mobile renderer supports it, but
+nothing has measured it on the weakest phone the tier targets, whose
+frame budget is the tightest, so turning it on is left to that tier's
+next measured pass (WP-41).
+
+Lowering the ambient also lowers what the volumetric fog picks up
+through its ambient injection, so the ground mist's tuning (#79 and its
+veil) is checked against these values.
+
+Readability capture, `main` (with the ground mist) against this change,
+RTX 4080 SUPER: `desktop-high` at 3840 × 2160, `mobile` (Mobile renderer)
+and `web` (Compatibility) at 1920 × 1080.
+
+| Rule | `desktop-high` | `mobile` | `web` |
+|---|---|---|---|
+| 2 effects inside the board (mean) | fail, 2.24 → 2.81 | pass, 0.007 → 0.008 | pass, 0.002 → 0.003 |
+| 4 piece and tile contrast change | pass, 6.9% → 6.9% | pass, 1.2% → 1.2% | pass, 4.7% → 4.7% |
+| 5 closest greyscale pair (light / dark tiles) | fail, 7.2 / 5.3 → 7.5 / 5.3 | fail, 8.9 / 7.1 → 8.9 / 7.1 | fail, 7.5 / 8.5 → 7.5 / 8.5 |
+| 6 bloom past a quarter cell | fail, 19.5% → 13.3% | pass, 0.010% → 0.011% | fail, 7.0% → 7.0% |
+
+No rule that passes on `main` fails. Rule 2 on `desktop-high` gets worse
+because the mist stands out more against the darker shadows; the mist's
+own tuning (the veil) owns that rule.
+
 ## Bake settings
 
 | Setting | Value | Why |
@@ -117,6 +182,7 @@ benchmark on the reference Mac mini M4 replaces them.
 | Atlas | one 1024² layer (measured), 0.6 MB EXR plus a 42 KB `.lmbake`; max texture size 2048 | Fits every tier's texture budget; on web it loads as an uncompressed half-float texture of about 8 MB in memory |
 | Probes | subdivision 2 | Enough density over the board for the pieces; probes are cheap to sample |
 | Camera attributes | the theme's | Required with physical units, or the bake overflows |
+| Sky | the theme's sky as a custom sky at `lighting.lightmap.sky_energy` (temple 0.3) | Lightmapped surfaces take indirect light only from the bake, so the scene's full sky would light every shadow (WP-60) |
 | Where | `tools/assets/bake_lightmaps.cmake`, editor only (the bake needs RenderingDevice, so it runs on Vulkan, never under Compatibility); the result serves every tier, web included | Godot exposes the bake only through the editor |
 
 ## Costs
@@ -227,7 +293,7 @@ is captured on load.
   flat above the pieces (`Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, …)`).
 - Every emissive material gets a `lo/` copy at 1 nit (the scene generator
   writes it); emission is authored in nits for the other tiers.
-- No environment fog over the board; backdrop haze is `FogVolume`s outside it (WP-51).
+- No environment fog over the board; haze is `FogVolume`s, thin and patchy over the board (WP-51).
 
 ## Open questions
 

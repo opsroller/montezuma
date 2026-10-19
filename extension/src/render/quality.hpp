@@ -103,6 +103,7 @@ struct Profile {
     int msaa = 0;  // 0, 2, 4 or 8 samples
     bool smaa = false;
     int anisotropy = 4;  // 1 (off), 2, 4, 8 or 16
+    bool debanding = false;  // dither the 3D output so dark gradients do not band
     float mesh_lod_threshold = 1.0f;  // pixels; higher picks coarser LODs sooner
 
     // Shadows.

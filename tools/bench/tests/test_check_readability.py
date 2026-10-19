@@ -78,11 +78,26 @@ class CheckReadability(unittest.TestCase):
         self.assertEqual(rules, {"rule_2": True, "rule_4": True, "rule_5": True, "rule_6": True})
         self.assertEqual(code, 0)
 
-    def test_fog_over_the_board_fails_rule_2(self):
+    def test_fog_over_the_whole_board_fails_rule_2(self):
         fog = Image.blend(board(), Image.new("RGB", SIZE, (200, 200, 200)), 0.15)
         code, rules = self.run_check(board(), atmosphere=fog)
         self.assertFalse(rules["rule_2"])
         self.assertEqual(code, 1)
+
+    def test_thin_fog_patches_with_clear_cells_pass_rule_2(self):
+        fog = Image.blend(board(), Image.new("RGB", SIZE, (200, 200, 200)), 0.15)
+        patchy = board()
+        # A patch over the left four columns; the other three stay clear.
+        patchy.paste(fog.crop((0, 0, ORIGIN[0] + 4 * CELL, SIZE[1])), (0, 0))
+        _, rules = self.run_check(board(), atmosphere=patchy)
+        self.assertTrue(rules["rule_2"])
+
+    def test_thick_fog_patch_fails_rule_2(self):
+        thick = board()
+        fog = Image.blend(board(), Image.new("RGB", SIZE, (230, 230, 230)), 0.6)
+        thick.paste(fog.crop((0, 0, ORIGIN[0] + 2 * CELL, SIZE[1])), (0, 0))
+        _, rules = self.run_check(board(), atmosphere=thick)
+        self.assertFalse(rules["rule_2"])
 
     def test_washed_out_pieces_fail_rule_4(self):
         washed = Image.blend(board(), Image.new("RGB", SIZE, (130, 120, 100)), 0.5)

@@ -34,11 +34,13 @@ own folder.
   [bonus games](reference/rules-bonus-games.md) and [sources](reference/rules-sources.md).
 - [Progression](reference/progression.md): episodes, levels, unlocks, upgrades, trophies, intro level.
 - [Balance targets](reference/balance.md): what the simulator checks each level against.
+- [Progress, save and trophies](reference/progress.md): the player profile, upgrades, trophy ids and the save file format.
 - [Level session](reference/level-session.md): one level by the full rules, its commands, reports and defaults.
 - [Match3Game](reference/match3-game.md): the game scene's controller, its signals, cues and self-test.
 - [Visual target](reference/visual-target.md): the look per quality tier, frame budgets and acceptance tests.
 - [Fire](reference/fire.md): the brazier fire's simulation, flipbooks, scene, shaders, flickering light and per-tier behaviour.
 - [Quality tiers](reference/quality-tiers.md): the `QualityTiers` autoload, settings key, feature ids, node groups and render settings per tier.
+- [Water](reference/water.md): the temple water channel, its two shaders, parameters, tiers and cost.
 - [Benchmark and readability capture](reference/benchmark.md): the benchmark replay, its JSON report, feature keys and readability checks.
 - [Benchmark results](reference/benchmark-results.md): measured frame times, feature rows and readability per machine and tier.
 - [Operations](reference/operations.md): cost, flow and quality measures, operations-review findings and the review log.
@@ -49,6 +51,7 @@ own folder.
 
 - [About the rules](explanation/about-the-rules.md): which original we follow, and every choice and deviation.
 - [About rule sets and themes](explanation/about-rule-sets-and-themes.md): how mini games fit the design.
+- [About progress and trophies](explanation/about-progress-and-trophies.md): why the save records wins, the choices the spec left open, how trophies are counted.
 
 ## How-to guides
 
@@ -68,6 +71,7 @@ own folder.
 - [Capture the effects showcase](how-to/capture-the-effects-showcase.md): record every totem and power-up effect to frames.
 - [Run the benchmark](how-to/run-the-benchmark.md): measure frame time and check readability on a desktop or a phone.
 - [Tune the fire](how-to/tune-the-fire.md): change the brazier fire's simulation, colour or particles and check it.
+- [Tune the fog veil](how-to/tune-the-fog-veil.md): make the mist over the board thicker, thinner or sparser and check it against readability rule 2.
 
 ## Explanation
 
@@ -80,7 +84,8 @@ own folder.
 - [About the fire](explanation/about-the-fire.md): why a simulated flipbook with motion vectors, why our own simulation, how it stays off the board.
 - [About quality tiers](explanation/about-quality-tiers.md): how a tier is picked, why the renderer is fixed per platform, why tiers only switch effects off.
 - [About lighting](explanation/about-lighting.md): baked and real-time GI per tier, why VoxelGI over SDFGI, physical units, height fog and the lighting costs.
-- [About the atmosphere](explanation/about-the-atmosphere.md): why one fog volume that is empty over the board, why shafts come from stretched noise, why cards on mobile and web.
+- [About post-processing and the colour grade](explanation/about-post-processing.md): glow before tonemapping, the CDL grade as a LUT and its palette check, backdrop depth of field that follows the camera, and their costs.
+- [About the atmosphere](explanation/about-the-atmosphere.md): why one fog volume with only a thin, patchy veil over the board, why shafts come from stretched noise, why cards on mobile and web.
 - [About CI caching](explanation/about-ci-caching.md): why CI uses a compiler cache and what it leaves uncached.
 - [About CI on every push](explanation/about-ci-on-every-push.md): why every branch push runs the checks, and why branch PRs skip their own run.
 - [About level clocks](explanation/about-level-clocks.md): why each level has its own base clock, why timer upgrades add to it, and why the clock rule counts only wins.
