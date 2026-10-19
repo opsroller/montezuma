@@ -58,6 +58,8 @@ public:
     int get_instance_count() const { return instance_count_; }
     int get_blas_count() const { return static_cast<int>(meshes_.size()); }
     int get_traced_frames() const { return traced_frames_; }
+    // Meshes it freed after they left the board.
+    int get_evicted_count() const { return evicted_; }
 
 protected:
     static void _bind_methods();
@@ -95,6 +97,7 @@ private:
     bool failed_ = false;
     int instance_count_ = 0;
     int traced_frames_ = 0;
+    int evicted_ = 0;
 };
 
 }  // namespace montezuma::godot_binding

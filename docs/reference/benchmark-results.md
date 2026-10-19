@@ -507,10 +507,15 @@ off, 60 s replay after 10 s warm-up, 2026-10-19, extension built with
 `-DGAME_ARGS=--rt-reflections`
 ([Ray-traced reflections](ray-traced-reflections.md)).
 
-| Run | GPU p50 | GPU p95 | CPU p50 | Frame p50 | Frame p95 |
-|---|---|---|---|---|---|
-| Off | 8.94 | 9.26 | 0.31 | 9.47 | 10.47 |
-| On | 9.61 | 9.97 | 0.41 | 10.15 | 11.97 |
+| Run | GPU p50 | GPU p95 | CPU p50 | CPU p95 | Frame p50 | Frame p95 |
+|---|---|---|---|---|---|---|
+| Off | 8.94 | 9.26 | 0.31 | 0.50 | 9.47 | 10.47 |
+| On | 9.61 | 9.97 | 0.41 | 0.62 | 10.15 | 11.97 |
+| Difference | +0.67 | +0.71 | +0.10 | +0.12 | +0.68 | +1.50 |
+
+With `-DGPU_PROFILE=ON`, 20 s captures off, on, off (portrait
+2160×3840, the same pixel count): GPU p50 9.06, 9.78, 9.17; the `RT
+Reflections` pass 0.69 to 0.70.
 
 Both runs: 16 of 17 feature rows (screen-space reflections reads off on
 this branch's base with or without the effect).

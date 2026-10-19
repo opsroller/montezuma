@@ -12,6 +12,7 @@
 #include <string>
 
 #include <godot_cpp/classes/base_material3d.hpp>
+#include <godot_cpp/classes/box_mesh.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/geometry_instance3d.hpp>
 #include <godot_cpp/classes/image.hpp>
@@ -34,6 +35,7 @@
 #include <godot_cpp/classes/rendering_server.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/shader_material.hpp>
+#include <godot_cpp/classes/standard_material3d.hpp>
 #include <godot_cpp/classes/texture2d.hpp>
 #include <godot_cpp/classes/uniform_set_cache_rd.hpp>
 #include <godot_cpp/classes/window.hpp>
@@ -64,7 +66,10 @@ constexpr uint64_t kSelfTestFrames = 90;
 // ... after rebuilding the board at this frame, long enough before the
 // checks for the old board's meshes to be evicted (rt::kEvictFrames).
 constexpr uint64_t kSelfTestRebuildFrame = 20;
-static_assert(kSelfTestFrames - kSelfTestRebuildFrame > rt::kEvictFrames + 5);
+// ... and shows a probe mesh of its own for these frames, so a mesh is
+// sure to leave the board (theme meshes come back from the resource cache).
+constexpr uint64_t kSelfTestProbeEnd = 25;
+static_assert(kSelfTestFrames - kSelfTestProbeEnd > rt::kEvictFrames + 5);
 
 const StringName& context() {
     static const StringName name("rt_reflections");
@@ -102,6 +107,7 @@ struct Shared {
     bool warned_unsupported = false;
     bool warned_overflow = false;
     bool announced = false;
+    uint64_t probe = 0;  // --rt-selftest's temporary mesh
     std::vector<ObjectID> effects;
 };
 
@@ -327,6 +333,23 @@ void gather() {
             if (Object* view = views[i]) view->call("set_cell_size", view->call("get_cell_size"));
         }
         UtilityFunctions::print("RtReflections self-test: rebuilt ", views.size(), " board(s)");
+        const TypedArray<Node> roots = tree->get_nodes_in_group(kGroupName);
+        if (auto* root = roots.is_empty() ? nullptr : Object::cast_to<Node>(roots[0].operator Object*())) {
+            auto* probe = memnew(MeshInstance3D);
+            Ref<BoxMesh> box;
+            box.instantiate();
+            box->set_size(Vector3(0.01f, 0.01f, 0.01f));
+            Ref<StandardMaterial3D> material;
+            material.instantiate();
+            probe->set_mesh(box);
+            probe->set_material_override(material);
+            probe->set_name("RtSelfTestProbe");
+            root->add_child(probe);
+            s.probe = probe->get_instance_id();
+        }
+    }
+    if (RtReflections::options().self_test && s.gathered_frames == kSelfTestProbeEnd) {
+        if (auto* probe = Object::cast_to<Node>(ObjectDB::get_instance(ObjectID(s.probe)))) probe->queue_free();
     }
     if (RtReflections::options().self_test && s.gathered_frames == kSelfTestFrames) run_self_test(tree);
 }
@@ -570,6 +593,8 @@ void run_self_test(SceneTree* tree) {
               "TLAS instances " + String::num_int64(drawing->get_instance_count()) + " == pieces gathered");
         // Meshes that left the board are freed, so the count is exact once
         // the board has been the same for kEvictFrames frames.
+        check(drawing->get_evicted_count() > 0,
+              "meshes freed after leaving the board: " + String::num_int64(drawing->get_evicted_count()));
         check(drawing->get_blas_count() == static_cast<int>(distinct.size()),
               "BLASes " + String::num_int64(drawing->get_blas_count()) + " == the " +
                   String::num_int64(static_cast<int64_t>(distinct.size())) + " meshes on the board");
@@ -740,6 +765,7 @@ bool RtReflections::upload_meshes() {
             if (rid->is_valid()) rd->free_rid(*rid);
         }
         meshes_.erase(key);
+        ++evicted_;
     }
     if (!gone.empty()) {
         normals_.clear();
@@ -777,6 +803,7 @@ bool RtReflections::upload_meshes() {
                 if (rid->is_valid()) rd->free_rid(*rid);
             }
             failed_ = true;
+            free_all();
             return false;
         }
         gpu.normals = mesh->triangle_normals;

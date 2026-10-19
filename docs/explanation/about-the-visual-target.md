@@ -58,7 +58,8 @@ eye must still find a match in a fraction of a second.
    Godot 4.7's new ray-tracing API. If it pays for itself it becomes a
    desktop setting; the game never depends on it. The spike built
    reflections and kept them off: subtle from the game's camera for
-   0.7 ms ([About ray tracing](about-ray-tracing.md)).
+   0.7 ms ([About ray tracing](about-ray-tracing.md),
+   [Benchmark results](../reference/benchmark-results.md#ray-traced-reflections-wp-54)).
 
 ## What is and is not possible with ray tracing
 

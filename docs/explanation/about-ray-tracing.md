@@ -68,7 +68,8 @@ reflections more to show.
 - **It works.** On the RTX 4080 SUPER the effect finds every piece,
   rebuilds the 75-instance scene every frame and traces at native 4K.
 - **It is cheap.** +0.67 ms GPU at p50 and +0.71 ms at p95 over the
-  busiest-board replay, inside the 1 ms the spike allowed.
+  busiest-board replay, inside the 1 ms the spike allowed
+  ([Benchmark results](../reference/benchmark-results.md#ray-traced-reflections-wp-54)).
 - **It is subtle.** From the game's camera most mirror rays leave the
   tops of the pieces upward and miss everything. Only the bevels and
   sides hit something, so the change is a faint band of tile colour and

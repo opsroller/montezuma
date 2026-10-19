@@ -61,8 +61,10 @@ gathers the visible geometry under every node in the `ray_traced` group:
 A surface takes part when it is visible, its layer mask is not 0 (the
 piece batcher hides the meshes it draws itself that way) and its
 material is a `BaseMaterial3D` with transparency off or any
-`ShaderMaterial`. Its values are read once per
-material:
+`ShaderMaterial`. A mesh is traced as one surface: the material of its
+first surface (or the node's override) applies to all its triangles, so
+a mesh whose surfaces differ is traced with the first one's values.
+Values are read once per material:
 
 | Value | From a `BaseMaterial3D` | From a `ShaderMaterial` |
 |---|---|---|
@@ -120,11 +122,12 @@ godot --path game -- --start-level=e1-l01 --rt-selftest
 
 Needs a window on a GPU that can run it (not `--headless`); anywhere
 else it prints `FAIL` with the reason and exits 1 at once. At frame 20
-it rebuilds every board, as a new level does. After 90 frames it checks:
-the GPU is supported; pieces were gathered; an attached effect traced
-frames; its TLAS held as many instances as were gathered; it holds
-exactly one BLAS per mesh on the board (none left from the old board);
-it traced in the last frames. It prints `RtReflections self-test passed` and exits 0, or
+it rebuilds every board, as a new level does, and adds a tiny probe
+mesh of its own under the pieces, which it removes at frame 25. After
+90 frames it checks: the GPU is supported; pieces were gathered; an
+attached effect traced frames; its TLAS held as many instances as were
+gathered; it freed at least one mesh that left the board; it holds
+exactly one BLAS per mesh on the board; it traced in the last frames. It prints `RtReflections self-test passed` and exits 0, or
 `FAILED` and exits 1.
 
 ## Benchmark feature key
@@ -135,7 +138,10 @@ in builds without the option.
 
 ## Cost
 
-RTX 4080 SUPER, Vulkan, Forward+, `desktop-high`, exclusive full screen
+Recorded in [Benchmark results](benchmark-results.md#ray-traced-reflections-wp-54).
+Both runs use the same build of this branch, once without and once with
+`--rt-reflections`: the effect is opt-in, so "off" is what every player
+gets. RTX 4080 SUPER, Vulkan, Forward+, `desktop-high`, exclusive full screen
 3840×2160 with no upscaler, vsync off, the 60 s busiest-board replay
 after a 10 s warm-up, 2026-10-19, built from this branch:
 
