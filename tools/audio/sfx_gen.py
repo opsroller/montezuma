@@ -50,20 +50,29 @@ def rng_for(name: str, variation: int) -> np.random.Generator:
 # Each design returns a mono signal. `v` is the variation index (0-based).
 
 def swap(r, v):
-    """Two stone pieces sliding past each other: short gritty slide plus a
-    soft wooden settle at the end."""
-    slide = s.sweep(0.16, r, 900 + 150 * v, 2600 + 200 * v, q=2.0)
-    slide *= s.env_ad(len(slide), 0.02, 0.06)
-    tick = s.wood_knock(67 + [0, 2, -2][v], 0.12, r, hollowness=0.3) * 0.5
-    return s.mix((slide, 0.0), (tick, 0.11))
+    """Two carved stone pieces slide past each other: stick-slip grit that
+    speeds up and slows down, then a small stone settle as they stop."""
+    slide_len = 0.17 + 0.01 * v
+    vel = np.sin(np.linspace(0, np.pi, 32)) ** 0.8
+    a = s.friction(slide_len, r, f0=1900 + 180 * v, rate=700, velocity=vel)
+    b = s.friction(slide_len, r, f0=2600 - 150 * v, rate=500, velocity=vel) * 0.6
+    settle = s.impact(900 + 70 * v, "stone", r, contact_ms=0.5, count=16) * 0.7
+    body = s.impact(240, "stone", r, contact_ms=1.6, count=8) * 0.35
+    dry = s.mix((a, 0.0), (b, 0.005), (settle, slide_len - 0.01), (body, slide_len - 0.01))
+    return s.fit(s.stone_room(dry, r, 0.35, 0.08, size=0.5), 0.3)
 
 
 def swap_illegal(r, v):
-    """Pieces bump and go back: two dull knocks, the second lower."""
-    a = s.wood_knock(50, 0.18, r, hollowness=0.5)
-    b = s.wood_knock(46, 0.22, r, hollowness=0.6)
-    thud = s.membrane_drum(38, 0.2, r, drop=0.2) * 0.4
-    return s.mix((a, 0.0), (thud, 0.0), (b, 0.11))
+    """The pieces bump into each other and slide back: a short shove, a
+    heavy stone knock, the scrape back and a dull settle."""
+    vel = np.sin(np.linspace(0, np.pi, 16))
+    push = s.friction(0.07, r, f0=1600, rate=600, velocity=vel) * 0.6
+    bump = s.impact(620, "stone", r, contact_ms=0.9, count=18, crack=0.15)
+    thud = s.impact(170, "stone", r, contact_ms=2.5, count=8) * 0.6
+    back = s.friction(0.11, r, f0=1400, rate=500, velocity=vel) * 0.5
+    settle = s.impact(520, "stone", r, contact_ms=1.1, count=14) * 0.6
+    dry = s.mix((push, 0.0), (bump, 0.065), (thud, 0.065), (back, 0.09), (settle, 0.2), (thud * 0.5, 0.2))
+    return s.soft_limit(s.fit(s.stone_room(dry, r, 0.4, 0.1, size=0.5), 0.4), 4.0)
 
 
 def match(r, v):
@@ -91,10 +100,13 @@ def cascade(step):
 
 
 def piece_land(r, v):
-    """A piece settles into its slot: a small low stone tap."""
-    tap = s.wood_knock(55 + [0, 1, -1, 2][v], 0.1, r, hollowness=0.15)
-    grit = s.bandpass(s.noise(int(0.05 * s.RATE), r), 1800, 1.0) * s.env_ad(int(0.05 * s.RATE), 0.001, 0.008) * 0.4
-    return s.lowpass(s.mix((tap, 0.0), (grit, 0.0)), 5000)
+    """A falling stone piece drops into its slot: a hard stone click with
+    a short ringing body, and the board's low knock under it. Variations
+    differ in size, so a cascade's landings do not sound identical."""
+    f0 = [1150, 1320, 980, 1500][v]
+    click = s.impact(f0, "stone", r, contact_ms=[0.35, 0.3, 0.45, 0.25][v], count=20)
+    board = s.impact(210 + 20 * v, "stone", r, contact_ms=1.8, count=8) * 0.45
+    return s.fit(s.stone_room(s.mix((click, 0.0), (board, 0.0)), r, 0.2, 0.06, size=0.4), 0.15, 0.05)
 
 
 def bonus_earned(r, v):
@@ -105,16 +117,35 @@ def bonus_earned(r, v):
     return s.reverb(s.mix((hit, 0.0), (up, 0.02)), r, 1.0, 0.2)
 
 
+def tnt(r):
+    """A charge goes off on the board: a crackling fuse, the blast's
+    pressure wave and low body, then stone debris raining down in the
+    temple hall."""
+    fuse_len = 0.28
+    n = int(fuse_len * s.RATE)
+    sparks = (r.uniform(0, 1, n) < 0.05) * np.minimum(r.pareto(2.0, n), 3.0)
+    fuse = s.highpass(sparks, 2500) * 0.25 + s.bandpass(s.noise(n, r), 6000, 0.7) * 0.03
+    fuse *= np.linspace(0.4, 1.0, n)
+    # Friedlander pressure wave: sharp rise, decay through a negative phase.
+    t = s.t_axis(0.12)
+    wave = (1 - t / 0.018) * np.exp(-2.2 * t / 0.018)
+    wave = s.lowpass(wave, 3500)
+    m = int(1.2 * s.RATE)
+    crack = s.noise(int(0.08 * s.RATE), r) * s.env_ad(int(0.08 * s.RATE), 0.0003, 0.015)
+    body = s.lowpass(s.noise(m, r, "brown"), 160, 2) * s.env_ad(m, 0.004, 0.32)
+    rumble = s.lowpass(s.noise(m, r, "brown"), 450, 2) * s.env_ad(m, 0.01, 0.18)
+    blast = s.mix((wave * 1.2, 0.0), (crack * 0.6, 0.0), (body * 0.9, 0.0), (rumble * 0.5, 0.0))
+    blast = np.tanh(blast * 2.0) / 2.0          # the air and the mic both saturate
+    rain = s.debris(1.6, r, pieces=40, material="stone", f_low=700, f_high=5000, start_spread=0.9) * 0.3
+    dry = s.mix((fuse, 0.0), (blast, fuse_len), (rain, fuse_len + 0.08))
+    return s.soft_limit(s.fit(s.stone_room(dry, r, 1.8, 0.3, size=1.6), 2.2, 0.4), 6.0)
+
+
 def bonus_use(kind):
     """A power-up on the board goes off when its piece is cleared."""
     def design(r, v):
         if kind == "tnt":
-            n = int(1.4 * s.RATE)
-            fizz = s.highpass(s.noise(int(0.3 * s.RATE), r), 4000) * 0.15
-            boom = s.lowpass(s.noise(n, r, "brown"), 900) * s.env_ad(n, 0.003, 0.3)
-            body = s.membrane_drum(28, 1.2, r, drop=1.5)
-            debris = s.rattle(0.9, r, grains=70, centre=2500) * 0.4
-            return s.reverb(s.mix((fizz, 0.0), (boom, 0.3), (body, 0.3), (debris, 0.4)), r, 1.6, 0.22)
+            return tnt(r)
         if kind == "color_clear":
             n = int(0.9 * s.RATE)
             whoomp = s.lowpass(s.noise(n, r, "brown"), 600) * s.env_ad(n, 0.01, 0.2) * 0.8
@@ -149,24 +180,31 @@ def gem_collect(r, v):
 
 
 def steel_break(r, v):
-    """A steel piece is destroyed: hard metallic crack, inharmonic ring."""
-    n = int(0.6 * s.RATE)
-    t = s.t_axis(0.6)
-    ring = sum(np.sin(2 * np.pi * f * t) * np.exp(-t / d) for f, d in
-               ((1230 + 40 * v, 0.25), (2710, 0.12), (4190, 0.07), (6330, 0.04)))
-    crack = s.highpass(s.noise(n, r), 2000) * s.env_ad(n, 0.0005, 0.02)
-    return s.reverb(s.mix((ring * 0.4 + crack, 0.0), (s.wood_knock(45, 0.2, r, 0.2) * 0.5, 0.0)), r, 0.9, 0.18)
+    """A steel band is smashed: a heavy blow on dense ringing metal, the
+    crack of the band failing, and fragments skittering over stone."""
+    blow = s.impact(380 + 45 * v, "metal", r, contact_ms=0.7, count=40, crack=0.5, damping=0.55)
+    snap = s.impact(1150 + 90 * v, "metal", r, contact_ms=0.2, count=24, crack=0.8, damping=0.3)
+    thud = s.impact(150, "stone", r, contact_ms=3.0, count=8) * 0.7
+    bits = s.debris(1.0, r, pieces=9, material="metal", f_low=2200, f_high=6500,
+                    start_spread=0.25, damping=0.12) * 0.35
+    dry = s.mix((blow, 0.0), (thud, 0.0), (snap, 0.012), (bits, 0.06))
+    return s.soft_limit(s.fit(s.stone_room(dry, r, 1.0, 0.18), 1.5, 0.5), 4.0)
 
 
 def chain_break(r, v):
-    """Chains on a cell snap: a few small metal clinks falling away."""
-    parts = []
-    for i in range(4):
-        tt = s.t_axis(0.12)
-        f = r.uniform(2500, 4200)
-        clink = np.sin(2 * np.pi * f * tt) * np.exp(-tt / 0.03) + s.noise(len(tt), r) * np.exp(-tt / 0.002) * 0.4
-        parts.append((clink * (1 - i * 0.18), i * r.uniform(0.04, 0.07) + i * 0.02))
-    return s.reverb(s.mix(*parts), r, 0.7, 0.15)
+    """Chains on a cell snap: a link parts under tension with a sharp
+    crack, then the loose links rattle down and settle on stone."""
+    snap = s.impact(1700 + 150 * v, "metal", r, contact_ms=0.15, count=24, crack=0.9, damping=0.15)
+    parts = [(snap, 0.0)]
+    times = np.sort(r.beta(1.4, 2.6, 16)) * 0.5 + 0.03
+    for i, tt in enumerate(times):
+        link = s.impact(r.uniform(2400, 5200), "metal", r, contact_ms=r.uniform(0.1, 0.25),
+                        count=12, damping=0.08)
+        parts.append((link * r.uniform(0.2, 0.6) * (1 - 0.03 * i), float(tt)))
+    for tt in (0.18, 0.31, 0.45):
+        parts.append((s.impact(r.uniform(500, 700), "stone", r, contact_ms=0.8, count=10) * 0.25,
+                      tt + r.uniform(-0.02, 0.02)))
+    return s.fit(s.stone_room(s.mix(*parts), r, 0.6, 0.12, size=0.6), 0.9, 0.15)
 
 
 def totem_charge(r, v):

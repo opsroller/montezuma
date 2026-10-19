@@ -45,8 +45,8 @@
     "category": "feedback",
     "cue": "bonus_use_tnt",
     "momentary_lufs": -19.0,
-    "seconds": 2.109,
-    "true_peak_dbtp": -4.6
+    "seconds": 2.142,
+    "true_peak_dbtp": -7.7
   },
   "cascade_1.wav": {
     "category": "feedback",
@@ -108,15 +108,15 @@
     "category": "feedback",
     "cue": "chain_break",
     "momentary_lufs": -19.1,
-    "seconds": 0.649,
-    "true_peak_dbtp": -4.2
+    "seconds": 0.787,
+    "true_peak_dbtp": -5.9
   },
   "chain_break_02.wav": {
     "category": "feedback",
     "cue": "chain_break",
-    "momentary_lufs": -19.2,
-    "seconds": 0.716,
-    "true_peak_dbtp": -7.1
+    "momentary_lufs": -19.1,
+    "seconds": 0.778,
+    "true_peak_dbtp": -6.8
   },
   "gem_collect_01.wav": {
     "category": "feedback",
@@ -184,30 +184,30 @@
   "piece_land_01.wav": {
     "category": "frequent",
     "cue": "piece_land",
-    "momentary_lufs": -24.1,
-    "seconds": 0.1,
-    "true_peak_dbtp": -8.5
+    "momentary_lufs": -24.2,
+    "seconds": 0.15,
+    "true_peak_dbtp": -3.5
   },
   "piece_land_02.wav": {
     "category": "frequent",
     "cue": "piece_land",
     "momentary_lufs": -24.1,
-    "seconds": 0.1,
-    "true_peak_dbtp": -8.6
+    "seconds": 0.15,
+    "true_peak_dbtp": -3.1
   },
   "piece_land_03.wav": {
     "category": "frequent",
     "cue": "piece_land",
-    "momentary_lufs": -24.1,
-    "seconds": 0.1,
-    "true_peak_dbtp": -8.6
+    "momentary_lufs": -24.3,
+    "seconds": 0.15,
+    "true_peak_dbtp": -2.9
   },
   "piece_land_04.wav": {
     "category": "frequent",
     "cue": "piece_land",
-    "momentary_lufs": -24.1,
-    "seconds": 0.1,
-    "true_peak_dbtp": -8.2
+    "momentary_lufs": -24.2,
+    "seconds": 0.15,
+    "true_peak_dbtp": -3.7
   },
   "quota_done.wav": {
     "category": "alert",
@@ -219,44 +219,44 @@
   "steel_break_01.wav": {
     "category": "feedback",
     "cue": "steel_break",
-    "momentary_lufs": -21.7,
+    "momentary_lufs": -19.0,
     "seconds": 1.5,
-    "true_peak_dbtp": -2.7
+    "true_peak_dbtp": -6.0
   },
   "steel_break_02.wav": {
     "category": "feedback",
     "cue": "steel_break",
-    "momentary_lufs": -21.7,
+    "momentary_lufs": -19.0,
     "seconds": 1.5,
-    "true_peak_dbtp": -1.8
+    "true_peak_dbtp": -6.8
   },
   "swap_01.wav": {
     "category": "frequent",
     "cue": "swap",
     "momentary_lufs": -24.0,
-    "seconds": 0.23,
-    "true_peak_dbtp": -10.4
+    "seconds": 0.299,
+    "true_peak_dbtp": -8.2
   },
   "swap_02.wav": {
     "category": "frequent",
     "cue": "swap",
     "momentary_lufs": -24.0,
-    "seconds": 0.23,
-    "true_peak_dbtp": -9.9
+    "seconds": 0.299,
+    "true_peak_dbtp": -9.6
   },
   "swap_03.wav": {
     "category": "frequent",
     "cue": "swap",
     "momentary_lufs": -24.0,
-    "seconds": 0.23,
-    "true_peak_dbtp": -9.7
+    "seconds": 0.299,
+    "true_peak_dbtp": -10.4
   },
   "swap_illegal.wav": {
     "category": "feedback",
     "cue": "swap_illegal",
     "momentary_lufs": -19.0,
-    "seconds": 0.33,
-    "true_peak_dbtp": -6.5
+    "seconds": 0.396,
+    "true_peak_dbtp": -4.0
   },
   "time_warning.wav": {
     "category": "alert",
@@ -317,9 +317,9 @@
   "totem_fire_ward.wav": {
     "category": "stinger",
     "cue": "totem_fire_ward",
-    "momentary_lufs": -16.0,
+    "momentary_lufs": -16.1,
     "seconds": 3.73,
-    "true_peak_dbtp": -1.7
+    "true_peak_dbtp": -3.6
   },
   "trophy.wav": {
     "category": "stinger",

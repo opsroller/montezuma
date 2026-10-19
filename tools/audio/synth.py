@@ -238,6 +238,184 @@ def sweep(length: float, rng: np.random.Generator, f_start: float, f_end: float,
     return out
 
 
+# ---------------------------------------------------------------- physical models
+# Contact sounds (stone, metal, debris) are modelled the way they happen:
+# a short contact force excites the resonant modes of the struck object,
+# each mode a decaying sine whose frequency, level and decay come from the
+# material. Friction is a train of tiny stick-slip impacts. These give the
+# dense, slightly irregular spectra of real impacts that a few fixed
+# sines cannot.
+
+# Material -> (mode frequency spread exponent, decay of the lowest mode in
+# seconds, how fast decay shortens with frequency, roughness of the
+# contact). Stone damps fast and evenly; metal rings long and dense.
+MATERIALS = {
+    "stone": (1.35, 0.030, 0.9, 0.35),
+    "jade":  (1.30, 0.080, 0.7, 0.20),
+    "metal": (1.12, 0.900, 0.45, 0.10),
+    "wood":  (1.50, 0.045, 1.0, 0.45),
+}
+
+
+def object_modes(f0: float, material: str, rng: np.random.Generator,
+                 count: int = 24) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Mode frequencies, amplitudes and decay times for an object whose
+    lowest mode is f0. Ratios follow a stretched series with random
+    detuning, like a solid block or plate rather than a string."""
+    spread, decay0, decay_slope, _ = MATERIALS[material]
+    k = np.arange(1, count + 1)
+    ratios = k ** spread * (1 + rng.uniform(-0.06, 0.06, count))
+    ratios[0] = 1.0
+    freqs = f0 * ratios
+    keep = freqs < RATE * 0.45
+    freqs = freqs[keep]
+    amps = rng.uniform(0.4, 1.0, len(freqs)) / np.sqrt(np.arange(1, len(freqs) + 1))
+    decays = decay0 * (freqs / f0) ** -decay_slope * rng.uniform(0.7, 1.3, len(freqs))
+    return freqs, amps, decays
+
+
+def contact_force(ms: float, rng: np.random.Generator, roughness: float = 0.2) -> np.ndarray:
+    """Hertz-like contact pulse: a half sine whose length sets the
+    brightness (harder, smaller contacts are shorter and brighter), with a
+    little surface noise."""
+    n = max(int(ms * 1e-3 * RATE), 2)
+    pulse = np.sin(np.pi * np.arange(n) / n) ** 1.5
+    return pulse * (1 + roughness * rng.standard_normal(n))
+
+
+def resonate(excitation: np.ndarray, freqs: np.ndarray, amps: np.ndarray,
+             decays: np.ndarray, rng: np.random.Generator) -> np.ndarray:
+    """Drive a bank of damped sinusoid modes with an excitation signal."""
+    length = float(min(np.max(decays) * 6.9, 4.0))
+    t = t_axis(length)
+    ir = np.zeros_like(t)
+    for f, a, d in zip(freqs, amps, decays):
+        ir += a * np.sin(2 * np.pi * f * t + rng.uniform(0, 0.3)) * np.exp(-t / d)
+    m = len(excitation) + len(ir)
+    out = np.fft.irfft(np.fft.rfft(excitation, m) * np.fft.rfft(ir, m), m)
+    return out / (np.max(np.abs(out)) + 1e-12)
+
+
+def impact(f0: float, material: str, rng: np.random.Generator, contact_ms: float = 0.4,
+           count: int = 24, crack: float = 0.0, damping: float = 1.0) -> np.ndarray:
+    """One strike on an object: contact pulse through its modes, plus an
+    optional broadband crack for brittle fracture. damping scales every
+    decay time (below 1 for small or held objects)."""
+    roughness = MATERIALS[material][3]
+    force = contact_force(contact_ms, rng, roughness)
+    freqs, amps, decays = object_modes(f0, material, rng, count)
+    out = resonate(force, freqs, amps, decays * damping, rng)
+    # Rough, brittle materials also crunch: a short noise burst from the
+    # contact area, coloured around the object's upper modes.
+    n = int((contact_ms * 1e-3 * 12 + 0.004) * RATE)
+    grit = bandpass(noise(n, rng), min(f0 * 3, RATE * 0.4), 0.6) * np.exp(-np.arange(n) / (n / 4))
+    out = mix((out, 0.0), (grit * roughness * 0.8, 0.0))
+    if crack > 0:
+        n = int(0.025 * RATE)
+        c = highpass(noise(n, rng), 1500) * np.exp(-np.arange(n) / (0.004 * RATE))
+        out = mix((out, 0.0), (c * crack, 0.0))
+    return out
+
+
+def bounces(drop_seconds: float, count: int, restitution: float, rng: np.random.Generator) -> list[tuple[float, float]]:
+    """(time, strength) of an object bouncing to rest: each gap and each
+    hit shrinks by the coefficient of restitution."""
+    out, t, gap, strength = [], 0.0, drop_seconds, 1.0
+    for _ in range(count):
+        out.append((t, strength))
+        gap *= restitution * rng.uniform(0.85, 1.1)
+        strength *= restitution * rng.uniform(0.7, 1.0)
+        t += gap
+    return out
+
+
+def debris(length: float, rng: np.random.Generator, pieces: int = 30, material: str = "stone",
+           f_low: float = 1500.0, f_high: float = 6000.0, start_spread: float = 0.5,
+           damping: float = 1.0) -> np.ndarray:
+    """Fragments raining down and bouncing to rest on a hard floor. Small
+    pieces ring higher and bounce faster."""
+    parts = []
+    for _ in range(pieces):
+        size = rng.uniform(0, 1)                       # 0 small .. 1 large
+        f0 = f_high * (f_low / f_high) ** size
+        start = rng.gamma(2.0, start_spread / 4)
+        gain = 0.25 + 0.75 * size * rng.uniform(0.5, 1.0)
+        for bt, bs in bounces(rng.uniform(0.05, 0.16) * (0.6 + size), int(rng.integers(2, 5)), 0.55, rng):
+            if start + bt >= length:
+                break
+            hit = impact(f0 * rng.uniform(0.97, 1.03), material, rng,
+                         contact_ms=0.15 + 0.35 * size, count=10, damping=damping)
+            parts.append((hit * gain * bs, start + bt))
+    out = mix(*parts) if parts else np.zeros(int(length * RATE))
+    return pad(out, int(length * RATE))
+
+
+def friction(length: float, rng: np.random.Generator, f0: float = 2400.0, material: str = "stone",
+             rate: float = 900.0, velocity: np.ndarray | None = None) -> np.ndarray:
+    """Surface sliding on surface: stick-slip micro-impacts at a rate that
+    follows the sliding velocity, each exciting the surface modes, over a
+    bed of fine scraping noise."""
+    n = int(length * RATE)
+    v = np.ones(n) if velocity is None else np.interp(np.linspace(0, 1, n), np.linspace(0, 1, len(velocity)), velocity)
+    p = np.clip(v * rate / RATE, 0, 1)
+    hits = (rng.uniform(0, 1, n) < p) * np.minimum(rng.pareto(2.5, n), 3.0) * v
+    # The contact point moves, so the surface modes it excites change:
+    # render in short overlapping segments, each with its own modes.
+    grains = np.zeros(n)
+    seg = int(0.03 * RATE)
+    win = np.hanning(2 * seg)
+    for i0 in range(0, n, seg):
+        part = hits[i0:i0 + 2 * seg] * win[:len(hits[i0:i0 + 2 * seg])]
+        freqs, amps, decays = object_modes(f0 * rng.uniform(0.85, 1.15), material, rng, 24)
+        g = resonate(part, freqs, amps, decays * 0.25, rng) * np.max(np.abs(part))
+        end = min(n, i0 + len(g))
+        grains[i0:end] += g[:end - i0]
+    grains /= np.max(np.abs(grains)) + 1e-12
+    scrape = bandpass(noise(n, rng, "pink"), f0 * 1.5, 0.6) * v
+    return grains + 0.7 * scrape / (np.max(np.abs(scrape)) + 1e-12)
+
+
+def fit(sig: np.ndarray, seconds: float, fade_out: float = 0.04) -> np.ndarray:
+    """Cut a sound to its length budget with a smooth fade, so long modal
+    and reverb tails never run past what the cue may take."""
+    n = int(seconds * RATE)
+    if len(sig) <= n:
+        return sig
+    return fade(sig[:n], 0.0, fade_out)
+
+
+def soft_limit(sig: np.ndarray, headroom_db: float = 6.0) -> np.ndarray:
+    """Round off the few sharpest transient peaks (as a recording chain
+    would) so a short sound can reach its loudness under the true-peak
+    ceiling. Peaks are first scaled to headroom_db above the knee."""
+    x = sig / (np.max(np.abs(sig)) + 1e-12) * 10 ** (headroom_db / 20)
+    return np.tanh(x)
+
+
+def stone_room(sig: np.ndarray, rng: np.random.Generator, seconds: float = 1.2, wet: float = 0.2,
+               size: float = 1.0) -> np.ndarray:
+    """Reverb of a stone hall: discrete early reflections off near walls,
+    then a dense tail whose highs die faster than its lows, as air and
+    porous stone absorb them."""
+    n = int(seconds * RATE)
+    t = np.arange(n) / RATE
+    ir = np.zeros(n)
+    for _ in range(10):                                  # early reflections
+        i = int(rng.uniform(0.004, 0.045) * size * RATE)
+        if i < n:
+            ir[i] += rng.uniform(0.3, 0.8) * rng.choice((-1, 1))
+    tail = np.zeros(n)
+    for lo, hi, rt in ((20, 500, 1.0), (500, 2000, 0.8), (2000, 6000, 0.55), (6000, 20000, 0.3)):
+        band = fft_filter(noise(n, rng), lambda f, lo=lo, hi=hi: ((f >= lo) & (f < hi)).astype(float))
+        tail += band * np.exp(-t / (seconds * rt / 6.9))
+    onset = np.clip((t - 0.012 * size) / 0.03, 0, 1)
+    ir += tail * onset * 0.25
+    ir /= np.sqrt(np.sum(ir ** 2)) + 1e-12
+    m = len(sig) + n
+    wet_sig = np.fft.irfft(np.fft.rfft(sig, m) * np.fft.rfft(ir, m), m)
+    return pad(sig, m) * (1 - wet) + wet_sig * wet
+
+
 # ---------------------------------------------------------------- loops
 
 class LoopTrack:
