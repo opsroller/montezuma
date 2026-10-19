@@ -269,7 +269,7 @@ The material's parameters:
 | `base_shade` | 0.75 (0 to 1) | share of the light the bottom of a bank scatters against its top; Godot's fog does not shadow itself, so this gives the banks lit tops |
 | `veil_density` | 1.0 (0 to 2) | extinction per metre on the tiles in the core of a patch: thin enough to read the tiles and pieces through |
 | `veil_height` | 0.25 m (0.05 to 0.4) | height above the tiles where the veil has thinned to nothing; the range stops under the score labels' bottom edge (about 0.5 m) |
-| `veil_scale`, `veil_coverage` | 12 m (2 to 24), (0.58, 0.78) | size of one tile of veil noise, and the noise values mapped to no veil and full veil: patches a few cells across with clear cells between them. Keep `wind` × 3600 s (Godot's `TIME` rollover) a whole number of `veil_scale` tiles, or the patches jump once an hour |
+| `veil_scale`, `veil_coverage` | 12 m (2 to 24), (0.58, 0.78) | size of one tile of veil noise, and the noise values mapped to no veil and full veil: patches a few cells across with clear cells between them. Keep `wind` × 3600 s (Godot's `TIME` rollover) a whole number of `veil_scale` tiles, or the patches jump once an hour: with the temple's wind, (432, −180) m, that is 2, 3, 4, 6, 9, 12 or 18 m. The wisps that shade the veil still shift a little at the rollover |
 | `veil_spread` | 1 m (0 to 2) | how far past the board edge the veil fades out |
 | `density_texture` | `NoiseTexture3D`, 64³, seed 51, frequency 0.08 | from `noise_textures_3d`, built by Godot at load |
 

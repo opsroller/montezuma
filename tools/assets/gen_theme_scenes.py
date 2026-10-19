@@ -544,7 +544,7 @@ def main():
         # Optional height fog. The temple has none: in the game's board view
         # on Forward+ even height fog that starts below the platform left a
         # haze over the board (readability rule 2), so atmosphere is
-        # FogVolumes kept off the board (WP-51).
+        # FogVolumes, with only a thin veil over the board (WP-51).
         *([
             "fog_enabled = true",
             f"fog_light_color = {color(fog['color'])}",

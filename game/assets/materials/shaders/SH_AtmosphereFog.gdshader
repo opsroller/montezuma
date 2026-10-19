@@ -54,7 +54,9 @@ uniform float base_shade : hint_range(0.0, 1.0) = 0.75;
 // above the tiles where it has thinned to nothing, the size in metres of
 // one tile of its noise (its patches are a few cells across, with clear
 // cells between them; wind x 3600 s, Godot's TIME rollover, should be a
-// whole number of tiles so the patches do not jump once an hour) and the noise values mapped to no veil and full veil.
+// whole number of tiles so the patches do not move at once an hour; the
+// wisps that shade them still shift a little then) and the noise values
+// mapped to no veil and full veil.
 // It spreads veil_spread metres past the board edge, where it meets the banks.
 uniform float veil_density : hint_range(0.0, 2.0, 0.001) = 1.0;
 uniform float veil_height : hint_range(0.05, 0.4) = 0.25;

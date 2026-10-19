@@ -383,8 +383,8 @@ cells clear at 3840×2160.
 Rule 4's worst group at 4K is the same on both builds: kind 2 on the
 light tile, whose contrast rises with glow (+5.7% alone) and with auto
 exposure's response to the plaza mist (+6.5% alone on `main`). The veil
-lowers contrast where it lies, so it takes back part of that rise; the
-rest belongs to the glow and exposure settings, not the fog.
+lowers it there, which is why the veil's 4K figures are below `main`'s
+([About the atmosphere](../explanation/about-the-atmosphere.md#how-rule-2-is-measured)).
 
 ## Feature rows
 
