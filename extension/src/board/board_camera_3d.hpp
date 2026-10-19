@@ -16,7 +16,10 @@ class BoardView3D;
 // window size or aspect ratio: it fits by width on tall phones and by height
 // on wide screens, and never crops the board. It refits when the viewport
 // resizes or the board changes size, and does nothing else (no motion during
-// play, so input picking always matches the frame the player saw).
+// play, so input picking always matches the frame the player saw). When the
+// active camera attributes carry the theme's "dof_far_beyond_board" metadata,
+// it also moves the far depth of field to start that far beyond the board, so
+// the blur stays on the backdrop at every fit.
 class BoardCamera3D : public godot::Camera3D {
     GDCLASS(BoardCamera3D, godot::Camera3D)
 
@@ -39,6 +42,7 @@ protected:
 
 private:
     BoardView3D* board_view() const;
+    void fit_depth_of_field(double board_far_depth);
 
     godot::NodePath board_view_path_;
     double tilt_degrees_ = feel::kCameraTiltDegrees;

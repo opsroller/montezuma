@@ -53,6 +53,10 @@ class Resource:
         return "\n".join(out).rstrip() + "\n"
 
 
+# Environment.glow_blend_mode values by name.
+GLOW_BLEND = {"additive": 0, "screen": 1, "softlight": 2, "replace": 3, "mix": 4}
+
+
 # The theme's "textures.sets", set by main(). Texture files are build outputs
 # (gen_theme_textures.py), so paths follow the parameters, not the disk.
 TEXTURE_SETS = {}
@@ -562,6 +566,9 @@ def main():
     env = p["environment"]
     light = p["lighting"]
     exposure, fog, ssao = light["exposure"], light.get("fog"), light["ssao"]
+    post = p["post"]
+    glow, dof = post["glow"], post.get("depth_of_field")
+    lut = f"res://assets/textures/{theme}/grade/T_Grade_LUT.png"
     fog3 = light.get("atmosphere", {}).get("fog")
     sky = [
         "[sub_resource type=\"ProceduralSkyMaterial\" id=\"sky_mat\"]",
@@ -584,6 +591,16 @@ def main():
         f"auto_exposure_speed = {exposure['auto_speed']}",
         f"auto_exposure_min_sensitivity = {exposure['auto_min_sensitivity']}",
         f"auto_exposure_max_sensitivity = {exposure['auto_max_sensitivity']}",
+        # Depth of field on the backdrop only: BoardCamera3D moves the far
+        # blur to start dof_far_beyond_board metres past the board's far edge
+        # whenever it refits, so the board stays sharp at every window size.
+        *([
+            "dof_blur_far_enabled = true",
+            f"dof_blur_far_distance = {dof['beyond_board']}",
+            f"dof_blur_far_transition = {dof['transition']}",
+            f"dof_blur_amount = {dof['amount']}",
+            f"metadata/dof_far_beyond_board = {dof['beyond_board']}",
+        ] if dof else []),
         "",
         "[sub_resource type=\"Environment\" id=\"env\"]",
         "background_mode = 2",
@@ -602,10 +619,22 @@ def main():
         f"ssao_power = {ssao['power']}",
         f"ssao_light_affect = {ssao['light_affect']}",
         "ssil_enabled = true",
+        # Glow runs before tonemapping (Godot 4.6+), on exposed scene values:
+        # only what is brighter than hdr_threshold blooms, on the small mip
+        # levels the theme picks (readability rule 6).
         "glow_enabled = true",
-        "glow_intensity = 0.6",
-        "glow_bloom = 0.05",
-        "glow_hdr_threshold = 1.1",
+        *[f"glow_levels/{i + 1} = {v}" for i, v in enumerate(glow["levels"])],
+        f"glow_intensity = {glow['intensity']}",
+        f"glow_strength = {glow['strength']}",
+        f"glow_bloom = {glow['bloom']}",
+        f"glow_blend_mode = {GLOW_BLEND[glow['blend']]}",
+        f"glow_hdr_threshold = {glow['hdr_threshold']}",
+        f"glow_hdr_scale = {glow['hdr_scale']}",
+        f"glow_hdr_luminance_cap = {glow['hdr_luminance_cap']}",
+        # Mobile and Compatibility put lower values in the buffer glow reads,
+        # so they get their own threshold (QualityTiers applies it).
+        *[f"metadata/glow_hdr_threshold_{tier.replace('-', '_')} = {v}"
+          for tier, v in sorted(glow.get("hdr_threshold_by_tier", {}).items())],
         # Optional height fog. The temple has none: in the game's board view
         # on Forward+ even height fog that starts below the platform left a
         # haze over the board (readability rule 2), so atmosphere is
@@ -632,8 +661,10 @@ def main():
             "volumetric_fog_sky_affect = 0.0",
             f"volumetric_fog_temporal_reprojection_amount = {fog3['temporal_amount']}",
         ] if fog3 else []),
+        # The colour grade: a 3D LUT applied after tonemapping, in display
+        # space (gen_theme_textures.py writes it from the theme's "grade").
         "adjustment_enabled = true",
-        f"adjustment_saturation = {env['saturation']}",
+        f"adjustment_color_correction = {r.ext_id('Texture3D', lut)}",
         "",
     ]
     atmo_subs, atmo_body = atmosphere(r, p, models) if fog3 else ([], [])

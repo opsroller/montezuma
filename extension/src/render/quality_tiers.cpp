@@ -12,7 +12,10 @@
 #include <godot_cpp/classes/box_mesh.hpp>
 #include <godot_cpp/classes/camera3d.hpp>
 #include <godot_cpp/classes/camera_attributes.hpp>
+#include <godot_cpp/classes/camera_attributes_physical.hpp>
 #include <godot_cpp/classes/camera_attributes_practical.hpp>
+#include <godot_cpp/classes/compositor.hpp>
+#include <godot_cpp/classes/compositor_effect.hpp>
 #include <godot_cpp/classes/config_file.hpp>
 #include <godot_cpp/classes/cpu_particles3d.hpp>
 #include <godot_cpp/classes/csg_box3d.hpp>
@@ -40,12 +43,16 @@
 #include <godot_cpp/classes/tube_trail_mesh.hpp>
 #include <godot_cpp/classes/viewport.hpp>
 #include <godot_cpp/classes/window.hpp>
+#include <godot_cpp/classes/world3d.hpp>
 #include <godot_cpp/classes/world_environment.hpp>
 #include <godot_cpp/core/class_db.hpp>
+#include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/typed_array.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
+
+#include "backdrop_blur.hpp"
 
 using namespace godot;
 
@@ -371,10 +378,21 @@ void QualityTiers::apply_node(Node* node) {
     if (auto* geometry = Object::cast_to<GeometryInstance3D>(node)) apply_materials(geometry);
     if (auto* world = Object::cast_to<WorldEnvironment>(node)) {
         apply_environment(world->get_environment());
+        world->set_compositor(backdrop_blur(world->get_compositor(), world->get_camera_attributes(), false));
         apply_camera_attributes(world->get_camera_attributes());
     } else if (auto* camera = Object::cast_to<Camera3D>(node)) {
         apply_environment(camera->get_environment());
-        apply_camera_attributes(camera->get_attributes());
+        // Godot takes a camera's own attributes and compositor over the
+        // world's, so a camera with either carries its own blur, bound to
+        // the attributes it renders with (those BoardCamera3D refits).
+        const Ref<CameraAttributes> own = camera->get_attributes();
+        if (own.is_valid() || camera->get_compositor().is_valid()) {
+            const Ref<World3D> space = camera->get_world_3d();
+            const Ref<CameraAttributes> used =
+                own.is_valid() ? own : (space.is_valid() ? space->get_camera_attributes() : Ref<CameraAttributes>());
+            camera->set_compositor(backdrop_blur(camera->get_compositor(), used, own.is_valid()));
+        }
+        apply_camera_attributes(own);
     }
     if (auto* sun = Object::cast_to<DirectionalLight3D>(node)) {
         // Each cascade draws every shadow caster again; a tier with fewer
@@ -599,6 +617,13 @@ void QualityTiers::apply_environment(const Ref<Environment>& env) {
     e->set_volumetric_fog_enabled(active(q::Feature::VolumetricFog) &&
                                   authored(e, "volumetric_fog", e->is_volumetric_fog_enabled()));
     e->set_glow_enabled(p.has(q::Feature::Glow) && authored(e, "glow", e->is_glow_enabled()));
+    // A theme can give a tier its own glow threshold (glow_hdr_threshold_<tier
+    // id with underscores> metadata): the renderers put different values in
+    // the buffer glow reads, so one threshold blooms only lit stone on
+    // Forward+ and nothing at all on Mobile and Compatibility.
+    const double threshold = authored_number(e, "glow_hdr_threshold", e->get_glow_hdr_bleed_threshold());
+    const StringName key = "glow_hdr_threshold_" + to_godot(q::tier_id(p.tier)).replace("-", "_");
+    e->set_glow_hdr_bleed_threshold(static_cast<real_t>(e->has_meta(key) ? double(e->get_meta(key)) : threshold));
 }
 
 void QualityTiers::apply_camera_attributes(const Ref<CameraAttributes>& attributes) {
@@ -608,11 +633,37 @@ void QualityTiers::apply_camera_attributes(const Ref<CameraAttributes>& attribut
     a->set_auto_exposure_enabled(p.has(q::Feature::AutoExposure) &&
                                  authored(a, "auto_exposure", a->is_auto_exposure_enabled()));
     if (auto* practical = Object::cast_to<CameraAttributesPractical>(a)) {
-        const bool dof = p.has(q::Feature::DepthOfField);
-        practical->set_dof_blur_far_enabled(dof && authored(a, "dof_far", practical->is_dof_blur_far_enabled()));
-        practical->set_dof_blur_near_enabled(dof &&
-                                             authored(a, "dof_near", practical->is_dof_blur_near_enabled()));
+        // BackdropBlur draws the far depth of field the theme authored; Godot's
+        // own costs a full-resolution pass over every pixel, so it stays off.
+        authored(a, "dof_far", practical->is_dof_blur_far_enabled());
+        practical->set_dof_blur_far_enabled(false);
+        practical->set_dof_blur_near_enabled(false);
     }
+}
+
+Ref<Compositor> QualityTiers::backdrop_blur(Ref<Compositor> compositor, const Ref<CameraAttributes>& attributes,
+                                             bool own_attributes) {
+    // Compositor effects need a RenderingDevice; Compatibility has none.
+    if (!RenderingServer::get_singleton()->get_rendering_device()) return compositor;
+    const Ref<CameraAttributesPractical> practical = attributes;
+    const bool wanted =
+        practical.is_valid() && authored(practical.ptr(), "dof_far", practical->is_dof_blur_far_enabled());
+    Ref<BackdropBlur> blur = BackdropBlur::in(compositor);
+    if (blur.is_null() && wanted) {
+        if (compositor.is_null()) compositor.instantiate();
+        blur.instantiate();
+        TypedArray<CompositorEffect> effects = compositor->get_compositor_effects();
+        effects.push_back(blur);
+        compositor->set_compositor_effects(effects);
+    }
+    // A camera's own attributes without a far blur still hide the world's.
+    if (compositor.is_null() && own_attributes) compositor.instantiate();
+    if (blur.is_valid()) {
+        blur->set_camera_attributes(practical);
+        blur->set_enabled(wanted && get_profile().has(q::Feature::DepthOfField));
+        if (blur->get_enabled()) blur->warm();
+    }
+    return compositor;
 }
 
 void QualityTiers::request_shadow_budget() {
@@ -666,6 +717,8 @@ void QualityTiers::run_self_test() {
     env->set_sdfgi_enabled(false);  // a theme that picked VoxelGI leaves SDFGI off on every tier
     env->set_volumetric_fog_enabled(true);
     env->set_glow_enabled(true);
+    env->set_glow_hdr_bleed_threshold(8.0f);
+    env->set_meta("glow_hdr_threshold_web", 0.5);  // the other tiers keep the authored threshold
     Ref<CameraAttributesPractical> attrs;
     attrs.instantiate();
     attrs->set_auto_exposure_enabled(true);
@@ -767,9 +820,18 @@ void QualityTiers::run_self_test() {
         check(env->is_ssr_enabled() == p.has(q::Feature::Ssr), id, "SSR");
         check(!env->is_sdfgi_enabled(), id, "SDFGI turned on though the theme left it off");
         check(env->is_volumetric_fog_enabled() == active(q::Feature::VolumetricFog), id, "volumetric fog");
+        check(Math::is_equal_approx(env->get_glow_hdr_bleed_threshold(), id == "web" ? 0.5f : 8.0f), id,
+              "glow threshold per tier");
         check(env->is_glow_enabled() == p.has(q::Feature::Glow), id, "glow");
         check(attrs->is_auto_exposure_enabled() == p.has(q::Feature::AutoExposure), id, "auto exposure");
-        check(attrs->is_dof_blur_far_enabled() == p.has(q::Feature::DepthOfField), id, "depth of field");
+        check(!attrs->is_dof_blur_far_enabled() && !attrs->is_dof_blur_near_enabled(), id, "Godot's depth of field on");
+        const Ref<BackdropBlur> blur = BackdropBlur::in(world->get_compositor());
+        if (RenderingServer::get_singleton()->get_rendering_device()) {
+            check(blur.is_valid() && blur->get_camera_attributes() == attrs, id, "no backdrop blur on the attributes");
+            check(blur.is_valid() && blur->get_enabled() == p.has(q::Feature::DepthOfField), id, "depth of field");
+        } else {
+            check(blur.is_null(), id, "backdrop blur without a RenderingDevice");
+        }
         check(voxel->is_visible() == p.has(q::Feature::VoxelGi), id, "quality:voxel_gi node");
         check(cards->is_visible() == !active(q::Feature::VolumetricFog), id, "fog fallback node");
         check(fog->get_material().is_valid() == active(q::Feature::VolumetricFog), id, "fog volume material");
@@ -863,6 +925,83 @@ void QualityTiers::run_self_test() {
     if (get_available_tiers().size() > 0) {
         switch_to(get_available_tiers()[0], false);
         check(env->is_ssao_enabled() == get_profile().has(q::Feature::Ssao), get_tier(), "authored SSAO not restored");
+    }
+    // A pooled WorldEnvironment comes back with the blur it had, not a second one.
+    scratch->remove_child(world);
+    scratch->add_child(world);
+    const Ref<Compositor> compositor = world->get_compositor();
+    int blurs = 0;
+    if (compositor.is_valid()) {
+        const TypedArray<CompositorEffect> effects = compositor->get_compositor_effects();
+        for (int64_t i = 0; i < effects.size(); ++i) blurs += Ref<BackdropBlur>(effects[i]).is_valid() ? 1 : 0;
+    }
+    const bool device = RenderingServer::get_singleton()->get_rendering_device() != nullptr;
+    check(blurs == (device ? 1 : 0), get_tier(), "backdrop blur added twice on re-entry");
+    // A camera's own attributes and compositor win over the world's, so the
+    // camera carries the blur, bound to the attributes it renders with.
+    for (const String& id : get_available_tiers()) {
+        switch_to(id, false);
+        const bool dof = device && get_profile().has(q::Feature::DepthOfField);
+        Ref<CameraAttributesPractical> lens;
+        lens.instantiate();
+        lens->set_dof_blur_far_enabled(true);
+        auto* framed = memnew(Camera3D);
+        framed->set_attributes(lens);
+        scratch->add_child(framed);
+        const Ref<BackdropBlur> own = BackdropBlur::in(framed->get_compositor());
+        check(!lens->is_dof_blur_far_enabled(), id, "Godot's depth of field on a camera's attributes");
+        check(own.is_valid() == device && (own.is_null() || own->get_camera_attributes() == lens), id,
+              "camera's own far blur not bound to its attributes");
+        check(own.is_null() || own->get_enabled() == dof, id, "camera's own far blur per tier");
+        scratch->remove_child(framed);
+        memdelete(framed);
+
+        Ref<CameraAttributesPractical> flat;
+        flat.instantiate();
+        auto* exposed = memnew(Camera3D);
+        exposed->set_attributes(flat);
+        scratch->add_child(exposed);
+        const Ref<BackdropBlur> none = BackdropBlur::in(exposed->get_compositor());
+        check(exposed->get_compositor().is_valid() == device && none.is_null(), id,
+              "camera attributes without far blur still show the world's");
+        scratch->remove_child(exposed);
+        memdelete(exposed);
+
+        Ref<Compositor> chain;
+        chain.instantiate();
+        auto* composed = memnew(Camera3D);
+        composed->set_compositor(chain);
+        scratch->add_child(composed);
+        const Ref<BackdropBlur> borrowed = BackdropBlur::in(composed->get_compositor());
+        check(borrowed.is_valid() == device && (borrowed.is_null() || (borrowed->get_camera_attributes() == attrs &&
+                                                                       borrowed->get_enabled() == dof)),
+              id, "camera's own compositor hides the world's far blur");
+        scratch->remove_child(composed);
+        memdelete(composed);
+    }
+    // A theme that drops its attributes draws no blur.
+    {
+        world->set_camera_attributes(Ref<CameraAttributes>());
+        apply_node(world);
+        const Ref<BackdropBlur> left = BackdropBlur::in(world->get_compositor());
+        check(left.is_null() || !left->get_enabled(), get_tier(), "backdrop blur left on without attributes");
+        Ref<CameraAttributesPhysical> physical;
+        physical.instantiate();
+        world->set_camera_attributes(physical);
+        apply_node(world);
+        check(left.is_null() || !left->get_enabled(), get_tier(), "backdrop blur left on with physical attributes");
+        world->set_camera_attributes(attrs);
+        apply_node(world);
+    }
+    // A theme that authored no far blur gets no effect.
+    {
+        Ref<CameraAttributesPractical> sharp;
+        sharp.instantiate();
+        auto* unblurred = memnew(WorldEnvironment);
+        unblurred->set_camera_attributes(sharp);
+        apply_node(unblurred);
+        check(unblurred->get_compositor().is_null(), get_tier(), "backdrop blur on a theme without far blur");
+        memdelete(unblurred);
     }
 
     scratch->queue_free();

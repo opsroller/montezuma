@@ -15,6 +15,8 @@ Writes one PNG set per entry in the parameters' "textures.sets":
 - game/assets/textures/<theme>/T_<Set>_{BC,N,ORM[,H]}.png      base, textures.size (1024)
 - game/assets/textures/<theme>/hi/T_<Set>_{BC,N,ORM[,H]}.png   desktop, textures.hi_size (2048),
                                                                 only for sets with "hi": true
+- game/assets/textures/<theme>/grade/T_Grade_LUT.png              the colour grade as a 3D LUT,
+                                                                for themes with a "grade" (grade_lut.py)
 
 BC is base colour (sRGB, no lighting or occlusion), N a tangent-space normal
 map (OpenGL, green up), ORM packs occlusion, roughness and metallic (linear,
@@ -38,6 +40,7 @@ import numpy as np
 import PIL
 from PIL import Image
 
+import grade_lut
 import texture_import
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -435,6 +438,9 @@ def generate(params_path):
     expected = list(outputs(out, tex))
     for png in expected:
         texture_import.write(png, png.stem.rsplit("_", 1)[-1])
+    # The colour grade LUT takes milliseconds, so it is checked on every run.
+    if "grade" in p and grade_lut.write(out, p["grade"]):
+        print(f"T_Grade_LUT: {p['grade']['lut_size']}^3")
     if stamp.exists() and stamp.read_text().strip() == digest and all(f.exists() for f in expected):
         print(f"{p['theme']}: textures up to date")
         return

@@ -499,8 +499,8 @@
       "multiplier": 1.0,
       "auto_scale": 0.32,
       "auto_speed": 0.5,
-      "auto_min_sensitivity": 300,
-      "auto_max_sensitivity": 640
+      "auto_min_sensitivity": 400,
+      "auto_max_sensitivity": 480
     },
     "sun": {
       "lux": 11000,
@@ -604,6 +604,38 @@
         "ground": -1.9
       },
       "board_clearance": 0.5
+    }
+  },
+  "grade": {
+    "_comment": "Colour grade as an ASC CDL in display space, baked into a 3D LUT by gen_theme_textures.py; check limits for validate_assets.py. docs/reference/board-themes.md#colour-grade.",
+    "lut_size": 32,
+    "slope": [1.0712, 1.04, 0.9984],
+    "offset": [-0.02, -0.02, -0.0096],
+    "power": [1.0, 1.0, 1.0],
+    "saturation": 1.04,
+    "check": {
+      "max_shift_pieces": 0.04,
+      "max_shift_surfaces": 0.05,
+      "max_separation_drop": 0.005
+    }
+  },
+  "post": {
+    "_comment": "Glow and depth of field of the theme environment. docs/reference/board-themes.md#post-processing.",
+    "glow": {
+      "levels": [0.0, 1.0, 0.5, 0.0, 0.0, 0.0, 0.0],
+      "intensity": 0.5,
+      "strength": 1.0,
+      "bloom": 0.0,
+      "blend": "additive",
+      "hdr_threshold": 8.0,
+      "hdr_threshold_by_tier": {"mobile": 0.6, "web": 0.6},
+      "hdr_scale": 2.0,
+      "hdr_luminance_cap": 12.0
+    },
+    "depth_of_field": {
+      "beyond_board": 0.5,
+      "transition": 2.0,
+      "amount": 0.1
     }
   },
   "lookdev": {
