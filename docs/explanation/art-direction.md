@@ -229,6 +229,12 @@ Choices behind the [reference](../reference/water.md):
   water reflects through the engine's own specular: the sky, plus on
   desktop the scene's reflection probe.
 
+- **Cost decision.** The opaque water still measures over its 0.5 ms
+  budget on the M4 (+2.6 ms p50 at native 5120×2880, about 0.65 ms at
+  1440p by pixel count; see [Water (WP-50)](../reference/benchmark-results.md#water-wp-50)).
+  On 2026-10-19 the owner chose to merge it over that overage. The budget
+  is unchanged, and a fix for the M4 cost follows as its own change.
+
 ## Why a theme, not a scene
 
 Montezuma's will host mini games with other looks. The board view asks the
