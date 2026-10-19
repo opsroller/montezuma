@@ -57,6 +57,7 @@ own folder.
 - [Build and test](how-to/build-and-test.md): build the core and extension, run tests, load the game, capture screenshots.
 - [Export a desktop build](how-to/export-a-desktop-build.md): get or make the Windows, macOS and Linux packages.
 - [Export the web demo](how-to/export-a-web-build.md): get or make the web package and run it in a browser.
+- [Cut a release](how-to/cut-a-release.md): tag a version and publish its packages and notes, from CI or your own machine.
 - [Make a board theme](how-to/make-a-board-theme.md): change the temple look or add a new theme.
 - [Regenerate or add sounds](how-to/regenerate-or-add-sounds.md): rebuild the generated audio, add a cue.
 - [Play a sound from code](how-to/play-a-sound-from-code.md): call a cue from C++ or a scene, start and stop music.
