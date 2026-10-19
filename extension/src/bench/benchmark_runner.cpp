@@ -164,6 +164,7 @@ void BenchmarkRunner::read_command_line() {
         }
         if (a == "--bench-vsync=off") disable_vsync_ = true;
         if (a == "--bench-stay") quit_when_done_ = false;
+        if (a == "--bench-fullscreen") fullscreen_ = true;
     }
 }
 
@@ -223,6 +224,12 @@ void BenchmarkRunner::lock_render_size() {
     Window* root = get_tree()->get_root();
     DisplayServer* ds = DisplayServer::get_singleton();
     if (disable_vsync_) ds->window_set_vsync_mode(DisplayServer::VSYNC_DISABLED);
+    // --bench-fullscreen: exclusive full screen at the screen's size, which
+    // replaces --bench-size (a full-screen window cannot be resized).
+    if (fullscreen_) {
+        ds->window_set_mode(DisplayServer::WINDOW_MODE_EXCLUSIVE_FULLSCREEN);
+        render_size_ = Vector2i();
+    }
     const bool requested = render_size_.x > 0 && render_size_.y > 0;
     sizes_ = bench::SizeTracker(requested ? std::optional(bench::Size2{render_size_.x, render_size_.y}) : std::nullopt);
     // The window is followed too: the lock keeps the render size, but a
@@ -411,6 +418,7 @@ void BenchmarkRunner::finish() {
     Dictionary resolution;
     resolution["requested"] = sizes_.requested ? Variant(to_array(*sizes_.requested)) : Variant();
     resolution["locked"] = sizes_.requested.has_value();
+    resolution["fullscreen"] = fullscreen_;
     resolution["render"] = to_array(sizes_.first);
     resolution["min"] = to_array(sizes_.min);
     resolution["max"] = to_array(sizes_.max);

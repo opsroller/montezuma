@@ -24,6 +24,8 @@
 #   NATIVE=OFF   use the tier's render scale and upscaler (FSR 2, MetalFX);
 #                by default the 3D renders at SIZE with no upscaler
 #                (--quality-native), so the upscale costs nothing
+#   FULLSCREEN=ON  run the benchmark exclusive full screen at the screen's
+#                size (--bench-fullscreen); SIZE is then ignored
 #   QUALITY_OFF  comma-separated feature ids to turn off for the runs
 #                (--quality-off), to measure what each costs; the feature
 #                check then fails for those rows
@@ -126,6 +128,9 @@ if(GPU_PROFILE)
   set(engine --gpu-profile)
 endif()
 set(bench "--bench-seconds=${SECONDS}" "--bench-warmup=${WARMUP}" "--bench-size=${SIZE}" "--bench-out=${OUT}/benchmark.json")
+if(FULLSCREEN)
+  list(APPEND bench --bench-fullscreen)
+endif()
 if(VSYNC STREQUAL "off")
   list(APPEND bench --bench-vsync=off)
 endif()
@@ -143,7 +148,11 @@ if(NOT rc EQUAL 0)
   set(status 1)
 endif()
 if(EXISTS "${OUT}/benchmark.json")
-  check("${OUT}/run.txt" "${bench_tools}/check_run.py" "${OUT}/benchmark.json" --size "${SIZE}")
+  set(size_check --size "${SIZE}")
+  if(FULLSCREEN)
+    set(size_check "")
+  endif()
+  check("${OUT}/run.txt" "${bench_tools}/check_run.py" "${OUT}/benchmark.json" ${size_check})
   check("${OUT}/features.txt" "${bench_tools}/check_features.py" "${OUT}/benchmark.json")
 else()
   message(NOTICE "FAIL benchmark: no report written")

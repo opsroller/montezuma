@@ -124,6 +124,7 @@ private:
     std::vector<double> canvas_draw_calls_;
     std::vector<double> primitives_;
     double video_mem_max_ = 0.0;
+    bool fullscreen_ = false;
     // RenderingServer's running pipeline-compilation counts (canvas, mesh,
     // surface, draw, specialization) when the run and the capture started.
     std::array<uint64_t, 5> pipelines_at_start_{};
