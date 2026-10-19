@@ -108,10 +108,16 @@ def collect(version, targets, dirs):
     return [(found[n], check_package(found[n])) for n in expected]
 
 
+def gh_command():
+    """gh, or the program in $MONTEZUMA_GH (a .py file runs with this Python; the tests use it)."""
+    program = os.environ.get("MONTEZUMA_GH", "gh")
+    return [sys.executable, program] if program.endswith(".py") else [program]
+
+
 def gh(*args, check=True):
     """Runs gh; exits with its error unless check is False."""
     try:
-        result = subprocess.run(["gh", *args], capture_output=True, text=True, timeout=600)
+        result = subprocess.run([*gh_command(), *args], capture_output=True, text=True, timeout=600)
     except subprocess.TimeoutExpired:
         sys.exit(f"gh {args[0]} {args[1]}: timed out after 600 s")
     if check and result.returncode != 0:

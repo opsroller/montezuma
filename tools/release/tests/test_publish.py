@@ -55,21 +55,17 @@ class PublishTest(unittest.TestCase):
                               env=env)
 
     def fake_gh(self, view_exit, view_out):
-        """A gh on PATH that logs its calls and answers `release view` as given."""
-        bindir = os.path.join(self.repo, "fakebin")
-        os.makedirs(bindir)
+        """A fake gh (run through $MONTEZUMA_GH) that logs its calls and answers `release view` as given."""
+        script = os.path.join(self.repo, "fake_gh.py")
         log = os.path.join(self.repo, "gh.log")
-        with open(os.path.join(bindir, "gh"), "w") as f:
-            f.write(f"""#!{sys.executable}
-import sys
+        with open(script, "w") as f:
+            f.write(f"""import sys
 open({log!r}, "a").write(" ".join(sys.argv[1:4]) + "\\n")
 if sys.argv[1:3] == ["release", "view"]:
     print({view_out!r})
     sys.exit({view_exit})
 """)
-        os.chmod(os.path.join(bindir, "gh"), 0o755)
-        env = dict(os.environ, PATH=bindir + os.pathsep + os.environ["PATH"])
-        return env, log
+        return dict(os.environ, MONTEZUMA_GH=script), log
 
     def gh_calls(self, log):
         with open(log) as f:

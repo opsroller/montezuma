@@ -187,7 +187,7 @@ stamps `game/project.godot`, `run_bench.cmake` writes
 | `changelog.py notes [--ref REF]` | Release notes for `REF` (default `HEAD`): commit titles since the previous release tag that is an ancestor of it |
 | `changelog.py changelog [--next X.Y.Z] [--out FILE]` | The whole `CHANGELOG.md`, one section per release tag, newest first; `--next` adds the untagged commits as `X.Y.Z` |
 | `changelog.py check-tag TAG` | Exits 1 unless `TAG` is `vX.Y.Z` |
-| `publish.py --tag vX.Y.Z [--only T,...] [--repo R] [--out DIR] [--dry-run] DIR...` | Finds each target's package of that version under the `DIR`s, verifies its `.sha256`, writes `SHA256SUMS` and `notes.md` to `--out` (default `dist/release`) and runs `gh release create`, or finishes a draft release for the tag; refuses a published one; `--dry-run` stops before `gh`; each `gh` call stops after 600 s |
+| `publish.py --tag vX.Y.Z [--only T,...] [--repo R] [--out DIR] [--dry-run] DIR...` | Finds each target's package of that version under the `DIR`s, verifies its `.sha256`, writes `SHA256SUMS` and `notes.md` to `--out` (default `dist/release`) and runs `gh release create`, or finishes a draft release for the tag; refuses a published one; `--dry-run` stops before `gh`; each `gh` call stops after 600 s; `MONTEZUMA_GH` names another `gh` (a `.py` file runs with the same Python), which the tests use |
 | `tests/` | Tests for `changelog.py` and `publish.py` against throwaway repositories (CTest `release_tools_tests`) |
 | `web-requirements.txt` | Hash-pinned Python packages for `web-smoke.py` (Playwright), for CPython 3.12 and 3.13 on Linux x86_64 |
 
