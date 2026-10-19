@@ -120,7 +120,8 @@ the driver started the window without mailbox and the runner turned
 vsync off; either way frames are not held to the display's rate.
 
 On Metal, Godot 4.7.2 returns no GPU timestamps, so the profile prints
-zeros there: judge by `frame_ms` or use Apple's Metal tools.
+zeros there: judge by `frame_ms` or use Apple's Metal tools. Godot 4.8
+returns them, so `gpu_ms` works on the Mac too.
 
 `render.pipeline_compilations.during_capture` in the report counts
 shaders compiled inside the timed window; `draw` above 0 means frames

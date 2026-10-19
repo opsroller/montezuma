@@ -5,7 +5,9 @@
 # exceptions, and mixing settings is an ODR hazard on MSVC.
 set(GODOTCPP_DISABLE_EXCEPTIONS OFF CACHE BOOL "" FORCE)
 # godot-cpp 10 is versioned apart from Godot; pick the engine API we target.
-# Must match the Godot pinned in tools/release/godot.env.
+# Godot loads extensions built for an older API, so this may lag the
+# Godot pinned in tools/release/godot.env (4.7 API on 4.8 beta 1: godot-cpp
+# has no 4.8 API yet).
 set(GODOTCPP_API_VERSION "4.7" CACHE STRING "" FORCE)
 # Keep godot-cpp's own warnings out of our -Werror builds.
 set(GODOTCPP_SYSTEM_HEADERS ON CACHE BOOL "" FORCE)

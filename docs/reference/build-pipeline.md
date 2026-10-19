@@ -172,7 +172,8 @@ stamps `game/project.godot`, `run_bench.cmake` writes
 |---|---|
 | `godot.env` | Godot version, file names and SHA-512 checksums |
 | `steps.cmake` | Helpers the steps share: running a command with a timeout, the version, checksums |
-| `fetch-godot.cmake` (`DIR`, `TEMPLATES`) | Downloads and verifies the editor and templates, installs the named templates (a `;`-separated list) |
+| `fetch-godot.cmake` (`DIR`, `TEMPLATES`) | Downloads and verifies the editor and templates, installs the named templates (a `;`-separated list); with `GODOT_MACOS_SWAP_TEMPLATE_VARIANTS=1` in `godot.env`, runs `macos-template-swap.py` on an installed `macos.zip` |
+| `macos-template-swap.py <macos.zip>` | Swaps the release and debug binary names in a macOS template, working around Godot 4.8 beta 1's universal export picking the wrong variant ([About the engine version](../explanation/about-the-engine-version.md)) |
 | `version.cmake` | Prints the version, as above |
 | `export-desktop.cmake` (`PLATFORM` = `linux`, `windows` or `macos`, `OUT`, `VERSION`, `GODOT`) | Exports one preset and writes the archive and `.sha256` |
 | `package.py <tar.gz\|zip> <root> <name> <archive>` | Packs a folder with stable bytes; refuses symlinks |
