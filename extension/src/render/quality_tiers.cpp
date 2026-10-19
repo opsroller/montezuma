@@ -367,9 +367,9 @@ void QualityTiers::apply_node(Node* node) {
         // the attributes it renders with (those BoardCamera3D refits).
         const Ref<CameraAttributes> own = camera->get_attributes();
         if (own.is_valid() || camera->get_compositor().is_valid()) {
-            const Ref<World3D> world = camera->get_world_3d();
+            const Ref<World3D> space = camera->get_world_3d();
             const Ref<CameraAttributes> used =
-                own.is_valid() ? own : (world.is_valid() ? world->get_camera_attributes() : Ref<CameraAttributes>());
+                own.is_valid() ? own : (space.is_valid() ? space->get_camera_attributes() : Ref<CameraAttributes>());
             camera->set_compositor(backdrop_blur(camera->get_compositor(), used, own.is_valid()));
         }
         apply_camera_attributes(own);
@@ -976,11 +976,11 @@ void QualityTiers::run_self_test() {
     {
         Ref<CameraAttributesPractical> sharp;
         sharp.instantiate();
-        auto* plain = memnew(WorldEnvironment);
-        plain->set_camera_attributes(sharp);
-        apply_node(plain);
-        check(plain->get_compositor().is_null(), get_tier(), "backdrop blur on a theme without far blur");
-        memdelete(plain);
+        auto* unblurred = memnew(WorldEnvironment);
+        unblurred->set_camera_attributes(sharp);
+        apply_node(unblurred);
+        check(unblurred->get_compositor().is_null(), get_tier(), "backdrop blur on a theme without far blur");
+        memdelete(unblurred);
     }
 
     scratch->queue_free();
