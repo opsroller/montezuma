@@ -166,7 +166,7 @@ budgets, frame times and the look each tier must show are in
 
 A finding raised in two or more reviews is listed here as a rule.
 
-- Performance figures (#35, #75, #79, #80). An absolute figure links to
+- Performance figures (#35, #75, #79, #80, #101). An absolute figure links to
   its section of `docs/reference/benchmark-results.md` and names the row
   (machine, tier, date or run); that row gives the tier, Resolution,
   3D scaling and vsync or cap mode, and a capped row says why (for
@@ -175,12 +175,12 @@ A finding raised in two or more reviews is listed here as a rule.
   Resolution, 3D scaling and cap settings, uncapped where the driver
   allows it. Frame-time numbers come from the benchmark the plan names as
   their owner (today WP-46's), not from the row's own package.
-- Plan dependencies (#35, #80). In the plan
+- Plan dependencies (#35, #80, #101). In the plan
   (`docs/reference/work-packages.md`), every package a `todo` or `active`
   row waits on, needs, or shares owned files or numbers with is in its
   `Depends on` column. Mentions of finished work, and the bracketed reason
   of a `blocked` row, are not dependencies.
-- Two open PRs changing the same plan row (#7, #13, #80). A PR edits only
+- Two open PRs changing the same plan row (#7, #13, #80, #101). A PR edits only
   its own package's row. On rebase it keeps `main`'s text for every other
   row; a PR that edits another package's row drops that edit or moves it
   to the owning PR.
@@ -188,3 +188,15 @@ A finding raised in two or more reviews is listed here as a rule.
   they belong (the plan's status key, `benchmark-results.md`), contradicts
   no rule already written down, and holds for the project's own existing
   rows.
+- Plan status words (#80, #101). A Status cell uses only the five words
+  of the plan's status key; a wait outside `Depends on` is
+  `blocked (reason)`, not `todo` with a note such as "held", and the
+  brackets give evidence or the reason, never a change of scope (that
+  goes in `Done when`). Check: every Status cell starts with a key word,
+  and only `blocked` rows give a reason for waiting.
+- A PR body that does not match the diff (#40, #61, #101). The squash
+  commit takes its message from the body, so it describes the current
+  head: no rows, figures or "before" states the diff does not show, and
+  no promise of later work once that work has landed. Check: every change
+  the body lists is in the diff, and every file the diff changes is
+  covered by the body.
