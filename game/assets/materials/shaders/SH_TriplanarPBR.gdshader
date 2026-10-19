@@ -5,8 +5,8 @@
 // height) mapped triplanar in object space, with parallax occlusion on
 // upward faces so chisel marks, pits and cracks keep their depth as the
 // camera moves. Mobile and web use the base StandardMaterial3D of the same
-// name instead (same textures, no parallax). Cost: 3 projections x 3
-// samples, plus 8 to 24 height samples on upward faces.
+// name instead (same textures, no parallax). Cost: 1 to 3 projections x 3
+// samples (projections under 2% weight are skipped), plus 8 to 24 height samples on upward faces.
 shader_type spatial;
 render_mode blend_mix, depth_draw_opaque, cull_back, diffuse_burley, specular_schlick_ggx;
 
@@ -38,7 +38,7 @@ void fragment() {
 	TriUV t = tri_uv(triplanar_scale, triplanar_sharpness);
 	if (height_depth > 0.0 && t.n.y > 0.0 && t.w.y > 0.01) {
 		vec3 view_obj = normalize(camera_obj - tri_pos);
-		t.y = tri_parallax_y(texture_height, t.y, view_obj, height_depth * triplanar_scale,
+		t.y = tri_parallax_y(texture_height, t.y, t.gy, view_obj, height_depth * triplanar_scale,
 				parallax_min_layers, parallax_max_layers);
 	}
 	vec4 orm = tri_sample(texture_orm, t);

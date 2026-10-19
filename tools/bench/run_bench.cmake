@@ -15,12 +15,23 @@
 #   SIZE         render size for the benchmark, WxH (default 1920x1080); the
 #                runner locks it and the run fails if it does not hold
 #   VSYNC=off    turn vsync off, so frame time is the work, not the
-#                display's pace (default: the project's vsync)
+#                display's pace (default: the project's vsync); also asks
+#                for mailbox presentation in override.cfg
 #   TOLERANCE    how far over a whole 60 Hz period a percentile may sit
 #                (default 0.05)
 #   SECONDS      capture length (default 60)
 #   WARMUP       warm-up before the capture (default 10)
 #   OUT          where reports and captures go (default bench-out/)
+#   NATIVE=OFF   use the tier's render scale and upscaler (FSR 2, MetalFX);
+#                by default the 3D renders at SIZE with no upscaler
+#                (--quality-native), so the upscale costs nothing
+#   FULLSCREEN=ON  run the benchmark exclusive full screen at the screen's
+#                size (--bench-fullscreen); SIZE is then ignored
+#   QUALITY_OFF  comma-separated feature ids to turn off for the runs
+#                (--quality-off), to measure what each costs; the feature
+#                check then fails for those rows
+#   GPU_PROFILE=ON  print Godot's GPU time per render pass about once a
+#                second (--gpu-profile; zeros on Metal in Godot 4.7.2)
 #   READABILITY=ON  also capture at 540x1170 and check rules 2, 4, 5 and 6
 #   XVFB=ON      run under xvfb-run (machines without a display)
 # Each Godot run is stopped after SECONDS + WARMUP + 300 s (the readability
@@ -74,9 +85,16 @@ function(restore_override)
   endif()
 endfunction()
 set(MONTEZUMA_ON_FAIL restore_override)
+# With VSYNC=off the window also asks for mailbox presentation: some
+# compositors (GNOME) keep vsync on when Godot asks for it off, and
+# mailbox never waits for the display.
 function(window size)
   string(REGEX MATCH "^([0-9]+)x([0-9]+)$" _ "${size}")
-  file(WRITE "${cfg}" "[display]\nwindow/size/window_width_override=${CMAKE_MATCH_1}\nwindow/size/window_height_override=${CMAKE_MATCH_2}\n")
+  set(present "")
+  if(VSYNC STREQUAL "off")
+    set(present "window/vsync/vsync_mode=3\n")
+  endif()
+  file(WRITE "${cfg}" "[display]\nwindow/size/window_width_override=${CMAKE_MATCH_1}\nwindow/size/window_height_override=${CMAKE_MATCH_2}\n${present}")
 endfunction()
 
 # run_godot(<timeout> <result var> <arg>...)
@@ -107,7 +125,20 @@ set(quality "")
 if(TIER)
   set(quality "--quality=${TIER}")
 endif()
+if(NOT DEFINED NATIVE OR NATIVE)
+  list(APPEND quality --quality-native)
+endif()
+if(QUALITY_OFF)
+  list(APPEND quality "--quality-off=${QUALITY_OFF}")
+endif()
+set(engine "")
+if(GPU_PROFILE)
+  set(engine --gpu-profile)
+endif()
 set(bench "--bench-seconds=${SECONDS}" "--bench-warmup=${WARMUP}" "--bench-size=${SIZE}" "--bench-out=${OUT}/benchmark.json")
+if(FULLSCREEN)
+  list(APPEND bench --bench-fullscreen)
+endif()
 if(VSYNC STREQUAL "off")
   list(APPEND bench --bench-vsync=off)
 endif()
@@ -120,12 +151,16 @@ set(status 0)
 # A stale report from an earlier run must not pass for this one.
 file(REMOVE "${OUT}/benchmark.json")
 window("${SIZE}")
-run_godot(${bench_timeout} rc res://scenes/bench/bench.tscn -- ${bench} ${quality})
+run_godot(${bench_timeout} rc ${engine} res://scenes/bench/bench.tscn -- ${bench} ${quality})
 if(NOT rc EQUAL 0)
   set(status 1)
 endif()
 if(EXISTS "${OUT}/benchmark.json")
-  check("${OUT}/run.txt" "${bench_tools}/check_run.py" "${OUT}/benchmark.json" --size "${SIZE}")
+  set(size_check --size "${SIZE}")
+  if(FULLSCREEN)
+    set(size_check "")
+  endif()
+  check("${OUT}/run.txt" "${bench_tools}/check_run.py" "${OUT}/benchmark.json" ${size_check})
   check("${OUT}/features.txt" "${bench_tools}/check_features.py" "${OUT}/benchmark.json")
 else()
   message(NOTICE "FAIL benchmark: no report written")

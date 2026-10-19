@@ -172,6 +172,144 @@ frame there is shorter than 16.67 ms and p50 sits near that floor; the
 miss is in the tail. The follow-up is the M4's p95 tail (hitches and
 frames that miss a present), not the mean cost. The budget is unchanged.
 
+## GPU time per pass and per effect
+
+Where the GPU time of one frame goes, and what each effect costs alone,
+the way players see the game. Machine: RTX 4080 SUPER, Ryzen 9 7950X3D,
+NixOS, GNOME on Wayland (the live desktop, not headless), Vulkan,
+Forward+, Godot 4.7.2 from nixpkgs, extension built `Release`.
+`desktop-high` exclusive full screen at the screen's native size
+(`--bench-fullscreen --quality-native`: 3D at 1.0, no upscaler, TAA):
+a 4K monitor the desktop had in portrait, so 2160×3840, the same
+8.3 million pixels as 3840×2160,
+vsync off with mailbox presentation (`override.cfg`, since GNOME keeps
+FIFO otherwise), busiest-board replay seed 52, 3 s warm-up and 6 s
+capture, every run alone on the GPU, 2026-10-19, at this change.
+Per-pass times are one `--gpu-profile` frame; they move by a few
+hundredths of a millisecond between frames.
+
+| Pass | GPU ms |
+|---|---|
+| Render opaque pass | 4.74 |
+| Render GI + directional and omni shadows | 0.88 |
+| TAA | 0.70 |
+| Process SSIL | 0.56 |
+| Render 3D transparent pass | 0.55 |
+| Copy final framebuffer (SSIL/SSR) | 0.47 |
+| Glow | 0.43 |
+| Render sky | 0.39 |
+| Render depth pre-pass | 0.39 |
+| Sub-surface scattering | 0.22 |
+| Copy screen texture | 0.20 |
+| Process SSAO, tonemap | 0.19 each |
+| Auto exposure, merge specular, copy depth texture | 0.12 to 0.13 each |
+| Fog volumes, fog, cluster, VoxelGI relight, GPU particles, shadow setup | 0.06 or less each |
+| Frame (`gpu_ms` p50) | 11.36 |
+
+`frame_ms` p50 11.99, p95 12.45 ms; CPU p50 0.32 ms, so the frame is
+GPU-bound. Each effect turned off alone with `--quality-off`, against
+two baseline runs (`gpu_ms` p50 11.36 and 11.39):
+
+| Feature off | `gpu_ms` p50 | Saved |
+|---|---|---|
+| `ssil` | 9.74 | 1.6 |
+| `voxel_gi` | 9.77 | 1.6 |
+| `area_light` | 10.12 | 1.2 |
+| `glow` | 10.34 | 1.0 |
+| `auto_exposure` | 11.00 | 0.4 |
+| `ssao` | 11.18 | 0.2 |
+| `ssr`, `volumetric_fog`, `subsurface_scattering`, `gem_refraction`, `heat_haze`, `decals`, `parallax_occlusion`, `fog_fire_light` | 11.30 to 11.43 | none measurable |
+
+`ssr` saves nothing because the temple's environment leaves SSR off.
+With VoxelGI or SSIL off the frame differs by a mean of 3.65 and 2.79
+of 255 against 0.32 between two runs of one build. Soft shadows in the
+opaque pass cost 1.3 ms for the sun and 1.0 ms for the four fire lights
+at `high` (measured by switching each filter to hard). Why none of these
+is turned off: [About quality tiers](../explanation/about-quality-tiers.md#cutting-cost-without-changing-the-look).
+
+**Triplanar sampling.** The stone shader sampled all three triplanar
+projections (9 to 12 anisotropic fetches) on every pixel, in the depth
+pre-pass and again in the opaque pass. It now drops projections under
+2% weight and skips their fetches. Measured back to back:
+
+| Build | `frame_ms` p50 | p95 | `gpu_ms` p50 | Depth pre-pass | Opaque pass |
+|---|---|---|---|---|---|
+| `main` at 791a680 shaders | 13.00 | 13.32 | 12.77 | 0.93 | 4.97 |
+| This change | 11.97 | 12.65 | 11.37 | 0.39 | 4.61 |
+
+A capture of the same frame (1920×1080, frame 80) differs from
+`main`'s by 0.29 of 255 on average, the same as two runs of one build.
+
+**GI at half resolution.** `rendering/global_illumination/gi/use_half_resolution`
+is on in `project.godot`: VoxelGI is traced at half resolution and
+upscaled. Back to back on the same setup: `gpu_ms` p50 11.40 before,
+10.81 after. Frame 25 of the replay captured at native 2160×3840
+(`--write-movie`, 30 fps fixed), twice with full-resolution GI and once
+with half:
+
+| Region | Full vs full: mean, p99.9, max | Full vs half: mean, p99.9, max |
+|---|---|---|
+| Whole frame | 0.15, 41, 172 | 0.47, 45, 172 |
+| Piece contact (720, 1700, 480×480) | 0.02, 1, 8 | 0.68, 1, 4 |
+| Board edge (80, 2560, 480×480) | 0.07, 5, 7 | 0.71, 3, 5 |
+| Brazier wall (0, 860, 480×480) | 1.30, 90, 164 | 2.45, 98, 163 |
+
+Differences are per-pixel maximum over the channels, in 0 to 255. Half
+resolution lifts the whole frame by under 1 level evenly and leaves no
+edge: no pixel at piece contact or the board edge moves more than 5.
+The large values at the brazier are its flames and sparks, which differ
+between any two runs. The crops, with the difference amplified 8 times:
+
+![Full- and half-resolution GI at piece contact, the brazier wall and the board edge](../images/lookdev/temple-gi-half-resolution-crops.jpg)
+
+The gem shader also stopped asking
+for the screen texture's mip chain it never read (copy screen texture
+0.20 to 0.17 ms).
+
+Other findings:
+
+- **Nothing redrawn needlessly every frame except VoxelGI.** The
+  brazier's `FlickerLight3D` changes its light energy every frame, and
+  Godot re-lights the `VoxelGI` grid whenever a dynamic light inside
+  it changes: 0.05 to 0.06 ms. With the flicker stopped, the pass is
+  gone and nothing else changes.
+- **No shader compiles stall a frame.** Godot compiled 139 surface and
+  71 specialization pipelines before the capture and 11 surface and 5
+  specialization pipelines during it (effects the replay shows for the
+  first time), and none at draw time, so an ubershader drew while each
+  compiled (`render.pipeline_compilations`, [Benchmark](benchmark.md#report)).
+- **The M4 at native 5K.** An exported release build of `main` (ba0e7c6)
+  full screen at 5120×2880, 3D at 1.0 with no upscaler, vsync off, takes
+  `frame_ms` p50 112.8 ms with 0.75 ms of CPU work a frame (from the M4
+  benchmark queue, 2026-10-19), so it is GPU-bound. That is about 5.6
+  times this machine's 11.4 ms scaled to 5K's 1.78 times the pixels.
+  Godot 4.7.2's Metal driver returns no GPU timestamps
+  (`timestamp_query_pool_get_results` clears the buffer), so
+  `--gpu-profile` prints a total of 0 there and the M4 cannot be split
+  per pass from Godot.
+
+## Mac mini M4 at native 5K
+
+This change against its merge base with `main` (c0f387e). Mac mini M4,
+Metal, Forward+, `desktop-high`, full screen at native 5120×2880 with
+3D at 1.0 and no upscaler, vsync off, busiest-board replay seed 52,
+5 s warm-up and one 10 s capture per build, run back to back with no
+other Godot process, 2026-10-19. Textures and fire generated and
+lightmaps baked in both builds. The merge base has no
+`--quality-native`, so it ran with a local, uncommitted patch that
+sets the same bilinear 1.0 scaling; that leaves TAA off there, while
+`--quality-native` here keeps TAA on.
+
+| Build | `frame_ms` p50 | p95 | p99 | Frames in 10 s | `cpu_ms` p95 | Draw calls p95 | Video memory max |
+|---|---|---|---|---|---|---|---|
+| Merge base c0f387e (TAA off) | 113.9 | 114.7 | 115.0 | 88 | 2.04 | 277 | 2107 MB |
+| This change 42413a0 (TAA on) | 112.1 | 115.5 | 138.0 | 89 | 1.65 | 241 | 2275 MB |
+
+Every frame rendered at 5120×2880 and the replay matched its plan in
+both runs. The p50 drops 1.8 ms even with TAA added; p99 138.0 is one
+slow frame in a run of 89. Both are far over the 16.6 ms budget: at
+native 5K the M4 is GPU-bound at about 9 fps.
+
 ## Ground mist rework
 
 Cost of reworking the WP-51 fog into ground mist (`SH_AtmosphereFog`,
