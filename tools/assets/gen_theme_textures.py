@@ -118,44 +118,164 @@ def rgb(value, tint):
     return np.stack([value * tint[0], value * tint[1], value * tint[2]], axis=-1)
 
 
+def warp(fields, rng, n, amount, octaves=6):
+    """Domain-warp periodic fields: sample each at positions pushed by one smooth noise.
+
+    fields is a list of (n, n) arrays, all pushed the same way; amount is the
+    largest push in pixels. Bilinear, wrapping at the edges.
+    """
+    dx = (fbm(rng, n, octaves, 2.2) - 0.5) * 2 * amount
+    dy = (fbm(rng, n, octaves, 2.2) - 0.5) * 2 * amount
+    yy, xx = np.mgrid[0:n, 0:n].astype(np.float32)
+    x, y = (xx + dx) % n, (yy + dy) % n
+    x0, y0 = np.floor(x).astype(np.int32), np.floor(y).astype(np.int32)
+    fx, fy = x - x0, y - y0
+    x0, y0 = x0 % n, y0 % n
+    x1, y1 = (x0 + 1) % n, (y0 + 1) % n
+    out = []
+    for f in fields:
+        top = f[y0, x0] * (1 - fx) + f[y0, x1] * fx
+        bottom = f[y1, x0] * (1 - fx) + f[y1, x1] * fx
+        out.append(top * (1 - fy) + bottom * fy)
+    return out
+
+
+def leaves(rng, n, count, size):
+    """Scattered fallen leaves: a per-pixel coverage mask (0..1) and a per-leaf random id.
+
+    Each leaf is a pointed ellipse of about `size` pixels, randomly turned,
+    with a darker midrib; the stamps wrap at the edges so the tile stays seamless.
+    """
+    cover = np.zeros((n, n), np.float32)
+    ident = np.zeros((n, n), np.float32)
+    r = int(np.ceil(size * 1.4))
+    oy, ox = np.mgrid[-r:r + 1, -r:r + 1].astype(np.float32)
+    for _ in range(count):
+        cy, cx = rng.random(2) * n
+        angle = rng.random() * np.pi
+        length = size * (0.6 + 0.8 * rng.random())
+        c, si = np.cos(angle), np.sin(angle)
+        u = (ox * c + oy * si) / length          # along the leaf, -1..1
+        v = (-ox * si + oy * c) / (length * 0.38)  # across it
+        width = np.clip(1 - u * u, 0, 1) ** 0.7     # pointed at both ends
+        inside = np.clip((width - np.abs(v)) * length * 0.5, 0, 1)
+        midrib = np.clip(1 - np.abs(v) * length * 0.38 / 0.8, 0, 1) * inside
+        stamp = inside * (1 - 0.35 * midrib)
+        rows = (np.arange(-r, r + 1) + int(cy)) % n
+        cols = (np.arange(-r, r + 1) + int(cx)) % n
+        patch = cover[np.ix_(rows, cols)]
+        over = stamp > 0.02
+        cover[np.ix_(rows, cols)] = np.where(over, stamp, patch)
+        ident[np.ix_(rows, cols)] = np.where(over, rng.random(), ident[np.ix_(rows, cols)])
+    return cover, ident
+
+
 # --- Recipes: each returns albedo (display 0..1), height (0..1), occlusion, roughness, metallic ---
 
 def stone(rng, n):
-    """Weathered carved sandstone: bedding bands, mottling, grain, pits, chisel strokes, hairline cracks."""
+    """Weathered Mesoamerican limestone: bedding, porous vugs, chisel strokes, cracks, run-off
+    stains, dark biofilm in the hollows, crustose lichen and traces of red stucco pigment.
+
+    Kept near-neutral around mid value: the board materials multiply it by their own tints.
+    """
     s = n / 1024
     large = fbm(rng, n, 6, 2.3)
-    bands = fbm(rng, n, 10, 2.0, stretch=(0.15, 1.0))
+    (bands,) = warp([fbm(rng, n, 10, 2.0, stretch=(0.15, 1.0))], rng, n, 40 * s)
     mid = fbm(rng, n, 24, 1.5)
     grain = fbm(rng, n, 64, 1.0)
-    pits = np.clip((fbm(rng, n, 64, 0.85) - 0.64) * 5, 0, 1)
     chisel = fbm(rng, n, 40, 1.4, stretch=(1.0, 0.18))
+    # Vugs: small dissolution pores in clusters along the soft beds, and shallow
+    # irregular solution pits where the surface has eroded.
+    d1, _, pore_id = voronoi(rng, n, 5000)
+    (d1,) = warp([d1], rng, n, 3 * s, octaves=32)
+    soft = np.clip((bands - 0.45) * 3, 0, 1) * np.clip((fbm(rng, n, 12, 1.8) - 0.45) * 3, 0, 1)
+    pores = np.clip(1.0 - d1 / ((0.6 + 1.6 * pore_id) * s), 0, 1) ** 0.7 * (pore_id > 0.92 - 0.5 * soft)
+    erosion = np.clip((fbm(rng, n, 32, 1.3) - 0.66) * 5, 0, 1)
     _, gap, _ = voronoi(rng, n, 18)
     crack_mask = np.clip((fbm(rng, n, 8, 2.0) - 0.55) * 4, 0, 1)
     crack = np.clip(1.0 - gap / (2.2 * s), 0, 1) * crack_mask
-    height = 0.30 * large + 0.14 * bands + 0.18 * chisel + 0.20 * mid + 0.10 * grain - 0.25 * pits - 0.35 * crack
+    height = 0.30 * large + 0.14 * bands + 0.18 * chisel + 0.20 * mid + 0.10 * grain - 0.22 * pores - 0.12 * erosion - 0.35 * crack
     height = (height - height.min()) / (height.max() - height.min())
-    v = 0.64 + 0.14 * (large - 0.5) + 0.10 * (bands - 0.5) + 0.08 * (mid - 0.5) + 0.10 * (grain - 0.5)
-    v -= 0.16 * pits + 0.12 * crack
-    albedo = rgb(v, (1.03, 0.98, 0.90))
-    occ = cavity(height, max(1, int(6 * s))) * (1 - 0.35 * crack)
-    rough = 0.80 + 0.10 * (grain - 0.5) + 0.10 * pits - 0.10 * np.clip(large - 0.65, 0, 1)
+    hollow = np.clip((blur(height, max(1, int(10 * s))) - height) * 8, 0, 1)
+    # Weathering layers, each a mask in 0..1.
+    runoff = np.clip((fbm(rng, n, 24, 1.6, stretch=(0.06, 1.0)) - 0.55) * 3, 0, 1) * np.clip((large - 0.3) * 2, 0, 1)
+    biofilm = np.clip((fbm(rng, n, 32, 1.4) - 0.5) * 3 + hollow * 1.5 - 0.2, 0, 1) * 0.8
+    # Crustose lichen: ragged blotches on the exposed faces, a few of them orange.
+    lichen = np.clip((fbm(rng, n, 48, 1.3) - 0.66) * 7, 0, 1) * (1 - hollow)
+    lichen *= np.clip((fbm(rng, n, 16, 1.8) - 0.4) * 3, 0, 1)
+    lichen_orange = lichen * np.clip((fbm(rng, n, 24, 1.6) - 0.7) * 8, 0, 1)
+    pigment = np.clip(hollow * 1.6 - 0.4, 0, 1) * np.clip((fbm(rng, n, 6, 2.2) - 0.6) * 4, 0, 1) * 0.55
+    v = 0.66 + 0.12 * (large - 0.5) + 0.10 * (bands - 0.5) + 0.08 * (mid - 0.5) + 0.10 * (grain - 0.5)
+    v -= 0.14 * pores + 0.09 * erosion + 0.12 * crack
+    albedo = rgb(v, (1.03, 0.99, 0.92))
+    albedo = mix(albedo, albedo * np.array([0.92, 0.80, 0.64], np.float32), runoff * 0.6)
+    albedo = mix(albedo, rgb(0.30 + 0.06 * grain, (1.0, 1.0, 0.95)), biofilm * 0.45)
+    albedo = mix(albedo, rgb(0.80 + 0.08 * grain, (0.96, 1.0, 0.90)), lichen * (1 - lichen_orange) * 0.55)
+    albedo = mix(albedo, rgb(0.78 + 0.06 * grain, (1.0, 0.72, 0.38)), lichen_orange * 0.6)
+    albedo = mix(albedo, rgb(0.58 + 0.06 * grain, (1.0, 0.56, 0.44)), pigment)
+    height = np.clip(height + 0.03 * lichen, 0, 1)
+    occ = cavity(height, max(1, int(6 * s))) * (1 - 0.35 * crack) * (1 - 0.3 * pores)
+    rough = 0.80 + 0.10 * (grain - 0.5) + 0.12 * pores + 0.05 * erosion + 0.06 * biofilm - 0.10 * np.clip(large - 0.65, 0, 1)
+    rough += 0.05 * lichen - 0.08 * pigment
     return albedo, height, occ, rough, np.zeros_like(v)
 
 
 def ground(rng, n):
-    """Jungle floor: sunken flagstones with moss and leaf litter in the joints."""
+    """Old plaza paving in the jungle: irregular domed limestone flags of uneven size and hue,
+    sunk unevenly and chipped at the edges, dark soil in the joints, moss creeping up from
+    the joints and pooling in hollows, fallen leaves and damp patches.
+
+    Darker and lower in contrast than the board stone so the board stays in front.
+    """
     s = n / 1024
-    _, gap, ident = voronoi(rng, n, 64)
-    joint = np.clip(1.0 - gap / (12 * s), 0, 1)
-    moss_noise = fbm(rng, n, 16, 1.7)
-    moss = np.clip(joint * 1.3 + (moss_noise - 0.5) * 2.2, 0, 1)
+    _, gap, ident = voronoi(rng, n, 46)
+    # Irregular flags; bilinear blends the ids only along the joints, which soil covers.
+    gap, ident = warp([gap, ident], rng, n, 18 * s)
+    hue = (ident * 7.31) % 1.0
+    joint_w = (7 + 10 * fbm(rng, n, 12, 1.6)) * s
+    edge = np.clip(gap / joint_w, 0, 1) ** 0.7     # 0 in the joint, 1 a joint-width in
+    dome = np.clip(gap / (60 * s), 0, 1) ** 0.6    # rounded, worn arris
+    chips = np.clip((fbm(rng, n, 48, 1.1) - 0.56) * 5, 0, 1) * np.clip(1 - gap / (22 * s), 0, 1)
     grain = fbm(rng, n, 64, 1.2)
-    stone_v = 0.36 + 0.12 * (ident - 0.5) + 0.1 * (grain - 0.5)
-    moss_rgb = np.stack([0.20 + 0.08 * grain, 0.30 + 0.12 * grain, 0.13 + 0.04 * grain], axis=-1)
-    albedo = mix(rgb(stone_v, (1.02, 0.98, 0.88)), moss_rgb, moss)
-    height = (1 - joint) * 0.6 + 0.3 * grain + 0.1 * ident
-    occ = cavity(height, max(1, int(5 * s))) * (1 - 0.3 * joint)
-    rough = 0.82 + 0.12 * moss
+    speckle = fbm(rng, n, 64, 0.6)
+    mid = fbm(rng, n, 20, 1.7)
+    sink = 0.22 * (ident - 0.5)                    # flags settled at different depths
+    stone_h = (0.55 + sink + 0.22 * dome + 0.10 * mid + 0.06 * grain - 0.28 * chips) * edge
+    soil = 1 - edge
+    hollow = np.clip((blur(stone_h, max(1, int(12 * s))) - stone_h) * 6, 0, 1)
+    patches = fbm(rng, n, 10, 1.9)
+    creep = np.clip(1 - gap / (45 * s), 0, 1) * np.clip((fbm(rng, n, 32, 1.4) - 0.35) * 2.5, 0, 1)
+    moss = np.clip((soil * 0.9 + creep * 1.3 + hollow * 0.8) * np.clip((patches - 0.15) * 3, 0, 1)
+                   + (patches - 0.65) * 3, 0, 1)
+    moss_fuzz = fbm(rng, n, 64, 0.8)
+    leaf, leaf_id = leaves(rng, n, int(320 * s * s), 8 * s)
+    leaf *= np.clip((fbm(rng, n, 8, 2.0) - 0.35) * 2.5, 0, 1) * 0.9   # litter drifts in patches
+    damp = np.clip((fbm(rng, n, 6, 2.2) - 0.55) * 4, 0, 1) * np.clip(hollow + soil + 0.3, 0, 1)
+
+    stone_v = 0.36 + 0.07 * (ident - 0.5) + 0.06 * (grain - 0.5) + 0.05 * (mid - 0.5) + 0.03 * dome
+    stone_v += 0.08 * (speckle - 0.5) - 0.06 * chips
+    warm = np.array([1.06, 1.0, 0.86], np.float32)
+    grey = np.array([0.99, 0.99, 0.95], np.float32)
+    albedo = stone_v[..., None] * (warm * (1 - hue[..., None]) + grey * hue[..., None])
+    soil_rgb = np.stack([0.13 + 0.05 * grain, 0.10 + 0.04 * grain, 0.07 + 0.03 * grain], axis=-1)
+    lichen = np.clip((fbm(rng, n, 64, 1.2) - 0.68) * 6, 0, 1) * edge
+    albedo = mix(albedo, rgb(0.50 + 0.08 * speckle, (1.0, 1.0, 0.92)), lichen * 0.35)
+    albedo = mix(albedo, soil_rgb, soil)
+    moss_rgb = mix(np.stack([0.15 + 0.06 * moss_fuzz, 0.21 + 0.08 * moss_fuzz, 0.08 + 0.03 * moss_fuzz], axis=-1),
+                   np.stack([0.25 + 0.05 * moss_fuzz, 0.28 + 0.06 * moss_fuzz, 0.11 + 0.03 * moss_fuzz], axis=-1),
+                   mid)
+    albedo = mix(albedo, moss_rgb, moss * (0.6 + 0.4 * moss_fuzz))
+    dry = np.stack([0.34, 0.24, 0.13], axis=-1) * np.ones((n, n, 1), np.float32)
+    olive = np.stack([0.27, 0.26, 0.13], axis=-1) * np.ones((n, n, 1), np.float32)
+    leaf_rgb = mix(dry, olive, leaf_id) * (0.6 + 0.6 * ((leaf_id * 13.7) % 1.0) * (0.7 + 0.3 * grain))[..., None]
+    albedo = mix(albedo, leaf_rgb, leaf)
+    albedo *= (1 - 0.18 * damp)[..., None]       # wet stone and soil darken
+
+    height = stone_h + 0.06 * moss * moss_fuzz + 0.04 * leaf
+    height = (height - height.min()) / (height.max() - height.min())
+    occ = cavity(height, max(1, int(5 * s))) * (1 - 0.35 * soil)
+    rough = 0.84 + 0.06 * (grain - 0.5) + 0.08 * moss + 0.08 * soil - 0.10 * leaf
+    rough = np.clip(rough * (1 - 0.40 * damp), 0, 1)
     return albedo, height, occ, rough, np.zeros_like(grain)
 
 
