@@ -16,6 +16,7 @@ Values are for the window of the latest review in the
 
 | Measure | Value | Baseline | Trend | Paired with | Source |
 |---|---|---|---|---|---|
+| PRs merged | 78 | none | unknown | spend | `gh pr list --state merged` |
 | PR lead time, merged | median about 25 min; longest #60 4h33m, #73 3h40m, #69 3h13m | none | unknown | review rounds | `gh pr list --state merged` |
 | Open PR age at 15:56Z | #61 18h28m, #72 14h56m, #78 8h21m, #86 6h20m, #88 5h47m | median lead time | worse | bench wait | `gh pr list --state open` |
 | Review rounds per PR | #88 4, #78 4, #86 2, #81 2; #80, #83, #91 1 | 2 or fewer | worse | PR lead time | review verdicts on each PR |
