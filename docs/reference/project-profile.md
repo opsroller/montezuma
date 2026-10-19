@@ -161,7 +161,7 @@ budgets, frame times and the look each tier must show are in
 
 A finding raised in two or more reviews is listed here as a rule.
 
-- Performance figures (#35, #75, #79, #80). An absolute figure links to
+- Performance figures (#35, #61, #75, #79, #80). An absolute figure links to
   its section of `docs/reference/benchmark-results.md` and names the row
   (machine, tier, date or run); that row gives the tier, Resolution,
   3D scaling and vsync or cap mode, and a capped row says why (for
@@ -183,3 +183,13 @@ A finding raised in two or more reviews is listed here as a rule.
   they belong (the plan's status key, `benchmark-results.md`), contradicts
   no rule already written down, and holds for the project's own existing
   rows.
+- A plan row marked `done` before its done-when holds (#36, #41, #61). A
+  PR that sets its package to `done` meets every clause of the row's
+  `Done when` with what it ships, and checks each one (in CI where the
+  clause names a check). When the scope changed, the same PR rewrites the
+  done-when to match what ships and says why; otherwise the row stays
+  `review`.
+- A PR body that describes an earlier head (#40, #61). The squash commit
+  takes its message from the PR body, so before merge the body matches
+  the head that lands: versions, what the code does, and every figure,
+  each linked to its source or marked as superseded.
