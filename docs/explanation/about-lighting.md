@@ -185,6 +185,15 @@ is the CPU emulating compute shaders and says nothing about a GPU, but it
 marks the voxel re-light as the item to measure first, and is why the
 volume is 64 cells.
 
+**The reflection probe (measured on the same lavapipe setup, `VoxelGI`
+off).** The scene's one box probe, captured once, cost about 35 to 50 ms
+of a 356 ms p50 frame. With its cull mask emptied it cost about the same,
+so the cost is sampling, not repeated captures. Godot's default
+reflection atlas (64 probes) added 500 MB of video memory for that one
+probe, so `project.godot` sets the atlas to 8 probes, which brings it to
+about 80 MB. Every probe added to a theme takes one of those 8 slots and
+is captured on load.
+
 ## Options considered
 
 | Option | Why not |
