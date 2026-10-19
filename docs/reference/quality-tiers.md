@@ -167,7 +167,7 @@ switch. The root viewport re-applies on resize.
 | Mesh LOD threshold (px) | 1.0 | 1.0 | 2.0 | 2.0 |
 | Sun shadow atlas | 4096 | 2048 | 2048 | 1024 |
 | Sun shadow cascades (most) | 4 | 4 | 4 | 1 (orthogonal) |
-| Soft shadow filter (sun and positional) | soft medium | soft low | soft very low | hard |
+| Soft shadow filter (sun and positional) | soft high | soft low | soft very low | hard |
 | Positional shadow atlas | 4096 | 2048 | 0 (off) | 0 (off) |
 | Shadow-casting lights (`quality_shadow_light`) | 8 | 2 | 0 | 0 |
 | SSR half size | no | yes | — | — |
