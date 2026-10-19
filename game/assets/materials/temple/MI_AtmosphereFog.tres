@@ -20,13 +20,13 @@ noise = SubResource("density_texture_noise")
 [resource]
 shader = ExtResource("1")
 shader_parameter/density_texture = SubResource("density_texture")
-shader_parameter/density = 6.0
+shader_parameter/density = 3.5
 shader_parameter/albedo = Color(0.9216, 0.9294, 0.9412, 1.0000)
 shader_parameter/ground_y = -1.92
 shader_parameter/bank_height = 1.4
 shader_parameter/top_soft = 0.6
 shader_parameter/thicken_over = 7.0
-shader_parameter/near_amount = 0.5
+shader_parameter/near_amount = 0.3
 shader_parameter/bank_scale = 9.0
 shader_parameter/wisp_scale = 4.0
 shader_parameter/wisp_stretch = 3.0
