@@ -223,7 +223,10 @@ void BenchmarkRunner::_ready() {
 void BenchmarkRunner::lock_render_size() {
     Window* root = get_tree()->get_root();
     DisplayServer* ds = DisplayServer::get_singleton();
-    if (disable_vsync_) ds->window_set_vsync_mode(DisplayServer::VSYNC_DISABLED);
+    // Mailbox (run_bench.cmake's override.cfg with VSYNC=off) already never
+    // waits for the display, and some compositors only honour it.
+    if (disable_vsync_ && ds->window_get_vsync_mode() != DisplayServer::VSYNC_MAILBOX)
+        ds->window_set_vsync_mode(DisplayServer::VSYNC_DISABLED);
     // --bench-fullscreen: exclusive full screen at the screen's size, which
     // replaces --bench-size (a full-screen window cannot be resized).
     if (fullscreen_) {
@@ -412,7 +415,7 @@ void BenchmarkRunner::finish() {
     String unmeasured;
     if (bool(device["headless"])) unmeasured = "headless, nothing rendered";
     else if (bool(device["software"])) unmeasured = "software renderer (" + String(device["adapter"]) + ")";
-    const bench::BudgetVerdict verdict = bench::judge_budget(frames, spec, vsync_ == "disabled" ? -1.0 : display_hz_,
+    const bench::BudgetVerdict verdict = bench::judge_budget(frames, spec, (vsync_ == "disabled" || vsync_ == "mailbox") ? -1.0 : display_hz_,
                                                              unmeasured.utf8().get_data());
 
     Dictionary resolution;

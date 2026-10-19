@@ -123,7 +123,7 @@ graphics-programmer owns the tolerance; a change to it is a change to this
 section. `over_budget` counts frames above the p95 limit (budget plus
 tolerance). A display slower than 60 Hz less the tolerance (a 50 Hz panel)
 cannot show the target, so with vsync on the verdict fails as
-`display-limited`; with vsync off, or when the refresh is unknown, it is
+`display-limited`; with vsync off or mailbox, or when the refresh is unknown, it is
 not held against the run.
 
 The verdict also fails, with its numbers still in the report, when the
@@ -149,7 +149,7 @@ command line:
 | `budget_ms` | `--bench-budget=MS` | 0: the tier's p95 budget, two 60 Hz periods (33.333) for `web`, else one (16.667); a value replaces the p95 budget |
 | `tolerance` | `--bench-tolerance=F` | 0.05; clamped to 0 to 0.5, a non-number stops the run |
 | `render_size` | `--bench-size=WxH` | (0, 0): not locked, but the size must not change |
-| `disable_vsync` | `--bench-vsync=off` sets it true | false: the project's vsync |
+| `disable_vsync` | `--bench-vsync=off` sets it true | false: the project's vsync. True turns vsync off unless the window already uses mailbox (as `run_bench.cmake` sets with `VSYNC=off`), which also never waits for the display |
 | `quit_when_done` | `--bench-stay` sets it false | true |
 | — | `--bench-fullscreen` | off: windowed. On: exclusive full screen at the screen's size, replacing `--bench-size` (`resolution.fullscreen` true, `requested` null) |
 
@@ -191,7 +191,7 @@ the run was locked at that size) and the replay. It does not take the
 runner's pass flags on trust: it re-derives the budget from the tier's
 rules and the report's percentiles (an unknown tier, a missing rule, a
 budget looser than the tier's, a tolerance outside 0 to 0.5, fewer than
-30 frames, a display below 57 Hz with vsync on, a headless or software
+30 frames, a display below 57 Hz with vsync on (not off or mailbox), a headless or software
 run all fail), and the size from the
 min, max and mismatch counts. It also fails a `process_ms` median above
 the `frame_ms` median (not per-frame data). NOTE lines give the adapter,
@@ -231,7 +231,7 @@ attributes and the visible nodes of the scene tree.
 
 `check_features.py REPORT [--tier NAME]` (the tier defaults to the report's; a readability `layout.json` needs it) compares these, plus
 `device.rendering_method`, with the tier's rows in `tiers.json` and exits 1
-when a row is not met. Rows cover what the features can show; resolution
+when a row is not met. The `desktop-standard` anti-aliasing row accepts TAA at native size as well as a temporal upscaler, since benchmarks run with `--quality-native` by default. Rows cover what the features can show; resolution
 of SSR, volumetric fog quality, HDR output and flipbook sizes are not in
 the list.
 

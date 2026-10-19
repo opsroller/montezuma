@@ -240,6 +240,14 @@ pre-pass and again in the opaque pass. It now drops projections under
 A capture of the same frame (1920×1080, frame 80) differs from
 `main`'s by 0.29 of 255 on average, the same as two runs of one build.
 
+**GI at half resolution.** `rendering/global_illumination/gi/use_half_resolution`
+is on in `project.godot`: VoxelGI is traced at half resolution and
+upscaled. Back to back on the same setup: `gpu_ms` p50 11.40 before,
+10.81 after; the same frame differs by 0.38 of 255 on average, against
+0.32 between two runs of one build. The gem shader also stopped asking
+for the screen texture's mip chain it never read (copy screen texture
+0.20 to 0.17 ms).
+
 Other findings:
 
 - **Nothing redrawn needlessly every frame except VoxelGI.** The
@@ -252,14 +260,6 @@ Other findings:
   specialization pipelines during it (effects the replay shows for the
   first time), and none at draw time, so an ubershader drew while each
   compiled (`render.pipeline_compilations`, [Benchmark](benchmark.md#report)).
-- **WP-52 depth of field** on the Mac mini M4 adds 3.3 ms: `frame_ms`
-  p50 18.5 ms with it, 15.2 ms with it off, and 15.5 ms on `main`
-  (`desktop-high` at 2560×1440 with MetalFX at 0.5, vsync off, baked
-  lightmaps, 2026-10-19). Godot's depth of field runs at the output size,
-  after the upscaler, so it shades four times the pixels of the passes
-  before it. These runs sit below the 16.67 ms present floor that the
-  [Pieces out of GI](#pieces-out-of-gi) runs hit: those ran without
-  baked lightmaps.
 - **The M4 at native 5K.** An exported release build of `main` (ba0e7c6)
   full screen at 5120×2880, 3D at 1.0 with no upscaler, vsync off, takes
   `frame_ms` p50 112.8 ms with 0.75 ms of CPU work a frame (from the M4

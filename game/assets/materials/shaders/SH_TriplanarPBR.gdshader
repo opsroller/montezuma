@@ -5,8 +5,8 @@
 // height) mapped triplanar in object space, with parallax occlusion on
 // upward faces so chisel marks, pits and cracks keep their depth as the
 // camera moves. Mobile and web use the base StandardMaterial3D of the same
-// name instead (same textures, no parallax). Cost: 3 projections x 3
-// samples, plus 8 to 24 height samples on upward faces.
+// name instead (same textures, no parallax). Cost: 1 to 3 projections x 3
+// samples (projections under 2% weight are skipped), plus 8 to 24 height samples on upward faces.
 shader_type spatial;
 render_mode blend_mix, depth_draw_opaque, cull_back, diffuse_burley, specular_schlick_ggx;
 

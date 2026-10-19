@@ -219,6 +219,10 @@ class CheckRunTest(unittest.TestCase):
         r["display"]["vsync"] = "disabled"
         code, out = run(r)
         self.assertEqual(code, 0, out)
+        # Mailbox never waits for the display either.
+        r["display"]["vsync"] = "mailbox"
+        code, out = run(r)
+        self.assertEqual(code, 0, out)
 
     def test_non_numeric_limit_exits_2(self):
         r = copy.deepcopy(GOOD)

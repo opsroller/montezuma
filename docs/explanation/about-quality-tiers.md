@@ -107,7 +107,7 @@ own and hides what the scene costs.
 
 The first cut of this kind sampled the triplanar stone textures only
 along the projections that carry weight: the same image, 1.4 ms less
-GPU time a frame at native 4K (2160×3840) on an RTX 4080. The tries that would have
+GPU time a frame at native 4K (2160×3840) on an RTX 4080; tracing VoxelGI at half resolution, which the low-frequency indirect light does not show, saved another 0.6 ms. The tries that would have
 saved more (medium soft shadows, VoxelGI or SSIL off) all changed the
 frame and were dropped: turning an effect off with `--quality-off` is a
 way to measure what it costs, not a fix. The numbers are in

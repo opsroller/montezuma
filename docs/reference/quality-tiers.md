@@ -105,6 +105,7 @@ one entry (phones, web).
 |---|---|
 | `--quality=<tier id or auto>` | Uses that tier for this run without saving it (benchmark captures) |
 | `--quality-off=<id>[,<id>...]` | Turns those [feature ids](#feature-ids) off for this run, on every tier, so their cost can be measured; an unknown id prints an error and is ignored. `get_active_features()` leaves them out |
+| `--quality-native` | Renders 3D at the output size with no upscaler on every tier: bilinear at 1.0, with TAA where the tier has TAA or a temporal upscaler. `run_bench.cmake` passes it unless `NATIVE=OFF` |
 | `--quality-selftest` | Switches through every available tier on scratch nodes, checks each switch (environment, groups, shadow budget, sun shadow cascades and material variants of `MI_Gold` and `MI_Ground`, also after a node leaves and re-enters the tree), prints `QualityTiers self-test: N checks, F failures` |
 
 ## Feature ids
@@ -156,11 +157,11 @@ metadata of the resource or light).
 ## Render settings per tier
 
 Applied to the root viewport and `RenderingServer` at start and on every
-switch. The root viewport re-applies on resize.
+switch. The root viewport re-applies on resize. On every Forward+ tier, `project.godot` traces VoxelGI at half resolution (`rendering/global_illumination/gi/use_half_resolution`).
 
 | Setting | `desktop-high` | `desktop-standard` | `mobile` | `web` |
 |---|---|---|---|---|
-| 3D scaling | at most 720 lines: up to 720p output bilinear 1.0 with TAA; above, temporal upscaler at 720 / output height (0.67 at 1080p, 0.5 at 1440p), never below 0.5, no TAA | temporal upscaler at 0.77 | bilinear 1.0 | bilinear 1.0 |
+| 3D scaling (`--quality-native` overrides it: bilinear 1.0 on every tier, TAA on the two desktop tiers) | at most 720 lines: up to 720p output bilinear 1.0 with TAA; above, temporal upscaler at 720 / output height (0.67 at 1080p, 0.5 at 1440p), never below 0.5, no TAA | temporal upscaler at 0.77 | bilinear 1.0 | bilinear 1.0 |
 | Temporal upscaler | MetalFX temporal on Metal, FSR 2.2 elsewhere | same | — | — |
 | MSAA (3D) | off | off | 2× | 2× |
 | Anisotropic filtering | 16× | 8× | 4× | 2× |
