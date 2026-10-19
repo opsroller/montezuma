@@ -23,7 +23,7 @@ gradients, bevels, glows or chrome.
 ## Files
 
 The SVGs and the two token files are the sources. Edit them directly,
-keep every SVG on its integer grid, and keep the two token files in step
+keep the mark's coordinates as the construction table gives them, and keep the two token files in step
 with each other and with the tables below. The PNGs in `previews/` are
 snapshots of the sources for review; they are not used anywhere.
 
@@ -350,7 +350,7 @@ each file gets a row in `game/assets/PROVENANCE.md` and an entry in
 | | |
 |---|---|
 | Field | Maya blue 900 `#033842`, full bleed; holds on light grounds (12.7 : 1 against white) and on black (1.65 : 1, where the bright mark and band carry the tile) |
-| Mark | Full colour, 820 px wide (80 percent), base on the band |
+| Mark | The keylined on-dark mark (`mark-on-dark.svg`), about 895 px wide with its keyline; the keyline stops just above the band, so nothing sits on the band |
 | Foot | Step-fret band at 2x (144 px tall) |
 | Masks | None baked in: no corners, shadows or highlights. Stores and launchers mask it |
 | Small sizes | 48 px and up from the master; 16 and 32 px from `app-icon-16.svg` |
@@ -359,7 +359,7 @@ each file gets a row in `game/assets/PROVENANCE.md` and an entry in
 Previews: [1024](previews/icon-1024.png), [180](previews/icon-180.png),
 [48](previews/icon-48.png), [32](previews/icon-32.png),
 [16](previews/icon-16.png), and
-[on home screens](previews/app-home-screens.png).
+[on home screens](previews/app-home-screens.png). The home-screen, applications and colour-check sheets were captured before the icon gained its keyline; the mark's colours, and so the colour-vision results, are unchanged.
 
 ### UI icons
 

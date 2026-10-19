@@ -8,19 +8,22 @@ rules and values: [Style guide](../../design/README.md). Why:
 
 ## Change an identity file
 
-1. Edit the SVG or token file directly. Keep SVG coordinates on their
-   integer grid, and change `design/tokens/montezuma.tokens.json` and
-   `design/tokens/tokens.css` together.
+1. Edit the SVG or token file directly. Keep the mark's coordinates as
+   the style guide's construction table gives them, and change
+   `design/tokens/montezuma.tokens.json` and `design/tokens/tokens.css`
+   together.
 2. For any new or changed colour pair, measure it with the WCAG 2.2
    contrast formula (any contrast checker) and add it to the style
    guide's [approved pairs](../../design/README.md#approved-pairs) only
    if it passes.
-3. Replace the matching PNG in `design/previews/` with a fresh snapshot,
-   for example with headless Chromium:
+3. Replace the matching PNG in `design/previews/` with a fresh snapshot.
+   Chromium draws an SVG at its own size, so put it in a page that scales
+   it, then screenshot the page. For the 180 px icon:
 
    ```sh
-   chromium --headless --no-sandbox --window-size=180,180 \
-     --screenshot=design/previews/icon-180.png design/icons/app-icon.svg
+   echo "<body style='margin:0'><img src='$PWD/design/icons/app-icon.svg' width=180 height=180>" > /tmp/icon.html
+   chromium --headless --no-sandbox --hide-scrollbars --allow-file-access-from-files \
+     --window-size=180,180 --screenshot=design/previews/icon-180.png /tmp/icon.html
    ```
 
 ## Swap the game's tokens (ui-developer)
@@ -126,7 +129,6 @@ rules and values: [Style guide](../../design/README.md). Why:
    (dark grounds) must reach 3 : 1 against it. Measure the outline colour
    (`#1e1916` or `#f4ecdc`) against the ground with any WCAG contrast
    checker.
-
 5. Compare the result with the
    [misuse sheet](../../design/previews/misuse.png): not mirrored,
    recoloured, stretched, rotated or given effects.
