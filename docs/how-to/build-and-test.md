@@ -17,6 +17,14 @@ build: Make then starts every compile at once, and godot-cpp alone has about
 a thousand, which runs a 16 GB machine out of memory with the compilers
 stalled in swap. To build one thing, name it with `--target`.
 
+CMake will not switch an existing build folder to another generator. If a
+folder was configured with Make (the old default), delete it before
+configuring it with Ninja, for example:
+
+```sh
+cmake -E rm -rf build-ext
+```
+
 ## Compile godot-cpp only once
 
 godot-cpp is most of the build: about a thousand files. Build through
@@ -37,14 +45,6 @@ is configured again from scratch. `CCACHE_BASEDIR` makes paths under it
 hash relative, so two checkouts in different folders share the cache.
 `ccache --show-stats` shows the hits. CI does the same (see
 [About CI caching](../explanation/about-ci-caching.md)).
-
-CMake will not switch an existing build folder to another generator. If a
-folder was configured with Make (the old default), delete it before
-configuring it with Ninja, for example:
-
-```sh
-cmake -E rm -rf build-ext
-```
 
 ## Build and test the core only
 
