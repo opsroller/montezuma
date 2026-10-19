@@ -63,7 +63,7 @@ shows up on `main` after merge, and the next PR fixes it.
 - The **Compiler cache stats** step prints hits and misses for the run.
 - Caches written by a branch or PR are visible only to that branch or PR.
   Branches and PRs read the caches written on `main`.
-- Godot itself (one download of about 60 MB, a few seconds) is not cached. The job fetches the editor pinned in `tools/release/godot.env` with `tools/release/fetch-godot.sh`, the same script and checksum the build pipeline uses.
+- Godot itself (one download of about 60 MB, a few seconds) is not cached. The job fetches the editor pinned in `tools/release/godot.env` with `tools/release/fetch-godot.cmake`, the same step and checksum the build pipeline uses.
 
 `core (windows-latest)` uses no cache: it builds with the Visual Studio
 generator, which ignores compiler launchers, and runs only on `main` and

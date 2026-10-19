@@ -147,7 +147,7 @@ first level at 1280×720, saved as `title.png` and `board.png`):
 
 ```sh
 xvfb-run -a -s "-screen 0 1280x720x24" \
-  tools/release/smoke-test.sh dist/linux/montezuma-<version>-linux-x86_64.tar.gz /tmp/screens
+  cmake -DARCHIVE=dist/linux -DSCREENS=/tmp/screens -P tools/release/smoke-test.cmake
 ```
 
 ## Export a build

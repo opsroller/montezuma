@@ -21,18 +21,19 @@ To build a branch, run the **web** workflow from the Actions tab with
 
 ## Build it yourself
 
-1. Install the pinned Emscripten (about 1 GB, reused once installed) and
-   load it into the shell:
+1. Install the pinned Emscripten (about 1 GB, reused once installed):
 
    ```sh
-   source "$(tools/release/web-fetch-emsdk.sh ~/emsdk)"
+   cmake -DDIR=~/emsdk -P tools/release/web-fetch-emsdk.cmake
    ```
 
-2. Build the extension for the web. Use its own build folder; CMake
-   caches the toolchain:
+2. Build the extension for the web with Emscripten's toolchain file and
+   config. Use its own build folder; CMake caches the toolchain:
 
    ```sh
-   emcmake cmake -S . -B build/web -G Ninja -DCMAKE_BUILD_TYPE=Release \
+   export EM_CONFIG=~/emsdk/.emscripten
+   cmake -S . -B build/web -G Ninja -DCMAKE_BUILD_TYPE=Release \
+     -DCMAKE_TOOLCHAIN_FILE=~/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
      -DMONTEZUMA_BUILD_EXTENSION=ON -DMONTEZUMA_BUILD_TESTS=OFF -DMONTEZUMA_WERROR=ON \
      -DGODOTCPP_TARGET=template_release -DGODOTCPP_THREADS=OFF
    cmake --build build/web -j
@@ -44,13 +45,13 @@ To build a branch, run the **web** workflow from the Actions tab with
 3. Fetch the pinned Godot and the web template:
 
    ```sh
-   tools/release/fetch-godot.sh ~/godot-dl web_dlink_nothreads_release.zip
+   cmake -DDIR=~/godot-dl -DTEMPLATES=web_dlink_nothreads_release.zip -P tools/release/fetch-godot.cmake
    ```
 
 4. Export and package:
 
    ```sh
-   GODOT=~/godot-dl/godot tools/release/web-export.sh "$(tools/release/version.sh)" dist/web
+   cmake -DGODOT=~/godot-dl/godot -DOUT=dist/web -P tools/release/web-export.cmake
    ```
 
    If the export fails, Godot's output is in `dist/web/logs/`.

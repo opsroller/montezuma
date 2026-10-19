@@ -62,7 +62,7 @@ The same files are also inside the game, readable from `res://`:
 | `THIRD-PARTY-NOTICES.txt` | `notices.py` |
 | `SOURCE.txt` | `notices.py` |
 
-`export-desktop.sh` stages them into `game/` with `game-files.py stage`
+`export-desktop.cmake` stages them into `game/` with `game-files.py stage`
 before exporting, the presets' `include_filter` packs them, and
 `game-files.py check` fails the export if any of them is missing from the
 exported game. They are generated and ignored by git.
@@ -104,7 +104,7 @@ console), the smoke job fails. The board shot passes
 
 ## Versions
 
-`tools/release/version.sh` prints the version of the checked-out commit:
+`cmake -P tools/release/version.cmake` prints the version of the checked-out commit:
 
 | Commit | Version |
 |---|---|
@@ -136,22 +136,49 @@ saved to the newest cache with the key prefix `build-extension-godot-cpp-10-<pla
 See [About CI caching](../explanation/about-ci-caching.md) for why a
 compiler cache is safe for release builds.
 
+## Build steps
+
+The build steps are CMake scripts with no shell in them, so they run the
+same on Linux, macOS and Windows. Run one from the repository root with
+`cmake -D<VAR>=<value>... -P <script>`; options go before `-P`. Each
+script's header lists its variables. Relative paths are taken from the
+current folder and a leading `~` is expanded.
+
+Every child process a step starts (Godot, git, Python, emsdk, the game)
+runs with a hard timeout. A step that runs past it stops with
+`<command>: timed out after <N> s` and fails; there are no retries.
+Downloads stop after 600 s in all, or after 60 s with no data.
+
+| Step | Timeouts |
+|---|---|
+| `fetch-godot.cmake` | each download 600 s; `godot --version` 60 s |
+| `version.cmake` | each git call 60 s |
+| `export-desktop.cmake`, `web-export.cmake` | Godot import 900 s, export 900 s; each Python helper 300 s; packaging 600 s |
+| `web-fetch-emsdk.cmake` | clone 300 s; `emsdk install` 1200 s; `emsdk activate` 300 s |
+| `smoke-test.cmake` | headless run 300 s; each screenshot capture 600 s |
+| `tools/bench/run_bench.cmake` | benchmark run `SECONDS` + `WARMUP` + 300 s; readability capture 600 s; each check 300 s |
+
+A step that changes a committed file for its run (`web-export.cmake`
+stamps `game/project.godot`, `run_bench.cmake` writes
+`game/override.cfg`) puts it back when it fails too.
+
 ## Scripts in `tools/release/`
 
 | Script | Use |
 |---|---|
 | `godot.env` | Godot version, file names and SHA-512 checksums |
-| `fetch-godot.sh <dir> <template>...` | Downloads and verifies the editor and templates, installs the named templates |
-| `version.sh` | Prints the version, as above |
-| `export-desktop.sh <linux\|windows\|macos> <version> <outdir>` | Exports one preset and writes the archive and `.sha256` |
+| `steps.cmake` | Helpers the steps share: running a command with a timeout, the version, checksums |
+| `fetch-godot.cmake` (`DIR`, `TEMPLATES`) | Downloads and verifies the editor and templates, installs the named templates (a `;`-separated list) |
+| `version.cmake` | Prints the version, as above |
+| `export-desktop.cmake` (`PLATFORM` = `linux`, `windows` or `macos`, `OUT`, `VERSION`, `GODOT`) | Exports one preset and writes the archive and `.sha256` |
 | `package.py <tar.gz\|zip> <root> <name> <archive>` | Packs a folder with stable bytes; refuses symlinks |
 | `notices.py <outdir>` | Writes `THIRD-PARTY-NOTICES.txt` and `SOURCE.txt`; add a row to its `COMPONENTS` for every library linked into the game |
 | `game-files.py stage <gamedir>` | Copies `CREDITS.md` and `LICENSE` into the Godot project and runs `notices.py` there |
 | `game-files.py check <gamedir> <export>` | Exits 1 unless every staged file's bytes are inside the exported game (a file or a `.app` folder) |
 | `notices/` | Verbatim upstream notice texts (Godot 4.7.2 `LICENSE.txt`, `COPYRIGHT.txt`) |
-| `smoke-test.sh <archive> [<screens-dir>]` | Verifies, unpacks and runs a package on its own platform; with a folder, also saves `title.png` and `board.png` there |
-| `web-fetch-emsdk.sh <dir>` | Installs the pinned Emscripten (`EMSDK_VERSION` in `godot.env`) into `<dir>` and prints its `emsdk_env.sh` |
-| `web-export.sh <version> <outdir>` | Exports the `Web` preset, checks the download budget and writes the zip and `.sha256` |
+| `smoke-test.cmake` (`ARCHIVE`, `SCREENS`) | Verifies, unpacks and runs a package on its own platform; `ARCHIVE` may be a folder holding one package; with `SCREENS`, also saves `title.png` and `board.png` there |
+| `web-fetch-emsdk.cmake` (`DIR`) | Installs and activates the pinned Emscripten (`EMSDK_VERSION` in `godot.env`) in `DIR` |
+| `web-export.cmake` (`OUT`, `VERSION`, `GODOT`) | Exports the `Web` preset, checks the download budget and writes the zip and `.sha256` |
 | `web-smoke.py <archive> [browser...]` | Verifies and serves a web package, starts it the way the site does and checks the hand-off events |
 | `web-requirements.txt` | Hash-pinned Python packages for `web-smoke.py` (Playwright), for CPython 3.12 and 3.13 on Linux x86_64 |
 
@@ -177,13 +204,13 @@ WebAssembly. It never deploys; the package is the run's artifact.
 | Triggers | Push to any branch (every time); pull requests from forks touching `web.yml`, `tools/release/`, `CMakeLists.txt`, `core/`, `extension/`, `game/` or `thirdparty/`; manual |
 | Runner | `ubuntu-24.04`, one job `web` |
 | Emscripten | 4.0.20 (`EMSDK_VERSION` in `godot.env`, the version Godot 4.7.2's official web templates are built with), cached under `emsdk-<hash of godot.env>` |
-| Extension build | `emcmake cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON -DMONTEZUMA_BUILD_TESTS=OFF -DMONTEZUMA_WERROR=ON -DGODOTCPP_TARGET=template_release -DGODOTCPP_THREADS=OFF`, through ccache (`EM_COMPILER_WRAPPER=ccache`, key prefix `build-web-extension`) |
+| Extension build | `cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=~/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON -DMONTEZUMA_BUILD_TESTS=OFF -DMONTEZUMA_WERROR=ON -DGODOTCPP_TARGET=template_release -DGODOTCPP_THREADS=OFF` with `EM_CONFIG=~/emsdk/.emscripten`, through ccache (`EM_COMPILER_WRAPPER=ccache`, key prefix `build-web-extension`) |
 | Library | `game/bin/libmontezuma.web.template_release.wasm32.nothreads.wasm` (`web.release.wasm32` in `game/montezuma.gdextension`) |
 | Template | `web_dlink_nothreads_release.zip` from the pinned templates archive |
 | Textures | Generated by `.github/actions/textures` before export (they are not committed); the Web preset excludes the desktop `*/hi/*` sets |
 | Renderer | Compatibility (`rendering/renderer/rendering_method.web`), 2× MSAA, 1024 directional shadow map: the `web` tier of the [visual target](visual-target.md) |
 | Main scene | `res://scenes/demo/intro_level.tscn` (`application/run/main_scene.web`); see [IntroLevel](intro-level.md) |
-| Budget | All files gzipped at most 40 MB, checked by `web-export.sh` |
+| Budget | All files gzipped at most 40 MB, checked by `web-export.cmake` |
 | Browser check | `web-smoke.py` in headless Chromium 141, Firefox 142 and WebKit 26 (Playwright 1.56.0): `montezuma:ready`, then `montezuma:level-completed` for `e1-l01` with `--complete-level`, and no browser errors |
 
 | Artifact | Contents | Kept |
