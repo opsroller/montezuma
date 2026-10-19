@@ -60,6 +60,42 @@ GLOW_BLEND = {"additive": 0, "screen": 1, "softlight": 2, "replace": 3, "mix": 4
 # The theme's "textures.sets", set by main(). Texture files are build outputs
 # (gen_theme_textures.py), so paths follow the parameters, not the disk.
 TEXTURE_SETS = {}
+# The theme's water channel in Godot units (water_channel()), or empty.
+WATER = {}
+WATER_STRIPS = ("WaterEast", "WaterWest", "WaterNear", "WaterFar")
+
+
+def water_channel(p):
+    """The moat round the lowest tier: the same numbers as water_channel() in
+    gen_theme_meshes.py (tests/test_water_channel.py checks they agree).
+    Heights are Godot Y."""
+    w = p["water"]
+    half = p["board"]["width"] * p["cell_size"] / 2 + p["board"]["frame_width"]
+    tiers = p["backdrop"]["tiers"]
+    base_half = (2 * half + 1.2 + 2.4 * (tiers - 1)) / 2
+    ground = -0.42 - 0.5 * tiers
+    inner = base_half + w["inset"]
+    return {"inner": inner, "outer": inner + w["width"], "ground": ground, "level": ground - w["level"],
+            "floor": ground - w["depth"], "causeway": w["causeway_width"]}
+
+
+def look_at(eye, target):
+    """Transform3D text for a camera at eye looking at target, Y up."""
+    def sub(a, b):
+        return [a[i] - b[i] for i in range(3)]
+
+    def norm(a):
+        n = sum(x * x for x in a) ** 0.5
+        return [x / n for x in a]
+
+    def cross(a, b):
+        return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
+
+    z = norm(sub(eye, target))
+    x = norm(cross([0.0, 1.0, 0.0], z))
+    y = cross(z, x)
+    rows = [x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2]]
+    return "Transform3D({})".format(", ".join(f"{v:.6f}" for v in rows + list(eye)))
 
 
 # Emission in nits per unit of authored emission energy. With physical light
@@ -122,10 +158,24 @@ def shader_material(spec, theme, hi):
         r.body.append(f"shader_parameter/normal_scale = {spec.get('normal_scale', 1.0)}")
     if "ior" in spec and spec["shader"].endswith("SH_TriplanarPBR.gdshader"):
         r.body.append(f"shader_parameter/specular = {specular_from_ior(spec['ior'])}")
-    for key, value in spec.get("params", {}).items():
+    params = dict(spec.get("params", {}))
+    if spec.get("water") and WATER and spec["shader"].endswith("SH_WaterSimple.gdshader"):
+        params["floor_height"] = round(WATER["floor"], 4)
+    if spec.get("water") and WATER and spec["shader"].endswith("SH_Water.gdshader"):
+        # The channel the desktop shader traces its refracted ray through, and
+        # its stone (gen_theme_meshes.py builds it from MI_StoneDark).
+        stone = WATER["stone"]
+        params |= {"channel_inner": round(WATER["inner"], 4), "channel_outer": round(WATER["outer"], 4),
+                   "floor_height": round(WATER["floor"], 4), "causeway_half": round(WATER["causeway"] / 2, 4),
+                   "floor_tint": stone.get("albedo_tint", stone["albedo"]), "floor_scale": stone.get("triplanar_scale", 1.0),
+                   "channel_top": round(WATER["ground"], 4), "sun_direction": [round(v, 5) for v in WATER["sun"]]}
+        r.body.append(f"shader_parameter/texture_albedo = {r.ext_id('Texture2D', texture_path(theme, stone['set'], 'BC', hi))}")
+    for key, value in params.items():
         v = color(value) if isinstance(value, str) else value
         if isinstance(value, list):
             v = f"Vector{len(value)}({', '.join(map(str, value))})"
+        elif isinstance(value, bool):
+            v = "true" if value else "false"
         if key == "emission_energy":  # SH_Gem's EMISSION, scaled like StandardMaterial emission
             v = round(value * EMISSION_NITS["scale"], 3)
         r.body.append(f"shader_parameter/{key} = {v}")
@@ -475,6 +525,9 @@ def main():
         board_half = p["board"]["width"] * p["cell_size"] / 2 + p["board"]["frame_width"]
         fog_params = p["materials"]["MI_AtmosphereFog"]["params"]
         fog_params["clear_half"] = round(board_half + p["lighting"]["atmosphere"]["volumes"]["clearance"], 3)
+    if "water" in p:
+        WATER.update(water_channel(p), stone=p["materials"]["MI_StoneDark"],
+                     sun=sun_toward(p["environment"]["sun"]["transform"]))
     assets = ROOT / "game/assets"
     models = f"res://assets/models/{theme}"
     entry = {}
@@ -501,10 +554,18 @@ def main():
 
     backdrop_parts = [("Stone", "MI_StoneFrame"), ("StoneDark", "MI_StoneDark"), ("Bronze", "MI_Bronze"),
                       ("Ground", "MI_Ground"), ("Foliage", "MI_Foliage"), ("Rocks", "MI_StoneDark")]
+    if WATER:
+        backdrop_parts += [(n, "MI_Water") for n in WATER_STRIPS]
     r = mesh_scene("Environment", [(n, f"{models}/backdrop/SM_Backdrop_{n}.obj", m) for n, m in backdrop_parts], theme)
+    if WATER:
+        # Water casts no shadow (its slabs would darken the floor under it)
+        # and stays out of baked GI and the lightmap: it moves.
+        for i, line in enumerate(r.body):
+            if any(line == f'[node name="{n}" type="MeshInstance3D" parent="."]' for n in WATER_STRIPS):
+                r.body[i + 1:i + 1] = ["cast_shadow = 0", "gi_mode = 0"]
     env = p["environment"]
     light = p["lighting"]
-    exposure, fog = light["exposure"], light.get("fog")
+    exposure, fog, ssao = light["exposure"], light.get("fog"), light["ssao"]
     post = p["post"]
     glow, dof = post["glow"], post.get("depth_of_field")
     lut = f"res://assets/textures/{theme}/grade/T_Grade_LUT.png"
@@ -554,6 +615,9 @@ def main():
         # Screen-space passes are authored on; the quality tier turns them off
         # where its renderer or budget has none (docs/reference/quality-tiers.md).
         "ssao_enabled = true",
+        f"ssao_intensity = {ssao['intensity']}",
+        f"ssao_power = {ssao['power']}",
+        f"ssao_light_affect = {ssao['light_affect']}",
         "ssil_enabled = true",
         # Glow runs before tonemapping (Godot 4.6+), on exposed scene values:
         # only what is brighter than hdr_threshold blooms, on the small mip
@@ -645,6 +709,11 @@ def main():
     r.body += ["", '[node name="Lightmap" type="LightmapGI" parent="."]', f"quality = {lm['quality']}",
                f"bounces = {lm['bounces']}", f"texel_scale = {lm['texel_scale']}",
                f"max_texture_size = {lm['max_texture_size']}", f"generate_probes_subdiv = {lm['probes_subdiv']}",
+               # Bake a dimmed copy of the sky: lightmapped surfaces get their indirect
+               # light only from the bake, so ambient_energy does not reach them
+               # (docs/explanation/about-lighting.md, WP-60).
+               *(["environment_mode = 2", 'environment_custom_sky = SubResource("sky")',
+                  f"environment_custom_energy = {lm['sky_energy']}"] if "sky_energy" in lm else []),
                # Bake at the theme's exposure: with physical light units the raw
                # lux values would otherwise overflow the lightmap's range.
                'camera_attributes = SubResource("camera")',
@@ -729,6 +798,23 @@ def main():
             hi_overrides(r, tiered + [(f"K{k}", "Mesh", kind_material[k]) for k in range(kinds)])
         write(assets / f"lookdev/LD_{theme.capitalize()}_LineUp{suffix}.tscn",
               r.text("[gd_scene load_steps={steps} format=3]"))
+
+        if WATER:
+            # Look-dev water close-up: the east channel against the temple
+            # wall, for refraction, caustics, reflections and the stone edge.
+            r = Resource()
+            mid = (WATER["inner"] + WATER["outer"]) / 2
+            eye = [mid + 4.6, WATER["ground"] + 2.6, 3.2]
+            target = [mid - 0.6, WATER["level"], -0.6]
+            r.body = [f'[node name="Water_{theme}" type="Node3D"]', "",
+                      f'[node name="Environment" parent="." instance={r.ext_id("PackedScene", entry["environment"])}]', "",
+                      f'[node name="Board" parent="." instance={r.ext_id("PackedScene", entry["board"])}]', "",
+                      '[node name="Camera" type="Camera3D" parent="."]', f"transform = {look_at(eye, target)}",
+                      "fov = 55.0"]
+            if suffix:
+                hi_overrides(r, tiered)
+            write(assets / f"lookdev/LD_{theme.capitalize()}_Water{suffix}.tscn",
+                  r.text("[gd_scene load_steps={steps} format=3]"))
 
     # Lightmap bake scene: the theme backdrop and board under one root with the
     # node names BoardView3D gives them, so the paths the bake records from the

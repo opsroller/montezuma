@@ -104,6 +104,8 @@ one entry (phones, web).
 | Argument (after `--`) | Effect |
 |---|---|
 | `--quality=<tier id or auto>` | Uses that tier for this run without saving it (benchmark captures) |
+| `--quality-off=<id>[,<id>...]` | Turns those [feature ids](#feature-ids) off for this run, on every tier, so their cost can be measured; an unknown id prints an error and is ignored. `get_active_features()` leaves them out |
+| `--quality-native` | Renders 3D at the output size with no upscaler on every tier: bilinear at 1.0, with TAA where the tier has TAA or a temporal upscaler. `run_bench.cmake` passes it unless `NATIVE=OFF` |
 | `--quality-selftest` | Switches through every available tier on scratch nodes, checks each switch (environment, groups, shadow budget, sun shadow cascades, material variants of `MI_Gold` and `MI_Ground`, and the backdrop blur on environments and cameras, also after a node leaves and re-enters the tree), prints `QualityTiers self-test: N checks, F failures` |
 
 ## Feature ids
@@ -127,7 +129,7 @@ target names.
 | `subsurface_scattering` | nodes in `quality:subsurface_scattering`; SSS quality high, medium, off | ✔ | ✔ | — | — |
 | `parallax_occlusion` | nodes in `quality:parallax_occlusion` | ✔ | ✔ | — | — |
 | `gem_refraction` | nodes in `quality:gem_refraction` | ✔ | ✔ | — | — |
-| `water_refraction` | nodes in `quality:water_refraction` | ✔ | ✔ | — | — |
+| `water_refraction` | the `hi/MI_Water` variant (`SH_Water`, refraction traced through the channel) on the water strips; mobile and web keep `MI_Water` ([Water](water.md#tiers)) | ✔ | ✔ | — | — |
 | `heat_haze` | nodes in `quality:heat_haze` | ✔ | ✔ | — | — |
 | `decals` | nodes in `quality:decals` | ✔ | ✔ | ✔ | — |
 | `area_light` | nodes in `quality:area_light` | ✔ | — | — | — |
@@ -155,14 +157,15 @@ metadata of the resource or light).
 ## Render settings per tier
 
 Applied to the root viewport and `RenderingServer` at start and on every
-switch. The root viewport re-applies on resize.
+switch. The root viewport re-applies on resize. On every Forward+ tier, `project.godot` traces VoxelGI at half resolution (`rendering/global_illumination/gi/use_half_resolution`).
 
 | Setting | `desktop-high` | `desktop-standard` | `mobile` | `web` |
 |---|---|---|---|---|
-| 3D scaling | at most 720 lines: up to 720p output bilinear 1.0 with TAA; above, temporal upscaler at 720 / output height (0.67 at 1080p, 0.5 at 1440p), never below 0.5, no TAA | temporal upscaler at 0.77 | bilinear 1.0 | bilinear 1.0 |
+| 3D scaling (`--quality-native` overrides it: bilinear 1.0 on every tier, TAA on the two desktop tiers) | at most 720 lines: up to 720p output bilinear 1.0 with TAA; above, temporal upscaler at 720 / output height (0.67 at 1080p, 0.5 at 1440p), never below 0.5, no TAA | temporal upscaler at 0.77 | bilinear 1.0 | bilinear 1.0 |
 | Temporal upscaler | MetalFX temporal on Metal, FSR 2.2 elsewhere | same | — | — |
 | MSAA (3D) | off | off | 2× | 2× |
 | Anisotropic filtering | 16× | 8× | 4× | 2× |
+| Debanding | On | On | Off | Off |
 | Mesh LOD threshold (px) | 1.0 | 1.0 | 2.0 | 2.0 |
 | Sun shadow atlas | 4096 | 2048 | 2048 | 1024 |
 | Sun shadow cascades (most) | 4 | 4 | 4 | 1 (orthogonal) |

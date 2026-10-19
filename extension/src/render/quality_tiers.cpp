@@ -218,8 +218,20 @@ void QualityTiers::_ready() {
         if (arg.begins_with("--quality=")) {
             choice_ = arg.substr(10);
         }
+        // `-- --quality-off=<id>[,<id>...]` turns features off for this run
+        // (the benchmark uses it to measure what each one costs).
+        // `-- --quality-native` renders 3D at the output size, no upscaler.
+        if (arg == "--quality-native") native_ = true;
+        if (arg.begins_with("--quality-off=")) {
+            const PackedStringArray ids = arg.substr(14).split(",", false);
+            for (const String& id : ids) {
+                const std::optional<q::Feature> f = q::feature_from_id(to_std(id.strip_edges()));
+                if (f) forced_off_[static_cast<std::size_t>(*f)] = true;
+                else ERR_PRINT("QualityTiers: --quality-off names no feature: " + id);
+            }
+        }
     }
-    tier_ = q::resolve_tier(to_std(choice_), adapter_);
+    set_tier(q::resolve_tier(to_std(choice_), adapter_));
 
     SceneTree* tree = get_tree();
     tree->connect("node_added", callable_mp(this, &QualityTiers::on_node_added));
@@ -261,7 +273,7 @@ void QualityTiers::switch_to(const String& choice, bool save) {
     if (save) save_choice();
     const q::Tier next = q::resolve_tier(wanted, adapter_);
     if (next == tier_) return;
-    tier_ = next;
+    set_tier(next);
     variant_cache_.clear();  // resolved for the old tier's variant folder
     apply_all();
     emit_signal("tier_changed", get_tier());
@@ -299,6 +311,13 @@ String QualityTiers::resolve_variant(const String& path) const {
     return ResourceLoader::get_singleton()->exists(candidate) ? candidate : path;
 }
 
+void QualityTiers::set_tier(q::Tier tier) {
+    tier_ = tier;
+    profile_ = q::profile(tier);
+    for (std::size_t i = 0; i < q::kFeatureCount; ++i)
+        if (forced_off_[i]) profile_.features[i] = false;
+}
+
 void QualityTiers::apply_all() {
     apply_engine_settings();
     apply_viewport();
@@ -322,7 +341,7 @@ void QualityTiers::apply_viewport() {
     if (!tree) return;
     Window* root = tree->get_root();
     const q::Profile& p = get_profile();
-    const q::ViewportPlan plan = q::viewport_plan(p, root->get_size().y);
+    const q::ViewportPlan plan = q::viewport_plan(p, root->get_size().y, native_);
     Viewport::Scaling3DMode mode = Viewport::SCALING_3D_MODE_BILINEAR;
     if (plan.scaling == q::Scaling::SpatialUpscale) mode = Viewport::SCALING_3D_MODE_FSR;
     if (plan.scaling == q::Scaling::TemporalUpscale) {
@@ -335,6 +354,7 @@ void QualityTiers::apply_viewport() {
     root->set_msaa_3d(msaa_mode(p.msaa));
     root->set_screen_space_aa(p.smaa ? Viewport::SCREEN_SPACE_AA_SMAA : Viewport::SCREEN_SPACE_AA_DISABLED);
     root->set_anisotropic_filtering_level(anisotropy_level(p.anisotropy));
+    root->set_use_debanding(p.debanding);
     root->set_mesh_lod_threshold(p.mesh_lod_threshold);
     root->set_positional_shadow_atlas_size(p.positional_shadow_atlas);
 }
@@ -794,6 +814,7 @@ void QualityTiers::run_self_test() {
         apply_shadow_budget();
         const q::Profile& p = get_profile();
         check(get_tier() == id, id, "tier did not take effect");
+        check(get_tree()->get_root()->is_using_debanding() == p.debanding, id, "debanding");
         check(env->is_ssao_enabled() == p.has(q::Feature::Ssao), id, "SSAO");
         check(env->is_ssil_enabled() == p.has(q::Feature::Ssil), id, "SSIL");
         check(env->is_ssr_enabled() == p.has(q::Feature::Ssr), id, "SSR");

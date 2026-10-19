@@ -39,8 +39,10 @@ own folder.
 - [Visual target](reference/visual-target.md): the look per quality tier, frame budgets and acceptance tests.
 - [Fire](reference/fire.md): the brazier fire's simulation, flipbooks, scene, shaders, flickering light and per-tier behaviour.
 - [Quality tiers](reference/quality-tiers.md): the `QualityTiers` autoload, settings key, feature ids, node groups and render settings per tier.
+- [Water](reference/water.md): the temple water channel, its two shaders, parameters, tiers and cost.
 - [Benchmark and readability capture](reference/benchmark.md): the benchmark replay, its JSON report, feature keys and readability checks.
 - [Benchmark results](reference/benchmark-results.md): measured frame times, feature rows and readability per machine and tier.
+- [Operations](reference/operations.md): cost, flow and quality measures, operations-review findings and the review log.
 - [History: Mexica art, 1502 to 1520](reference/history-mexica-art.md): the sourced reference set and artist brief for the temple's look (stone, codices, featherwork, greenstone, gold), with what is not used and why.
 
 ## Explanation

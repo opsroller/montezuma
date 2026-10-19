@@ -103,6 +103,7 @@ struct Profile {
     int msaa = 0;  // 0, 2, 4 or 8 samples
     bool smaa = false;
     int anisotropy = 4;  // 1 (off), 2, 4, 8 or 16
+    bool debanding = false;  // dither the 3D output so dark gradients do not band
     float mesh_lod_threshold = 1.0f;  // pixels; higher picks coarser LODs sooner
 
     // Shadows.
@@ -149,7 +150,9 @@ struct ViewportPlan {
     float render_scale;
     bool taa;
 };
-ViewportPlan viewport_plan(const Profile& profile, int output_height);
+// With `native`, the 3D renders at the output size with no upscaler (TAA
+// where the tier would have a temporal upscaler or TAA), as benchmarks run.
+ViewportPlan viewport_plan(const Profile& profile, int output_height, bool native = false);
 
 // The tier variant of an asset path: "dir/file" becomes "dir/<variant>/file".
 // Returns the path unchanged when the profile has no variant folder.

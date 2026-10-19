@@ -114,7 +114,7 @@ def budget_problems(report):
                             f"({budget_ms:.2f} ms budget + {tol * 100:.0f}%)")
     display = report.get("display") or {}
     hz = display.get("refresh_hz")
-    if display.get("vsync") != "disabled" and isinstance(hz, (int, float)) and 0 < hz < 60.0 * (1 - tol):
+    if display.get("vsync") not in ("disabled", "mailbox") and isinstance(hz, (int, float)) and 0 < hz < 60.0 * (1 - tol):
         problems.append(f"display-limited: the display refreshes at {hz:.2f} Hz, below the 60 Hz target")
     if not problems and not budget.get("pass"):
         problems.append(budget.get("reason") or "the runner failed the budget")

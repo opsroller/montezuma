@@ -98,6 +98,7 @@ void test_profiles_match_visual_target() {
     check(high.has(Feature::VoxelGi) && !standard.has(Feature::VoxelGi), "VoxelGI on desktop-high only");
     check(high.has(Feature::AreaLight) && !standard.has(Feature::AreaLight), "area light on desktop-high only");
     check(high.has(Feature::FogFireLight) && !standard.has(Feature::FogFireLight), "fire lights fog on high only");
+    check(high.debanding && standard.debanding && !mobile.debanding && !web.debanding, "debanding on desktop tiers only");
     for (Feature f : {Feature::Ssao, Feature::Ssil, Feature::Ssr, Feature::VolumetricFog, Feature::DepthOfField,
                       Feature::HeatHaze, Feature::SubsurfaceScattering, Feature::GemRefraction,
                       Feature::WaterRefraction, Feature::AutoExposure, Feature::FireFlipbook8x8}) {
@@ -149,6 +150,13 @@ void test_viewport_plan() {
           "4K temporal upscale at the 0.5 floor");
     const ViewportPlan std_plan = viewport_plan(profile(Tier::DesktopStandard), 2160);
     check(std_plan.render_scale == 0.77f, "standard ignores output size");
+    const ViewportPlan high_native = viewport_plan(high, 2880, true);
+    check(high_native.scaling == Scaling::Bilinear && high_native.render_scale == 1.0f && high_native.taa,
+          "native: full size, no upscaler, TAA");
+    const ViewportPlan std_native = viewport_plan(profile(Tier::DesktopStandard), 1080, true);
+    check(std_native.render_scale == 1.0f && std_native.taa, "native standard keeps temporal AA as TAA");
+    const ViewportPlan web_native = viewport_plan(profile(Tier::Web), 720, true);
+    check(web_native.render_scale == 1.0f && !web_native.taa, "native web adds no TAA");
 }
 
 void test_variant_path() {

@@ -46,6 +46,7 @@ Profile make_desktop_high() {
     p.render_scale = 1.0f;
     p.taa = true;
     p.anisotropy = 16;
+    p.debanding = true;
     p.sun_shadow_size = 4096;
     p.soft_shadows = SoftShadows::High;
     p.positional_shadow_atlas = 4096;
@@ -68,6 +69,7 @@ Profile make_desktop_standard() {
     p.scaling = Scaling::TemporalUpscale;
     p.render_scale = 0.77f;
     p.anisotropy = 8;
+    p.debanding = true;
     p.sun_shadow_size = 2048;
     p.soft_shadows = SoftShadows::Low;
     p.positional_shadow_atlas = 2048;
@@ -179,7 +181,8 @@ const Profile& profile(Tier tier) {
     return profiles[static_cast<std::size_t>(tier)];
 }
 
-ViewportPlan viewport_plan(const Profile& p, int output_height) {
+ViewportPlan viewport_plan(const Profile& p, int output_height, bool native) {
+    if (native) return {Scaling::Bilinear, 1.0f, p.taa || p.scaling == Scaling::TemporalUpscale};
     if (p.tier == Tier::DesktopHigh && output_height > kHighInternalHeight)
         return {Scaling::TemporalUpscale,
                 std::max(kHighMinScale, static_cast<float>(kHighInternalHeight) / static_cast<float>(output_height)),
