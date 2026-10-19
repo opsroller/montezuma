@@ -5,7 +5,9 @@
 # exceptions, and mixing settings is an ODR hazard on MSVC.
 set(GODOTCPP_DISABLE_EXCEPTIONS OFF CACHE BOOL "" FORCE)
 # godot-cpp 10 is versioned apart from Godot; pick the engine API we target.
-# Must match the Godot pinned in tools/release/godot.env.
+# Godot loads extensions built for an older API, so this may lag the
+# Godot pinned in tools/release/godot.env (4.7 API on 4.8 beta 1: godot-cpp
+# has no 4.8 API yet).
 set(GODOTCPP_API_VERSION "4.7" CACHE STRING "" FORCE)
 # Keep godot-cpp's own warnings out of our -Werror builds.
 set(GODOTCPP_SYSTEM_HEADERS ON CACHE BOOL "" FORCE)
@@ -43,6 +45,16 @@ add_library(montezuma_extension SHARED
   src/bench/replay.cpp
 )
 target_include_directories(montezuma_extension PRIVATE src)
+
+# Hardware ray-traced reflections on the board's pieces (WP-54 spike). Off
+# by default and never needed by a quality tier: it uses Godot's
+# experimental RenderingDevice ray-tracing API, which only Vulkan has.
+# docs/reference/ray-traced-reflections.md
+option(MONTEZUMA_RAY_TRACING "Build the optional ray-traced reflections effect" OFF)
+if(MONTEZUMA_RAY_TRACING)
+  target_sources(montezuma_extension PRIVATE src/render/rt/rt_math.cpp src/render/rt/rt_reflections.cpp)
+  target_compile_definitions(montezuma_extension PRIVATE MONTEZUMA_RAY_TRACING=1)
+endif()
 target_link_libraries(montezuma_extension PRIVATE montezuma_core godot-cpp)
 montezuma_warnings(montezuma_extension)
 

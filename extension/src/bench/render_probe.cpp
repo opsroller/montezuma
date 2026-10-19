@@ -27,6 +27,10 @@
 
 #include "frame_stats.hpp"
 #include "render/backdrop_blur.hpp"
+#include "render/rendering_device_access.hpp"
+#ifdef MONTEZUMA_RAY_TRACING
+#include "render/rt/rt_reflections.hpp"
+#endif
 
 using namespace godot;
 
@@ -158,6 +162,11 @@ Dictionary active_features(Viewport* viewport) {
     f["auto_exposure"] = attrs.is_valid() && attrs->is_auto_exposure_enabled();
     const Ref<BackdropBlur> blur = BackdropBlur::drawing(viewport);
     f["depth_of_field"] = blur.is_valid() && blur->get_enabled();
+#ifdef MONTEZUMA_RAY_TRACING
+    f["rt_reflections"] = RtReflections::tracing();
+#else
+    f["rt_reflections"] = false;
+#endif
 
     f["lightmap_gi"] = c.lightmap_gi > 0;
     f["voxel_gi"] = c.voxel_gi > 0;
@@ -192,7 +201,7 @@ Dictionary device_info(Viewport* viewport) {
     d["rendering_driver"] = rs->get_current_rendering_driver_name();
     d["adapter"] = rs->get_video_adapter_name();
     d["vendor"] = rs->get_video_adapter_vendor();
-    d["api_version"] = rs->get_video_adapter_api_version();
+    d["api_version"] = rendering_server_has("get_video_adapter_api_version") ? rs->get_video_adapter_api_version() : String();
     // Frames from either are no measurement (docs/reference/benchmark.md#budget).
     d["headless"] = DisplayServer::get_singleton()->get_name() == "headless";
     d["software"] = software_adapter(rs->get_video_adapter_name().utf8().get_data());

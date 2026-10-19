@@ -29,10 +29,33 @@ benchmark on the reference Mac mini M4 replaces them.
   p50 23 ms / p95 25.1 ms on `desktop-high` at 1440p (native with TAA)
   against 16.6 ms, and found the depth fog fails readability rules 2
   and 4.
-- Godot 4.7.2 has no hardware ray tracing. Its GI options are
+- Godot 4.7.2 has no built-in hardware ray-traced lighting (its
+  `RenderingDevice` ray-tracing API is plumbing for our own effects; see
+  [About ray tracing](about-ray-tracing.md)). Its GI options are
   `LightmapGI` (baked in the editor, all renderers), `VoxelGI` (Forward+
   only, baked, re-lit every frame), SDFGI (Forward+ only, real-time,
   cascaded) and SSIL (screen space, Forward+ only).
+
+## Sun and sky balance
+
+Daylight reads as daylight when the sun is much brighter than the sky
+light in shade, which gives dark, hard-edged shadows, and when the two
+differ in colour: white-warm sun, cool blue shade. The temple's first
+setup had an 11,000 lux, 4500 K sun under a tan sky, plus a warm colour
+grade that also pulled the shadows down. The sun was too weak against the
+sky to give real shadows, so the scene looked flat, and the tan sky, the
+low sun temperature and the grade turned the stone and the mist brown and
+the whole frame dark.
+
+The temple now has a 30,000 lux, 5800 K sun; a sky that is blue overhead
+and pale blue-grey at the horizon, which lights the shade and the mist;
+a lightmap bake that takes that sky at 0.5 of its 15,000 nits; AgX white
+8 and contrast 1.5; exposure × 0.8, since the auto range (ISO 400 to 480)
+is too narrow to absorb the brighter sun; and a near-neutral grade. With
+the light setting the colour, the mist renders white-grey and the water
+blue. Check any change to these with before-and-after captures of the
+game itself, at the size people play it: the balance shows on the plaza,
+the water and the mist around the board, not in a close look-dev frame.
 
 ## Decision
 
@@ -120,7 +143,7 @@ ambient alone changed nothing on the static stone. The sky fill area light
 and the ambient energy added more on top.
 
 So the lightmap now bakes the theme's sky at a reduced energy
-(`lighting.lightmap.sky_energy`, 0.3), the ambient energy drops from 0.4
+(`lighting.lightmap.sky_energy`, 0.3 at the time, 0.5 since the [sun and sky balance](#sun-and-sky-balance) fix), the ambient energy drops from 0.4
 to 0.15 and the sky fill from 20,000 to 6,000 lm. The braziers go up to
 90,000 lm so their pools of light show against the darker shadows, and
 SSAO goes to intensity 3 (power 1.5, light affect 0.3) so the creases
@@ -182,7 +205,7 @@ own tuning (the veil) owns that rule.
 | Atlas | one 1024² layer (measured), 0.6 MB EXR plus a 42 KB `.lmbake`; max texture size 2048 | Fits every tier's texture budget; on web it loads as an uncompressed half-float texture of about 8 MB in memory |
 | Probes | subdivision 2 | Enough density over the board for the pieces; probes are cheap to sample |
 | Camera attributes | the theme's | Required with physical units, or the bake overflows |
-| Sky | the theme's sky as a custom sky at `lighting.lightmap.sky_energy` (temple 0.3) | Lightmapped surfaces take indirect light only from the bake, so the scene's full sky would light every shadow (WP-60) |
+| Sky | the theme's sky as a custom sky at `lighting.lightmap.sky_energy` (temple 0.5) | Lightmapped surfaces take indirect light only from the bake, so the scene's full sky would light every shadow (WP-60) |
 | Where | `tools/assets/bake_lightmaps.cmake`, editor only (the bake needs RenderingDevice, so it runs on Vulkan, never under Compatibility); the result serves every tier, web included | Godot exposes the bake only through the editor |
 
 ## Costs

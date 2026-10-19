@@ -31,6 +31,24 @@ moves to a new major version or Godot API version.
 ccache is the common choice on Linux. On Windows, sccache has the more
 established MSVC support, so the Windows job uses it.
 
+## Why not a prebuilt godot-cpp package
+
+Building godot-cpp once per version and linking the stored library would
+skip even the cache lookups. godot-cpp 10 has no CMake install or export,
+so the only ready-made prebuilt is the ConanCenter package
+(`godot-cpp/10.0.0`, the same commit as our submodule). Its recipe
+rebuilds godot-cpp's usage requirements by hand and does not match ours:
+it leaves out the static `libstdc++` link on Linux, builds with threads
+on and always defines `THREADS_ENABLED` with `-sUSE_PTHREADS` on the web
+(our web build turns threads off), and compiles the library with
+exceptions off on every platform, defining `_HAS_EXCEPTIONS=0` with MSVC
+(we build with exceptions on). Linking it would quietly change the libraries we
+ship. Using it would mean maintaining our own recipe or overrides, so the
+compiler cache stays: it keeps godot-cpp's own CMake target, flags and
+all, and a hit is the same object a cold compile gives. Developers use
+the same cache locally
+([Build and test](../how-to/build-and-test.md#compile-godot-cpp-only-once)).
+
 ## Why Ninja
 
 CMake's Visual Studio generator hands whole projects to MSBuild and

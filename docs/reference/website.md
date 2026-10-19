@@ -100,7 +100,7 @@ Agreed with the web demo's owner (gameplay-programmer, WP-21/WP-34). The
 canonical copy is [Web demo hand-off in contracts](contracts.md#web-demo-hand-off-owner-gameplay-programmer-wp-21wp-34-consumer-frontend-web-developer-wp-35--agreed);
 this section summarises it for the site.
 
-**Files.** The Godot 4.7 single-threaded web export, named `montezuma`
+**Files.** The Godot 4.8 single-threaded web export, named `montezuma`
 (`montezuma.js`, `montezuma.wasm`, `montezuma.side.wasm`, `montezuma.pck`,
 the audio worklet scripts) and the game's extension library
 `libmontezuma.web.template_release.wasm32.nothreads.wasm`, all in one

@@ -6,7 +6,7 @@ simulation), its colour and brightness (the materials), or how much
 smoke, embers and light it has (the scene). Every setting is listed in
 [Fire](../reference/fire.md). Needs Python 3 with the pinned numpy and
 Pillow ([Check the assets](build-and-test.md#check-the-assets)) and, to
-look at it, Godot 4.7.2 with the extension built
+look at it, Godot 4.8 beta 1 with the extension built
 ([Build and test](build-and-test.md)).
 
 ## Change the flame's shape or motion

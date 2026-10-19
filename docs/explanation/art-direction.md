@@ -177,10 +177,12 @@ the reasoning in [About the atmosphere](about-the-atmosphere.md).
 
 ## Light
 
-Late-afternoon sun from the far left at about 42 degrees, warm white, with
-shadows; sky ambient and sky fill kept low, and the baked sky bounce
-dimmed, so shadows go properly dark and the sun and the four braziers make
-pools of light. AgX tonemapping and a light glow make the flames and gold
+Daylight sun from the far left at about 42 degrees, near white (5800 K),
+under a blue sky that lights the shade and the mist cool; sky ambient and
+sky fill kept low, and the baked sky bounce dimmed so the sun is clearly
+brighter than the shade
+([About lighting](about-lighting.md#sun-and-sky-balance)), so shadows go
+properly dark and the sun and the four braziers make pools of light. AgX tonemapping and a light glow make the flames and gold
 bloom slightly. This is a lighting choice only; no material or motif
 changed, so it adds no claim about Mexica art. The same scene runs on all
 three renderers the profile names (Forward+, Mobile, Compatibility for

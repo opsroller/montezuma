@@ -39,6 +39,7 @@ own folder.
 - [Match3Game](reference/match3-game.md): the game scene's controller, its signals, cues and self-test.
 - [Visual target](reference/visual-target.md): the look per quality tier, frame budgets and acceptance tests.
 - [Fire](reference/fire.md): the brazier fire's simulation, flipbooks, scene, shaders, flickering light and per-tier behaviour.
+- [Ray-traced reflections](reference/ray-traced-reflections.md): the optional hardware ray-traced reflections on the pieces, their build option, flags, defaults and cost.
 - [Quality tiers](reference/quality-tiers.md): the `QualityTiers` autoload, settings key, feature ids, node groups and render settings per tier.
 - [Water](reference/water.md): the temple water channel, its two shaders, parameters, tiers and cost.
 - [Benchmark and readability capture](reference/benchmark.md): the benchmark replay, its JSON report, feature keys and readability checks.
@@ -58,6 +59,7 @@ own folder.
 - [Build and test](how-to/build-and-test.md): build the core and extension, run tests, load the game, capture screenshots.
 - [Export a desktop build](how-to/export-a-desktop-build.md): get or make the Windows, macOS and Linux packages.
 - [Export the web demo](how-to/export-a-web-build.md): get or make the web package and run it in a browser.
+- [Cut a release](how-to/cut-a-release.md): tag a version and publish its packages and notes, from CI or your own machine.
 - [Make a board theme](how-to/make-a-board-theme.md): change the temple look or add a new theme.
 - [Use the identity](how-to/use-the-identity.md): swap the game and site tokens, vendor the fonts, add the band, place the logo, rebuild the 3D key art.
 - [Regenerate or add sounds](how-to/regenerate-or-add-sounds.md): rebuild the generated audio, add a cue.
@@ -82,6 +84,7 @@ own folder.
 - [About the visual identity](explanation/about-the-visual-identity.md): why the twin temple, blue north on the left, why realistic rendered art now leads and the flat marks serve small sizes, what was folded in from the other directions, and the open risks.
 - [About the visual target](explanation/about-the-visual-target.md): why a realistic high-end look, and what Godot can and cannot do with ray tracing.
 - [About the fire](explanation/about-the-fire.md): why a simulated flipbook with motion vectors, why our own simulation, how it stays off the board.
+- [About ray tracing](explanation/about-ray-tracing.md): what the hardware ray-tracing spike tried, what it showed and why it stays off.
 - [About quality tiers](explanation/about-quality-tiers.md): how a tier is picked, why the renderer is fixed per platform, why tiers only switch effects off.
 - [About lighting](explanation/about-lighting.md): baked and real-time GI per tier, why VoxelGI over SDFGI, physical units, height fog and the lighting costs.
 - [About post-processing and the colour grade](explanation/about-post-processing.md): glow before tonemapping, the CDL grade as a LUT and its palette check, backdrop depth of field that follows the camera, and their costs.
@@ -93,6 +96,7 @@ own folder.
 - [About the episode 4 levels](explanation/about-the-episode-4-levels.md): how the one ward is taught, the chain shapes, and why `random` has no target from episode 4.
 - [About the episode 5 levels](explanation/about-the-episode-5-levels.md): how the final episode gets harder through goals and obstacles alone, its new chain shapes, and what the simulator cannot see there.
 - [About the build pipeline](explanation/about-the-build-pipeline.md): why builds compile natively and export once, and how the web demo is built.
+- [About the engine version](explanation/about-the-engine-version.md): why the game builds with a Godot 4.8 beta, what that costs and what stays the same.
 - [Sound direction](explanation/sound-direction.md): why the game sounds the way it does.
 - [About the website](explanation/about-the-website.md): why the front page is the playable intro level and how it hands off to downloads.
 

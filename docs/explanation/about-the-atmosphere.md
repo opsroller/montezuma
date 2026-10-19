@@ -145,12 +145,13 @@ shader to fill.
 ## Lit like mist, not like dust
 
 Mist droplets scatter almost all light and absorb almost none, at every
-colour, so the albedo is near white; the warm late sun gives the mist its
-colour. Since Godot's fog only scatters once, the sun's
-`light_volumetric_fog_energy` is raised to 7 to stand in for the many
-scatterings in mist this thick, which is what makes real mist about as
-bright as a white wall in the same light. Ambient and GI injection are
-low, so mist in shade is dim and slightly cool, and the shadows of the
+colour, so the albedo is near white and the light must not tint it. An
+earlier setup lit it with a 4500 K sun at fog energy 7 under a tan sky,
+and the mist rendered brown. A near-daylight 5800 K sun at fog energy 3
+(Godot's fog only scatters once, so the energy still stands in for the
+many scatterings in real mist) and a pale blue sky, injected at 0.5, now
+light it, and it reads white-grey like real mist. GI injection is low, so
+mist in shade is a little dimmer and cooler, and the shadows of the
 temple and ferns stay dark lanes through it: that is where shafts of light
 come from in real fog. Godot's fog does not shadow itself either, so the
 lower part of each bank scatters three quarters of the light its top

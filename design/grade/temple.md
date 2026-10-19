@@ -8,9 +8,15 @@ this way is in
 
 ## Intent
 
-A gentle primary grade that warms the sunlit limestone and keeps the
-shadows a touch cool, so the board reads as late afternoon in a jungle
-clearing without tinting the pieces.
+A near-neutral grade: slope 1.02, 1.01, 1.0, no offset, power 1,
+saturation 1.04. The light gives the scene its colour (a 5800 K sun and
+a pale blue sky, [About lighting](../../docs/explanation/about-lighting.md#sun-and-sky-balance)).
+The first grade, below, warmed the highlights and pulled the shadows down
+on top of a 4500 K sun and a tan sky; together they turned the stone and
+the mist brown and the scene dark, so it was replaced in the lighting fix
+of 19 October 2026.
+
+First grade (replaced):
 
 | CDL term | Red | Green | Blue | Effect |
 |---|---|---|---|---|
@@ -31,11 +37,21 @@ follows, without loosening any check.
 |---|---|---|---|
 | Contrast | 1.12 | 1.04, in the CDL | with saturation 1.18 it moves ruby 0.078, carnelian 0.052 and lapis 0.043 (limit 0.04) and closes the tritanopia pair by 0.041 (limit 0.005). The passing pairs run from contrast 1.10 at saturation 1.00 to contrast 1.00 at saturation 1.06; 1.04 and 1.04 raises both |
 | Saturation | 1.18 | 1.04, in the CDL | as above; not a second environment adjustment stacked on the LUT |
-| AgX contrast | 1.6 | 1.25 (unchanged) | at 1.6 amethyst on the light tile came within 0.03 luminance of the tile on `mobile`, so rule 4 could not find it (it passes at 1.25: 0.9%); at 4K on `desktop-high` it also doubled the capture noise rule 6 reads (0.26% to 0.49%) |
+| AgX contrast | 1.6 | 1.25 then; 1.5 since the lighting fix of 19 October 2026, where rule 4 passes at 4.5% on `mobile`, `web` and `desktop-high` | at 1.6 amethyst on the light tile came within 0.03 luminance of the tile on `mobile`, so rule 4 could not find it (it passes at 1.25: 0.9%); at 4K on `desktop-high` it also doubled the capture noise rule 6 reads (0.26% to 0.49%) |
 | Glow blend, mips, bloom | soft light, 3 to 7, 0.05 | additive, 2 and 3, 0 | at 4K the soft-light glow spread past a quarter cell over 6.1% of the board at threshold 1.6 and 1.1% at 8 (rule 6 allows 0.1%) |
 | Glow intensity | 0.6 | 0.5 (unchanged) | 0.6 raised `web`'s rule 6 at 4K from 2.8% to 6.1%; on Forward+ it changes nothing at threshold 8 |
 | Glow threshold | 1.6 | 8 (Forward+); 0.6 on mobile and web | at 8 only flames, gem highlights and gold glints bloom |
 | Auto exposure range | — | ISO 400 to 480 (was 300 to 640) | the plaza mist pulled the exposure: rules 2 and 4 failed at 4K |
+
+## Lighting fix, 19 October 2026
+
+The lighting fix set AgX contrast to 1.5 and the grade above to near
+neutral. Readability on dropkick (RTX 4080 SUPER, 2560 × 1440 for
+`desktop-high`): rule 4 passes at 4.5% on `desktop-high`, `mobile` and
+`web` (main before the fix: 8.6% on `desktop-high`), rule 6 at 0.000%,
+rule 2 at 27 to 30% worst cell contrast loss. Rule 5 fails on main and
+still fails, but every closest pair moved apart: on `desktop-high`,
+greyscale 7.04 to 9.63 (shade 0) and 4.84 to 9.24 (shade 1).
 
 ## Palette check
 
@@ -44,29 +60,30 @@ Output of `python3 tools/assets/grade_lut.py` (also run by
 a surface colour by 0.05, and the closest piece pair may come at most
 0.005 closer in any view.
 
-| Colour | OKLab shift |
-|---|---|
-| Colour | OKLab shift, first grade | Now |
-|---|---|---|
-| Ruby | 0.027 | 0.026 |
-| Carnelian | 0.024 | 0.029 |
-| Amethyst | 0.015 | 0.015 |
-| Moonstone | 0.013 | 0.021 |
-| Jade | 0.008 | 0.011 |
-| SunDisc | 0.006 | 0.010 |
-| Lapis | 0.003 | 0.006 |
-| Surfaces (sandstone light and dark, frame, shadow, gold, jungle, torch, glow) | 0.003 to 0.013 | 0.005 to 0.019 |
+Columns: the WP-52 draft grade, the warm grade it became (slope 1.0712,
+1.04, 0.9984; replaced) and the near-neutral grade now in use.
 
-| View | Closest piece pair, ungraded | First grade | Now |
+| Colour | OKLab shift, WP-52 draft | Warm grade (replaced) | Now |
 |---|---|---|---|
-| Normal | 0.155 | 0.169 | 0.172 |
-| Greyscale | 0.002 | 0.014 | 0.013 |
-| Protanopia | 0.008 | 0.007 | 0.005 |
-| Deuteranopia | 0.040 | 0.046 | 0.048 |
-| Tritanopia | 0.123 | 0.119 | 0.119 |
+| Ruby | 0.027 | 0.026 | 0.018 |
+| Carnelian | 0.024 | 0.029 | 0.016 |
+| Amethyst | 0.015 | 0.015 | 0.012 |
+| Moonstone | 0.013 | 0.021 | 0.009 |
+| Jade | 0.008 | 0.011 | 0.009 |
+| SunDisc | 0.006 | 0.010 | 0.007 |
+| Lapis | 0.003 | 0.006 | 0.008 |
+| Surfaces (sandstone light and dark, frame, shadow, gold, jungle, torch, glow) | 0.003 to 0.013 | 0.005 to 0.019 | 0.004 to 0.010 |
+
+| View | Closest piece pair, ungraded | WP-52 draft | Warm grade (replaced) | Now |
+|---|---|---|---|---|
+| Normal | 0.155 | 0.169 | 0.172 | 0.164 |
+| Greyscale | 0.002 | 0.014 | 0.013 | 0.008 |
+| Protanopia | 0.008 | 0.007 | 0.005 | 0.007 |
+| Deuteranopia | 0.040 | 0.046 | 0.048 | 0.043 |
+| Tritanopia | 0.123 | 0.119 | 0.119 | 0.122 |
 
 The grade separates the pieces slightly in normal vision, greyscale and
-deuteranopia, and brings them at most 0.004 closer under protanopia and
+deuteranopia, and brings them at most 0.001 closer under protanopia and
 tritanopia, within the limit. The greyscale pair near zero (ruby, lapis
 and amethyst share a value) is by design: silhouettes separate them.
 
@@ -101,7 +118,7 @@ judged at desktop size, where it runs. Rule 5 (kinds apart in greyscale
 and colour-vision deficiency) fails on every tier before and after the
 grade and moves by less than 0.5: it is a piece design question.
 
-Frames: [before, `desktop-high`](../../docs/images/lookdev/temple-board-before-wp52-desktop-high.jpg),
+Frames (WP-52, before the lighting fix of 19 October 2026): [before, `desktop-high`](../../docs/images/lookdev/temple-board-before-wp52-desktop-high.jpg),
 [after, `desktop-high`](../../docs/images/lookdev/temple-board-post-desktop-high.jpg),
 [after, `web`](../../docs/images/lookdev/temple-board-post-web.jpg),
 [after, `mobile`](../../docs/images/lookdev/temple-board-post-mobile.jpg).

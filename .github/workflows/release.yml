@@ -1,0 +1,85 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
+#
+# Release: a pushed tag vX.Y.Z on main builds every target with the build
+# and web workflows (all three desktop platforms and the web demo, each
+# smoke-tested), then publishes a GitHub release with the packages, their
+# checksums and notes generated from the Conventional Commit titles since
+# the previous release tag (tools/release/changelog.py).
+# Red means the tag is not vX.Y.Z on main, a target failed to build or
+# start, or the release could not be assembled. Reproduce the last step
+# with: python3 tools/release/publish.py --tag vX.Y.Z --dry-run dist
+# Reference: docs/reference/build-pipeline.md#releases
+# How-to: docs/how-to/cut-a-release.md
+name: release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+
+# One run per tag; a release run is never cancelled.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: tag is vX.Y.Z on main
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0 # main and the earlier tags, for the check and the notes
+          persist-credentials: false
+      - name: Check the tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          python3 tools/release/changelog.py check-tag "$TAG"
+          if ! git merge-base --is-ancestor "$TAG^{commit}" origin/main; then
+            echo "::error::$TAG is not on main. Tag a commit of main; see docs/how-to/cut-a-release.md"
+            exit 1
+          fi
+          # The packages are named after this version; another tag on the
+          # same commit could win it and make every package the wrong name.
+          version="$(cmake -P tools/release/version.cmake)"
+          if [ "$version" != "${TAG#v}" ]; then
+            echo "::error::the build version of $TAG is $version. Remove the other release tag on this commit"
+            exit 1
+          fi
+          python3 tools/release/changelog.py notes --ref "$TAG" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  build:
+    needs: check
+    uses: ./.github/workflows/build.yml
+
+  web:
+    needs: check
+    uses: ./.github/workflows/web.yml
+
+  publish:
+    needs: [build, web]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write # create the release and upload its files
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0 # earlier tags, for the notes
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: montezuma-*
+          path: dist
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          python3 tools/release/publish.py --tag "$TAG" --repo "$GITHUB_REPOSITORY" dist
+          cat dist/release/notes.md >> "$GITHUB_STEP_SUMMARY"

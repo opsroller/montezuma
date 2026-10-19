@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
 
 #include "backdrop_blur.hpp"
+#include "rendering_device_access.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -181,7 +182,7 @@ BackdropBlur::BackdropBlur() {
 
 void BackdropBlur::warm() {
     RenderingServer* rs = RenderingServer::get_singleton();
-    if (rs && rs->get_rendering_device() && !blur_pipeline_.is_valid() && !failed_)
+    if (rs && main_rendering_device() && !blur_pipeline_.is_valid() && !failed_)
         rs->call_on_render_thread(callable_mp(this, &BackdropBlur::compile_on_render_thread));
 }
 
@@ -221,7 +222,7 @@ Ref<BackdropBlur> BackdropBlur::under(Node* root) {
 bool BackdropBlur::ensure_pipelines() {
     if (blur_pipeline_.is_valid()) return true;
     if (failed_) return false;
-    RenderingDevice* rd = RenderingServer::get_singleton()->get_rendering_device();
+    RenderingDevice* rd = main_rendering_device();
     if (!rd) return false;
     blur_shader_ = compile(rd, kBlur, "BackdropBlur blur");
     blend_shader_ = compile(rd, kBlend, "BackdropBlur blend");
@@ -246,7 +247,7 @@ bool BackdropBlur::ensure_pipelines() {
 
 void BackdropBlur::free_pipelines() {
     RenderingServer* rs = RenderingServer::get_singleton();
-    RenderingDevice* rd = rs ? rs->get_rendering_device() : nullptr;
+    RenderingDevice* rd = rs ? main_rendering_device() : nullptr;
     if (!rd) return;
     // Freeing a shader frees the pipelines made from it.
     for (RID* rid : {&blur_shader_, &blend_shader_, &linear_sampler_, &nearest_sampler_}) {
@@ -264,7 +265,7 @@ void BackdropBlur::_render_callback(int32_t p_effect_callback_type, RenderData* 
     Ref<RenderSceneBuffersRD> buffers = p_render_data->get_render_scene_buffers();
     RenderSceneData* scene = p_render_data->get_render_scene_data();
     if (buffers.is_null() || !scene) return;
-    RenderingDevice* rd = RenderingServer::get_singleton()->get_rendering_device();
+    RenderingDevice* rd = main_rendering_device();
     // A GPU timestamp orders the whole frame graph around it, so the pass
     // only marks itself when Godot is capturing its own (--gpu-profile).
     if (rd->get_captured_timestamps_count() > 0) rd->capture_timestamp("Backdrop Blur");

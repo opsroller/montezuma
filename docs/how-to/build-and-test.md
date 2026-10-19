@@ -25,6 +25,27 @@ configuring it with Ninja, for example:
 cmake -E rm -rf build-ext
 ```
 
+## Compile godot-cpp only once
+
+godot-cpp is most of the build: about a thousand files. Build through
+[ccache](https://ccache.dev) so it is compiled once per godot-cpp version
+and compiler, and every later build folder, clean rebuild or worktree
+reuses the cached objects (a fresh extension build folder then takes
+seconds, not minutes). Install ccache and set these before configuring:
+
+```sh
+export CMAKE_C_COMPILER_LAUNCHER=ccache
+export CMAKE_CXX_COMPILER_LAUNCHER=ccache
+export CCACHE_BASEDIR="$HOME/src"   # a folder that holds all your checkouts
+```
+
+CMake reads the two launcher variables when it configures a new build
+folder, so an existing folder keeps compiling without the cache until it
+is configured again from scratch. `CCACHE_BASEDIR` makes paths under it
+hash relative, so two checkouts in different folders share the cache.
+`ccache --show-stats` shows the hits. CI does the same (see
+[About CI caching](../explanation/about-ci-caching.md)).
+
 ## Build and test the core only
 
 Needs CMake 3.22+, Ninja and a C++20 compiler. No Godot needed.
@@ -50,7 +71,7 @@ ctest --test-dir build-asan --output-on-failure
 
 ## Build the extension and load the game
 
-Needs the godot-cpp submodule and Godot 4.7.2 (an older Godot refuses to load the extension). The extension is built
+Needs the godot-cpp submodule and Godot 4.8 beta 1, the version in `tools/release/godot.env` (Godot 4.7 or later loads the extension; an older Godot refuses it). The extension is built
 from the root project, never from `extension/` on its own, and in its own
 build folder: CMake caches options, so reusing the core-only `build/`
 would keep the extension off. The library lands in `game/bin/`.
@@ -99,6 +120,46 @@ print an error or a leak at exit:
 ```sh
 godot --headless --path game --quit-after 600 -- --start-level=e1-l01 --quit-after-frames=60
 ```
+
+## Build with ray-traced reflections
+
+The optional ray-traced reflections on the pieces
+([Ray-traced reflections](../reference/ray-traced-reflections.md)) need
+a Vulkan GPU with ray-tracing pipelines (on Linux, or on Windows with
+`--rendering-driver vulkan` before `--`) and a
+window; they do not run headless or on macOS.
+
+1. Configure the extension with the option on, and build:
+
+   ```sh
+   cmake -S . -B build-ext -G Ninja -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON -DMONTEZUMA_RAY_TRACING=ON
+   cmake --build build-ext
+   ctest --test-dir build-ext --output-on-failure
+   ```
+
+2. Run the self-test. It prints six `ok` lines and
+   `RtReflections self-test passed`:
+
+   ```sh
+   godot --path game -- --start-level=e1-l01 --rt-selftest
+   ```
+
+3. Play with the effect on, or see what it traces:
+
+   ```sh
+   godot --path game -- --start-level=e1-l01 --rt-reflections
+   godot --path game -- --start-level=e1-l01 --rt-debug
+   ```
+
+   `--rt-debug` paints pieces it traced from blue, and reflections that
+   hit something green (shown on screen) or red (hidden).
+
+4. Measure it against the same run without it, as in
+   [Run the benchmark](run-the-benchmark.md#check-what-one-effect-or-edit-costs-with-a-short-run), with
+   `-DGAME_ARGS=--rt-reflections`.
+
+Configure with `-DMONTEZUMA_RAY_TRACING=OFF` (the default) to build
+without it again; the flags are then ignored.
 
 ## Build and test on Windows
 
