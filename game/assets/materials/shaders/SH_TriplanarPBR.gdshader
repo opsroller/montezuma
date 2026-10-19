@@ -38,7 +38,7 @@ void fragment() {
 	TriUV t = tri_uv(triplanar_scale, triplanar_sharpness);
 	if (height_depth > 0.0 && t.n.y > 0.0 && t.w.y > 0.01) {
 		vec3 view_obj = normalize(camera_obj - tri_pos);
-		t.y = tri_parallax_y(texture_height, t.y, view_obj, height_depth * triplanar_scale,
+		t.y = tri_parallax_y(texture_height, t.y, t.gy, view_obj, height_depth * triplanar_scale,
 				parallax_min_layers, parallax_max_layers);
 	}
 	vec4 orm = tri_sample(texture_orm, t);

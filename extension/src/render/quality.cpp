@@ -47,7 +47,10 @@ Profile make_desktop_high() {
     p.taa = true;
     p.anisotropy = 16;
     p.sun_shadow_size = 4096;
-    p.soft_shadows = SoftShadows::High;
+    // Medium, not High: at native 4K on an RTX 4080 High cost 3.4 ms more a
+    // frame (11.2 against 7.8 ms GPU) for a mean pixel change of 0.4/255
+    // under TAA.
+    p.soft_shadows = SoftShadows::Medium;
     p.positional_shadow_atlas = 4096;
     p.shadow_casting_lights = 8;
     p.volumetric_fog_size = 64;
