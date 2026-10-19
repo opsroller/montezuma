@@ -34,6 +34,7 @@ own folder.
   [bonus games](reference/rules-bonus-games.md) and [sources](reference/rules-sources.md).
 - [Progression](reference/progression.md): episodes, levels, unlocks, upgrades, trophies, intro level.
 - [Balance targets](reference/balance.md): what the simulator checks each level against.
+- [Progress, save and trophies](reference/progress.md): the player profile, upgrades, trophy ids and the save file format.
 - [Level session](reference/level-session.md): one level by the full rules, its commands, reports and defaults.
 - [Match3Game](reference/match3-game.md): the game scene's controller, its signals, cues and self-test.
 - [Visual target](reference/visual-target.md): the look per quality tier, frame budgets and acceptance tests.
@@ -49,6 +50,7 @@ own folder.
 
 - [About the rules](explanation/about-the-rules.md): which original we follow, and every choice and deviation.
 - [About rule sets and themes](explanation/about-rule-sets-and-themes.md): how mini games fit the design.
+- [About progress and trophies](explanation/about-progress-and-trophies.md): why the save records wins, the choices the spec left open, how trophies are counted.
 
 ## How-to guides
 

@@ -110,6 +110,23 @@ level by the full rules. Commands: `swap(a, b)` -> `optional<MoveReport>`,
 Reports list every step in display order. Fields and defaults:
 [level-session.md](level-session.md).
 
+## Progress and trophies (owner: gameplay-programmer, WP-08) — implemented
+
+`montezuma::Progress` is the player profile: `is_open`, `record_level(id,
+difficulty, LevelPlay)` and `record_bonus(id, passed)` return a `Reward`
+(stars added, trophies newly earned); `upgrades_for(id)` gives the
+`Upgrades` for `LevelSession`; `to_json()` and the non-throwing
+`try_from_json(text)` are the save file. `TrophyWatch` follows one session's
+reports and builds the `LevelPlay`. Details:
+[progress.md](progress.md).
+
+Trophy ids: `first_find`, `chain_reaction`, `demolition`, `totem_keeper`,
+`quick_hands`, `frenzy`, `sharp_eye`, `explorer`, `legend`. The string
+table keys are to become `trophy.<id>.name` and `.desc`; today
+`game/ui/strings.csv` and `TrophiesScreen` still use `t01` to `t09`
+until the wiring follow-up ([#104](https://github.com/opsroller/montezuma/issues/104)). Bonus level ids: `<game>-<tier>`, for
+example `bg_accuracy-1`.
+
 ## Game signals (owner: graphics-programmer, WP-10/WP-26) — implemented
 
 `Match3Game` (C++ node in `extension/src/game/`, placed in `game/scenes/game/game.tscn`)
