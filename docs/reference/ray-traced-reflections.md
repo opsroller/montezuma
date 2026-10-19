@@ -147,7 +147,8 @@ after a 10 s warm-up, 2026-10-19, built from this branch:
 
 75 instances (64 pieces and the board's meshes), 14 BLASes.
 
-With `-DGPU_PROFILE=ON`, 20 s captures run off, on, off: GPU p50 9.06,
+With `-DGPU_PROFILE=ON`, 20 s captures (same machine and settings, the
+monitor's portrait 2160×3840, the same pixel count) run off, on, off: GPU p50 9.06,
 9.78, 9.17 ms (+0.66 against the mean of the two off runs), and the
 `RT Reflections` pass, which includes the per-frame TLAS build and
 uploads, reads 0.69 to 0.70 ms.
