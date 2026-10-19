@@ -109,7 +109,7 @@ except the optional WP-54: nothing goes public until it looks finished.
 |---|---|---|---|---|---|---|
 | 40 | Feel pass | game-designer + graphics-programmer | `extension/src/board/feel.hpp`, [Feel constants](board-view.md#feel-constants) | 28 | timings in the spec feel section set from our own targets and checked in playtests (the original is not studied: owner, 2026-10-19) | todo |
 | 41 | Performance pass | graphics-programmer | with owners | 28, 46, 53, 55 | 60 fps mid-range Android and older iPhones; demo under 40 MB compressed | todo |
-| 42 | Releases and changelog | devops-engineer | `.github/workflows/release.yml`, `tools/release/` | 20 | tag `vX.Y.Z` builds every target and publishes notes from Conventional Commits | todo |
+| 42 | Releases and changelog | devops-engineer | `.github/workflows/release.yml`, `tools/release/` | 20 | tag `vX.Y.Z` builds every target and publishes notes from Conventional Commits | review (`release.yml`, `publish.py`, [Cut a release](../how-to/cut-a-release.md); Linux and web release packages built on dropkick; done once a real tag has run on GitHub Actions, which is unavailable now) |
 | 43 | Store submissions | devops-engineer | `docs/stores/` | 36, 37, 38, 39, 42 | App Store, Google Play and desktop listings prepared; steps needing Charles's accounts listed for him | todo |
 
 Wave 1 is the widest point: 17 packages that only share contracts.

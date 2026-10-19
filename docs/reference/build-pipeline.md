@@ -1,7 +1,9 @@
 # Build pipeline
 
-Facts about the desktop build pipeline in `.github/workflows/build.yml`
-and the web demo build in `.github/workflows/web.yml` ([Web demo](#web-demo)).
+Facts about the desktop build pipeline in `.github/workflows/build.yml`,
+the web demo build in `.github/workflows/web.yml` ([Web demo](#web-demo))
+and the release workflow in `.github/workflows/release.yml`
+([Releases](#releases)).
 Tests run separately in `.github/workflows/tests.yml`.
 
 ## Triggers
@@ -12,9 +14,10 @@ Tests run separately in `.github/workflows/tests.yml`.
 | Push to any other branch | Linux and macOS only, every time; a new push cancels the branch's older run |
 | Pull request from a fork | Linux and macOS only, when it changes `build.yml`, `tools/release/`, `CMakeLists.txt`, `core/`, `extension/`, `game/` or `thirdparty/` (docs-only PRs skip it). A PR from a branch of this repository shows its push runs instead; see [CI pipeline: Triggers](ci-pipeline.md#triggers) |
 | Manual (`workflow_dispatch`) | On demand, from the Actions tab |
+| Called by `release.yml` (`workflow_call`) | For a pushed release tag `vX.Y.Z`; all three platforms |
 
 Windows (`extension (windows)`, the Windows export and `smoke (windows)`)
-runs only on pushes to `main` and manual runs, to keep branch and PR feedback fast.
+runs only on pushes to `main`, release tags and manual runs, to keep branch and PR feedback fast.
 PRs that change the build system also build and test on Windows in the
 [`windows` workflow](ci-pipeline.md#windows-workflow); any other
 Windows-only break shows up on `main` after merge, and the next PR fixes it.
@@ -77,8 +80,9 @@ Archives are packed by `tools/release/package.py` with sorted entries,
 no owners, and every timestamp set to the commit time
 (`SOURCE_DATE_EPOCH`).
 
-Artifacts stay on the Actions run: no job publishes a release, a page or
-a store upload. Open a run in the Actions tab and download them from its
+Artifacts stay on the Actions run: only `release.yml` publishes them, as a
+GitHub release for a tag ([Releases](#releases)); nothing uploads a page
+or a store build. Open a run in the Actions tab and download them from its
 **Artifacts** list (GitHub requires signing in to download).
 
 ### Screenshot rendering
@@ -180,6 +184,11 @@ stamps `game/project.godot`, `run_bench.cmake` writes
 | `web-fetch-emsdk.cmake` (`DIR`) | Installs and activates the pinned Emscripten (`EMSDK_VERSION` in `godot.env`) in `DIR` |
 | `web-export.cmake` (`OUT`, `VERSION`, `GODOT`) | Exports the `Web` preset, checks the download budget and writes the zip and `.sha256` |
 | `web-smoke.py <archive> [browser...]` | Verifies and serves a web package, starts it the way the site does and checks the hand-off events |
+| `changelog.py notes [--ref REF]` | Release notes for `REF` (default `HEAD`): commit titles since the previous release tag that is an ancestor of it |
+| `changelog.py changelog [--next X.Y.Z] [--out FILE]` | The whole `CHANGELOG.md`, one section per release tag, newest first; `--next` adds the untagged commits as `X.Y.Z` |
+| `changelog.py check-tag TAG` | Exits 1 unless `TAG` is `vX.Y.Z` |
+| `publish.py --tag vX.Y.Z [--only T,...] [--repo R] [--out DIR] [--dry-run] DIR...` | Finds each target's package of that version under the `DIR`s, verifies its `.sha256`, writes `SHA256SUMS` and `notes.md` to `--out` (default `dist/release`) and runs `gh release create`, or finishes a draft release for the tag; refuses a published one; `--dry-run` stops before `gh`; each `gh` call stops after 600 s; `MONTEZUMA_GH` names another `gh` (a `.py` file runs with the same Python), which the tests use |
+| `tests/` | Tests for `changelog.py` and `publish.py` against throwaway repositories (CTest `release_tools_tests`) |
 | `web-requirements.txt` | Hash-pinned Python packages for `web-smoke.py` (Playwright), for CPython 3.12 and 3.13 on Linux x86_64 |
 
 ## Export presets
@@ -201,7 +210,7 @@ WebAssembly. It never deploys; the package is the run's artifact.
 
 | Item | Value |
 |---|---|
-| Triggers | Push to any branch (every time); pull requests from forks touching `web.yml`, `tools/release/`, `CMakeLists.txt`, `core/`, `extension/`, `game/` or `thirdparty/`; manual |
+| Triggers | Push to any branch (every time); pull requests from forks touching `web.yml`, `tools/release/`, `CMakeLists.txt`, `core/`, `extension/`, `game/` or `thirdparty/`; manual; called by `release.yml` for a release tag |
 | Runner | `ubuntu-24.04`, one job `web` |
 | Emscripten | 4.0.20 (`EMSDK_VERSION` in `godot.env`, the version Godot 4.7.2's official web templates are built with), cached under `emsdk-<hash of godot.env>` |
 | Extension build | `cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=~/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -DCMAKE_BUILD_TYPE=Release -DMONTEZUMA_BUILD_EXTENSION=ON -DMONTEZUMA_BUILD_TESTS=OFF -DMONTEZUMA_WERROR=ON -DGODOTCPP_TARGET=template_release -DGODOTCPP_THREADS=OFF` with `EM_CONFIG=~/emsdk/.emscripten`, through ccache (`EM_COMPILER_WRAPPER=ccache`, key prefix `build-web-extension`) |
@@ -225,6 +234,54 @@ library, the audio worklet scripts, `montezuma.html` (Godot's page, for a
 quick preview; the site uses its own), `LICENSE.txt`,
 `THIRD-PARTY-NOTICES.txt` and `SOURCE.txt`.
 
+## Releases
+
+`.github/workflows/release.yml` turns a pushed tag into a GitHub
+release. How to cut one: [Cut a release](../how-to/cut-a-release.md).
+
+| Item | Value |
+|---|---|
+| Trigger | Push of a tag matching `v*.*.*`; nothing else |
+| Concurrency | One run per tag, never cancelled |
+| Token | `contents: read`, except `publish`: `contents: write` |
+| Secrets | None; `publish` uses the run's `GITHUB_TOKEN` |
+| Time limits | `tag is vX.Y.Z on main` 5 min; `build` and `web` as their own jobs (longest path 80 min); `publish` 30 min, because finishing a draft takes up to three `gh` calls of at most 600 s each. A whole run ends within 115 min. Releases run only for tags, so no PR or branch run waits on them |
+
+| Job | What it does | Red means |
+|---|---|---|
+| `tag is vX.Y.Z on main` | `changelog.py check-tag`, checks the tagged commit is on `main` and that `version.cmake` gives it the tag's version; prints the notes to the run summary | The tag is not `vX.Y.Z`, not on `main`, or another release tag on the same commit wins the version; nothing is built |
+| `build / ...` | `build.yml` for the tag: all three extensions, exports and smoke tests ([Jobs](#jobs)) | As in [Jobs](#jobs) |
+| `web / web` | `web.yml` for the tag ([Web demo](#web-demo)) | As in [Web demo](#web-demo) |
+| `publish` | Downloads the `montezuma-*` artifacts and runs `publish.py`: creates the release, or finishes a draft an earlier run left | A package or its checksum is missing or wrong, the release for the tag is already published, or `gh` failed |
+
+The version of every package is the tag's (`X.Y.Z`, see
+[Versions](#versions)).
+
+| Release file | Contents |
+|---|---|
+| `montezuma-X.Y.Z-linux-x86_64.tar.gz` | The Linux package |
+| `montezuma-X.Y.Z-windows-x86_64.zip` | The Windows package |
+| `montezuma-X.Y.Z-macos-universal.zip` | The macOS package |
+| `montezuma-X.Y.Z-web.zip` | The web demo |
+| `<each>.sha256` | That file's checksum, `sha256sum` format |
+| `SHA256SUMS` | All four checksums |
+
+The release is titled `Montezuma's X.Y.Z`. Its notes group the
+Conventional Commit titles since the previous release tag:
+
+| Section | Commits |
+|---|---|
+| Breaking changes | `type!:` or a `BREAKING CHANGE:` footer |
+| Features | `feat` |
+| Fixes | `fix` |
+| Performance | `perf` |
+| Other changes | Every other type, and titles that are not Conventional Commits |
+
+`chore(release): ...` commits are left out. A scope is shown in bold
+before the description. The first release (no earlier release tag) has
+no Breaking changes section: those commits go under their type. The notes end with how to check the downloads
+and a link to the tag's source.
+
 ## Not yet covered
 
 - Real code signing and notarization (needs the owner's Apple Developer
@@ -232,5 +289,9 @@ quick preview; the site uses its own), `LICENSE.txt`,
 - Linux arm64 and Windows arm64 packages.
 - Version numbers inside the binaries (Windows file version, macOS
   bundle version).
+- Build provenance and an SBOM for release files (for example
+  `actions/attest-build-provenance`); releases carry only SHA-256 sums.
+- A tag ruleset limiting who may create, move or delete `v*` tags; until
+  then anyone with write access can start a release.
 - Bit-for-bit reproducibility across runners: archives are stable, but
   two runners have not yet been compared.

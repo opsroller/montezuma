@@ -125,6 +125,10 @@ if(MONTEZUMA_BUILD_TESTS)
       WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
     # Read and write text as UTF-8 on Windows too.
     set_tests_properties(site_build_tests PROPERTIES ENVIRONMENT "PYTHONUTF8=1")
+    add_test(NAME release_tools_tests
+      COMMAND "${Python3_EXECUTABLE}" -m unittest discover tools/release/tests
+      WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+    set_tests_properties(release_tools_tests PROPERTIES ENVIRONMENT "PYTHONUTF8=1")
   endif()
   find_program(MONTEZUMA_NODE node)
   if(MONTEZUMA_NODE)
