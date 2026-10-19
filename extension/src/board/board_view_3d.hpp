@@ -118,6 +118,7 @@ private:
     bool in_bounds(godot::Vector2i c) const;
 
     void rebuild();
+    void on_tier_changed(const godot::String& tier);
     // After every tween of the frame, before it is drawn.
     void sync_batches();
     void clear_pieces();

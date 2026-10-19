@@ -104,7 +104,7 @@ one entry (phones, web).
 | Argument (after `--`) | Effect |
 |---|---|
 | `--quality=<tier id or auto>` | Uses that tier for this run without saving it (benchmark captures) |
-| `--quality-selftest` | Switches through every available tier on scratch nodes, checks each switch (environment, groups, shadow budget, sun shadow cascades and material variants of `MI_Gold` and `MI_Lapis`, also after a node leaves and re-enters the tree), prints `QualityTiers self-test: N checks, F failures` |
+| `--quality-selftest` | Switches through every available tier on scratch nodes, checks each switch (environment, groups, shadow budget, sun shadow cascades and material variants of `MI_Gold` and `MI_Ground`, also after a node leaves and re-enters the tree), prints `QualityTiers self-test: N checks, F failures` |
 
 ## Feature ids
 
@@ -158,7 +158,7 @@ switch. The root viewport re-applies on resize.
 
 | Setting | `desktop-high` | `desktop-standard` | `mobile` | `web` |
 |---|---|---|---|---|
-| 3D scaling | bilinear 1.0 with TAA; above 1440p output: temporal upscaler at 0.67, no TAA | temporal upscaler at 0.77 | bilinear 1.0 | bilinear 1.0 |
+| 3D scaling | at most 720 lines: up to 720p output bilinear 1.0 with TAA; above, temporal upscaler at 720 / output height (0.67 at 1080p, 0.5 at 1440p), never below 0.5, no TAA | temporal upscaler at 0.77 | bilinear 1.0 | bilinear 1.0 |
 | Temporal upscaler | MetalFX temporal on Metal, FSR 2.2 elsewhere | same | — | — |
 | MSAA (3D) | off | off | 2× | 2× |
 | Anisotropic filtering | 16× | 8× | 4× | 2× |
@@ -171,7 +171,7 @@ switch. The root viewport re-applies on resize.
 | SSR half size | no | yes | — | — |
 | Volumetric fog froxels (size × depth) | 64 × 64 | 32 × 32 | — | — |
 | Subsurface scattering quality | high | medium | off | off |
-| Texture variant folder | `hi/` | `hi/` | base only | `lo/` |
+| Texture and material variant folder | `hi/` | `hi/` | base only | `lo/` |
 | Pieces batched (`batch_pieces`, [Board view](board-view.md#draw-calls)) | no | no | yes | yes |
 
 Sun shadow cascades apply to every `DirectionalLight3D` as it enters the

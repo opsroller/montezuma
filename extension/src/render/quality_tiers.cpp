@@ -659,14 +659,14 @@ void QualityTiers::run_self_test() {
     sun->set_shadow(true);
     sun->set_shadow_mode(DirectionalLight3D::SHADOW_PARALLEL_4_SPLITS);
     scratch->add_child(sun);
-    // Material variants: gold has a hi/ variant, lapis has none; a material
+    // Material variants: gold has a hi/ variant, ground has none on any tier; a material
     // made in code has no file and is never swapped.
     const String gold_path = "res://assets/materials/temple/MI_Gold.tres";
-    const String lapis_path = "res://assets/materials/temple/MI_Lapis.tres";
+    const String ground_path = "res://assets/materials/temple/MI_Ground.tres";
     ResourceLoader* loader = ResourceLoader::get_singleton();
     const Ref<Material> gold = loader->exists(gold_path) ? Ref<Material>(loader->load(gold_path)) : Ref<Material>();
-    const Ref<Material> lapis = loader->exists(lapis_path) ? Ref<Material>(loader->load(lapis_path)) : Ref<Material>();
-    check(gold.is_valid() && lapis.is_valid(), get_tier(), "temple materials do not load");
+    const Ref<Material> ground = loader->exists(ground_path) ? Ref<Material>(loader->load(ground_path)) : Ref<Material>();
+    check(gold.is_valid() && ground.is_valid(), get_tier(), "temple materials do not load");
     Ref<StandardMaterial3D> made;
     made.instantiate();
     Ref<BoxMesh> box;
@@ -680,7 +680,7 @@ void QualityTiers::run_self_test() {
     plain.instantiate();
     auto* overrides = memnew(MeshInstance3D);
     overrides->set_mesh(plain);
-    overrides->set_surface_override_material(0, lapis);
+    overrides->set_surface_override_material(0, ground);
     overrides->set_material_override(gold);
     scratch->add_child(overrides);
     auto material_path = [](const Ref<Material>& m) { return m.is_valid() ? m->get_path() : String(); };
@@ -733,7 +733,7 @@ void QualityTiers::run_self_test() {
         check(shadowed == std::min(3, p.shadow_casting_lights), id, "shadow-casting light budget");
         check(shadow_splits(sun->get_shadow_mode()) == std::min(4, p.sun_shadow_splits), id, "sun shadow cascades");
         check(get_active_features().size() > 0, id, "active feature list empty");
-        if (gold.is_valid() && lapis.is_valid()) {
+        if (gold.is_valid() && ground.is_valid()) {
             const String gold_variant = resolve_variant(gold_path);
             const String gold_file = to_godot(q::variant_path(to_std(gold_path), p.texture_variant));
             check(gold_variant == (loader->exists(gold_file) ? gold_file : gold_path), id,
@@ -741,7 +741,7 @@ void QualityTiers::run_self_test() {
             check(p.texture_variant != "hi" || gold_variant != gold_path, id, "desktop tier shows the base gold");
             check(material_path(surfaces->get_active_material(0)) == gold_variant, id, "mesh material variant");
             check(material_path(overrides->get_material_override()) == gold_variant, id, "material_override variant");
-            check(material_path(overrides->get_surface_override_material(0)) == lapis_path, id,
+            check(material_path(overrides->get_surface_override_material(0)) == ground_path, id,
                   "material without a variant changed");
             check(surfaces->get_material_overlay() == made, id, "material made in code changed");
             // A pooled node leaves the tree and comes back.
@@ -755,25 +755,25 @@ void QualityTiers::run_self_test() {
             Ref<BoxMesh> gold_box;
             gold_box.instantiate();
             gold_box->set_material(gold);
-            Ref<BoxMesh> lapis_box;
-            lapis_box.instantiate();
-            lapis_box->set_material(lapis);
+            Ref<BoxMesh> ground_box;
+            ground_box.instantiate();
+            ground_box->set_material(ground);
             auto* reshaped = memnew(MeshInstance3D);
             reshaped->set_mesh(gold_box);
             scratch->add_child(reshaped);
             check(material_path(reshaped->get_active_material(0)) == gold_variant, id, "reshaped: gold variant");
-            reshaped->set_mesh(lapis_box);
+            reshaped->set_mesh(ground_box);
             apply_to(reshaped);
-            check(material_path(reshaped->get_active_material(0)) == lapis_path, id,
+            check(material_path(reshaped->get_active_material(0)) == ground_path, id,
                   "mesh changed in the tree keeps the old mesh's material variant");
             scratch->remove_child(reshaped);
             reshaped->set_mesh(gold_box);
             scratch->add_child(reshaped);
             check(material_path(reshaped->get_active_material(0)) == gold_variant, id, "re-entry with gold mesh");
             scratch->remove_child(reshaped);
-            reshaped->set_mesh(lapis_box);
+            reshaped->set_mesh(ground_box);
             scratch->add_child(reshaped);
-            check(material_path(reshaped->get_active_material(0)) == lapis_path, id,
+            check(material_path(reshaped->get_active_material(0)) == ground_path, id,
                   "mesh changed out of the tree re-enters with the old mesh's material variant");
             scratch->remove_child(reshaped);
             memdelete(reshaped);
@@ -800,7 +800,7 @@ void QualityTiers::run_self_test() {
             }
             check(material_path(csg->get_material()) == gold_variant, id, "CSG material variant");
             // The particle mesh changes to one without a variant: the override goes.
-            cpu->set_mesh(lapis_box);
+            cpu->set_mesh(ground_box);
             apply_to(cpu);
             check(cpu->get_material_override().is_null(), id, "particle override kept after its mesh changed");
             for (GeometryInstance3D* g : drawn) {
