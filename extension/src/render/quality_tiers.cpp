@@ -176,6 +176,10 @@ void QualityTiers::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_choice", "choice"), &QualityTiers::set_choice);
     ClassDB::bind_method(D_METHOD("get_tier"), &QualityTiers::get_tier);
     ClassDB::bind_method(D_METHOD("get_detected_tier"), &QualityTiers::get_detected_tier);
+    ClassDB::bind_method(D_METHOD("preview_choice", "choice"), &QualityTiers::preview_choice);
+    ClassDB::bind_method(D_METHOD("set_feature_override", "feature", "mode"), &QualityTiers::set_feature_override);
+    ClassDB::bind_method(D_METHOD("get_feature_override", "feature"), &QualityTiers::get_feature_override);
+    ClassDB::bind_method(D_METHOD("tier_has_feature", "feature"), &QualityTiers::tier_has_feature);
     ClassDB::bind_method(D_METHOD("get_available_tiers"), &QualityTiers::get_available_tiers);
     ClassDB::bind_method(D_METHOD("has_feature", "feature"), &QualityTiers::has_feature);
     ClassDB::bind_method(D_METHOD("get_active_features"), &QualityTiers::get_active_features);
@@ -232,7 +236,7 @@ void QualityTiers::_ready() {
             const PackedStringArray ids = arg.substr(14).split(",", false);
             for (const String& id : ids) {
                 const std::optional<q::Feature> f = q::feature_from_id(to_std(id.strip_edges()));
-                if (f) forced_off_[static_cast<std::size_t>(*f)] = true;
+                if (f) forced_[static_cast<std::size_t>(*f)] = false;
                 else ERR_PRINT("QualityTiers: --quality-off names no feature: " + id);
             }
         }
@@ -321,7 +325,30 @@ void QualityTiers::set_tier(q::Tier tier) {
     tier_ = tier;
     profile_ = q::profile(tier);
     for (std::size_t i = 0; i < q::kFeatureCount; ++i)
-        if (forced_off_[i]) profile_.features[i] = false;
+        if (forced_[i]) profile_.features[i] = *forced_[i];
+}
+
+void QualityTiers::set_feature_override(const String& feature, int64_t mode) {
+    const std::optional<q::Feature> f = q::feature_from_id(to_std(feature));
+    ERR_FAIL_COND_MSG(!f, "QualityTiers: no feature named " + feature);
+    std::optional<bool>& forced = forced_[static_cast<std::size_t>(*f)];
+    const std::optional<bool> wanted = mode < 0 ? std::nullopt : std::optional<bool>(mode > 0);
+    if (forced == wanted) return;
+    forced = wanted;
+    set_tier(tier_);
+    apply_all();
+}
+
+int64_t QualityTiers::get_feature_override(const String& feature) const {
+    const std::optional<q::Feature> f = q::feature_from_id(to_std(feature));
+    if (!f) return -1;
+    const std::optional<bool>& forced = forced_[static_cast<std::size_t>(*f)];
+    return forced ? (*forced ? 1 : 0) : -1;
+}
+
+bool QualityTiers::tier_has_feature(const String& feature) const {
+    const std::optional<q::Feature> f = q::feature_from_id(to_std(feature));
+    return f && q::profile(tier_).has(*f);
 }
 
 void QualityTiers::apply_all() {

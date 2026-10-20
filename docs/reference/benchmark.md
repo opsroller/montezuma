@@ -13,6 +13,7 @@ readability capture and checks that measure a build against the
 |---|---|
 | `game/scenes/bench/bench.tscn` | Board scene plus a `BenchmarkRunner` |
 | `game/scenes/bench/readability.tscn` | Board scene plus a `ReadabilityCapture` |
+| `game/scenes/bench/tuner.tscn` | Board scene plus a `BenchmarkRunner` with `capture = false` (the replay in a loop, no capture, report or size lock) and the [render tuning screen](render-tuner.md) |
 | `extension/src/bench/replay.*` | Godot-free replay planner (`plan_replay`) |
 | `extension/src/bench/frame_stats.hpp` | Godot-free percentiles (`summarize`), budget verdict (`judge_budget`), render-size tracking (`SizeTracker`) |
 | `extension/src/bench/render_probe.*` | Feature list, device info, effect switching |

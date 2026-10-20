@@ -7,12 +7,16 @@
 
 #include "benchmark_runner.hpp"
 #include "readability_capture.hpp"
+#include "render_tuner.hpp"
 
 namespace montezuma::godot_binding {
 
 void register_bench() {
     GDREGISTER_CLASS(BenchmarkRunner);
     GDREGISTER_CLASS(ReadabilityCapture);
+    GDREGISTER_CLASS(TunerSettings);
+    GDREGISTER_CLASS(FrameGraph);
+    GDREGISTER_CLASS(RenderTuner);
 }
 
 }  // namespace montezuma::godot_binding
