@@ -170,6 +170,17 @@ void BenchmarkRunner::read_command_line() {
 
 void BenchmarkRunner::_ready() {
     if (Engine::get_singleton()->is_editor_hint()) return;
+    if (!capture_) {
+        ERR_FAIL_NULL_MSG(view(), "BenchmarkRunner: board_view_path does not point at a BoardView3D.");
+        plan();
+        if (replay_.actions.empty()) return;
+        bench::hide_ui_overlays(get_tree()->get_root());
+        board_.instantiate();
+        restart_replay();
+        phase_ = Phase::Demo;
+        set_process(true);
+        return;
+    }
     read_command_line();
     if (tier_.is_empty()) {
         const QualityTiers* tiers = QualityTiers::get_singleton();
@@ -188,14 +199,8 @@ void BenchmarkRunner::_ready() {
     lock_render_size();
     BoardView3D* v = view();
     ERR_FAIL_NULL_MSG(v, "BenchmarkRunner: board_view_path does not point at a BoardView3D.");
-    try {
-        bench::ReplayConfig config;
-        config.seed = static_cast<std::uint64_t>(seed_);
-        replay_ = bench::plan_replay(config);
-    } catch (const std::exception& e) {
-        ERR_FAIL_MSG(String("BenchmarkRunner: cannot plan the replay: ") + e.what());
-    }
-    ERR_FAIL_COND_MSG(replay_.actions.empty(), "BenchmarkRunner: the replay has no beats.");
+    plan();
+    if (replay_.actions.empty()) return;
 
     const std::size_t frames = static_cast<std::size_t>(std::max(1.0, measure_seconds_)) * kReservedFramesPerSecond;
     for (auto* samples : {&process_ms_, &render_cpu_ms_, &cpu_ms_, &gpu_ms_, &frame_ms_, &draw_calls_, &scene_draw_calls_, &shadow_draw_calls_, &canvas_draw_calls_, &primitives_}) samples->reserve(frames);
@@ -256,9 +261,22 @@ void BenchmarkRunner::on_process_frame() { process_start_usec_ = Time::get_singl
 void BenchmarkRunner::_exit_tree() {
     const Callable stamp = callable_mp(this, &BenchmarkRunner::on_process_frame);
     if (get_tree()->is_connected("process_frame", stamp)) get_tree()->disconnect("process_frame", stamp);
-    if (Viewport* vp = get_viewport()) {
+    Viewport* vp = get_viewport();
+    if (capture_ && vp) {
         RenderingServer::get_singleton()->viewport_set_measure_render_time(vp->get_viewport_rid(), false);
     }
+}
+
+void BenchmarkRunner::plan() {
+    try {
+        bench::ReplayConfig config;
+        config.seed = static_cast<std::uint64_t>(seed_);
+        replay_ = bench::plan_replay(config);
+    } catch (const std::exception& e) {
+        replay_ = {};
+        ERR_FAIL_MSG(String("BenchmarkRunner: cannot plan the replay: ") + e.what());
+    }
+    ERR_FAIL_COND_MSG(replay_.actions.empty(), "BenchmarkRunner: the replay has no beats.");
 }
 
 void BenchmarkRunner::restart_replay() {
@@ -327,6 +345,11 @@ void BenchmarkRunner::sample_frame() {
 void BenchmarkRunner::_process(double) {
     if (phase_ == Phase::Idle || phase_ == Phase::Done) return;
     const uint64_t now = Time::get_singleton()->get_ticks_usec();
+    if (phase_ == Phase::Demo) {
+        BoardView3D* v = view();
+        if (v && !v->is_busy() && now >= hold_until_usec_) play_next_beat();
+        return;
+    }
     const double frame_ms = seconds_between(last_frame_usec_, now) * 1000.0;
     last_frame_usec_ = now;
 
@@ -524,6 +547,8 @@ void BenchmarkRunner::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_disable_vsync"), &BenchmarkRunner::get_disable_vsync);
     ClassDB::bind_method(D_METHOD("set_quit_when_done", "quit"), &BenchmarkRunner::set_quit_when_done);
     ClassDB::bind_method(D_METHOD("get_quit_when_done"), &BenchmarkRunner::get_quit_when_done);
+    ClassDB::bind_method(D_METHOD("set_capture", "capture"), &BenchmarkRunner::set_capture);
+    ClassDB::bind_method(D_METHOD("get_capture"), &BenchmarkRunner::get_capture);
     ClassDB::bind_method(D_METHOD("get_report"), &BenchmarkRunner::get_report);
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "board_view_path", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "BoardView3D"),
                  "set_board_view_path", "get_board_view_path");
@@ -538,6 +563,7 @@ void BenchmarkRunner::_bind_methods() {
     ADD_PROPERTY(PropertyInfo(Variant::VECTOR2I, "render_size"), "set_render_size", "get_render_size");
     ADD_PROPERTY(PropertyInfo(Variant::BOOL, "disable_vsync"), "set_disable_vsync", "get_disable_vsync");
     ADD_PROPERTY(PropertyInfo(Variant::BOOL, "quit_when_done"), "set_quit_when_done", "get_quit_when_done");
+    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "capture"), "set_capture", "get_capture");
     ADD_SIGNAL(MethodInfo("bench_event", PropertyInfo(Variant::STRING, "label"), PropertyInfo(Variant::ARRAY, "cells")));
     ADD_SIGNAL(MethodInfo("finished", PropertyInfo(Variant::STRING, "path")));
 }

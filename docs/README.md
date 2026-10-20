@@ -43,6 +43,7 @@ own folder.
 - [Quality tiers](reference/quality-tiers.md): the `QualityTiers` autoload, settings key, feature ids, node groups and render settings per tier.
 - [Water](reference/water.md): the temple water channel, its two shaders, parameters, tiers and cost.
 - [Benchmark and readability capture](reference/benchmark.md): the benchmark replay, its JSON report, feature keys and readability checks.
+- [Render tuning screen](reference/render-tuner.md): the panel over the board demo with live controls for every render setting and a performance readout.
 - [Benchmark results](reference/benchmark-results.md): measured frame times, feature rows and readability per machine and tier.
 - [Operations](reference/operations.md): cost, flow and quality measures, operations-review findings and the review log.
 - [Style guide](../design/README.md): the visual identity's rendered key art, gold wordmark and flat logo, colour, type, icons, glass UI surfaces, band and imagery rules, approved contrast pairs, font sources and token files.
@@ -72,6 +73,7 @@ own folder.
 - [Make content depend on the quality tier](how-to/make-content-depend-on-the-quality-tier.md): desktop-only nodes, fallbacks, light shadows, texture variants.
 - [Capture the effects showcase](how-to/capture-the-effects-showcase.md): record every totem and power-up effect to frames.
 - [Run the benchmark](how-to/run-the-benchmark.md): measure frame time and check readability on a desktop or a phone.
+- [Tune rendering live](how-to/tune-rendering-live.md): try lighting and effect settings on the running board and see what each costs.
 - [Tune the fire](how-to/tune-the-fire.md): change the brazier fire's simulation, colour or particles and check it.
 - [Tune the fog veil](how-to/tune-the-fog-veil.md): make the mist over the board thicker, thinner or sparser and check it against readability rule 2.
 

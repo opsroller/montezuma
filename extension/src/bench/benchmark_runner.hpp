@@ -60,6 +60,10 @@ public:
     bool get_disable_vsync() const { return disable_vsync_; }
     void set_quit_when_done(bool v) { quit_when_done_ = v; }
     bool get_quit_when_done() const { return quit_when_done_; }
+    // false: only plays the replay, looping, with no capture, report or
+    // size lock (the render tuning screen's demo).
+    void set_capture(bool v) { capture_ = v; }
+    bool get_capture() const { return capture_; }
 
     // The summary written to output_path; empty until the capture ends.
     godot::Dictionary get_report() const { return report_; }
@@ -68,12 +72,13 @@ protected:
     static void _bind_methods();
 
 private:
-    enum class Phase { Idle, Warmup, Measure, Done };
+    enum class Phase { Idle, Demo, Warmup, Measure, Done };
 
     BoardView3D* view() const;
     void read_command_line();
     void lock_render_size();
     godot::Vector2i current_render_size() const;
+    void plan();
     void restart_replay();
     void play_next_beat();
     void sample_frame();
@@ -96,6 +101,7 @@ private:
     bool size_arg_invalid_ = false;
     bool tolerance_arg_invalid_ = false;
     bool quit_when_done_ = true;
+    bool capture_ = true;
 
     godot::Ref<Match3Board> board_;
     bench::Replay replay_;

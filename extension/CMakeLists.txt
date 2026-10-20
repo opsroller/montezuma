@@ -42,6 +42,7 @@ add_library(montezuma_extension SHARED
   src/bench/readability_capture.cpp
   src/bench/register_bench.cpp
   src/bench/render_probe.cpp
+  src/bench/render_tuner.cpp
   src/bench/replay.cpp
 )
 target_include_directories(montezuma_extension PRIVATE src)

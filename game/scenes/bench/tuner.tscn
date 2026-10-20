@@ -1,0 +1,19 @@
+[gd_scene load_steps=2 format=3 uid="uid://bmztunerscene"]
+; SPDX-License-Identifier: GPL-2.0-or-later
+
+[ext_resource type="PackedScene" uid="uid://bmzboardview3d" path="res://scenes/board/board.tscn" id="1_board"]
+
+[node name="Tuner" type="Node3D"]
+
+[node name="Board" parent="." instance=ExtResource("1_board")]
+
+[node name="Demo" type="BenchmarkRunner" parent="."]
+board_view_path = NodePath("../Board/View")
+seed = 52
+capture = false
+
+[node name="Panel" type="CanvasLayer" parent="."]
+
+[node name="RenderTuner" type="RenderTuner" parent="Panel"]
+
+[connection signal="bench_event" from="Demo" to="Board/View" method="play_effect"]

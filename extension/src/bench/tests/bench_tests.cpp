@@ -13,6 +13,7 @@
 #include "frame_stats.hpp"
 #include "montezuma/board.hpp"
 #include "replay.hpp"
+#include "tuner_model.hpp"
 
 using namespace montezuma;
 using namespace montezuma::godot_binding::bench;
@@ -254,6 +255,53 @@ void test_missing_gpu_samples_are_dropped() {
     check(positive_only({0.0, 0.0}).empty(), "no timestamps, no samples");
 }
 
+// ---- Render tuning screen (tuner_model.hpp) ---------------------------------
+
+void test_range_hints() {
+    namespace t = montezuma::godot_binding::tuner;
+    const auto r = t::parse_range_hint("0,16,0.01,or_greater,exp");
+    check(r && r->min == 0.0 && r->max == 16.0 && r->step == 0.01, "range bounds and step");
+    check(r && r->or_greater && r->exp && !r->or_less, "range flags");
+    const auto suffix = t::parse_range_hint("-1, 1, suffix:m");
+    check(suffix && suffix->min == -1.0 && suffix->max == 1.0 && suffix->step == 0.0, "range without a step keeps 0");
+    check(!t::parse_range_hint("5"), "a range needs two bounds");
+    check(!t::parse_range_hint("2,1"), "max below min is refused");
+    check(!t::parse_range_hint("a,b"), "bounds must be numbers");
+    check(t::default_step(0.0, 1.0, false) == 0.01, "a hundredth of 0..1");
+    check(t::default_step(0.0, 16.0, false) == 0.1, "rounded down to 1, 2 or 5 x 10^n");
+    check(t::default_step(0.0, 1000.0, false) == 10.0, "large spans step in tens");
+    check(t::default_step(0.0, 3.0, true) == 1.0, "integers step by one");
+}
+
+void test_enum_hints() {
+    namespace t = montezuma::godot_binding::tuner;
+    const auto plain = t::parse_enum_hint("Off,Low,High");
+    check(plain.size() == 3 && plain[0].value == 0 && plain[2].value == 2 && plain[1].label == "Low", "plain enum counts from 0");
+    const auto valued = t::parse_enum_hint("Windowed:0,Maximized:2,Full:3,Exclusive");
+    check(valued.size() == 4 && valued[1].value == 2 && valued[3].value == 4 && valued[1].label == "Maximized",
+          "explicit values, and the next one after them");
+    const auto numeric = t::parse_enum_hint("1024:1024,2048:2048");
+    check(numeric.size() == 2 && numeric[1].value == 2048 && numeric[1].label == "2048", "numbers as labels");
+    check(t::parse_enum_hint("").empty(), "empty hint, no entries");
+}
+
+void test_frame_window() {
+    namespace t = montezuma::godot_binding::tuner;
+    t::FrameWindow w;
+    check(w.stats(10).frames == 0, "empty window");
+    for (int i = 1; i <= 100; ++i) w.push({static_cast<double>(i), 1.0, i % 2 == 0 ? 2.0 : 0.0});
+    const t::WindowStats s = w.stats(100);
+    check(s.frames == 100 && std::abs(s.frame_mean - 50.5) < 1e-9, "mean frame time");
+    check(s.frame_p99 == 99.0 && s.frame_max == 100.0, "nearest-rank p99 and max");
+    check(std::abs(s.fps - 1000.0 * 100.0 / 5050.0) < 1e-9, "fps over the window's time");
+    check(s.gpu_mean == 2.0, "frames without GPU timing are left out");
+    const t::WindowStats last = w.stats(10);
+    check(last.frames == 10 && std::abs(last.frame_mean - 95.5) < 1e-9, "only the newest frames");
+    for (std::size_t i = 0; i < t::FrameWindow::kCapacity; ++i) w.push({1.0, 0.0, 0.0});
+    check(w.size() == t::FrameWindow::kCapacity && w.at(0).frame_ms == 1.0, "old frames roll out");
+    check(w.stats(1000).gpu_mean == 0.0, "no GPU timing at all reads 0");
+}
+
 int main() {
     test_nearest_rank_percentiles();
     test_replay_is_deterministic();
@@ -273,6 +321,9 @@ int main() {
     test_too_few_frames_fail();
     test_unmeasured_runs_do_not_pass();
     test_missing_gpu_samples_are_dropped();
+    test_range_hints();
+    test_enum_hints();
+    test_frame_window();
     std::printf("%d checks, %d failures\n", checks, failures);
     return failures == 0 ? 0 : 1;
 }

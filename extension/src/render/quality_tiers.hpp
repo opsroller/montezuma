@@ -4,6 +4,7 @@
 #pragma once
 
 #include <array>
+#include <optional>
 
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/classes/packed_scene.hpp>
@@ -65,6 +66,18 @@ public:
     godot::String get_choice() const { return choice_; }
     void set_choice(const godot::String& choice);
 
+    // Applies a choice for this run only, without saving it (the render
+    // tuning screen's tier list).
+    void preview_choice(const godot::String& choice) { switch_to(choice, false); }
+
+    // Per-feature overrides on top of the tier for this run, as the tuning
+    // screen sets them: 1 forces the feature on, 0 off, -1 follows the tier.
+    // `-- --quality-off=` starts its features at 0. Re-applies at once.
+    void set_feature_override(const godot::String& feature, int64_t mode);
+    int64_t get_feature_override(const godot::String& feature) const;
+    // Whether the active tier itself has the feature, overrides aside.
+    bool tier_has_feature(const godot::String& feature) const;
+
     // The tier in effect and the one auto would pick.
     godot::String get_tier() const;
     godot::String get_detected_tier() const;
@@ -88,7 +101,7 @@ public:
     // Loaders call it when a theme loads.
     void preload_variants(const godot::Ref<godot::PackedScene>& scene);
 
-    // The tier's profile, less any features `-- --quality-off=` turned off.
+    // The tier's profile with the feature overrides applied.
     const quality::Profile& get_profile() const { return profile_; }
 
     // The tier's feature, unless this GPU cannot run it: volumetric fog
@@ -132,9 +145,10 @@ private:
     bool atomic_storage_ = true;
     quality::Tier tier_ = quality::Tier::DesktopStandard;
     quality::Profile profile_ = quality::profile(quality::Tier::DesktopStandard);
-    // Features `-- --quality-off=ssao,glow` turns off for this run, on every
-    // tier, so the cost of one effect can be measured against the rest.
-    std::array<bool, quality::kFeatureCount> forced_off_{};
+    // Features forced on or off for this run, on every tier:
+    // `-- --quality-off=ssao,glow` (so the cost of one effect can be
+    // measured against the rest) and the tuning screen's toggles.
+    std::array<std::optional<bool>, quality::kFeatureCount> forced_{};
     // `-- --quality-native`: 3D at the output size, no upscaler.
     bool native_ = false;
     godot::String choice_ = "auto";

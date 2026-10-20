@@ -40,6 +40,10 @@ Autoload `/root/QualityTiers`; from C++ `QualityTiers::get_singleton()`
 |---|---|---|
 | `get_choice()` | String | The saved setting: `auto` or a tier id |
 | `set_choice(choice)` | — | Saves the setting to `user://quality.cfg` and applies it at once. A tier the running method cannot show is refused with a warning and nothing changes |
+| `preview_choice(choice)` | — | Applies `auto` or a tier id for this run only, without saving it (the [render tuning screen](render-tuner.md)) |
+| `set_feature_override(id, mode)` | — | Forces a [feature](#feature-ids) on (1) or off (0) on every tier for this run, or back to the tier (-1), and re-applies at once. `--quality-off` starts its features at 0 |
+| `get_feature_override(id)` | int | 1, 0 or -1, as set above |
+| `tier_has_feature(id)` | bool | Whether the active tier itself has the feature, overrides aside |
 | `get_tier()` | String | The tier in effect |
 | `get_detected_tier()` | String | The tier `auto` picks on this machine |
 | `get_available_tiers()` | PackedStringArray | Tier ids `set_choice` accepts here, highest first |
