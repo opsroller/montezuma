@@ -80,6 +80,8 @@ private:
     const tuner::FrameWindow* window_ = nullptr;
     godot::PackedVector2Array frame_points_;
     godot::PackedVector2Array gpu_points_;
+    double top_ms_ = 0.0;
+    godot::String top_label_;
 };
 
 // The render tuning screen (docs/reference/render-tuner.md): a panel over

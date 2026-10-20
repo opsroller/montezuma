@@ -199,13 +199,22 @@ void FrameGraph::_draw() {
     top = std::min(top, 100.0);
     const auto y_of = [&](double v) { return size.y - static_cast<float>(std::min(v, top) / top) * size.y; };
     const Ref<Font> font = get_theme_default_font();
-    for (const auto& [line_ms, label] : {std::pair{1000.0 / 120.0, "120 fps"}, std::pair{1000.0 / 60.0, "60 fps"}}) {
+    // Labels made once, so a redraw allocates nothing.
+    static const String k120 = "120 fps", k60 = "60 fps", kFrame = "frame", kGpu = "GPU";
+    for (const auto& [line_ms, label] : {std::pair{1000.0 / 120.0, &k120}, std::pair{1000.0 / 60.0, &k60}}) {
         const float y = y_of(line_ms);
         draw_dashed_line(Vector2(0, y), Vector2(size.x, y), Color(1, 1, 1, 0.3f), 1.0f, 4.0f);
-        if (font.is_valid()) draw_string(font, Vector2(4, y - 2), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 10);
+        if (font.is_valid()) draw_string(font, Vector2(4, y - 2), *label, HORIZONTAL_ALIGNMENT_LEFT, -1, 10);
     }
-    frame_points_.resize(static_cast<int64_t>(n));
-    gpu_points_.resize(static_cast<int64_t>(n));
+    if (top != top_ms_) {
+        top_ms_ = top;
+        top_label_ = String::num(top, 0) + " ms";
+    }
+    std::size_t gpu_count = 0;
+    for (std::size_t i = 0; i < n; ++i) gpu_count += window_->at(i).gpu_ms > 0.0 ? 1 : 0;
+    // Sized only when the counts change: once the window is full they stay put.
+    if (frame_points_.size() != static_cast<int64_t>(n)) frame_points_.resize(static_cast<int64_t>(n));
+    if (gpu_points_.size() != static_cast<int64_t>(gpu_count)) gpu_points_.resize(static_cast<int64_t>(gpu_count));
     const float dx = size.x / static_cast<float>(tuner::FrameWindow::kCapacity - 1);
     const float x0 = size.x - dx * static_cast<float>(n - 1);
     int64_t gpu_n = 0;
@@ -215,15 +224,14 @@ void FrameGraph::_draw() {
         frame_points_.set(static_cast<int64_t>(i), Vector2(x, y_of(s.frame_ms)));
         if (s.gpu_ms > 0.0) gpu_points_.set(gpu_n++, Vector2(x, y_of(s.gpu_ms)));
     }
-    gpu_points_.resize(gpu_n);
     draw_polyline(frame_points_, Color(0.92f, 0.92f, 0.95f), 1.5f);
     if (gpu_n > 1) draw_polyline(gpu_points_, Color(1.0f, 0.62f, 0.2f), 1.5f);
     if (font.is_valid()) {
-        draw_string(font, Vector2(size.x - 150, 12), "frame", HORIZONTAL_ALIGNMENT_LEFT, -1, 10,
+        draw_string(font, Vector2(size.x - 150, 12), kFrame, HORIZONTAL_ALIGNMENT_LEFT, -1, 10,
                     Color(0.92f, 0.92f, 0.95f));
-        draw_string(font, Vector2(size.x - 100, 12), "GPU", HORIZONTAL_ALIGNMENT_LEFT, -1, 10,
+        draw_string(font, Vector2(size.x - 100, 12), kGpu, HORIZONTAL_ALIGNMENT_LEFT, -1, 10,
                     Color(1.0f, 0.62f, 0.2f));
-        draw_string(font, Vector2(size.x - 60, 12), String::num(top, 0) + " ms", HORIZONTAL_ALIGNMENT_LEFT, -1, 10);
+        draw_string(font, Vector2(size.x - 60, 12), top_label_, HORIZONTAL_ALIGNMENT_LEFT, -1, 10);
     }
 }
 
@@ -952,15 +960,17 @@ void RenderTuner::sync_controls() {
 }
 
 void RenderTuner::reset_all() {
-    if (QualityTiers* tiers = QualityTiers::get_singleton()) {
-        for (std::size_t i = 0; i < q::kFeatureCount; ++i)
-            tiers->set_feature_override(String(std::string(q::feature_id(static_cast<q::Feature>(i))).c_str()), -1);
-        tiers->preview_choice(original_choice_);
-    }
+    // Saved values first, the tier last: a value first shown under a feature
+    // override or another tier is then put right by the tier itself.
     const uint64_t quality_id = quality_.is_valid() ? quality_->get_instance_id() : 0;
     for (const Original& o : originals_) {
         if (uint64_t(o.object) == quality_id) continue;
         if (Object* object = ObjectDB::get_instance(o.object)) object->set(o.property, o.value);
+    }
+    if (QualityTiers* tiers = QualityTiers::get_singleton()) {
+        for (std::size_t i = 0; i < q::kFeatureCount; ++i)
+            tiers->set_feature_override(String(std::string(q::feature_id(static_cast<q::Feature>(i))).c_str()), -1);
+        tiers->preview_choice(original_choice_);
     }
     sync_controls();
 }
@@ -1082,6 +1092,11 @@ void RenderTuner::run_self_test() {
             UtilityFunctions::printerr("RenderTuner self-test FAIL: ", what);
         }
     };
+    QualityTiers* tiers = QualityTiers::get_singleton();
+    // A feature changed before its section is first opened: reset must still
+    // bring it back (the saved value is then the overridden one).
+    const bool glow_case = tiers && tiers->tier_has_feature("glow");
+    if (glow_case) tiers->set_feature_override("glow", 0);
     rebuild();
     // Open every section, nested ones included, as a person clicking through would.
     for (std::size_t i = 0; i < sections_.size(); ++i) {
@@ -1102,8 +1117,12 @@ void RenderTuner::run_self_test() {
     }
     check(changed == 0, String::num_int64(changed) + " settings changed when written back unchanged");
 
-    QualityTiers* tiers = QualityTiers::get_singleton();
     auto* env = Object::cast_to<Environment>(environments_.empty() ? nullptr : ObjectDB::get_instance(environments_[0]));
+    if (glow_case && env) {
+        reset_all();
+        check(tiers->has_feature("glow") && env->is_glow_enabled(),
+              "reset turns glow back on after it was off when its section first opened");
+    }
     if (tiers && env && tiers->tier_has_feature("glow")) {
         // The feature list forces glow off; the environment follows.
         const int64_t row = find_binding(quality_.ptr(), "glow");
