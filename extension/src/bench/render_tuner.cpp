@@ -604,7 +604,7 @@ void RenderTuner::scan() {
         Node* node = stack.back();
         stack.pop_back();
         if (node == this) continue;
-        for (int64_t i = node->get_child_count(true) - 1; i >= 0; --i) stack.push_back(node->get_child(i, true));
+        for (int32_t i = node->get_child_count(true) - 1; i >= 0; --i) stack.push_back(node->get_child(i, true));
         const auto name_after = [this, node](const Ref<Resource>& r) {
             if (r.is_valid() && !titles_.has(r->get_instance_id())) titles_[r->get_instance_id()] = node->get_name();
         };
@@ -654,7 +654,7 @@ void RenderTuner::rebuild() {
     bindings_.clear();
     builders_.clear();
     sections_.clear();
-    for (int64_t i = section_box_->get_child_count() - 1; i >= 0; --i) {
+    for (int32_t i = section_box_->get_child_count() - 1; i >= 0; --i) {
         Node* child = section_box_->get_child(i);
         section_box_->remove_child(child);
         child->queue_free();
@@ -1054,7 +1054,7 @@ void RenderTuner::update_readout() {
 
     // Per-pass GPU times exist only when Godot captures timestamps (--gpu-profile).
     RenderingDevice* rd = rs->get_rendering_device();
-    const int64_t count = rd ? rd->get_captured_timestamps_count() : 0;
+    const uint32_t count = rd ? rd->get_captured_timestamps_count() : 0;
     if (count < 2) {
         passes_->set_text("Per-pass GPU times: start Godot with --gpu-profile.");
         return;
@@ -1063,7 +1063,7 @@ void RenderTuner::update_readout() {
     // to the next marker. --gpu-profile adds a marker per pass.
     std::vector<std::pair<double, String>> passes;
     passes.reserve(static_cast<std::size_t>(count));
-    for (int64_t i = 0; i + 1 < count; ++i) {
+    for (uint32_t i = 0; i + 1 < count; ++i) {
         const double ns = static_cast<double>(rd->get_captured_timestamp_gpu_time(i + 1) - rd->get_captured_timestamp_gpu_time(i));
         const String name = rd->get_captured_timestamp_name(i);
         passes.emplace_back(ns / 1e6, name.begins_with("vp_begin") ? String("viewport render") : name);
