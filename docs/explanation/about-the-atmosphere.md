@@ -62,9 +62,9 @@ low air beside the platform is never in their way.
 Rule 2 used to ask for zero fog over the board, and its check compared
 the luma of the board with and without the atmosphere. Once a veil is
 allowed, a luma difference no longer separates what the rule allows from
-what it forbids. The plaza mist brightens the frame and auto exposure
-answers by shifting the whole board by about 7 levels, cell by cell
-alike, with no fog over the board at all; a thin even haze over every
+what it forbids. The plaza mist brightened the frame and auto exposure,
+while the temple had it, answered by shifting the whole board by about
+7 levels, cell by cell alike, with no fog over the board at all; a thin even haze over every
 cell shifts it by about as much. One is fine and the other is what the
 rule forbids.
 

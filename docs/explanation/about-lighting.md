@@ -50,8 +50,8 @@ the whole frame dark.
 The temple now has a 30,000 lux, 5800 K sun; a sky that is blue overhead
 and pale blue-grey at the horizon, which lights the shade and the mist;
 a lightmap bake that takes that sky at 0.5 of its 15,000 nits; AgX white
-8 and contrast 1.5; exposure × 0.8, since the auto range (ISO 400 to 480)
-is too narrow to absorb the brighter sun; and a near-neutral grade. With
+8 and contrast 1.5; a fixed exposure of ISO 440 × 0.8 on every tier
+([Revision: fixed exposure](#revision-fixed-exposure)); and a near-neutral grade. With
 the light setting the colour, the mist renders white-grey and the water
 blue. Check any change to these with before-and-after captures of the
 game itself, at the size people play it: the balance shows on the plaza,
