@@ -57,7 +57,7 @@ cell · — absent
 
 | Feature | `desktop-high` | `desktop-standard` | `mobile` | `web` |
 |---|---|---|---|---|
-| Physical light units, AgX tonemapper, auto exposure | ✔ | ✔ | ✔ (no auto exposure) | ◐ AgX, fixed exposure |
+| Physical light units, AgX tonemapper, fixed exposure (no auto exposure; [About lighting](../explanation/about-lighting.md#revision-fixed-exposure)) | ✔ | ✔ | ✔ | ◐ AgX, fixed exposure |
 | Baked path-traced static lighting (`LightmapGI`, with probes for moving pieces) | ✔ | ✔ | ✔ | ✔ |
 | Real-time bounce light from moving lights (fire flicker, effects) | ✔ `VoxelGI` over the temple, on the pieces (SDFGI only for a theme too big for one volume) | ◐ SSIL | ◐ baked only | ◐ baked only |
 | Screen-space indirect light (SSIL) | ✔ | ✔ | — | — |

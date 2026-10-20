@@ -62,9 +62,9 @@ low air beside the platform is never in their way.
 Rule 2 used to ask for zero fog over the board, and its check compared
 the luma of the board with and without the atmosphere. Once a veil is
 allowed, a luma difference no longer separates what the rule allows from
-what it forbids. The plaza mist brightens the frame and auto exposure
-answers by shifting the whole board by about 7 levels, cell by cell
-alike, with no fog over the board at all; a thin even haze over every
+what it forbids. The plaza mist brightened the frame and auto exposure,
+while the temple had it, answered by shifting the whole board by about
+7 levels, cell by cell alike, with no fog over the board at all; a thin even haze over every
 cell shifts it by about as much. One is fine and the other is what the
 rule forbids.
 
@@ -171,6 +171,9 @@ did with no fog at all (mean RGB (162, 135, 114) against (163, 136, 114)
 without fog, 1920×1080, `e1-l01`, frame 150, RTX 4080 SUPER). WP-60 later
 lowered it to 0.32 on purpose, for darker sunlit stone; see
 [About lighting: Revision](about-lighting.md#revision-darker-shadows-wp-60).
+The temple has since turned auto exposure off
+([About lighting: Revision: fixed exposure](about-lighting.md#revision-fixed-exposure)),
+so the mist no longer moves the exposure at all.
 
 ## Dust
 
