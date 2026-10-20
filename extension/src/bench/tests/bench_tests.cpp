@@ -260,13 +260,13 @@ void test_missing_gpu_samples_are_dropped() {
 void test_range_hints() {
     namespace t = montezuma::godot_binding::tuner;
     const auto r = t::parse_range_hint("0,16,0.01,or_greater,exp");
-    check(r && r->min == 0.0 && r->max == 16.0 && r->step == 0.01, "range bounds and step");
-    check(r && r->or_greater && r->exp && !r->or_less, "range flags");
+    check(r.valid && r.min == 0.0 && r.max == 16.0 && r.step == 0.01, "range bounds and step");
+    check(r.valid && r.or_greater && r.exp && !r.or_less, "range flags");
     const auto suffix = t::parse_range_hint("-1, 1, suffix:m");
-    check(suffix && suffix->min == -1.0 && suffix->max == 1.0 && suffix->step == 0.0, "range without a step keeps 0");
-    check(!t::parse_range_hint("5"), "a range needs two bounds");
-    check(!t::parse_range_hint("2,1"), "max below min is refused");
-    check(!t::parse_range_hint("a,b"), "bounds must be numbers");
+    check(suffix.valid && suffix.min == -1.0 && suffix.max == 1.0 && suffix.step == 0.0, "range without a step keeps 0");
+    check(!t::parse_range_hint("5").valid, "a range needs two bounds");
+    check(!t::parse_range_hint("2,1").valid, "max below min is refused");
+    check(!t::parse_range_hint("a,b").valid, "bounds must be numbers");
     check(t::default_step(0.0, 1.0, false) == 0.01, "a hundredth of 0..1");
     check(t::default_step(0.0, 16.0, false) == 0.1, "rounded down to 1, 2 or 5 x 10^n");
     check(t::default_step(0.0, 1000.0, false) == 10.0, "large spans step in tens");

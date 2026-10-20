@@ -860,25 +860,25 @@ void RenderTuner::add_property_row(VBoxContainer* box, Object* object, const Dic
     } else {
         const bool integer = type == Variant::INT;
         b.integer_range = integer;
-        const std::optional<tuner::RangeHint> range =
-            hint == PROPERTY_HINT_RANGE ? tuner::parse_range_hint(hint_string.utf8().get_data()) : std::nullopt;
+        const tuner::RangeHint range =
+            hint == PROPERTY_HINT_RANGE ? tuner::parse_range_hint(hint_string.utf8().get_data()) : tuner::RangeHint{};
         auto* spin = memnew(SpinBox);
         spin->add_theme_font_size_override("font_size", kFontSize);
         spin->set_custom_minimum_size(Vector2(86, 0));
         spin->set_select_all_on_focus(true);
-        if (range) {
-            const double step = range->step > 0.0 ? range->step : tuner::default_step(range->min, range->max, integer);
+        if (range.valid) {
+            const double step = range.step > 0.0 ? range.step : tuner::default_step(range.min, range.max, integer);
             auto* slider = memnew(HSlider);
             slider->set_h_size_flags(SIZE_EXPAND_FILL);
             slider->set_custom_minimum_size(Vector2(90, 0));
             slider->set_v_size_flags(SIZE_SHRINK_CENTER);
             for (Range* r : {static_cast<Range*>(slider), static_cast<Range*>(spin)}) {
-                r->set_min(range->min);
-                r->set_max(range->max);
+                r->set_min(range.min);
+                r->set_max(range.max);
                 r->set_step(step);
-                r->set_allow_greater(range->or_greater);
-                r->set_allow_lesser(range->or_less);
-                if (range->exp && range->min > 0.0) r->set_exp_ratio(true);
+                r->set_allow_greater(range.or_greater);
+                r->set_allow_lesser(range.or_less);
+                if (range.exp && range.min > 0.0) r->set_exp_ratio(true);
             }
             // Typed values may go past the slider's ends when the hint allows it.
             slider->set_value_no_signal(value);

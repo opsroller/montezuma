@@ -53,7 +53,10 @@ inline std::optional<double> to_number(std::string_view s) {
 }  // namespace detail
 
 // A PROPERTY_HINT_RANGE hint string: "min,max[,step][,or_greater][,or_less][,exp][,suffix:m]...".
+// `valid` is false when the hint is not a range. (A plain struct rather than
+// std::optional: GCC's -Wmaybe-uninitialized misreads the optional at -O3.)
 struct RangeHint {
+    bool valid = false;
     double min = 0.0;
     double max = 1.0;
     double step = 0.0;  // 0: the caller picks one
@@ -62,13 +65,14 @@ struct RangeHint {
     bool exp = false;
 };
 
-inline std::optional<RangeHint> parse_range_hint(std::string_view hint) {
+inline RangeHint parse_range_hint(std::string_view hint) {
+    RangeHint r;
     const std::vector<std::string_view> parts = detail::split(hint, ',');
-    if (parts.size() < 2) return std::nullopt;
+    if (parts.size() < 2) return r;
     const std::optional<double> lo = detail::to_number(parts[0]);
     const std::optional<double> hi = detail::to_number(parts[1]);
-    if (!lo || !hi || *hi < *lo) return std::nullopt;
-    RangeHint r;
+    if (!lo || !hi || *hi < *lo) return r;
+    r.valid = true;
     r.min = *lo;
     r.max = *hi;
     for (std::size_t i = 2; i < parts.size(); ++i) {
