@@ -123,7 +123,7 @@ target names.
 | `voxel_gi` | nodes in `quality:voxel_gi` | ✔ | — | — | — |
 | `volumetric_fog` | `Environment.volumetric_fog_enabled`; also off, with its fallback nodes shown, on a GPU without atomic `R32_UINT` storage images (Godot's fog needs them; some virtual GPUs lack them and crash) | ✔ | ✔ | — | — |
 | `fog_fire_light` | volumetric fog energy of lights in `quality_fog_light` | ✔ | — | — | — |
-| `auto_exposure` | `CameraAttributes.auto_exposure_enabled` | ✔ | ✔ | — | — |
+| `auto_exposure` | `CameraAttributes.auto_exposure_enabled`, only where the theme turns it on (the temple leaves it off) | ✔ | ✔ | — | — |
 | `depth_of_field` | `CameraAttributesPractical` far and near blur (the board camera places the far blur behind the board, [Board view](board-view.md#camera-fit)) | ✔ | ✔ | — | — |
 | `glow` | `Environment.glow_enabled`; the threshold comes from the environment's `glow_hdr_threshold_<tier>` metadata when it has one ([Board themes](board-themes.md#post-processing)) | ✔ | ✔ | ✔ | ✔ |
 | `subsurface_scattering` | nodes in `quality:subsurface_scattering`; SSS quality high, medium, off | ✔ | ✔ | — | — |

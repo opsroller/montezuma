@@ -585,11 +585,15 @@ def main():
         "[sub_resource type=\"CameraAttributesPractical\" id=\"camera\"]",
         f"exposure_sensitivity = {exposure['sensitivity']}",
         f"exposure_multiplier = {exposure['multiplier']}",
-        "auto_exposure_enabled = true",
-        f"auto_exposure_scale = {exposure['auto_scale']}",
-        f"auto_exposure_speed = {exposure['auto_speed']}",
-        f"auto_exposure_min_sensitivity = {exposure['auto_min_sensitivity']}",
-        f"auto_exposure_max_sensitivity = {exposure['auto_max_sensitivity']}",
+        # Auto exposure is the theme's choice ("auto"); the quality tiers
+        # switch it off where they cannot afford it but never turn it on.
+        *([
+            "auto_exposure_enabled = true",
+            f"auto_exposure_scale = {exposure['auto_scale']}",
+            f"auto_exposure_speed = {exposure['auto_speed']}",
+            f"auto_exposure_min_sensitivity = {exposure['auto_min_sensitivity']}",
+            f"auto_exposure_max_sensitivity = {exposure['auto_max_sensitivity']}",
+        ] if exposure["auto"] else []),
         # Depth of field on the backdrop only: BoardCamera3D moves the far
         # blur to start dof_far_beyond_board metres past the board's far edge
         # whenever it refits, so the board stays sharp at every window size.

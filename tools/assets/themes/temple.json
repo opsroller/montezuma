@@ -501,10 +501,7 @@
     "exposure": {
       "sensitivity": 440,
       "multiplier": 0.8,
-      "auto_scale": 0.32,
-      "auto_speed": 0.5,
-      "auto_min_sensitivity": 400,
-      "auto_max_sensitivity": 480
+      "auto": false
     },
     "sun": {
       "lux": 30000,

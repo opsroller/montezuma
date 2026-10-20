@@ -41,7 +41,7 @@ follows, without loosening any check.
 | Glow blend, mips, bloom | soft light, 3 to 7, 0.05 | additive, 2 and 3, 0 | at 4K the soft-light glow spread past a quarter cell over 6.1% of the board at threshold 1.6 and 1.1% at 8 (rule 6 allows 0.1%) |
 | Glow intensity | 0.6 | 0.5 (unchanged) | 0.6 raised `web`'s rule 6 at 4K from 2.8% to 6.1%; on Forward+ it changes nothing at threshold 8 |
 | Glow threshold | 1.6 | 8 (Forward+); 0.6 on mobile and web | at 8 only flames, gem highlights and gold glints bloom |
-| Auto exposure range | — | ISO 400 to 480 (was 300 to 640) | the plaza mist pulled the exposure: rules 2 and 4 failed at 4K |
+| Auto exposure range | — | ISO 400 to 480 (was 300 to 640); auto exposure off since | the plaza mist pulled the exposure: rules 2 and 4 failed at 4K. Later turned off: the fixed exposure reads darker and more saturated ([About lighting](../../docs/explanation/about-lighting.md#revision-fixed-exposure)) |
 
 ## Lighting fix, 19 October 2026
 

@@ -4,7 +4,7 @@
     "desktop-high": [
       {"row": "Renderer", "key": "rendering_method", "eq": "forward_plus"},
       {"row": "AgX tonemapper", "key": "tonemapper", "eq": "agx"},
-      {"row": "Auto exposure", "key": "auto_exposure", "eq": true},
+      {"row": "Fixed exposure", "key": "auto_exposure", "eq": false},
       {"row": "Baked LightmapGI", "key": "lightmap_gi", "eq": true},
       {"row": "Real-time bounce light (VoxelGI or SDFGI)", "any": [{"key": "voxel_gi", "eq": true}, {"key": "sdfgi", "eq": true}]},
       {"row": "SSIL", "key": "ssil", "eq": true},
@@ -23,7 +23,7 @@
     "desktop-standard": [
       {"row": "Renderer", "key": "rendering_method", "eq": "forward_plus"},
       {"row": "AgX tonemapper", "key": "tonemapper", "eq": "agx"},
-      {"row": "Auto exposure", "key": "auto_exposure", "eq": true},
+      {"row": "Fixed exposure", "key": "auto_exposure", "eq": false},
       {"row": "Baked LightmapGI", "key": "lightmap_gi", "eq": true},
       {"row": "No VoxelGI (SSIL instead)", "key": "voxel_gi", "eq": false},
       {"row": "No SDFGI (SSIL instead)", "key": "sdfgi", "eq": false},

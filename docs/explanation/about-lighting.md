@@ -67,7 +67,8 @@ the water and the mist around the board, not in a close look-dev frame.
    sky and fire without the hue shifts of Filmic. Auto exposure only on
    the desktop tiers (the tier table leaves it off on mobile, and
    Compatibility does not implement it); mobile and web use the theme's
-   fixed sensitivity.
+   fixed sensitivity. The temple has since turned auto exposure off on
+   every tier ([Revision: fixed exposure](#revision-fixed-exposure)).
 2. **`LightmapGI` with probes is the GI every tier shares.** The board and
    backdrop are static, so a path-traced bake carries their bounce light
    and soft occlusion for the cost of one texture sample. The bake's
@@ -195,6 +196,36 @@ and `web` (Compatibility) at 1920 × 1080.
 No rule that passes on `main` fails. Rule 2 on `desktop-high` gets worse
 because the mist stands out more against the darker shadows; the mist's
 own tuning (the veil) owns that rule.
+
+## Revision: fixed exposure
+
+Auto exposure metered the whole frame, and the frame is mostly sunlit
+stone and plaza mist, so it lifted the exposure until the board looked
+washed out: bright, with the gem colours greyed. Switched off, the
+desktop tiers render at the theme's fixed exposure (ISO 440, multiplier
+0.8), the same one mobile and web already used, and the board reads
+darker and richer.
+
+Mean of the board view at 1280 × 720 on `desktop-high` (`e1-l01`, frame
+150, RTX 4080 SUPER), HSV value and saturation:
+
+| | Brightness | Saturation |
+|---|---|---|
+| Auto exposure (ISO 400 to 480, `auto_scale` 0.32) | 0.62 | 0.25 |
+| Fixed exposure | 0.43 | 0.35 |
+
+Readability on `desktop-high` at 540 × 1170, auto exposure against fixed:
+rule 2 worst cell contrast loss 22% to 14% (clear cells 47% to 67%),
+rule 4 6.9% to 6.6%, rule 6 0.000% on both. Rule 5 fails on both, as on
+`main` before; its closest greyscale pair on shade 1 moves from 8.33 to
+6.4 (12.1 needed).
+
+A fixed exposure also means the plaza mist can no longer shift the board
+(see [About the atmosphere](about-the-atmosphere.md#how-rule-2-is-measured)),
+and every tier now shows the board at one exposure. The quality tiers
+keep their `auto_exposure` switch for a theme that wants it: a theme
+turns it on with `lighting.exposure.auto`
+([Board themes](../reference/board-themes.md#lighting)).
 
 ## Bake settings
 
