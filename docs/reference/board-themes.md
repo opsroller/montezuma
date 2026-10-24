@@ -81,8 +81,8 @@ A texture set with `hi: true` is drawn at `hi_size` (2048²) into
 `textures/<theme>/hi/` and box-filtered down to the 1024² base set next
 to it. A material whose theme entry has a `hi` block is written with
 those keys merged in and names the `hi/` set where the set has one; a
-material without a `hi` block names the base set. The Web export preset
-lists `*/hi/*` in `exclude_filter`.
+material without a `hi` block names the base set. Every export preset
+ships both folders: the materials name what they need.
 
 | Material | What it is |
 |---|---|
@@ -195,7 +195,7 @@ the parameter file's `lighting` section:
 | `camera` (`CameraAttributesPractical`) | exposure, on the environment and `LightmapGI` | all | `exposure` (`sensitivity`, `multiplier`, `auto`; with `auto` true also `auto_scale`, `auto_speed`, `auto_min_sensitivity`, `auto_max_sensitivity`) | ISO 440, multiplier 0.8, `auto` false: every tier renders at the same fixed exposure, darker and more saturated than auto exposure made it ([About lighting](../explanation/about-lighting.md#revision-fixed-exposure)) |
 | `Sun` | `DirectionalLight3D`, shadows | all | `sun` (`lux`, `kelvin`, `color`, `angular_distance`, optional `fog_energy` → `light_volumetric_fog_energy`) | 30,000 lux, 5800 K, 0.6°, fog energy 3 (see [Atmosphere](#atmosphere) and [About lighting](../explanation/about-lighting.md#sun-and-sky-balance)) |
 | `Fire1`…`Fire4/Light` | `FlickerLight3D` in each brazier's `PF_BrazierFire` ([Fire](fire.md)), cube-map shadows (dual paraboloid is not supported on the Compatibility renderer) | all | `torch` (`lumens`, `kelvin`, `color`, `size`, `range`) | 90,000 lm, 1900 K, range 4.5 m |
-| `SkyFill` | `AreaLight3D` over the board, not baked | all | `sky_fill` (`transform`, `lumens`, `color`, `size`, `range`) | 6,000 lm, warm (`#ffc98a`), 10 × 10 m |
+| `SkyFill` | `AreaLight3D` over the board, not baked | all | `sky_fill` (`transform`, `lumens`, `color`, `size`, `range`) | 6,000 lm, cool (`#b8d4ff`), 10 × 10 m |
 | `ReflectionProbe` | box-projected probe; leaves out render layer 2 (fire effects, [Fire](fire.md#pf_brazierfire)) | all | `reflection_probe` (`position`, `size`) | 12 × 4 × 12 m |
 | `Lightmap` | `LightmapGI` with probes | all | `lightmap` (`quality`, `bounces`, `texel_scale`, `max_texture_size`, `probes_subdiv`, optional `sky_energy`: bake the theme's sky at this energy instead of the scene's) | medium, 3 bounces, sky 0.5 |
 
@@ -475,8 +475,8 @@ each as `error: <file>: <rule and fix>`:
   `grade/T_Grade_LUT.png` matches the parameters, and its `.import`
   imports it as a 3D texture ([Colour grade](#colour-grade)). Grade LUTs
   are exempt from the texture map rules above.
-- Android, iOS and Web export presets list `*/hi/*` in `exclude_filter`;
-  desktop presets do not.
+- No export preset excludes the `hi/` texture folder: the folded
+  materials name those files.
 - `PROVENANCE.md` has a record for each theme.
 - Every board and backdrop OBJ has a committed `.obj.import` with
   `generate_lightmap_uv2=true`, and each theme has

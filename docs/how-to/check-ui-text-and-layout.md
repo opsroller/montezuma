@@ -15,7 +15,7 @@ hard-coded; a missing closing bracket is clipped text.
 
 ## Largest text
 
-Open Settings and set **Text size** to the maximum (200%). Visit every
+Visit every
 screen: nothing may overlap or leave the window; long lists scroll.
 
 ## Window sizes and safe areas
@@ -26,7 +26,9 @@ godot --path game --resolution 1170x1080
 godot --path game --resolution 2400x1080
 ```
 
-The UI scales from 1280×720 to fit the short side. On phones it also
+The UI is laid out for 1280×720 and scaled by Godot's `canvas_items`
+stretch mode with the `expand` aspect (project settings), so it keeps
+its proportions on every screen. On phones it also
 stays inside the reported safe area (notches, rounded corners).
 
 ## Keyboard and controller only

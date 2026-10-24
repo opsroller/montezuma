@@ -183,10 +183,10 @@ variants, and each export carries only its own:
   material is one file in `game/assets/materials/<theme>/`, and names
   the `hi/` texture set directly where the theme gives that material a
   `hi` block ([Board themes](board-themes.md#texture-sizes)).
-- **Stripping at export.** The Android, iOS and web export presets
-  exclude the desktop-only folders and LOD files with export
-  `exclude_filter`s, so the desktop sets never reach a phone or the web
-  build. The desktop presets keep everything.
+- **Nothing stripped at export.** Since the materials became one set
+  (23 October 2026) every preset ships the texture files they name,
+  the web build included; its size against the 40 MB budget is checked
+  by the export job.
 - **Checked, not trusted.** The asset validator checks that every desktop
   variant has a base variant, and the release checks that the mobile
   install stays under 150 MB and the web demo under 40 MB compressed.

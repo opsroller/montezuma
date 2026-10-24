@@ -13,8 +13,8 @@ names follow the prefixes. Texture sets: each map has the channels and
 colour space of its suffix, is wired to the matching material slot, and
 holds physically plausible values; no material or shader filters
 anisotropically with repeat (it does not compile on 16-slot Metal GPUs);
-every desktop variant under hi/ has a
-base file; mobile and web export presets leave the hi/ variants out.
+every desktop-size texture under hi/ has a
+base file, and no export preset leaves the hi/ folder out.
 Every texture under game/assets/textures has a .import beside it that turns
 mipmaps on (or off on purpose), sets its compression and turns detect_3d off;
 texture maps carry exactly the settings of tools/assets/texture_import.py.
@@ -55,7 +55,7 @@ MAPS = {
 # Shader samplers by colour space: colour data needs source_color, data maps must not have it.
 SRGB_SAMPLERS = {"texture_albedo", "texture_emission"}
 DATA_SAMPLERS = {"texture_normal", "texture_orm", "texture_height", "texture_roughness", "flame_sheet", "motion_sheet"}
-TIERED = "hi"  # desktop variant folder; mobile and web exports leave it out
+TIERED = "hi"  # desktop-size texture folder; the folded materials name these files
 SPDX = "SPDX-License-Identifier: GPL-2.0-or-later"
 HEADERS = {".tscn": "[gd_scene", ".tres": "[gd_resource"}
 

@@ -134,12 +134,12 @@ credits screen and the website both read from it.
 
 These are the caps for everything the mobile and web builds ship.
 Desktop builds also carry larger texture and LOD variants (up to 2048²,
-8k-triangle pieces) that the mobile and web exports strip; per-tier
+8k-triangle pieces); since 23 October 2026 every export ships them, because the materials are one set that names them; per-tier
 budgets, frame times and the look each tier must show are in
 [Visual target](visual-target.md#how-each-tier-gets-its-assets).
 
 - 60 fps on mid-range Android and older iPhones.
-- Pieces under 2k triangles, board under 20k; textures 1024² max.
+- Pieces under 2k triangles, board under 20k; textures 1024² max for the base sets (the `hi/` sets are 2048² and ship everywhere, [Board themes](board-themes.md#texture-sizes)).
 - Install size target under 150 MB on mobile; web demo under 40 MB
   compressed, playable within 10 s on broadband.
 

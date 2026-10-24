@@ -36,6 +36,7 @@ start sends UiRoot the `quit_level` action, so the episode map comes back.
 | `levels_dir` | `res://data/levels` | Level `e<N>-l<NN>` is read from `<levels_dir>/e<N>/l<NN>.json` |
 | `autostart_level` | empty | A level id to start on `_ready` without the menus (for a test scene); empty waits for UiRoot |
 | `autostart_difficulty` | `normal` | `normal` or `hard` |
+| `timer_enabled` | true | Whether the level clock runs; the render tuning screen switches it off to measure a still board |
 | `warning_seconds` | 10 | `time_warning` plays when time left crosses this |
 | `effects_showcase` | false | Look-dev: after `autostart_level`, fires every totem and sets off every power-up in turn, forever (`game/scenes/board/effects/effects_showcase.tscn`) |
 

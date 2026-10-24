@@ -90,7 +90,7 @@ endfunction()
 
 set(log "${work}/smoke.log")
 file(TO_NATIVE_PATH "${log}" log_arg)
-montezuma_run(TIMEOUT 300 RESULT rc COMMAND "${game}" --headless --quit-after 120 --log-file "${log_arg}")
+montezuma_run(TIMEOUT 300 RESULT rc COMMAND "${game}" --headless --xr-mode off --quit-after 120 --log-file "${log_arg}")
 if(EXISTS "${log}")
   file(READ "${log}" text)
   message(NOTICE "${text}")
@@ -125,7 +125,7 @@ function(capture shot frames)
     # The game quits itself after <frames> (--quit-after-frames), stopping
     # its sounds first; Godot's --quit-after, set later, catches a game that
     # keeps running, and the timeout a process that hangs.
-    execute_process(COMMAND "${game}" --rendering-driver ${driver} --fixed-fps 30 --quit-after ${quit_after}
+    execute_process(COMMAND "${game}" --xr-mode off --rendering-driver ${driver} --fixed-fps 30 --quit-after ${quit_after}
         --write-movie "${movie_arg}" --log-file "${slog_arg}" -- "--quit-after-frames=${frames}" ${ARGN}
       TIMEOUT 600 RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE out)
     if(NOT rc MATCHES "^-?[0-9]+$")

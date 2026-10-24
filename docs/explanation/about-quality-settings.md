@@ -86,8 +86,10 @@ it only warns about. So `gen_theme_scenes.py` writes transmittance only
 when a theme's `subsurface` block has a `transmittance` colour, and the
 temple's blocks have only `strength`
 ([Board themes](../reference/board-themes.md#parameter-file)). With that,
-every material of ours compiles on Forward+, Mobile and Compatibility.
-The scattering itself stays on.
+every material of ours compiles on Forward+ and Mobile, and on
+Compatibility too except the fog volume's, whose shader type the
+Compatibility renderer does not have (below). The scattering itself
+stays on.
 
 ## What the tier system did that nothing does now
 
