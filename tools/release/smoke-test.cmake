@@ -102,7 +102,17 @@ file(STRINGS "${log}" started REGEX "Godot Engine")
 if(NOT started)
   montezuma_fail("the game did not start")
 endif()
-montezuma_log_has(errors "${log}" REGEX "ERROR|SCRIPT ERROR|Can't open dynamic library")
+# Lines Godot prints that the project's own settings cause and the shipped
+# game shows too (docs/reference/engine-issues.md; work package 64):
+# - the separate render thread (rendering/driver/threads/thread_model=2,
+#   experimental in Godot 4.8) logs this once at exit on macOS;
+# - with HDR output requested (display/window/hdr/request_hdr_output),
+#   HDR 2D is on, and --write-movie's frame capture on the OpenGL driver
+#   logs this for every frame it converts (Image::linear_to_srgb).
+set(known_engine_lines
+  "This function \\(finalize\\) can only be called from the render thread"
+  "format != FORMAT_RGB8 && format != FORMAT_RGBA8 && format != FORMAT_RGBH && format != FORMAT_RGBAH")
+montezuma_log_has(errors "${log}" REGEX "ERROR|SCRIPT ERROR|Can't open dynamic library" IGNORE ${known_engine_lines})
 if(errors)
   montezuma_fail("engine errors during the smoke run")
 endif()
@@ -148,7 +158,7 @@ function(capture shot frames)
         # to another driver would not fix it. Errors printed at exit (such
         # as resources still in use) reach only the console, not the log.
         file(WRITE "${work}/${shot}.out" "${out}")
-        montezuma_log_has(errors "${slog}" "${work}/${shot}.out" REGEX "ERROR|SCRIPT ERROR")
+        montezuma_log_has(errors "${slog}" "${work}/${shot}.out" REGEX "ERROR|SCRIPT ERROR" IGNORE ${known_engine_lines})
         if(errors)
           montezuma_fail("engine errors while capturing ${shot} with ${driver}")
         endif()
