@@ -137,7 +137,9 @@ function(capture shot frames)
     # keeps running, and the timeout a process that hangs.
     execute_process(COMMAND "${game}" --xr-mode off --rendering-driver ${driver} --fixed-fps 30 --quit-after ${quit_after}
         --write-movie "${movie_arg}" --log-file "${slog_arg}" -- "--quit-after-frames=${frames}" ${ARGN}
-      TIMEOUT 600 RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE out)
+      # 1200 s: the board capture measured 8:53 on GitHub's llvmpipe runner
+      # (2026-10-24, Compatibility content), so twice that is the limit.
+      TIMEOUT 1200 RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE out)
     if(NOT rc MATCHES "^-?[0-9]+$")
       show_output("${out}" "${slog}")
       montezuma_fail("capturing ${shot} with ${driver}: ${rc} (timeout 600 s)")

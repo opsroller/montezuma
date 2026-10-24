@@ -179,6 +179,10 @@ variants, and each export carries only its own:
 | Fire flipbooks | 8×8 sheets | 4×4 sheets | 4×4 sheets |
 | Bake outputs | lightmaps at desktop texel density | lightmaps at mobile density | lightmaps at mobile density |
 
+No Android or iOS export preset exists yet; when one is added, the mobile
+column is produced the way the web column is, by manifest variants
+([Board themes](board-themes.md#manifest)).
+
 - **One material set.** Materials are not varied at run time: each
   material is one file in `game/assets/materials/<theme>/`, and names
   the `hi/` texture set directly where the theme gives that material a

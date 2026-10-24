@@ -247,7 +247,9 @@ minutes on lavapipe (a 0.6 MB EXR atlas).
 exposure to lights and the sky but not to emission. Materials carry
 emission in nits (`emission_intensity`, or the `emission_energy` of
 `SH_Gem`) at 1 nit per unit (`EMISSION_NITS` in `gen_theme_scenes.py`),
-so the web build reads the same value as the others.
+so the web build reads the same value as the others. The `web/` copies
+of the `hi`-block materials carry the same emission values as the
+desktop ones.
 
 ## Colour grade
 
