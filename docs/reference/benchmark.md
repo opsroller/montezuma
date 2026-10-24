@@ -11,7 +11,7 @@ readability capture and checks that measure a build against the
 
 | Path | What |
 |---|---|
-| `game/scenes/bench/bench.tscn` | A `ScenePreloader` (`Loader`) that loads the board scene through the primer scene `game/scenes/render/pipeline_primer.tscn`, and a `BenchmarkRunner` pointed at it by `preloader_path` ([About pipeline compilation](../explanation/about-pipeline-compilation.md)) |
+| `game/scenes/bench/bench.tscn` | The board scene and a `BenchmarkRunner` that plays the replay, with its `bench_event` signal wired to the board view |
 | `game/scenes/bench/readability.tscn` | Board scene plus a `ReadabilityCapture` |
 | `game/scenes/bench/tuner.tscn` | Board scene plus a `BenchmarkRunner` with `capture = false` (the replay in a loop, no capture, report or size lock) and the [render tuning screen](render-tuner.md) |
 | `extension/src/bench/replay.*` | Godot-free replay planner (`plan_replay`) |
@@ -181,7 +181,6 @@ reach):
 | `display` | `refresh_hz` (-1 when unknown), `vsync` (`disabled`, `enabled`, `adaptive`, `mailbox`) |
 | `timing` | `gpu` (as `gpu_timing`), `gpu_note` (why, when false), `gpu_frames` (frames with a GPU timestamp), `render_cpu_includes_display_wait` (true on Metal) |
 | `warmup_seconds`, `measure_seconds` | as run |
-| `load_seconds` | how long the `ScenePreloader` took to load the scene and the theme's assets before the warm-up ([About pipeline compilation](../explanation/about-pipeline-compilation.md)) |
 | `device` | `os`, `model`, `godot`, `rendering_method` (`forward_plus`, `mobile`, `gl_compatibility`), `rendering_driver`, `adapter`, `vendor`, `api_version` (empty where Godot has no RenderingDevice, such as the web), `resolution` [w, h], `headless`, `software` (a CPU rasteriser adapter) |
 | `gpu_timing` | false when no frame had a GPU timestamp (headless, or a driver without timer queries: Metal in Godot 4.7.2; 4.8 has them); then `gpu_ms` is null and no verdict uses GPU time |
 | `process_ms`, `render_cpu_ms`, `cpu_ms`, `gpu_ms`, `frame_ms` | each `{frames, mean, p50, p95, p99, max, over_budget}`; `over_budget` counts frames over the p95 limit |

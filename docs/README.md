@@ -88,7 +88,6 @@ own folder.
 - [About the fire](explanation/about-the-fire.md): why a simulated flipbook with motion vectors, why our own simulation, how it stays off the board.
 - [About ray tracing](explanation/about-ray-tracing.md): what the hardware ray-tracing spike tried, what it showed and why it stays off.
 - [About quality settings](explanation/about-quality-settings.md): why quality is Godot's project settings and not a tier system of our own, what the temple's effects cost at 5K and why they stay, and the one material change (no transmittance).
-- [About pipeline compilation](explanation/about-pipeline-compilation.md): why the benchmark scene loads the board through a `ScenePreloader` with a primer scene, and what that does and does not fix.
 - [About lighting](explanation/about-lighting.md): baked and real-time GI, why VoxelGI over SDFGI, physical units, height fog and the lighting costs.
 - [About post-processing and the colour grade](explanation/about-post-processing.md): glow before tonemapping, the CDL grade as a LUT and its palette check, the backdrop depth of field that followed the camera, and their costs.
 - [About the atmosphere](explanation/about-the-atmosphere.md): why one fog volume with only a thin, patchy veil over the board, why shafts come from stretched noise, and what mobile and web got in its place.

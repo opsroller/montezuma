@@ -89,6 +89,17 @@ temple's blocks have only `strength`
 every material of ours compiles on Forward+, Mobile and Compatibility.
 The scattering itself stays on.
 
+## What the tier system did that nothing does now
+
+The tier system also switched content per renderer: no fog volume and
+cube-map omni shadows on Compatibility, fewer particles on mobile and
+web. With one material set and one scene, the Compatibility renderer
+now logs that the fog volume's shader is unsupported, and the braziers
+were moved to cube-map shadows for every renderer. A replacement that is
+Godot's own would be per-feature-tag entries in the asset manifest (as
+`run/main_scene.web` already picks the web demo's scene); that is a
+work package of its own, not part of the change that removed the tiers.
+
 ## Consequences
 
 - The settings screen has no graphics quality row.

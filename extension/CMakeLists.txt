@@ -35,7 +35,6 @@ add_library(montezuma_extension SHARED
   src/render/flicker.cpp
   src/render/flicker_light_3d.cpp
   src/render/register_render.cpp
-  src/render/scene_preloader.cpp
   src/bench/benchmark_runner.cpp
   src/bench/readability_capture.cpp
   src/bench/register_bench.cpp

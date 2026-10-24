@@ -45,7 +45,7 @@ The HUD sits below the stack, so pause and results draw over it.
 | `get_setting(key)`, `set_setting(key, value)`, `save_settings()` | methods | See Settings |
 | `perform(action, target, params := {})` | method | Same routing as a NavButton |
 | `get_stack()`, `get_tokens()`, `get_current_level()` | methods | |
-| `reference_size` | property | Default `Vector2(1280, 720)` |
+| `reference_size` | property | Default `Vector2(1280, 720)`; kept for scenes that set it, but nothing reads it since the UI fills the window and Godot's stretch settings scale it |
 | `tokens_path` | property | Default `res://ui/theme/placeholder.tokens.json` |
 | `settings_path` | property | Default `user://settings.cfg` |
 

@@ -703,6 +703,22 @@ writes transmittance only for a `subsurface` block that gives a
 have no transmittance
 ([Board themes](board-themes.md#parameter-file)).
 
+### Compatibility renderer and the brazier shadows
+
+The game on the Compatibility renderer (`--rendering-driver opengl3`,
+`rendering_method="gl_compatibility"` through `override.cfg`) crashes
+at start with the project's separate render thread
+(`rendering/driver/threads/thread_model=2`, which Godot marks
+experimental) and runs with the single-thread model. It then logs that
+the fog volume's shader type is not supported in OpenGL (volumetric fog
+is Forward+ only; nothing switches it off per renderer since the tier
+system went) and, before 24 October 2026, sixteen errors that dual
+paraboloid omni shadows are not supported there. The braziers now use
+cube-map shadows: on Forward+ at 5K with the project's settings the
+board demo measured 5.3 fps with cube maps against 5.4 with dual
+paraboloid (opaque pass 38.9 ms against 37.4, omni shadow pass 0.8 ms),
+within run-to-run noise.
+
 ### Windowed at 1280×720
 
 Same machine, project settings, Forward+, theme as shipped, in a

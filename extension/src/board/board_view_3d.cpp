@@ -689,12 +689,11 @@ PackedInt32Array BoardView3D::get_marks() const {
 
 void BoardView3D::clear_effects() {
     // Transient beats end with the animation; a skip drops them at once.
+    // queue_free alone: a node pulled out of the tree first is still driven
+    // by its tweens until the end of the frame, and a global transform set
+    // on it there logs an error.
     if (!fx_root_) return;
-    for (int i = fx_root_->get_child_count() - 1; i >= 0; --i) {
-        Node* child = fx_root_->get_child(i);
-        fx_root_->remove_child(child);
-        child->queue_free();
-    }
+    for (int i = fx_root_->get_child_count() - 1; i >= 0; --i) fx_root_->get_child(i)->queue_free();
 }
 
 void BoardView3D::show_hints(const Array& pairs, double seconds) {

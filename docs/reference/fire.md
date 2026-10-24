@@ -109,7 +109,7 @@ and the light's lumens, temperature, colour, size and range from `lighting.torch
 | `Flame` | `GPUParticles3D` | 10 particles, 1.2 s, almost still, 0.6 × 1.2 m quads based 0.1 m inside the bowl; `MI_Fire` |
 | `Embers` | `GPUParticles3D` | 18 particles, 1.6 s, 0.6 to 1.3 m/s up within 25°, turbulence, 0.12 s tube trails (`trail_enabled`, the tube mesh as the draw pass); `MI_EmberTrail` |
 | `HeatHaze` | `MeshInstance3D` | 0.9 × 1.1 m quad 0.95 m above the rim; `MI_HeatHaze` |
-| `Light` | `FlickerLight3D` | 0.42 m above the rim, turned so its dual paraboloid shadow seam lies flat; `lighting.torch` (temple: 90,000 lm at 1900 K); shadows on, blur 1.5; volumetric fog energy 2.0; bake mode dynamic |
+| `Light` | `FlickerLight3D` | 0.42 m above the rim, cube-map shadows (the Compatibility renderer has no dual paraboloid mode, and on Forward+ the four braziers cost the same either way); `lighting.torch` (temple: 90,000 lm at 1900 K); shadows on, blur 1.5; volumetric fog energy 2.0; bake mode dynamic |
 
 Every particle system starts full (`preprocess` = lifetime) and casts no
 shadow. The particles and the heat haze are on render layer 2, which

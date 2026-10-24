@@ -102,7 +102,7 @@ the water and the mist around the board, not in a close look-dev frame.
 4. **SSIL on both desktop tiers** adds screen-space bounce from moving
    pieces onto the lightmapped stone, which neither GI volume can do.
    Mobile and web keep the baked light only.
-5. **Brazier shadows: dual paraboloid, capped by the tier.** Each brazier
+5. **Brazier shadows: dual paraboloid, capped by the tier** (since 24 October 2026 cube maps, because the Compatibility renderer has no dual paraboloid mode and the four braziers measured the same on Forward+, 5.3 against 5.4 fps at 5K). Each brazier
    is an `OmniLight3D` with its shadow on. The tier system kept shadows
    on the nearest 8 (`desktop-high`), 2 (`desktop-standard`) or none;
    without it all four cast shadows on every renderer. "Every brazier"

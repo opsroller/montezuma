@@ -167,8 +167,8 @@ is never cropped.
 Each refit also places the far depth of field when the active camera
 attributes (the camera's own, else the environment's) are a
 `CameraAttributesPractical` with the theme's `dof_far_beyond_board`
-metadata (a theme with a `post.depth_of_field` block; the temple has
-none, [About quality settings](../explanation/about-quality-settings.md)):
+metadata (a theme with a `post.depth_of_field` block, as the temple has;
+[About quality settings](../explanation/about-quality-settings.md)):
 `dof_blur_far_distance` becomes the view depth of the board's far edge
 at board level (`layout::far_depth`) plus that many metres, so the blur
 stays on the backdrop at every window size

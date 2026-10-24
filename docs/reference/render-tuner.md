@@ -13,7 +13,7 @@ Owner: graphics-programmer.
 
 | Path | What |
 |---|---|
-| `game/scenes/bench/tuner.tscn` | The board, a `BenchmarkRunner` with `capture = false` playing the benchmark replay in a loop, and a `RenderTuner` on a `CanvasLayer`. Unlike `bench.tscn` ([Benchmark](benchmark.md#files)) it has no `ScenePreloader`, so its first seconds compile pipelines ([About pipeline compilation](../explanation/about-pipeline-compilation.md)) |
+| `game/scenes/bench/tuner.tscn` | The board, a `BenchmarkRunner` with `capture = false` playing the benchmark replay in a loop, and a `RenderTuner` on a `CanvasLayer` |
 | `game/scenes/bench/game_tuner.tscn` | The game (`scenes/main.tscn`, menus included) with a `RenderTuner` on a `CanvasLayer` |
 | `game/scenes/bench/yardstick/*.tscn` | The [yardstick](#yardstick) scenes, each with a `RenderTuner` on a `CanvasLayer` |
 | `extension/src/bench/render_tuner.*` | `RenderTuner` (the panel), `FrameGraph` (the frame-time graph), `TunerSettings` (settings with no object of their own, shown as properties) |

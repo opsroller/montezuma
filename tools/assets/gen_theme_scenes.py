@@ -364,7 +364,10 @@ def brazier_fire(p, theme):
     r.body += ["", '[node name="Light" type="FlickerLight3D" parent="."]',
                f"transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, {li['height']}, 0)",
                f"light_intensity_lumens = {torch['lumens']}", f"light_temperature = {torch['kelvin']}",
-               f"light_color = {color(torch['color'])}", f"light_size = {torch['size']}", "omni_shadow_mode = 0",
+               f"light_color = {color(torch['color'])}", f"light_size = {torch['size']}",
+               # Cube shadows: the Compatibility renderer has no dual paraboloid mode, and on
+               # Forward+ the four braziers cost the same either way (docs/reference/benchmark-results.md).
+               "omni_shadow_mode = 1",
                f"light_volumetric_fog_energy = {li['fog_energy']}", "light_bake_mode = 2", "shadow_enabled = true",
                f"shadow_blur = {li['shadow_blur']}", f"omni_range = {torch['range']}", "omni_attenuation = 1.4",
                f"flicker = {li['flicker']}", f"speed = {li['speed']}", f"sway = {li['sway']}"]
@@ -582,8 +585,9 @@ def main():
         f"glow_hdr_threshold = {glow['hdr_threshold']}",
         f"glow_hdr_scale = {glow['hdr_scale']}",
         f"glow_hdr_luminance_cap = {glow['hdr_luminance_cap']}",
-        # Mobile and Compatibility put lower values in the buffer glow reads,
-        # so they get their own threshold (QualityTiers applies it).
+        # Mobile and Compatibility put lower values in the buffer glow reads;
+        # the per-tier thresholds are written as metadata for a reader to apply
+        # (nothing applies them since the tier system went).
         *[f"metadata/glow_hdr_threshold_{tier.replace('-', '_')} = {v}"
           for tier, v in sorted(glow.get("hdr_threshold_by_tier", {}).items())],
         # Optional height fog. The temple has none: in the game's board view
@@ -622,8 +626,8 @@ def main():
     r.body = sky + atmo_subs + r.body
     r.body += ["", '[node name="WorldEnvironment" type="WorldEnvironment" parent="."]', 'environment = SubResource("env")',
                'camera_attributes = SubResource("camera")']
-    # A theme may have a sun; the temple has none, so the braziers are its key
-    # lights and the warm fill above the board lights the rest.
+    # A theme may have a sun (the temple does); the braziers and the fill
+    # above the board light the rest.
     if "sun" in light:
         sun = light["sun"]
         r.body += ["", '[node name="Sun" type="DirectionalLight3D" parent="."]', f"transform = {env['sun']['transform']}",

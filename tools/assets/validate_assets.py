@@ -277,25 +277,19 @@ def anisotropic_repeat_errors(path, rel):
 
 
 def export_errors():
-    """Mobile and web presets exclude the desktop texture and material variants; desktop presets keep them."""
+    """Every preset ships every texture a material references: there is one material set, and the
+    desktop-size (`hi/`) texture sets are what the folded materials name (docs/reference/board-themes.md#texture-sizes)."""
     path = GAME / "export_presets.cfg"
     if not path.exists():
         return []
     errors = []
     for block in re.split(r"^\[preset\.\d+\]$", path.read_text(), flags=re.M)[1:]:
         name = re.search(r'^name="([^"]*)"', block, re.M)
-        platform = re.search(r'^platform="([^"]*)"', block, re.M)
         exclude = re.search(r'^exclude_filter="([^"]*)"', block, re.M)
-        name = name.group(1) if name else "?"
-        platform = platform.group(1) if platform else ""
-        filters = [f.strip() for f in (exclude.group(1) if exclude else "").split(",")]
-        strips = f"*/{TIERED}/*" in filters
-        if platform in ("Android", "iOS", "Web") and not strips:
-            errors.append(f"game/export_presets.cfg: preset '{name}' ({platform}) must list */{TIERED}/* in "
-                          "exclude_filter so desktop-only variants stay out of the build")
-        if platform in ("Windows Desktop", "Linux", "macOS") and strips:
-            errors.append(f"game/export_presets.cfg: desktop preset '{name}' excludes */{TIERED}/*; "
-                          "desktop builds ship the hi/ variants")
+        filters = [f.strip() for f in (exclude.group(1) if exclude else "").split(",") if f.strip()]
+        if any(f"/{TIERED}/" in f for f in filters):
+            errors.append(f"game/export_presets.cfg: preset '{name.group(1) if name else '?'}' excludes {TIERED}/ "
+                          "textures that the materials reference")
     return errors
 
 

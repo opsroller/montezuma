@@ -481,7 +481,7 @@
     }
   },
   "lighting": {
-    "_comment": "Physical light units (lux, lumens, nits, Kelvin, ISO). Lights, GI and exposure: docs/reference/board-themes.md#lighting; per-tier behaviour: docs/reference/quality-tiers.md.",
+    "_comment": "Physical light units (lux, lumens, nits, Kelvin, ISO). Lights, GI and exposure: docs/reference/board-themes.md#lighting; why effects are kept and what they cost: docs/explanation/about-quality-settings.md.",
     "sky_nits": 15000,
     "agx_white": 8.0,
     "agx_contrast": 1.5,
@@ -513,7 +513,7 @@
     "sky_fill": {
       "transform": "Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 6, 0)",
       "lumens": 6000,
-      "color": "#ffc98a",
+      "color": "#b8d4ff",
       "size": [
         10.0,
         10.0
