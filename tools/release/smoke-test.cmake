@@ -178,4 +178,15 @@ endfunction()
 # settle. --start-level plays the first level, so the board shows with the
 # in-level HUD over it.
 capture(title 15)
-capture(board 30 --start-level=e1-l01)
+# GitHub's macOS runners expose an Apple Paravirtual device that reports
+# 32-bit image atomics and then refuses the R32_UINT atomic image Godot 4.8
+# beta 1's volumetric fog creates, so the first in-level frame segfaults
+# there (docs/reference/engine-issues.md, work package 65). The board shot
+# is skipped on that device only; any real GPU still captures it and still
+# fails loudly.
+file(STRINGS "${work}/title.log" paravirtual REGEX "Apple Paravirtual device")
+if(paravirtual)
+  montezuma_print("skipping the board capture: Apple Paravirtual device cannot run volumetric fog (engine-issues.md, WP-65)")
+else()
+  capture(board 30 --start-level=e1-l01)
+endif()
