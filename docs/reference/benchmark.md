@@ -11,7 +11,7 @@ readability capture and checks that measure a build against the
 
 | Path | What |
 |---|---|
-| `game/scenes/bench/bench.tscn` | Board scene plus a `BenchmarkRunner` |
+| `game/scenes/bench/bench.tscn` | A `ScenePreloader` (`Loader`) that loads the board scene through the primer scene `game/scenes/render/pipeline_primer.tscn`, and a `BenchmarkRunner` pointed at it by `preloader_path` ([About pipeline compilation](../explanation/about-pipeline-compilation.md)) |
 | `game/scenes/bench/readability.tscn` | Board scene plus a `ReadabilityCapture` |
 | `game/scenes/bench/tuner.tscn` | Board scene plus a `BenchmarkRunner` with `capture = false` (the replay in a loop, no capture, report or size lock) and the [render tuning screen](render-tuner.md) |
 | `extension/src/bench/replay.*` | Godot-free replay planner (`plan_replay`) |
@@ -22,9 +22,7 @@ readability capture and checks that measure a build against the
 | `extension/src/bench/tests/` | `bench_tests` CTest test (planner, statistics, budget, render size) |
 | `tools/bench/run_bench.cmake` | Runs both scenes and the checks on a desktop (`cmake -D<OPTION>=<value>... -P tools/bench/run_bench.cmake`; options in its header); each Godot run stops after `SECONDS` + `WARMUP` + 300 s, the readability capture after 600 s |
 | `tools/bench/check_run.py` | Budget verdict, render size and replay of one report |
-| `tools/bench/check_features.py` | Feature list against one tier (`tiers.json`) |
 | `tools/bench/check_readability.py` | Readability rules 2, 4, 5 and 6 on the captures (Pillow) |
-| `tools/bench/tiers.json` | What each tier must have on, from the feature tables |
 | `tools/bench/tests/` | Tests of the readability checks on synthetic captures and of `check_run.py` on synthetic reports (the `assets` CI job runs them) |
 
 Both scenes hide the UI layers the autoloads draw (the menus), so the
@@ -146,7 +144,7 @@ command line:
 | `warmup_seconds` | `--bench-warmup=S` | 10 |
 | `measure_seconds` | `--bench-seconds=S` | 60 |
 | `output_path` | `--bench-out=PATH` | `user://bench/benchmark.json` |
-| `tier` | `--bench-tier=NAME` | empty: the tier [`QualityTiers`](quality-tiers.md) has in effect. A label only; to run another tier, pass `--quality=NAME` (QualityTiers' own argument) |
+| `tier` | `--bench-tier=NAME` | `desktop-high`: the [visual target](visual-target.md#quality-tiers) tier whose frame budget and draw-call cap the run is judged against. A label in the report; it changes no setting (the game runs on the project settings everywhere, [About quality settings](../explanation/about-quality-settings.md)) |
 | `budget_ms` | `--bench-budget=MS` | 0: the tier's p95 budget, two 60 Hz periods (33.333) for `web`, else one (16.667); a value replaces the p95 budget |
 | `tolerance` | `--bench-tolerance=F` | 0.05; clamped to 0 to 0.5, a non-number stops the run |
 | `render_size` | `--bench-size=WxH` | (0, 0): not locked, but the size must not change |
@@ -183,13 +181,13 @@ reach):
 | `display` | `refresh_hz` (-1 when unknown), `vsync` (`disabled`, `enabled`, `adaptive`, `mailbox`) |
 | `timing` | `gpu` (as `gpu_timing`), `gpu_note` (why, when false), `gpu_frames` (frames with a GPU timestamp), `render_cpu_includes_display_wait` (true on Metal) |
 | `warmup_seconds`, `measure_seconds` | as run |
+| `load_seconds` | how long the `ScenePreloader` took to load the scene and the theme's assets before the warm-up ([About pipeline compilation](../explanation/about-pipeline-compilation.md)) |
 | `device` | `os`, `model`, `godot`, `rendering_method` (`forward_plus`, `mobile`, `gl_compatibility`), `rendering_driver`, `adapter`, `vendor`, `api_version` (empty where Godot has no RenderingDevice, such as the web), `resolution` [w, h], `headless`, `software` (a CPU rasteriser adapter) |
 | `gpu_timing` | false when no frame had a GPU timestamp (headless, or a driver without timer queries: Metal in Godot 4.7.2; 4.8 has them); then `gpu_ms` is null and no verdict uses GPU time |
 | `process_ms`, `render_cpu_ms`, `cpu_ms`, `gpu_ms`, `frame_ms` | each `{frames, mean, p50, p95, p99, max, over_budget}`; `over_budget` counts frames over the p95 limit |
 | `render` | `draw_calls_p95`, `draw_calls_max`, `draw_calls_by_pass` (`scene_p95`, `shadow_p95`, `canvas_p95`), `piece_draws` (the board view's `get_piece_draws()` at the end of the run), `primitives_p95`, `primitives_max`, `video_mem_max_mb`, `pipeline_compilations` (`before_capture` and `during_capture`, each `canvas`, `mesh`, `surface`, `draw`, `specialization`: the render pipelines Godot compiled in that window, from `RenderingServer.get_rendering_info`; `draw` ones stalled the frame that needed them, the others compiled in the background while an ubershader drew) |
 | `replay` | `scenario` (`busiest-board`), `seed`, `beats`, `loops`, `deep_cascades` (beats of 4+ steps played), `max_cascade_steps`, `diverged` |
 | `features` | the feature list below, read when the capture starts |
-| `quality_features` | `QualityTiers.get_active_features()`: the feature ids the active tier switches on ([Quality tiers](quality-tiers.md#feature-ids)) |
 
 `check_run.py REPORT [--size WxH] [--no-budget]` prints a PASS or FAIL
 line for the budget, the draw calls, the render and window size (with `--size`, also that
@@ -223,7 +221,7 @@ attributes and the visible nodes of the scene tree.
 | `glow`, `fog`, `volumetric_fog`, `ssr`, `ssao`, `ssil`, `sdfgi` | bool | that `Environment` setting is on |
 | `color_grade_lut` | bool | adjustments on with a colour-correction texture |
 | `auto_exposure` | bool | the camera attributes have auto exposure on |
-| `depth_of_field` | bool | the `BackdropBlur` the viewport renders with (its camera's, else its world's) is enabled |
+| `depth_of_field` | bool | the camera attributes the viewport renders with (its camera's, else its world's) are `CameraAttributesPractical` with the far or near blur enabled |
 | `rt_reflections` | bool | an [`RtReflections`](ray-traced-reflections.md) traced in one of the last three frames; `false` in builds without `MONTEZUMA_RAY_TRACING` |
 | `lightmap_gi`, `voxel_gi` | bool | a visible `LightmapGI` / `VoxelGI` node |
 | `reflection_probes`, `fog_volumes`, `decals` | int | visible nodes of that type |
@@ -236,11 +234,10 @@ attributes and the visible nodes of the scene tree.
 | `screen_space_aa` | string | `none`, `fxaa`, `smaa` |
 | `scaling_3d_mode`, `scaling_3d_scale` | string, float | `bilinear`, `fsr1`, `fsr2`, `metalfx_spatial`, `metalfx_temporal`, `nearest`; render scale |
 
-`check_features.py REPORT [--tier NAME]` (the tier defaults to the report's; a readability `layout.json` needs it) compares these, plus
-`device.rendering_method`, with the tier's rows in `tiers.json` and exits 1
-when a row is not met. The `desktop-standard` anti-aliasing row accepts TAA at native size as well as a temporal upscaler, since benchmarks run with `--quality-native` by default. Rows cover what the features can show; resolution
-of SSR, volumetric fog quality, HDR output and flipbook sizes are not in
-the list.
+The list is there to be read beside the tier's rows in
+[Visual target](visual-target.md#features-per-tier) when a run claims a
+tier; no script checks it. Resolution of SSR, volumetric fog quality,
+HDR output and flipbook sizes are not in the list.
 
 ## Readability capture
 

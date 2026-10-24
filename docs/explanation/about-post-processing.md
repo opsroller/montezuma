@@ -1,17 +1,25 @@
 <!-- SPDX-License-Identifier: GPL-2.0-or-later -->
 # About post-processing and the colour grade
 
-*Explanation, written as a decision record. How the board's glow, colour
-grade and depth of field are set up on each quality tier, and why. The
-parameters are in [Board themes: Colour grade](../reference/board-themes.md#colour-grade)
+*Explanation, written as a decision record. How the board's glow and
+colour grade are set up, and why; and how its backdrop depth of field
+came to be Godot's own. The parameters are in
+[Board themes: Colour grade](../reference/board-themes.md#colour-grade)
 and [Post-processing](../reference/board-themes.md#post-processing); the
-switches per tier in [Quality tiers](../reference/quality-tiers.md); the
 grade's palette check and the captures in
 [`design/grade/temple.md`](../../design/grade/temple.md).*
 
 ## Status
 
-Accepted, October 2026 (WP-52). Built on the physical lighting of WP-47
+Accepted, October 2026 (WP-52). Revised 23 October 2026: the
+`BackdropBlur` effect of decision 4 and the quality tier system are gone,
+and quality is Godot's project settings. The temple keeps Godot's far
+depth of field (`post.depth_of_field`): it cost 37 to 42 ms a frame at
+native 5K on a Mac mini M4 in the measurements, and the owner decided
+the look stays ([About quality settings](about-quality-settings.md),
+[Benchmark results](../reference/benchmark-results.md#mac-mini-m4-at-native-5k-project-settings)).
+Decision 4 and the costs below stand as the record of what was built and
+measured. Built on the physical lighting of WP-47
 ([About lighting](about-lighting.md)). Costs are estimates, labelled as
 such: the only renderer this package could run is software Vulkan and GL
 (lavapipe, llvmpipe), which says nothing about GPU time.
@@ -55,7 +63,7 @@ such: the only renderer this package could run is software Vulkan and GL
    was. Mobile and Compatibility put much lower
    values in the buffer glow reads: at a threshold of 1.1 or more nothing
    bloomed there at all. So `mobile` and `web` get their own threshold of
-   0.6 (environment metadata `QualityTiers` applies per tier), which
+   0.6 (environment metadata that `QualityTiers` applied per tier; nothing applies it since that system went), which
    blooms the flames and gold glints and still passes rule 6.
 2. **The grade is a 3D LUT made from an ASC CDL.** The theme sets slope,
    offset and power per channel and a saturation; `grade_lut.py` bakes
@@ -94,11 +102,11 @@ such: the only renderer this package could run is software Vulkan and GL
    `BoardCamera3D` writes the far distance every time it refits: the view
    depth of the board's far edge plus that margin. The blur then never
    reaches the board at any aspect ratio, and the jungle floor two metres
-   below the platform softens. Both desktop tiers draw it; mobile and web
-   do not, as the target says.
+   below the platform softens. Both desktop tiers drew it; mobile and web
+   did not, as the target said.
 
-   The blur is our own `BackdropBlur` compositor effect, not Godot's depth
-   of field, which `QualityTiers` keeps off on every tier. The M4 runs
+   The blur was our own `BackdropBlur` compositor effect, not Godot's depth
+   of field, which `QualityTiers` kept off on every tier. The M4 runs
    (below) put Godot's low box blur at about 3 ms, the whole cost of this
    package: Godot runs it after the upscaler, at the output size, in four
    passes over every pixel, the board included, though the board never
@@ -154,8 +162,7 @@ That left the package about 3 ms over a target of under 1 ms, so
 `BackdropBlur` replaced Godot's depth of field (decision 4). On the RTX
 4080 at 3840×2160, `--gpu-profile` puts Godot's low box blur at 0.63 ms
 on `desktop-high` and 0.58 ms on `desktop-standard`, and `BackdropBlur`
-at 0.05 ms and 0.09 ms
-([Quality tiers](../reference/quality-tiers.md#backdrop-depth-of-field)).
+at 0.05 ms and 0.09 ms (one `--gpu-profile` frame each on `e1-l01`).
 Its half-size buffer takes about 17 MB of video memory at native 4K.
 
 With `BackdropBlur`, the M4 was re-measured at the owner's benchmark

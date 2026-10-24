@@ -1,0 +1,11 @@
+[gd_scene load_steps=1 format=3]
+; SPDX-License-Identifier: GPL-2.0-or-later
+; Yardstick step 0: the project settings and autoloads, nothing else, with the
+; render tuner's readout (docs/reference/render-tuner.md#yardstick).
+
+[node name="Yardstick" type="Node3D"]
+
+[node name="Panel" type="CanvasLayer" parent="."]
+layer = 100
+
+[node name="RenderTuner" type="RenderTuner" parent="Panel"]

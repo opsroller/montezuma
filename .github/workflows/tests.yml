@@ -154,15 +154,6 @@ jobs:
         run: |
           ./godot --headless --path game --quit-after 600 -- --start-level=e1-l01 --quit-after-frames=60 2>&1 | tee level.log
           if grep -E "ERROR|SCRIPT ERROR|leaked at exit" level.log; then exit 1; fi
-      # Each rendering method offers different quality tiers (desktop pair,
-      # mobile, web); switch through them on every method.
-      - name: Quality tier self-test
-        if: runner.os == 'Linux'
-        run: |
-          for method in forward_plus mobile gl_compatibility; do
-            ./godot --headless --path game --rendering-method "$method" --quit-after 120 -- --quality-selftest 2>&1 | tee "quality-$method.log"
-            grep -E "QualityTiers self-test: [0-9]+ checks, 0 failures" "quality-$method.log"
-          done
       # The benchmark replay runs headless for a few seconds: it must plan,
       # replay without drifting from the plan, hold its locked render size
       # and write its report. Frame

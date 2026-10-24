@@ -1,0 +1,32 @@
+[gd_scene load_steps=4 format=3]
+; SPDX-License-Identifier: GPL-2.0-or-later
+; Yardstick step 0 variant: a camera and an Environment with the theme's procedural sky only (docs/reference/render-tuner.md#yardstick).
+
+[sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
+sky_top_color = Color(0.2275, 0.4706, 0.7216, 1.0000)
+sky_horizon_color = Color(0.7059, 0.7765, 0.8392, 1.0000)
+ground_bottom_color = Color(0.1137, 0.1647, 0.0863, 1.0000)
+ground_horizon_color = Color(0.7059, 0.7765, 0.8392, 1.0000)
+sun_angle_max = 20.0
+
+[sub_resource type="Sky" id="sky"]
+sky_material = SubResource("sky_mat")
+
+[sub_resource type="Environment" id="env"]
+background_mode = 2
+sky = SubResource("sky")
+
+[node name="Yardstick" type="Node3D"]
+
+[node name="Camera" type="Camera3D" parent="."]
+transform = Transform3D(1.000000, 0.000000, 0.000000, 0.000000, 0.258819, 0.965926, 0.000000, -0.965926, 0.258819, 0.0000, 15.0919, 4.0439)
+fov = 40.0
+current = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("env")
+
+[node name="Panel" type="CanvasLayer" parent="."]
+layer = 100
+
+[node name="RenderTuner" type="RenderTuner" parent="Panel"]

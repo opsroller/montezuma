@@ -64,6 +64,10 @@ public:
     // size lock (the render tuning screen's demo).
     void set_capture(bool v) { capture_ = v; }
     bool get_capture() const { return capture_; }
+    // A ScenePreloader that loads the board: the run starts once it has
+    // loaded, and board_view_path is resolved then. Empty: start at _ready.
+    void set_preloader_path(const godot::NodePath& p) { preloader_path_ = p; }
+    godot::NodePath get_preloader_path() const { return preloader_path_; }
 
     // The summary written to output_path; empty until the capture ends.
     godot::Dictionary get_report() const { return report_; }
@@ -75,6 +79,7 @@ private:
     enum class Phase { Idle, Demo, Warmup, Measure, Done };
 
     BoardView3D* view() const;
+    void start();
     void read_command_line();
     void lock_render_size();
     godot::Vector2i current_render_size() const;
@@ -87,13 +92,15 @@ private:
     void finish();
 
     godot::NodePath board_view_path_;
+    godot::NodePath preloader_path_;
+    double load_seconds_ = 0.0;
     int64_t seed_ = 52;
     double warmup_seconds_ = 10.0;
     double measure_seconds_ = 60.0;
     godot::String output_path_ = "user://bench/benchmark.json";
-    // Empty: the tier QualityTiers has in effect.
-    godot::String tier_;
-    // 0: the tier's p95 budget from the visual target.
+    // The visual target's budget to judge against (bench::budget_for_tier).
+    godot::String tier_ = "desktop-high";
+    // 0: the p95 budget from the visual target.
     double budget_ms_ = 0.0;
     double tolerance_ = bench::kDefaultTolerance;
     godot::Vector2i render_size_;

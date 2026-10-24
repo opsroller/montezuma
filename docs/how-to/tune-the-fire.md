@@ -60,14 +60,14 @@ without the menus (delete the `UiRoot=` line from a scratch copy of
 ```sh
 printf '[display]\nwindow/size/window_width_override=1280\nwindow/size/window_height_override=720\n' > game/override.cfg
 xvfb-run -a godot --path game --rendering-driver vulkan --write-movie /tmp/fire/f.png \
-  --fixed-fps 30 --quit-after 46 res://assets/lookdev/LD_Temple_Fire_Hi.tscn -- --quality=desktop-high
+  --fixed-fps 30 --quit-after 46 res://assets/lookdev/LD_Temple_Fire.tscn
 xvfb-run -a godot --path game --rendering-driver opengl3 --rendering-method gl_compatibility \
-  --write-movie /tmp/fire-web/f.png --fixed-fps 30 --quit-after 46 res://assets/lookdev/LD_Temple_Fire.tscn -- --quality=web
+  --write-movie /tmp/fire-web/f.png --fixed-fps 30 --quit-after 46 res://assets/lookdev/LD_Temple_Fire.tscn
 rm game/override.cfg
 ```
 
 Compare frame 46 with the [look-dev frames](../reference/fire.md#look-dev-frames).
-Check the board from the game camera (`LD_Temple_Hi.tscn`) too: nothing of
+Check the board from the game camera (`LD_Temple.tscn`) too: nothing of
 the fire may cross the tiles.
 
 ## Check readability and cost

@@ -6,9 +6,14 @@
 [benchmark and readability capture](benchmark.md), per machine, tier,
 driver and resolution, against the
 [tier budgets](visual-target.md#quality-tiers). How to run it and add a
-row: [Run the benchmark](../how-to/run-the-benchmark.md). Why the tiers and
-budgets are set as they are:
-[About quality tiers](../explanation/about-quality-tiers.md).*
+row: [Run the benchmark](../how-to/run-the-benchmark.md). Why there is no
+tier system, and why the temple keeps its effects at what they cost:
+[About quality settings](../explanation/about-quality-settings.md).*
+
+Rows up to 22 October 2026 ran under the quality tier system of the time
+(`--quality=<tier>`, `--quality-native`, `--quality-off`, the
+`check_features.py` feature check); those arguments and tools are gone,
+and the rows stay as history.
 
 All times are milliseconds, nearest-rank percentiles over a 60 s capture
 after a 10 s warm-up, unless a row says otherwise. "Over budget" counts
@@ -225,7 +230,8 @@ With VoxelGI or SSIL off the frame differs by a mean of 3.65 and 2.79
 of 255 against 0.32 between two runs of one build. Soft shadows in the
 opaque pass cost 1.3 ms for the sun and 1.0 ms for the four fire lights
 at `high` (measured by switching each filter to hard). Why none of these
-is turned off: [About quality tiers](../explanation/about-quality-tiers.md#cutting-cost-without-changing-the-look).
+was turned off then, and why depth of field and SSIL were cut later at
+5K: [About quality settings](../explanation/about-quality-settings.md).
 
 **Triplanar sampling.** The stone shader sampled all three triplanar
 projections (9 to 12 anisotropic fetches) on every pixel, in the depth
@@ -565,9 +571,147 @@ Reflections` pass 0.69 to 0.70.
 Both runs: 16 of 17 feature rows (screen-space reflections reads off on
 this branch's base with or without the effect).
 
+## Mac mini M4 at native 5K, project settings
+
+What a frame costs with the game on Godot's project settings alone,
+after the quality tier system went
+([About quality settings](../explanation/about-quality-settings.md)).
+Mac mini M4, Metal, Forward+, Godot 4.8 beta 1, exclusive full screen at
+native 5120×2880, vsync off; `game/project.godot` as committed with this
+change: 3D at 100% with MetalFX temporal and TAA, 8× MSAA 3D and 2D,
+SMAA, HDR output. Read from the render tuning screen's printed readout
+(`--tuner-print=10 --tuner-quit=62`, the last printout of each run,
+`--gpu-profile` for the passes) on the
+[yardstick scenes](render-tuner.md#yardstick) and the board demo, as in
+[Measure what a frame costs, step by step](../how-to/measure-a-frame-step-by-step.md).
+Frames per second only: on this machine the frame is all GPU (the CPU
+line stays far below it), and no shader compiled during the readings
+(Godot issue 123481, a Metal pipeline compile hang on a canvas shader
+with many texture-array reads on macOS 26 with M4 and M5, is a startup
+stall, not a per-frame cost). 2026-10-23.
+
+| Scene | Settings | fps |
+|---|---|---|
+| `s0_empty` (no camera: Godot draws no 3D) | project | 346 |
+| `v0_camera` (a camera alone) | project | 31 |
+| `v0_camera` | every anti-aliasing setting off (`override.cfg`) | 187 |
+| `s1_env` (camera plus the theme's `Environment`: depth of field and SSIL on, as shipped) | project | 9.5 |
+| Board demo (`tuner.tscn`), theme as shipped | project | 5.4 |
+| Board demo, experiment: depth of field taken out of the theme | project | 6.8 |
+| Board demo, experiment: depth of field and SSIL taken out | project | 9.1 |
+| In game with the UI (`game_tuner.tscn`), theme as shipped | project | 4.0 |
+| In game with the UI, experiment: depth of field taken out | project | 6.7 |
+
+The rows marked experiment were measured on a theme file edited for the
+run and regenerated; the shipped `tools/assets/themes/temple.json` keeps
+depth of field and SSIL
+([About quality settings](../explanation/about-quality-settings.md#what-the-effects-cost-and-why-they-stay)).
+
+GPU time per pass with the environment only (`s1_env`, one
+`--gpu-profile` frame; ranges are the spread between printouts):
+
+| Pass | GPU ms |
+|---|---|
+| Depth of field | 37 (37 to 42 in the board demo) |
+| MetalFX temporal | about 13 |
+| SMAA | 7.5 to 12.8 |
+| SSIL | 11.5 (30 with the backdrop geometry; 29 to 32 in the board demo) |
+| SSAO | 6.3 |
+| Copy final framebuffer | 4.1 |
+| Tonemap with the LUT | 2.9 to 10 |
+| Glow | 1.9 |
+
+Project settings changed one at a time on the environment-only scene,
+each through `game/override.cfg` against the 9.5 fps above:
+
+| Setting | fps |
+|---|---|
+| SMAA off (`anti_aliasing/quality/screen_space_aa`) | 10.4 |
+| 2D MSAA off (`anti_aliasing/quality/msaa_2d`) | 10.4 |
+| HDR output off (`display/window/hdr/request_hdr_output`) | 10.0 |
+| MetalFX temporal and TAA off (`scaling_3d/mode.macos`, `anti_aliasing/quality/use_taa`) | 10.3 |
+| Bokeh quality high to very low (`camera/depth_of_field/depth_of_field_bokeh_quality`) | 12.9 |
+| SSIL quality low (`environment/ssil/quality`) | 9.9 |
+| SSAO quality low (`environment/ssao/quality`) | 9.7 |
+| 3D MSAA off (`anti_aliasing/quality/msaa_3d`) | no change |
+| VRS off (`vrs/mode`) | no change |
+| Thread model (`driver/threads/thread_model`) | no change |
+
+Two more findings from the same runs:
+
+- Soft shadow filter quality ultra to low
+  (`lights_and_shadows/*/soft_shadow_filter_quality`) on the board demo
+  with depth of field and SSIL out took the opaque pass from 35 to 22 ms.
+- Texture imports matter more than the shader: the generated textures
+  imported with Godot's defaults (no mipmaps, no VRAM compression) made
+  the stone shader cost about 60 ms instead of 11 ms.
+  `tools/assets/texture_import.py` writes the import settings the
+  generator uses ([Board themes: Import settings](board-themes.md#import-settings)).
+
+Nothing in the theme changed on these numbers: the owner's decision is
+that the look stays
+([About quality settings](../explanation/about-quality-settings.md#what-the-effects-cost-and-why-they-stay)).
+`project.godot` stays as committed.
+
+### Light by light on the opaque pass
+
+Board demo, same machine and settings, with depth of field and SSIL
+taken out of the theme for the experiment so the opaque pass stands out:
+36 ms of a 108 ms frame. Each row changes one thing against that;
+"no change" means within the readout's spread.
+
+| Change | Opaque pass GPU ms |
+|---|---|
+| As above | 36 |
+| Four brazier lights off | 28 |
+| Brazier shadows hard | 33 |
+| Sun shadow off | 24 |
+| Sun shadow hard (angular distance 0) | 31 |
+| Sun shadow orthogonal, or 2048 shadow atlases | no change |
+| All dynamic lights off | 15 |
+| All dynamic lights off, and our stone, water and gem shaders swapped for stock materials | 9 |
+| Water, fog volume and dust hidden | no change |
+
+### Mobile renderer
+
+Same scene and settings with Godot's Mobile renderer selected for the
+run through a temporary `game/override.cfg`
+(`rendering/renderer/rendering_method="mobile"`; the committed `project.godot` selects Forward+ on desktop through
+its `Forward Plus` feature, with no base `rendering_method`, and
+`gl_compatibility` under the `mobile` tag). The Mobile renderer drops
+MetalFX temporal, TAA, SSAO, SSIL, volumetric fog and subsurface
+scattering itself, so the theme's state makes no difference to it.
+Board demo: **19.4 fps**, against 9.1 fps on Forward+ at that point of
+the session (depth of field and SSIL out). GPU time per pass:
+
+| Pass | GPU ms |
+|---|---|
+| Opaque | 28 |
+| SMAA | 7.9 |
+| Transparent | 4.2 |
+| Particles | 1.7 |
+| Tonemap | 1.7 |
+| Shadows | 1.3 |
+
+A Godot bug found on the way: Godot 4.8 beta 1's Forward Mobile
+renderer generates a scene shader it cannot compile for a material with
+subsurface transmittance on (`light_compute: no matching overloaded
+function found`, `missing #endif`, then a fatal empty pipeline list),
+where it only warns about subsurface scattering. The generator now
+writes transmittance only for a `subsurface` block that gives a
+`transmittance` colour; the temple's gems keep their scattering and
+have no transmittance
+([Board themes](board-themes.md#parameter-file)).
+
+### Windowed at 1280×720
+
+Same machine, project settings, Forward+, theme as shipped, in a
+1280×720 window: the board demo ran at **98 fps** and the main menu at
+60 (the frame pacing's cap, not vsync).
+
 ## Feature rows
 
-`check_features.py` on the same reports. Rows that fail are the
+`check_features.py` (since removed) on the same reports. Rows that fail are the
 lighting, reflection and atmosphere work in WP-47 to WP-53, still to do.
 
 | Tier | Rows met | Met | Not met |

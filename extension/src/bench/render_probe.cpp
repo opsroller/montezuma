@@ -26,7 +26,6 @@
 #include <godot_cpp/variant/array.hpp>
 
 #include "frame_stats.hpp"
-#include "render/backdrop_blur.hpp"
 #include "render/rendering_device_access.hpp"
 #ifdef MONTEZUMA_RAY_TRACING
 #include "render/rt/rt_reflections.hpp"
@@ -160,8 +159,9 @@ Dictionary active_features(Viewport* viewport) {
 
     const Ref<CameraAttributes> attrs = camera_attributes_of(viewport);
     f["auto_exposure"] = attrs.is_valid() && attrs->is_auto_exposure_enabled();
-    const Ref<BackdropBlur> blur = BackdropBlur::drawing(viewport);
-    f["depth_of_field"] = blur.is_valid() && blur->get_enabled();
+    const Ref<CameraAttributesPractical> practical = attrs;
+    f["depth_of_field"] =
+        practical.is_valid() && (practical->is_dof_blur_far_enabled() || practical->is_dof_blur_near_enabled());
 #ifdef MONTEZUMA_RAY_TRACING
     f["rt_reflections"] = RtReflections::tracing();
 #else
@@ -230,10 +230,8 @@ void EffectSwitch::capture(Node* root, Viewport* viewport) {
         base_ = {env_->is_fog_enabled(), env_->is_volumetric_fog_enabled(),
                  env_->get_glow_intensity(), env_->is_ssr_enabled(), env_->is_ssao_enabled(), env_->is_ssil_enabled(), env_->is_sdfgi_enabled()};
     }
-    if (const Ref<BackdropBlur> blur = BackdropBlur::drawing(viewport); blur.is_valid()) {
-        blur_ = ObjectID(blur->get_instance_id());
-        dof_ = blur->get_enabled();
-    }
+    dof_attributes_ = camera_attributes_of(viewport);
+    if (dof_attributes_.is_valid()) dof_ = dof_attributes_->is_dof_blur_far_enabled();
     atmosphere_nodes_.clear();
     std::vector<Node*> stack{root};
     while (!stack.empty()) {
@@ -261,7 +259,7 @@ void EffectSwitch::apply(std::uint32_t on) {
         env_->set_ssil_enabled(base_.ssil && screen);
         env_->set_sdfgi_enabled(base_.sdfgi && screen);
     }
-    if (auto* blur = Object::cast_to<BackdropBlur>(ObjectDB::get_instance(blur_))) blur->set_enabled(dof_ && atmosphere);
+    if (dof_attributes_.is_valid()) dof_attributes_->set_dof_blur_far_enabled(dof_ && atmosphere);
     for (const Visible& v : atmosphere_nodes_) {
         if (auto* n = Object::cast_to<Node3D>(ObjectDB::get_instance(v.node))) n->set_visible(v.visible && atmosphere);
     }

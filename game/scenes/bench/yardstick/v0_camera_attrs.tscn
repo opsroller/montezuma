@@ -1,0 +1,24 @@
+[gd_scene load_steps=2 format=3]
+; SPDX-License-Identifier: GPL-2.0-or-later
+; Yardstick: a camera with the theme's CameraAttributes (depth of field on), no Environment.
+
+[sub_resource type="CameraAttributesPractical" id="cam"]
+exposure_sensitivity = 440
+exposure_multiplier = 0.8
+dof_blur_far_enabled = true
+dof_blur_far_distance = 17.3
+dof_blur_far_transition = 2.0
+dof_blur_amount = 0.1
+
+[node name="Yardstick" type="Node3D"]
+
+[node name="Camera" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.258819, 0.965926, 0, -0.965926, 0.258819, 0, 15.0919, 4.0439)
+fov = 40.0
+attributes = SubResource("cam")
+current = true
+
+[node name="Panel" type="CanvasLayer" parent="."]
+layer = 100
+
+[node name="RenderTuner" type="RenderTuner" parent="Panel"]

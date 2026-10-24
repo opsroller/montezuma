@@ -118,9 +118,7 @@ private:
     bool in_bounds(godot::Vector2i c) const;
 
     void rebuild();
-    void on_tier_changed(const godot::String& tier);
     // After every tween of the frame, before it is drawn.
-    void sync_batches();
     void clear_pieces();
     // Makes every cell show the board's kind; changed cells drop in when `animate`.
     void sync_to_board(bool animate);

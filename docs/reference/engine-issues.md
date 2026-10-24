@@ -1,0 +1,12 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+# Engine issues we work around
+
+*Reference. Godot behaviour that the project had to work around, with the
+engine version it was seen on, what we did and what would let us undo it.
+Why the engine version is what it is: [About the engine version](../explanation/about-the-engine-version.md).*
+
+| Seen | Godot | What happens | What we do | Undo when |
+|---|---|---|---|---|
+| 2026-10-23, Mac mini M4, Metal | 4.8 beta 1 | The Forward Mobile renderer generates a scene shader for a `BaseMaterial3D` with `subsurf_scatter_transmittance_enabled` that it cannot compile: the generated fragment calls `light_compute` with the transmittance arguments, which the Mobile variant does not have, so the compile fails with `'light_compute' : no matching overloaded function found` and `missing #endif`, and the renderer then aborts on an empty pipeline list (`Index p_index = 25 is out of bounds (size() = 0)`). Subsurface scattering itself is only warned about and stripped, as documented. | The temple's gem materials keep subsurface scattering and leave transmittance out: `gen_theme_scenes.py` writes transmittance only when a theme's `subsurface` block names a `transmittance` colour, and `tools/assets/themes/temple.json` does not ([Board themes](board-themes.md#generators), the `materials` table). | A Godot release strips transmittance on Mobile like it strips subsurface scattering. Not reported upstream from this project; the owner decides what goes out under the project's account. |
+| 2026-10-23, Mac mini M4 | 4.7.2, 4.8 beta 1 | With `xr/openxr/enabled=true` and no OpenXR runtime installed, start-up shows a modal "OpenXR was requested but failed to start" alert and waits for a click, so an unattended run (benchmark, CI-style check) hangs in `NSAlert runModal`. | `xr/openxr/startup_alert=false` in `project.godot`; Godot still logs the failure and starts in normal mode. | Never: the alert is for players, the log line is for us. |
+| 2026-10-20, Mac mini M4 | 4.7.2 | Godot's Metal driver returns no GPU timestamps, so `viewport_get_measured_render_time_gpu` is 0 and `--gpu-profile` prints zeros. | Measure GPU time on 4.8 beta 1, which reports it; on 4.7.2 use whole-frame time with vsync off ([Benchmark results](benchmark-results.md)). | 4.7.x backports the Metal timestamps. |

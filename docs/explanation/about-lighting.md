@@ -1,12 +1,17 @@
 <!-- SPDX-License-Identifier: GPL-2.0-or-later -->
 # About lighting
 
-*Explanation, written as a decision record. How the board is lit on each
-quality tier, which global illumination each tier gets and why, and what
-it costs. The nodes and parameters are in
-[Board themes: Lighting](../reference/board-themes.md#lighting); the
-switches per tier in [Quality tiers](../reference/quality-tiers.md); the
-look each tier must show in [Visual target](../reference/visual-target.md#lighting-and-global-illumination).*
+*Explanation, written as a decision record. How the board is lit, which
+global illumination it gets and why, and what it costs. The nodes and
+parameters are in [Board themes: Lighting](../reference/board-themes.md#lighting);
+the look each platform class must show in
+[Visual target](../reference/visual-target.md#lighting-and-global-illumination).
+The per-tier switches this record refers to belonged to the quality tier
+system, which has since been removed: the game runs on Godot's project
+settings ([About quality settings](about-quality-settings.md)). The
+`VoxelGI` volume of decision 3 was removed with it; real-time bounce on
+the pieces now comes from the lightmap's probes and SSIL, which the
+temple keeps.*
 
 ## Status
 
@@ -76,7 +81,10 @@ the water and the mist around the board, not in a close look-dev frame.
    real-time lights (bake mode dynamic): the bake keeps their indirect
    light only, so the flames can flicker and the pieces cast real-time
    shadows. No shadowmask: every tier renders the sun's shadow itself.
-3. **`VoxelGI` for real-time bounce on `desktop-high`, not SDFGI.** In
+3. **`VoxelGI` for real-time bounce on `desktop-high`, not SDFGI**
+   (since removed: the generator writes no `VoxelGI` node and the
+   scenes have none; the rest of this item is the record of why it was
+   chosen). In
    Godot, a lightmapped surface takes its indirect light from the
    lightmap only; `VoxelGI` and SDFGI reach only the pieces. What the top
    tier adds is bounce from the moving lights (flicker, effects) on the
@@ -95,14 +103,16 @@ the water and the mist around the board, not in a close look-dev frame.
    pieces onto the lightmapped stone, which neither GI volume can do.
    Mobile and web keep the baked light only.
 5. **Brazier shadows: dual paraboloid, capped by the tier.** Each brazier
-   is an `OmniLight3D` in `quality_shadow_light`; the tier keeps shadows
-   on the nearest 8 (`desktop-high`), 2 (`desktop-standard`) or none.
-   "Every brazier" in the visual target means every brazier up to that
-   cap of 8; the temple has four. Dual paraboloid shadows render two
+   is an `OmniLight3D` with its shadow on. The tier system kept shadows
+   on the nearest 8 (`desktop-high`), 2 (`desktop-standard`) or none;
+   without it all four cast shadows on every renderer. "Every brazier"
+   in the visual target means every brazier up to a cap of 8; the temple
+   has four. Dual paraboloid shadows render two
    passes instead of a cube's six; the light is turned so the seam lies
    flat at flame height, above the pieces.
-6. **One `AreaLight3D` sky fill on `desktop-high`** (`quality:area_light`,
-   not baked), for the soft top light a single sun cannot give.
+6. **One `AreaLight3D` sky fill** (not baked; `desktop-high` only under
+   the tier system, now everywhere), for the soft top light a single sun
+   cannot give.
 7. **No environment-wide fog.** Depth fog failed rules 2 and 4. Height fog
    that starts below the platform (`fog_height` −0.6 m) passed on web, but
    in the board view on Forward+ it still left a haze over the board (rule
@@ -128,11 +138,11 @@ the water and the mist around the board, not in a close look-dev frame.
    [Costs](#costs)); 4K at the 0.5 floor shades 2.25 times as many pixels
    and is for machines above the reference class, as the visual target
    says.
-9. **Emission in nits, with `lo/` copies for web.** Under physical units
-   the RD renderers scale emission by the exposure, Compatibility in Godot
-   4.7.2 does not. Base materials carry emission in nits, and each emissive
-   material has a `lo/` copy at 1 nit that `QualityTiers` loads on the
-   web tier, the same way it loads `hi/` materials on desktop.
+9. **Emission in nits.** Under physical units the RD renderers scale
+   emission by the exposure, Compatibility in Godot 4.7.2 does not.
+   Materials carry emission in nits (`EMISSION_NITS` in
+   `gen_theme_scenes.py`); the `lo/` copies at 1 nit that the tier
+   system loaded on web went with that system.
 
 ## Revision: darker shadows (WP-60)
 
@@ -267,8 +277,8 @@ Budget: 16.6 ms p95 (web: 33.3 ms), planned to at most about 85%.
 4 to 6 ms of that does not scale with pixels (shadow passes, vertex and
 draw work, glow's small mips; an assumption, not measured) and the rest
 does. At 720 lines (0.92 Mpx, 25%) the scaling part becomes 4.8 to 5.3 ms.
-The desktop `hi/` materials, which the board view now loads (parallax
-stone, refracting gems), add an assumed 1 to 2 ms at that size. This
+The parallax stone and refracting gem materials, which the board view
+now loads, add an assumed 1 to 2 ms at that size. This
 package's items not in the measurement (`VoxelGI` 0.8, SSIL 0.6, SSAO 0.4,
 brazier shadows 1.2 and lights 0.2, area light 0.3, softer PCSS sun 0.3,
 the upscaler over TAA 0.5) add about 4.3 ms. Central estimate:
@@ -339,14 +349,13 @@ is captured on load.
   to 1467 MB) and stalled every frame on an RTX 4080 SUPER at 1440p, for
   no visible bounce, because lightmapped surfaces take their indirect
   light from the lightmap and SSIL ([numbers](../reference/benchmark-results.md#pieces-out-of-gi)).
-- `VoxelGI` while the scene fits one volume of about 20 m; SDFGI only for
-  a theme that does not, and that theme then has to fit its cost.
-- Shadow-casting braziers per theme: the budget above is for 4. Up to the
-  tier cap of 8 is allowed, at about 0.3 ms each on `desktop-high`.
+- No real-time GI volume: `VoxelGI` was removed, and a theme that
+  wants one has to measure its cost first.
+- Shadow-casting braziers per theme: the budget above is for 4, at
+  about 0.3 ms each on `desktop-high` class hardware.
 - Omni lights with shadows are dual paraboloid, turned so the seam lies
   flat above the pieces (`Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, …)`).
-- Every emissive material gets a `lo/` copy at 1 nit (the scene generator
-  writes it); emission is authored in nits for the other tiers.
+- Emission is authored in nits; there are no per-renderer copies.
 - No environment fog over the board; haze is `FogVolume`s, thin and patchy over the board (WP-51).
 
 ## Open questions
@@ -356,8 +365,9 @@ is captured on load.
   `desktop-high` budget uses. WP-41 decides with the re-run numbers.
 - Whether Compatibility leaves emission unexposed was found by rendering
   (pieces came out white on web with nit-scaled emission) and reading
-  Godot 4.7.2's `drivers/gles3` scene shader; a Godot release that adds
-  it would make the `lo/` copies redundant.
+  Godot 4.7.2's `drivers/gles3` scene shader. The `lo/` copies that
+  worked around it went with the tier system, so web emission now rests
+  on `EMISSION_NITS` alone.
 
 ## Consequences
 
@@ -365,8 +375,6 @@ is captured on load.
   and backdrop `.obj.import` files are committed with lightmap UV2.
 - Pieces stay out of GI (`gi_mode = 0`); any new moving content must
   too, so its cost does not grow with the number of things on screen.
-- A theme whose emissive material is new needs its `lo/` copy (the scene
-  generator writes it).
 - The M4 re-run with the pieces out of GI keeps the 720-line internal
   height and the switches above: p50 17.5 ms, but p95 18.4 ms against the
   17.5 ms limit, still a miss. The follow-up is the M4's p95 tail

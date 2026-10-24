@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <vector>
 
+#include <godot_cpp/classes/camera_attributes_practical.hpp>
 #include <godot_cpp/classes/environment.hpp>
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/classes/viewport.hpp>
@@ -67,7 +68,7 @@ private:
     };
     godot::Ref<godot::Environment> env_;
     Env base_;
-    godot::ObjectID blur_;  // the BackdropBlur drawing depth of field
+    godot::Ref<godot::CameraAttributesPractical> dof_attributes_;  // the far depth of field
     bool dof_ = false;
     std::vector<Visible> atmosphere_nodes_;
 };

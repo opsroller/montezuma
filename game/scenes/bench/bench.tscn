@@ -1,14 +1,13 @@
-[gd_scene load_steps=2 format=3 uid="uid://bmzbenchscene"]
+[gd_scene format=3 uid="uid://bmzbenchscene"]
 ; SPDX-License-Identifier: GPL-2.0-or-later
-
-[ext_resource type="PackedScene" uid="uid://bmzboardview3d" path="res://scenes/board/board.tscn" id="1_board"]
 
 [node name="Bench" type="Node3D"]
 
-[node name="Board" parent="." instance=ExtResource("1_board")]
+[node name="Loader" type="ScenePreloader" parent="."]
+scene_path = "res://scenes/board/board.tscn"
+primer_path = "res://scenes/render/pipeline_primer.tscn"
 
 [node name="BenchmarkRunner" type="BenchmarkRunner" parent="."]
-board_view_path = NodePath("../Board/View")
+board_view_path = NodePath("../Loader/Board/View")
+preloader_path = NodePath("../Loader")
 seed = 52
-
-[connection signal="bench_event" from="BenchmarkRunner" to="Board/View" method="play_effect"]

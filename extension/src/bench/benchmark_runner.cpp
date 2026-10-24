@@ -28,7 +28,7 @@
 
 #include "board/board_view_3d.hpp"
 #include "frame_stats.hpp"
-#include "render/quality_tiers.hpp"
+#include "render/scene_preloader.hpp"
 #include "render_probe.hpp"
 
 using namespace godot;
@@ -170,6 +170,26 @@ void BenchmarkRunner::read_command_line() {
 
 void BenchmarkRunner::_ready() {
     if (Engine::get_singleton()->is_editor_hint()) return;
+    if (!preloader_path_.is_empty()) {
+        auto* preloader = Object::cast_to<ScenePreloader>(get_node_or_null(preloader_path_));
+        ERR_FAIL_NULL_MSG(preloader, "BenchmarkRunner: preloader_path does not point at a ScenePreloader.");
+        if (!preloader->is_loaded()) {
+            preloader->connect("loaded", callable_mp(this, &BenchmarkRunner::start).unbind(1), CONNECT_ONE_SHOT);
+            return;
+        }
+    }
+    start();
+}
+
+void BenchmarkRunner::start() {
+    if (!preloader_path_.is_empty()) {
+        if (auto* preloader = Object::cast_to<ScenePreloader>(get_node_or_null(preloader_path_))) {
+            load_seconds_ = preloader->get_load_seconds();
+        }
+    }
+    if (BoardView3D* v = view(); v && !is_connected("bench_event", Callable(v, "play_effect"))) {
+        connect("bench_event", Callable(v, "play_effect"));
+    }
     if (!capture_) {
         ERR_FAIL_NULL_MSG(view(), "BenchmarkRunner: board_view_path does not point at a BoardView3D.");
         plan();
@@ -182,10 +202,6 @@ void BenchmarkRunner::_ready() {
         return;
     }
     read_command_line();
-    if (tier_.is_empty()) {
-        const QualityTiers* tiers = QualityTiers::get_singleton();
-        tier_ = tiers ? tiers->get_tier() : String("unset");
-    }
     // Visual target: p95 within one 60 Hz period, two on the web tier;
     // budget_ms is that p95 budget before the tolerance.
     const bench::BudgetSpec spec = bench::budget_for_tier(tier_.utf8().get_data(), tolerance_, budget_ms_);
@@ -483,6 +499,7 @@ void BenchmarkRunner::finish() {
     report_["display"] = display;
     report_["timing"] = timing;
     report_["warmup_seconds"] = warmup_seconds_;
+    report_["load_seconds"] = load_seconds_;
     report_["measure_seconds"] = seconds_between(measure_start_usec_, now);
     report_["device"] = device;
     report_["gpu_timing"] = gpu_timing;
@@ -494,7 +511,6 @@ void BenchmarkRunner::finish() {
     report_["render"] = render;
     report_["replay"] = replay;
     report_["features"] = features_;
-    if (const QualityTiers* tiers = QualityTiers::get_singleton()) report_["quality_features"] = tiers->get_active_features();
 
     const String dir = output_path_.get_base_dir();
     if (!dir.is_empty()) DirAccess::make_dir_recursive_absolute(ProjectSettings::get_singleton()->globalize_path(dir));
@@ -549,6 +565,8 @@ void BenchmarkRunner::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_quit_when_done"), &BenchmarkRunner::get_quit_when_done);
     ClassDB::bind_method(D_METHOD("set_capture", "capture"), &BenchmarkRunner::set_capture);
     ClassDB::bind_method(D_METHOD("get_capture"), &BenchmarkRunner::get_capture);
+    ClassDB::bind_method(D_METHOD("set_preloader_path", "path"), &BenchmarkRunner::set_preloader_path);
+    ClassDB::bind_method(D_METHOD("get_preloader_path"), &BenchmarkRunner::get_preloader_path);
     ClassDB::bind_method(D_METHOD("get_report"), &BenchmarkRunner::get_report);
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "board_view_path", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "BoardView3D"),
                  "set_board_view_path", "get_board_view_path");
@@ -564,6 +582,7 @@ void BenchmarkRunner::_bind_methods() {
     ADD_PROPERTY(PropertyInfo(Variant::BOOL, "disable_vsync"), "set_disable_vsync", "get_disable_vsync");
     ADD_PROPERTY(PropertyInfo(Variant::BOOL, "quit_when_done"), "set_quit_when_done", "get_quit_when_done");
     ADD_PROPERTY(PropertyInfo(Variant::BOOL, "capture"), "set_capture", "get_capture");
+    ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "preloader_path"), "set_preloader_path", "get_preloader_path");
     ADD_SIGNAL(MethodInfo("bench_event", PropertyInfo(Variant::STRING, "label"), PropertyInfo(Variant::ARRAY, "cells")));
     ADD_SIGNAL(MethodInfo("finished", PropertyInfo(Variant::STRING, "path")));
 }

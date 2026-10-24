@@ -12,7 +12,7 @@ way: [UI architecture](../explanation/ui-architecture.md).
 
 ```
 UiRoot (UiRoot)
-└─ Scaled (Control)                 scaled from the 1280×720 reference size
+└─ Scaled (Control)                 fills the window; Godot's stretch settings scale it
    └─ SafeArea (MarginContainer)    inset by the phone's safe area
       ├─ Hud (Hud)                  game/ui/hud/hud.tscn; shown during a level
       └─ ScreenStack (ScreenStack)  the open screens, bottom to top
@@ -187,14 +187,15 @@ settings screen saves on close.
 | `sfx_volume` | float 0..1 | 0.8 | audio bus `SFX` (dB) |
 | `fullscreen` | bool | false | window mode (desktop only) |
 | `locale` | String | `""` (system) | `TranslationServer` |
-| `text_scale` | float 1..2 | 1.0 | all font sizes (headings ×½ rate, titles ×¼) |
 | `reduced_motion` | bool | false | screen transitions off; board animations at `feel::kReducedMotionAnimationSpeed` (2×) through `BoardView3D.animation_speed` |
 | `difficulty` | `normal` / `hard` | `normal` | passed with `play_requested` |
 
-The settings screen's **Graphics quality** row is not a `UiRoot` setting:
-it reads and writes the `quality_tier` choice of `QualityTiers`
-(`user://quality.cfg`), applies at once and shows only where more than
-one tier is available ([Quality tiers](quality-tiers.md#settings-key)).
+The settings screen has no graphics quality row: the game runs on
+Godot's project settings ([About quality settings](../explanation/about-quality-settings.md)).
+There is no text scale either: the UI fills the window at the tokens'
+font sizes, and Godot's stretch settings (`display/window/stretch` in
+`project.godot`) decide any scaling. A `text_scale` key left in an older
+`settings.cfg` is kept but has no effect.
 
 ## Theme tokens
 

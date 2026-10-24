@@ -200,7 +200,7 @@ stamps `game/project.godot`, `run_bench.cmake` writes
 |---|---|---|
 | `Linux` | Linux | PCK embedded |
 | `Windows` | Windows Desktop | PCK embedded; `application/modify_resources=false` (no rcedit, so no icon or version info in the `.exe` yet) |
-| `macOS` | macOS | Universal; bundle id `io.github.opsroller.montezuma`; built-in ad-hoc signing; no notarization; minimum macOS 10.15 (x86_64) and 11.0 (arm64) |
+| `macOS` | macOS | Universal; bundle id `io.github.opsroller.montezuma`; built-in ad-hoc signing; no notarization; minimum macOS 10.15 (x86_64) and 27.0 (arm64) |
 | `Web` | Web | Single-threaded (`variant/thread_support=false`), GDExtension on (`variant/extensions_support=true`), desktop texture compression only, no PWA |
 
 ## Web demo

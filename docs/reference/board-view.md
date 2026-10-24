@@ -119,18 +119,21 @@ cool fill light at 0.35 energy, no shadow.
 
 ## Draw calls
 
-On tiers whose profile has `batch_pieces` (`mobile` and `web`, see
-[Quality tiers](quality-tiers.md#render-settings-per-tier)), the view draws
-every `MeshInstance3D` under `Pieces` (the pieces and their `Marks`)
-through `PieceBatcher` (`extension/src/board/piece_batcher.*`): one
+`PieceBatcher` (`extension/src/board/piece_batcher.*`) can draw every
+`MeshInstance3D` under `Pieces` (the pieces and their `Marks`) as one
 `MultiMeshInstance3D` under `PieceBatches` per mesh, material, shadow
-setting and render layers. A full temple board is then 7 piece draws
-instead of 64, plus one per kind of marker shown, and the same again in
-each shadow cascade.
+setting and render layers: a full temple board as 7 piece draws instead
+of 64, plus one per kind of marker shown, and the same again in each
+shadow cascade. The quality tier system called its sync once a frame on
+`mobile` and `web`; since that system went
+([About quality settings](../explanation/about-quality-settings.md))
+nothing calls it, so pieces draw one by one on every renderer and
+`get_piece_draws()` reports zero batches. The rules below are the
+batcher's when it runs.
 
 | Rule | Detail |
 |---|---|
-| When | Once a frame on `RenderingServer.frame_pre_draw`, after every tween has moved the pieces, so a batch never trails its piece |
+| When | Its `sync` is meant to run once a frame on `RenderingServer.frame_pre_draw`, after every tween has moved the pieces, so a batch never trails its piece |
 | What is copied | The mesh's global transform relative to `PieceBatches` (position, scale, rotation), only while it is visible in the tree |
 | Material | The mesh's `material_override`; else the mesh's own surface materials; else the one material every surface shows. A mesh whose surfaces show different overrides stays unbatched |
 | Unbatched | Meshes with a `material_overlay`, a `transparency` above 0 or a skeleton keep drawing themselves |
@@ -164,8 +167,8 @@ is never cropped.
 Each refit also places the far depth of field when the active camera
 attributes (the camera's own, else the environment's) are a
 `CameraAttributesPractical` with the theme's `dof_far_beyond_board`
-metadata (which `BackdropBlur` draws,
-[Quality tiers](quality-tiers.md#backdrop-depth-of-field)):
+metadata (a theme with a `post.depth_of_field` block; the temple has
+none, [About quality settings](../explanation/about-quality-settings.md)):
 `dof_blur_far_distance` becomes the view depth of the board's far edge
 at board level (`layout::far_depth`) plus that many metres, so the blur
 stays on the backdrop at every window size
@@ -323,9 +326,7 @@ comes at the plan's end. A marker growing in is not transient: its
 sparkle plays on its own tween and never holds the move. Effects
 never move the camera. Additive effects are translucent so the piece
 under them still reads. `animation_speed` scales them; `skip_animation`
-frees them at once and leaves only the end state. On the `mobile` and
-`web` [quality tiers](quality-tiers.md) bursts carry half the particles;
-no effect uses trails. The placeholders are cheap meshes, `Label3D` and
+frees them at once and leaves only the end state. No effect uses trails. The placeholders are cheap meshes, `Label3D` and
 small `CPUParticles3D` bursts that run on every renderer; WP-53 replaces
 them with realistic GPU-particle scenes through the `fx_*` names.
 

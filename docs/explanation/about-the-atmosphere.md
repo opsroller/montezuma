@@ -3,14 +3,15 @@
 
 *Explanation. Why the temple's mist is one fog volume with only a thin
 veil over the board, why it lies in banks on the plaza and is lit as
-brightly as it is, and why mobile and web get cards. The parameters are in
+brightly as it is, and what mobile and web got in its place. The parameters are in
 [Board themes: Atmosphere](../reference/board-themes.md#atmosphere).*
 
 ## What it has to do
 
 The [visual target](../reference/visual-target.md) asks for "shafts of sun
-through dusty air" on desktop and light-shaft cards in their place on
-mobile and web. Readability rule 2 lets fog lie over the board as long as
+through dusty air" on desktop; it asked for light-shaft cards in their
+place on mobile and web, since removed (see
+[Cards on mobile and web](#cards-on-mobile-and-web)). Readability rule 2 lets fog lie over the board as long as
 the tiles and pieces read through it, it never covers the whole board and
 it stays under the HUD and all text. The first lighting pass (WP-47) found
 that height fog starting below the platform left an even haze over the
@@ -185,22 +186,26 @@ in a sunbeam read. They exist only on the desktop tiers, with the fog.
 ## Cards on mobile and web
 
 The Mobile and Compatibility renderers have no volumetric fog. The cards
-that stand in for it are twelve soft additive quads along the sun's
-direction, beside the platform: twelve draw calls, which the web build's
-draw-call budget has room for. They are plain meshes with no
-depth-texture soft edge (they fade toward the ground in their own UVs
-instead): the cards reading the depth texture made ANGLE's
-Metal backend, which runs the Compatibility renderer on macOS, abort on
-the virtual Mac GPU the release smoke test runs on. The generator checks
-every point of every card against the game camera at the distances it
-uses from a wide window to a tall phone, and places them again until none
-draws over the board. Without volumetric fog there is no veil either: on
-mobile and web the board is clear.
+that stood in for it, until they were removed with the quality tier
+system ([About quality settings](about-quality-settings.md)), were
+twelve soft additive quads along the sun's direction, beside the
+platform: twelve draw calls, which the web build's draw-call budget had
+room for. They were plain meshes with no depth-texture soft edge (they
+faded toward the ground in their own UVs instead): the cards reading the
+depth texture made ANGLE's Metal backend, which runs the Compatibility
+renderer on macOS, abort on the virtual Mac GPU the release smoke test
+runs on. The generator checked every point of every card against the
+game camera at the distances it uses from a wide window to a tall phone,
+and placed them again until none drew over the board. The generator
+still writes their `SH_LightShaft` material; no scene uses it
+([Board themes: Shaders](../reference/board-themes.md#shaders)). Without
+volumetric fog there is no veil either: on mobile and web the board is
+clear.
 
 The fog shader itself cannot even load on Compatibility (Godot prints an
 error for any fog shader there), so the fog volume names its material by
-path and the quality tier system loads it only on tiers with volumetric
-fog.
+path; the quality tier system used to load it only on tiers with
+volumetric fog.
 
 ## Cost
 
