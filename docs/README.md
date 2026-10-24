@@ -37,14 +37,14 @@ own folder.
 - [Progress, save and trophies](reference/progress.md): the player profile, upgrades, trophy ids and the save file format.
 - [Level session](reference/level-session.md): one level by the full rules, its commands, reports and defaults.
 - [Match3Game](reference/match3-game.md): the game scene's controller, its signals, cues and self-test.
-- [Visual target](reference/visual-target.md): the look per quality tier, frame budgets and acceptance tests.
-- [Fire](reference/fire.md): the brazier fire's simulation, flipbooks, scene, shaders, flickering light and per-tier behaviour.
+- [Visual target](reference/visual-target.md): the look per platform class (the tiers), frame budgets and acceptance tests.
+- [Fire](reference/fire.md): the brazier fire's simulation, flipbooks, scene, shaders, flickering light and behaviour per renderer.
 - [Ray-traced reflections](reference/ray-traced-reflections.md): the optional hardware ray-traced reflections on the pieces, their build option, flags, defaults and cost.
-- [Quality tiers](reference/quality-tiers.md): the `QualityTiers` autoload, settings key, feature ids, node groups and render settings per tier.
-- [Water](reference/water.md): the temple water channel, its two shaders, parameters, tiers and cost.
+- [Water](reference/water.md): the temple water channel, its two shaders, parameters, renderers and cost.
 - [Benchmark and readability capture](reference/benchmark.md): the benchmark replay, its JSON report, feature keys and readability checks.
-- [Render tuning screen](reference/render-tuner.md): the panel over the board demo with live controls for every render setting and a performance readout.
+- [Render tuning screen](reference/render-tuner.md): the panel over the board demo with live controls for every render setting, a performance readout, its command-line arguments and the yardstick scenes.
 - [Benchmark results](reference/benchmark-results.md): measured frame times, feature rows and readability per machine and tier.
+- [Engine issues we work around](reference/engine-issues.md): Godot behaviour the project works around, with the version, the workaround and when to undo it.
 - [Operations](reference/operations.md): cost, flow and quality measures, operations-review findings and the review log.
 - [Style guide](../design/README.md): the visual identity's rendered key art, gold wordmark and flat logo, colour, type, icons, glass UI surfaces, band and imagery rules, approved contrast pairs, font sources and token files.
 - [History: Mexica art, 1502 to 1520](reference/history-mexica-art.md): the sourced reference set and artist brief for the temple's look (stone, codices, featherwork, greenstone, gold), with what is not used and why.
@@ -70,10 +70,10 @@ own folder.
 - [Check UI text and layout](how-to/check-ui-text-and-layout.md): pseudo-localization, large text, window sizes, controller only.
 - [Build and preview the website](how-to/build-and-preview-the-website.md): build `site/`, preview it with or without the web demo, update the embedded web build, check a deployed demo, run its tests.
 - [Add a level](how-to/add-a-level.md): write a campaign level file from the progression tables, test it and play it.
-- [Make content depend on the quality tier](how-to/make-content-depend-on-the-quality-tier.md): desktop-only nodes, fallbacks, light shadows, texture variants.
 - [Capture the effects showcase](how-to/capture-the-effects-showcase.md): record every totem and power-up effect to frames.
 - [Run the benchmark](how-to/run-the-benchmark.md): measure frame time and check readability on a desktop or a phone.
 - [Tune rendering live](how-to/tune-rendering-live.md): try lighting and effect settings on the running board and see what each costs.
+- [Measure what a frame costs, step by step](how-to/measure-a-frame-step-by-step.md): run the yardstick scenes, take content, effects and project settings out one at a time with `override.cfg`, and read what each costs.
 - [Tune the fire](how-to/tune-the-fire.md): change the brazier fire's simulation, colour or particles and check it.
 - [Tune the fog veil](how-to/tune-the-fog-veil.md): make the mist over the board thicker, thinner or sparser and check it against readability rule 2.
 
@@ -87,10 +87,10 @@ own folder.
 - [About the visual target](explanation/about-the-visual-target.md): why a realistic high-end look, and what Godot can and cannot do with ray tracing.
 - [About the fire](explanation/about-the-fire.md): why a simulated flipbook with motion vectors, why our own simulation, how it stays off the board.
 - [About ray tracing](explanation/about-ray-tracing.md): what the hardware ray-tracing spike tried, what it showed and why it stays off.
-- [About quality tiers](explanation/about-quality-tiers.md): how a tier is picked, why the renderer is fixed per platform, why tiers only switch effects off.
-- [About lighting](explanation/about-lighting.md): baked and real-time GI per tier, why VoxelGI over SDFGI, physical units, height fog and the lighting costs.
-- [About post-processing and the colour grade](explanation/about-post-processing.md): glow before tonemapping, the CDL grade as a LUT and its palette check, backdrop depth of field that follows the camera, and their costs.
-- [About the atmosphere](explanation/about-the-atmosphere.md): why one fog volume with only a thin, patchy veil over the board, why shafts come from stretched noise, why cards on mobile and web.
+- [About quality settings](explanation/about-quality-settings.md): why quality is Godot's project settings and not a tier system of our own, what the temple's effects cost at 5K and why they stay, and the one material change (no transmittance).
+- [About lighting](explanation/about-lighting.md): baked and real-time GI, why VoxelGI over SDFGI, physical units, height fog and the lighting costs.
+- [About post-processing and the colour grade](explanation/about-post-processing.md): glow before tonemapping, the CDL grade as a LUT and its palette check, the backdrop depth of field that followed the camera, and their costs.
+- [About the atmosphere](explanation/about-the-atmosphere.md): why one fog volume with only a thin, patchy veil over the board, why shafts come from stretched noise, and what mobile and web got in its place.
 - [About CI caching](explanation/about-ci-caching.md): why CI uses a compiler cache and what it leaves uncached.
 - [About CI on every push](explanation/about-ci-on-every-push.md): why every branch push runs the checks, and why branch PRs skip their own run.
 - [About level clocks](explanation/about-level-clocks.md): why each level has its own base clock, why timer upgrades add to it, and why the clock rule counts only wins.

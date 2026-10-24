@@ -178,15 +178,26 @@ endfunction()
 
 # montezuma_log_has(<var> <file>... REGEX <regex>): TRUE in <var> when any
 # line of the files matches; the matching lines are printed to stderr.
+# montezuma_log_has(<var> <file>... REGEX <regex> [IGNORE <regex>...]): TRUE
+# when a line of a file matches REGEX and none of the IGNORE regexes (lines
+# the engine is known to print that a run cannot avoid; each caller says why).
 function(montezuma_log_has var)
-  cmake_parse_arguments(PARSE_ARGV 1 L "" "REGEX" "")
+  cmake_parse_arguments(PARSE_ARGV 1 L "" "REGEX" "IGNORE")
   set(found FALSE)
   foreach(f IN LISTS L_UNPARSED_ARGUMENTS)
     if(EXISTS "${f}")
       file(STRINGS "${f}" hits REGEX "${L_REGEX}")
       foreach(h IN LISTS hits)
-        message(NOTICE "${h}")
-        set(found TRUE)
+        set(ignored FALSE)
+        foreach(i IN LISTS L_IGNORE)
+          if(h MATCHES "${i}")
+            set(ignored TRUE)
+          endif()
+        endforeach()
+        if(NOT ignored)
+          message(NOTICE "${h}")
+          set(found TRUE)
+        endif()
       endforeach()
     endif()
   endforeach()

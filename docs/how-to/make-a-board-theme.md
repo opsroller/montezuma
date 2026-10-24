@@ -57,9 +57,9 @@ With a Blender install instead of `bpy`, run the mesh step as
    ```
 
    Check it in greyscale too: every kind must still be told apart.
-   `LD_Temple_Hi.tscn` and `LD_Temple_LineUp_Hi.tscn` show the desktop
-   materials; render them with the Forward+ renderer (`--rendering-driver
-   vulkan`) and compare them with the base scenes.
+   Render them with the Forward+ renderer too (`--rendering-driver
+   vulkan`): `SH_TriplanarPBR`, `SH_Gem` and `SH_Water` compile there
+   only ([Board themes: Shaders](../reference/board-themes.md#shaders)).
 4. Commit the parameter file and every regenerated file together.
 
 ## Grade a theme
@@ -83,8 +83,8 @@ With a Blender install instead of `bpy`, run the mesh step as
    ```sh
    python3 tools/assets/gen_theme_textures.py
    godot --headless --path game --import
-   cmake -DTIER=web -DDRIVER=opengl3 -DREADABILITY=ON -DSECONDS=5 -DXVFB=ON -P tools/bench/run_bench.cmake
-   cmake -DTIER=desktop-high -DDRIVER=vulkan -DREADABILITY=ON -DSECONDS=5 -DXVFB=ON -P tools/bench/run_bench.cmake
+   cmake -DGAME_ARGS=--bench-tier=web -DDRIVER=opengl3 -DREADABILITY=ON -DSECONDS=5 -DXVFB=ON -P tools/bench/run_bench.cmake
+   cmake -DDRIVER=vulkan -DREADABILITY=ON -DSECONDS=5 -DXVFB=ON -P tools/bench/run_bench.cmake
    ```
 
    Rules 4 and 6 must still pass. Look at `all_on.png` beside the
@@ -104,17 +104,19 @@ With a Blender install instead of `bpy`, run the mesh step as
    Register it in `RECIPES`.
 2. Add the set under `textures.sets` in the parameter file, for example
    `"Shell_01": {"recipe": "shell", "normal_strength": 1.0}`. Add
-   `"hi": true` for a hero surface that needs a 2048² desktop set and
+   `"hi": true` for a hero surface that needs a 2048² set and
    `"height": true` if a parallax shader will read `_H`.
 3. Point a material at it with `"set": "Shell_01"`, then regenerate and
    validate. A value error (`dielectric base colour spans ...`, `metallic
    values are between ...`) means the recipe's numbers are off, not the
    validator.
 
-## Give a material a desktop variant
+## Give a material its `hi` keys
 
-Add a `hi` object to the material with only the keys that change on
-desktop. For example, sub-surface scattering on a translucent stone:
+A material's `hi` object holds the keys that once made its desktop
+variant; the generator now merges them into the one material it writes
+([About quality settings](../explanation/about-quality-settings.md)).
+For example, sub-surface scattering on a translucent stone:
 
 ```json
 "MI_Jade": {
@@ -124,9 +126,9 @@ desktop. For example, sub-surface scattering on a translucent stone:
 ```
 
 or a custom shader: `"hi": {"shader": "res://assets/materials/shaders/SH_Gem.gdshader", "params": {...}}`.
-`gen_theme_scenes.py` writes `materials/<theme>/hi/<name>.tres` and uses
-`hi/` textures where the set has them. Keep the base material good on its
-own: mobile and web never see the variant.
+`gen_theme_scenes.py` writes `materials/<theme>/<name>.tres` with the
+`hi` keys applied and uses the `hi/` textures where the set has them
+([Board themes: Texture sizes](../reference/board-themes.md#texture-sizes)).
 
 ## Add a new theme
 

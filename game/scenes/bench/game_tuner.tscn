@@ -1,0 +1,15 @@
+[gd_scene load_steps=2 format=3 uid="uid://bmzgametuner"]
+; SPDX-License-Identifier: GPL-2.0-or-later
+; The game with the render tuning panel over it (F1 hides it, F12 saves a
+; screenshot): docs/reference/render-tuner.md.
+
+[ext_resource type="PackedScene" path="res://scenes/main.tscn" id="1_main"]
+
+[node name="GameTuner" type="Node"]
+
+[node name="Game" parent="." instance=ExtResource("1_main")]
+
+[node name="Panel" type="CanvasLayer" parent="."]
+layer = 100
+
+[node name="RenderTuner" type="RenderTuner" parent="Panel"]

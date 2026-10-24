@@ -10,10 +10,9 @@ namespace montezuma::godot_binding {
 class UiRoot;
 
 // Binds the settings scene's controls (unique names %Music, %Sfx,
-// %TextSize, %ReducedMotion, %Fullscreen, %Language, %Difficulty) to
-// UiRoot settings, and %Quality to the QualityTiers choice. Changes apply
-// live; UiRoot settings are saved when the screen closes, the quality tier
-// at once.
+// %ReducedMotion, %Fullscreen, %Language, %Difficulty) to
+// UiRoot settings. Changes apply live and are saved when the screen
+// closes.
 class SettingsScreen : public Screen {
     GDCLASS(SettingsScreen, Screen)
 
@@ -30,8 +29,6 @@ private:
     void bind_toggle(const char* node, const char* key);
     void bind_option(const char* node, const char* key, const godot::PackedStringArray& values,
                      const godot::PackedStringArray& labels);
-    void bind_quality();
-    void on_quality(int64_t index);
     void on_value(double value, const godot::String& key);
     void on_toggled(bool on, const godot::String& key);
     void on_option(int64_t index, const godot::String& node, const godot::String& key);

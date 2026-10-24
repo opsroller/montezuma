@@ -85,6 +85,7 @@ jobs:
         env:
           GODOT: /home/runner/godot-dl/godot
         run: |
+          set -o pipefail  # an export failure must fail this step, not the next one
           version="$(cmake -P tools/release/version.cmake)"
           echo "Version $version" >> "$GITHUB_STEP_SUMMARY"
           cmake "-DGODOT=$GODOT" "-DVERSION=$version" -DOUT=dist/web -P tools/release/web-export.cmake \

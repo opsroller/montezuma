@@ -23,8 +23,10 @@
 # output lands next to the backdrop scene as PF_Environment.lmbake plus
 # textures, with a .lightmap-inputs stamp of what it was baked from. A theme
 # whose stamp still matches is skipped. Before a bake the project is
-# imported (stopped after 900 s); the editor is stopped after 900 s per
-# scene it bakes. Either limit failing the step means the editor hung.
+# imported (stopped after 900 s); the editor is stopped after 1500 s per
+# scene it bakes (the temple took 11:21 on GitHub's Linux runner on
+# 24 October 2026, the editor drawing its Forward+ viewport on llvmpipe
+# through the bake). Either limit failing the step means the editor hung.
 include("${CMAKE_CURRENT_LIST_DIR}/../release/steps.cmake")
 if(NOT GODOT)
   set(GODOT godot)
@@ -132,7 +134,7 @@ endif()
 montezuma_run(TIMEOUT 900 LOG "${work}/import.log" RESULT ignored
   COMMAND "${GODOT}" --headless --path "${root}/game" --import)
 list(LENGTH scenes count)
-math(EXPR timeout "900 * ${count}")
+math(EXPR timeout "1500 * ${count}")
 list(JOIN scenes "," arg)
 # The driver prints one result line per scene; trust those, not the exit
 # status alone (the editor's own exit can be noisy).

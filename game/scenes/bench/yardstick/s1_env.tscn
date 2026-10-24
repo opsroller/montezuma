@@ -1,0 +1,89 @@
+[gd_scene load_steps=3 format=3]
+; SPDX-License-Identifier: GPL-2.0-or-later
+; Yardstick step 1: the camera and the theme's WorldEnvironment alone: sky, SSAO, SSIL, glow, volumetric fog, depth of field, colour grade (docs/reference/render-tuner.md#yardstick).
+
+[ext_resource type="PackedScene" path="res://assets/models/temple/backdrop/PF_Environment.tscn" id="1_env"]
+
+[sub_resource type="CameraAttributesPractical" id="cam"]
+; The theme's attributes with the far depth of field where BoardCamera3D puts it for an 8x8 board.
+exposure_sensitivity = 440
+exposure_multiplier = 0.8
+dof_blur_far_enabled = true
+dof_blur_far_distance = 17.3
+dof_blur_far_transition = 2.0
+dof_blur_amount = 0.1
+
+[node name="Yardstick" type="Node3D"]
+
+[node name="Camera" type="Camera3D" parent="."]
+transform = Transform3D(1.000000, 0.000000, 0.000000, 0.000000, 0.258819, 0.965926, 0.000000, -0.965926, 0.258819, 0.0000, 15.0919, 4.0439)
+fov = 40.0
+attributes = SubResource("cam")
+current = true
+
+[node name="Environment" parent="." instance=ExtResource("1_env")]
+
+[node name="Stone" parent="Environment"]
+visible = false
+
+[node name="StoneDark" parent="Environment"]
+visible = false
+
+[node name="Bronze" parent="Environment"]
+visible = false
+
+[node name="Ground" parent="Environment"]
+visible = false
+
+[node name="Foliage" parent="Environment"]
+visible = false
+
+[node name="Rocks" parent="Environment"]
+visible = false
+
+[node name="WaterEast" parent="Environment"]
+visible = false
+
+[node name="WaterWest" parent="Environment"]
+visible = false
+
+[node name="WaterNear" parent="Environment"]
+visible = false
+
+[node name="WaterFar" parent="Environment"]
+visible = false
+
+[node name="Sun" parent="Environment"]
+visible = false
+
+[node name="Fire1" parent="Environment"]
+visible = false
+
+[node name="Fire2" parent="Environment"]
+visible = false
+
+[node name="Fire3" parent="Environment"]
+visible = false
+
+[node name="Fire4" parent="Environment"]
+visible = false
+
+[node name="SkyFill" parent="Environment"]
+visible = false
+
+[node name="ReflectionProbe" parent="Environment"]
+visible = false
+
+[node name="Lightmap" parent="Environment"]
+visible = false
+
+[node name="AtmosphereFog" parent="Environment"]
+visible = false
+
+[node name="Dust" parent="Environment"]
+visible = false
+
+[node name="Panel" type="CanvasLayer" parent="."]
+layer = 100
+
+[node name="RenderTuner" type="RenderTuner" parent="Panel"]

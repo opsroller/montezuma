@@ -144,9 +144,7 @@
       "emission_energy": 0.5,
       "hi": {
         "subsurface": {
-          "strength": 0.6,
-          "transmittance": "#ff8a3a",
-          "depth": 0.3
+          "strength": 0.6
         }
       }
     },
@@ -171,10 +169,7 @@
       "emission_energy": 0.5,
       "hi": {
         "subsurface": {
-          "strength": 0.8,
-          "transmittance": "#5fd38a",
-          "depth": 0.25,
-          "boost": 0.1
+          "strength": 0.8
         }
       }
     },
@@ -225,9 +220,7 @@
       "hi": {
         "clearcoat": 0.8,
         "subsurface": {
-          "strength": 0.7,
-          "transmittance": "#c8d4ff",
-          "depth": 0.2
+          "strength": 0.7
         }
       }
     },
@@ -488,7 +481,7 @@
     }
   },
   "lighting": {
-    "_comment": "Physical light units (lux, lumens, nits, Kelvin, ISO). Lights, GI and exposure: docs/reference/board-themes.md#lighting; per-tier behaviour: docs/reference/quality-tiers.md.",
+    "_comment": "Physical light units (lux, lumens, nits, Kelvin, ISO). Lights, GI and exposure: docs/reference/board-themes.md#lighting; why effects are kept and what they cost: docs/explanation/about-quality-settings.md.",
     "sky_nits": 15000,
     "agx_white": 8.0,
     "agx_contrast": 1.5,

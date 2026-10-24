@@ -2,12 +2,12 @@
 # Water
 
 *Reference. The temple's water channel: where it is, the two water
-shaders and their parameters, what each quality tier shows, and what it
+shaders and their parameters, what each shader shows, and what it
 costs. For technical artists tuning the water and graphics programmers
 checking its cost. Why it is built this way: [Art direction, Water](../explanation/art-direction.md#water).
 The look it must meet: [Visual target](visual-target.md#fire-water-and-particles).
 Changing a theme's water: [Make a board theme](../how-to/make-a-board-theme.md);
-how the tier picks the material: [Make content depend on the quality tier](../how-to/make-content-depend-on-the-quality-tier.md).
+why there is one material on every renderer: [About quality settings](../explanation/about-quality-settings.md).
 Owner: technical-artist (WP-50).*
 
 ![The east channel on desktop (Forward+)](../images/lookdev/temple-water-desktop.jpg)
@@ -50,41 +50,42 @@ near and far strips. Water never lies inside the board rectangle
 | `game/assets/models/<theme>/backdrop/SM_Backdrop_Water{East,West,Near,Far}.obj` | the surface, one 2 cm slab per strip (the far strip in two pieces either side of the causeway) |
 | `SM_Backdrop_Ground.obj`, `SM_Backdrop_StoneDark.obj`, `SM_Backdrop_Stone.obj` | the ground with the channel cut out; channel floor, walls, apron and causeway; coping stones on both edges |
 | `PF_Environment.tscn` | nodes `WaterEast` … `WaterFar` (`MI_Water`, no shadow casting) |
-| `game/assets/materials/<theme>/MI_Water.tres`, `hi/MI_Water.tres` | base (`SH_WaterSimple`) and desktop (`SH_Water`) material |
+| `game/assets/materials/<theme>/MI_Water.tres` | the water material (`SH_Water`) |
 | `game/assets/materials/shaders/SH_Water.gdshader`, `SH_WaterSimple.gdshader`, `SH_Water.gdshaderinc` | the shaders and their shared code |
-| `game/assets/lookdev/LD_<Theme>_Water.tscn`, `LD_<Theme>_Water_Hi.tscn` | look-dev close-up of the east channel, base and desktop materials |
+| `game/assets/lookdev/LD_<Theme>_Water.tscn` | look-dev close-up of the east channel |
 
-## Tiers
+## The two shaders
 
-The tier picks the material through the `hi/` variant
-([Quality tiers](quality-tiers.md#material-variants)); the feature id is
-`water_refraction`.
+`MI_Water` is one material, `SH_Water`, on every renderer (the theme's
+`hi.params` merged over `params`; [About quality settings](../explanation/about-quality-settings.md)).
+`SH_WaterSimple` stays in the repository, used by no material; it compiled
+on Mobile and Compatibility where `SH_Water` compiled on Forward+ only
+([Board themes: Shaders](board-themes.md#shaders)). What the two do:
 
-| | `desktop-high` | `desktop-standard` | `mobile` | `web` |
-|---|---|---|---|---|
-| Material | `hi/MI_Water` (`SH_Water`) | `hi/MI_Water` at 0.77 render scale | `MI_Water` (`SH_WaterSimple`) | `MI_Water` |
-| Ripple normals | 2 swells + 3 noise octaves | same | 2 swells + 2 octaves | same as mobile |
-| Depth colour | absorption over the traced path to the stone it reaches | same | absorption over the path to the flat floor height | same as mobile |
-| Refraction | the view ray bent by the ripples (IOR 1.33) and traced through the channel box to the floor, a wall or a causeway side; the stone there is drawn from its colour map, with slab joints, wall shadow and darker corners | same | — (blended over the real floor) | — |
-| Caustics | 2 layers on the traced floor point | same | 1 layer on the flat floor point | same as mobile |
-| Reflections | the engine's on an opaque surface: sky, reflection probe and, where the tier has it, screen-space reflection, through a dielectric specular | same | sky | same as mobile |
-| Contact line at the stone | yes | yes | — | — |
+| | `SH_Water` (`MI_Water`) | `SH_WaterSimple` (unused) |
+|---|---|---|
+| Ripple normals | 2 swells + 3 noise octaves | 2 swells + 2 octaves |
+| Depth colour | absorption over the traced path to the stone it reaches | absorption over the path to the flat floor height |
+| Refraction | the view ray bent by the ripples (IOR 1.33) and traced through the channel box to the floor, a wall or a causeway side; the stone there is drawn from its colour map, with slab joints, wall shadow and darker corners | — (blended over the real floor) |
+| Caustics | 2 layers on the traced floor point | 1 layer on the flat floor point |
+| Reflections | the engine's on an opaque surface: sky, reflection probe and, where the environment has it, screen-space reflection, through a dielectric specular | sky |
+| Contact line at the stone | yes | — |
 
 ## Parameters
 
-Theme key `materials.MI_Water`; `params` for the base, `hi.params` for the
-desktop variant. The generator adds `floor_height` to materials marked
+Theme key `materials.MI_Water`; `params`, with `hi.params` merged over
+them into the one material. The generator adds `floor_height` to materials marked
 `"water": true`.
 
 | Parameter | Shaders | Range | Temple | Meaning |
 |---|---|---|---|---|
-| `water_color` | both | colour | `#1d4a40` base, `#17494a` desktop | colour deep water scatters back, lit by the scene |
+| `water_color` | both | colour | `#17494a` | colour deep water scatters back, lit by the scene |
 | `absorption` | both | 0 to 4 per metre, per channel (negative counts as 0) | (1.1, 0.34, 0.28) | light lost per metre, red, green, blue; red goes first, so depth turns the water green-teal |
 | `wave_scale` | both | 0.2 to 4 | 1.4 | ripple size; wavelength and height scale together, so the slope stays the same |
 | `wave_strength` | both | 0 to 1 | 0.18 | ripple slope; capped at a 0.6 slope (about 31°) so no setting turns the surface into glitter |
 | `flow_speed` | both | 0 to 0.5 | 0.05 | drift rate of the ripple noise (the pattern moves at about a third of this in m/s); the two swells and the caustics move at fixed slow rates |
 | `roughness` | both | 0 to 0.3 | 0.04 | surface roughness of the reflections |
-| `caustic_strength` | both | 0 to 4 | 2.2 base, 1.4 desktop | brightness of the caustic lines on the floor |
+| `caustic_strength` | both | 0 to 4 | 1.4 | brightness of the caustic lines on the floor |
 | `caustic_scale` | both | 0.2 to 4 | 1.3 | caustic pattern size |
 | `edge_softness` | `SH_Water` | 0 to 0.3 m | 0.08 | width of the soft line where the water meets stone |
 | `floor_height` | both | metres, Godot Y | −2.52 (generated) | the flat channel floor the path length and caustics use |
@@ -122,7 +123,7 @@ No static switches: two compiled user variants. `SH_WaterSimple` samples
 no texture; `SH_Water` samples one, the stone's colour map, through a
 clamped sampler wrapped by hand, so the water adds no repeating sampler
 and stays inside the 16 Metal sampler slots
-([Board themes](board-themes.md#quality-tier-variants)). `SH_Water` is
+([Board themes](board-themes.md#texture-sizes)). `SH_Water` is
 written for Forward+ (Vulkan, D3D12, Metal) and checked on Vulkan; Metal is
 checked by CI's macOS screenshot job when that job renders with Metal, and
 D3D12 by no job yet (the Windows screenshot uses OpenGL through ANGLE).

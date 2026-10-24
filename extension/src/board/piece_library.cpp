@@ -14,6 +14,8 @@
 #include <godot_cpp/classes/image_texture.hpp>
 #include <godot_cpp/classes/json.hpp>
 #include <godot_cpp/classes/mesh_instance3d.hpp>
+#include <godot_cpp/classes/os.hpp>
+#include <godot_cpp/classes/rendering_server.hpp>
 #include <godot_cpp/classes/plane_mesh.hpp>
 #include <godot_cpp/classes/prism_mesh.hpp>
 #include <godot_cpp/classes/procedural_sky_material.hpp>
@@ -26,7 +28,6 @@
 #include <godot_cpp/core/memory.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
-#include "../render/quality_tiers.hpp"
 
 using namespace godot;
 
@@ -129,19 +130,13 @@ void PieceLibrary::load(double cell, const String& theme) {
             const Variant entries =
                 themes.get_type() == Variant::DICTIONARY ? Dictionary(themes).get(name, Variant()) : Variant();
             if (entries.get_type() == Variant::DICTIONARY) {
-                entries_ = entries;
+                entries_ = resolve_features(entries);
             } else {
                 UtilityFunctions::push_warning("Asset manifest has no theme '", name, "'; using placeholders.");
             }
         } else {
             UtilityFunctions::push_warning("Asset manifest is not a JSON object; using placeholders: ", kManifestPath);
         }
-    }
-    // Load the tier's material variants now, with the theme, so a piece or
-    // effect first shown mid-level does not load them in its frame.
-    if (QualityTiers* tiers = QualityTiers::get_singleton()) {
-        const Array names = entries_.keys();
-        for (int64_t i = 0; i < names.size(); ++i) tiers->preload_variants(load_entry(names[i]));
     }
     match_fx_ = load_entry("fx_match");
     const real_t s = static_cast<real_t>(cell) * 0.7f;
@@ -167,6 +162,43 @@ void PieceLibrary::load(double cell, const String& theme) {
         mat->set_metallic(k == 2 ? 0.8f : 0.1f);  // gold reads as gold
         materials_[k] = mat;
     }
+}
+
+// An entry may have variants keyed `<name>.<feature>`, the way Godot's own
+// `application/run/main_scene.web` works: the variant for a feature this
+// build has (OS::has_feature) replaces the plain entry, and the suffixed
+// keys are dropped. The theme generator writes `.web` variants that name
+// the base texture sets (docs/reference/board-themes.md#manifest).
+Dictionary PieceLibrary::resolve_features(const Dictionary& entries) {
+    Dictionary out;
+    const Array keys = entries.keys();
+    for (int64_t i = 0; i < keys.size(); ++i) {
+        const String key = keys[i];
+        if (!key.contains(".")) out[key] = entries[key];
+    }
+    const OS* os = OS::get_singleton();
+    // A tag matches when the build has it as a feature (platform tags) or
+    // when it is the rendering method Godot is running (Godot 4.8 does not
+    // report the method as a feature tag; RenderingServer names it).
+    // Renderer tags first, platform tags after, so a platform's variant wins
+    // over the renderer's when both match (the web build is always
+    // Compatibility, and its variant also names the web materials).
+    const String method = RenderingServer::get_singleton()->get_current_rendering_method();
+    const auto is_renderer = [](const String& tag) {
+        return tag == "forward_plus" || tag == "mobile" || tag == "gl_compatibility";
+    };
+    const auto matches = [&](const String& tag) { return tag == method || os->has_feature(tag); };
+    for (const bool platform_pass : {false, true}) {
+        for (int64_t i = 0; i < keys.size(); ++i) {
+            const String key = keys[i];
+            const int64_t dot = key.find(".");
+            if (dot < 0) continue;
+            const String tag = key.substr(dot + 1);
+            if (is_renderer(tag) == platform_pass) continue;
+            if (matches(tag)) out[key.substr(0, dot)] = entries[key];
+        }
+    }
+    return out;
 }
 
 Ref<Resource> PieceLibrary::load_entry(const String& name) const {

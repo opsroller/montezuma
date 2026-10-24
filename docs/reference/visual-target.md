@@ -1,7 +1,10 @@
 <!-- SPDX-License-Identifier: GPL-2.0-or-later -->
 # Visual target
 
-*Reference. The look Montezuma's ships with, per quality tier, and the
+*Reference. The look Montezuma's ships with, per quality tier (a platform
+class with a frame budget, not a runtime mode: the game runs on the
+project settings in `game/project.godot` everywhere, see
+[About quality settings](../explanation/about-quality-settings.md)), and the
 numbers a build must hit to claim a tier. Why this target and what the
 engine can and cannot do: [About the visual target](../explanation/about-the-visual-target.md).
 The current temple theme is the first pass described in
@@ -26,7 +29,7 @@ told apart at a glance.
 | Engine for the target | Godot **4.8 beta 1** (4.4.1 to 4.7 in WP-44; 4.7.2 to 4.8 beta 1 for Metal performance, see [About the engine version](../explanation/about-the-engine-version.md)) |
 | Ray tracing in stock Godot 4.7 | Low-level, experimental `RenderingDevice` API only (acceleration structures, ray-tracing pipelines; ray queries are declared but 4.7.2 never enables them), **Vulkan only**, not on macOS or iOS, not on web. No built-in ray-traced GI, reflections or shadows |
 | Ray tracing in forks | NVIDIA's RTX fork of Godot (path tracing, RTX GPUs, tracks development snapshots). Not used: not shippable to our mobile, web or macOS targets and not a stable base |
-| Ray-traced lighting we do use | `LightmapGI` bakes static lighting with a GPU path tracer, so static stone gets path-traced bounce light on every tier; dynamic light uses real-time GI below |
+| Ray-traced lighting we do use | `LightmapGI` bakes static lighting with a GPU path tracer, so static stone gets path-traced bounce light on every tier; the moving pieces take the lightmap's probes and, on desktop, SSIL (see below) |
 
 ## Quality tiers
 
@@ -43,10 +46,11 @@ them. The benchmark judges them on wall-clock frame time with a small
 tolerance; see [Benchmark](benchmark.md#budget).
 
 A higher-end desktop runs `desktop-high` at 4K (3840×2160) with FSR 2.2
-Quality; that is a setting, not a separate tier. The tier is chosen at
-start from the renderer and GPU and can be changed in the settings menu;
-how, and the exact settings each tier applies, are in
-[Quality tiers](quality-tiers.md).
+Quality; that is a setting, not a separate tier. Nothing picks a tier at
+run time: the render settings are Godot's project settings, with
+per-platform values through feature tags (`.mobile`, `.macos`, `.ios`,
+`.web`) in `game/project.godot`, and the benchmark takes the tier to
+judge against as a label (`--bench-tier`, [Benchmark](benchmark.md#options)).
 
 ## Features per tier
 
@@ -59,7 +63,7 @@ cell · — absent
 |---|---|---|---|---|
 | Physical light units, AgX tonemapper, fixed exposure (no auto exposure; [About lighting](../explanation/about-lighting.md#revision-fixed-exposure)) | ✔ | ✔ | ✔ | ◐ AgX, fixed exposure |
 | Baked path-traced static lighting (`LightmapGI`, with probes for moving pieces) | ✔ | ✔ | ✔ | ✔ |
-| Real-time bounce light from moving lights (fire flicker, effects) | ✔ `VoxelGI` over the temple, on the pieces (SDFGI only for a theme too big for one volume) | ◐ SSIL | ◐ baked only | ◐ baked only |
+| Real-time bounce light from moving lights (fire flicker, effects) | ◐ lightmap probes plus SSIL (the `VoxelGI` volume was removed) | ◐ lightmap probes plus SSIL | ◐ baked only | ◐ baked only |
 | Screen-space indirect light (SSIL) | ✔ | ✔ | — | — |
 | Ambient occlusion | ✔ SSAO + baked | ✔ SSAO + baked | ◐ baked | ◐ baked |
 | Sun shadows | ✔ soft (PCSS), 4096 | ✔ 2048 | ✔ 2048 | ✔ 1024 |
@@ -99,7 +103,7 @@ cell · — absent
 
 | Feature | `desktop-high` | `desktop-standard` | `mobile` | `web` |
 |---|---|---|---|---|
-| Volumetric fog with sun shafts and dust (`FogVolume`s; a thin veil over the board) | ✔ | ◐ low resolution, no fire contribution | ◐ light-shaft cards | ◐ light-shaft cards |
+| Volumetric fog with sun shafts and dust (`FogVolume`s; a thin veil over the board) | ✔ | ◐ low resolution, no fire contribution | — (the light-shaft cards were removed) | — |
 | Depth and height fog | ◐ only where the readability capture passes on every tier; the temple has none (see [About lighting](../explanation/about-lighting.md)) | ◐ same | ◐ same | ◐ same |
 | Glow (bloom), before tonemapping | ✔ | ✔ | ✔ | ✔ |
 | Colour grade (LUT) | ✔ | ✔ | ✔ | ✔ |
@@ -138,7 +142,7 @@ A tier is met when all of these pass on its reference hardware:
 |---|---|---|
 | Frame time | [Benchmark scene](benchmark.md) (WP-46): 60 s scripted replay of the busiest board (four-step cascades, two power-ups, all totems firing) with the braziers lit, at a locked render size; wall-clock frame time per frame (CPU and, where the driver gives it, GPU time from `RenderingServer` reported beside it), after 10 s warm-up | p95 within the tier budget above ([Benchmark](benchmark.md#budget)) |
 | Thermal (mobile) | Benchmark replay looped for 10 minutes | never below 55 fps over any 5 s window |
-| Effects present | Benchmark writes the active feature list; `tools/bench/check_features.py` compares it with the tier | every ✔ for the tier on, every — off |
+| Effects present | Benchmark writes the active feature list (`features` in the report, [Benchmark](benchmark.md#features)); the reviewer compares it with the tier's rows above | every ✔ for the tier on, every — off |
 | Readability | [Readability capture](benchmark.md#readability-checks) (`game/scenes/bench/readability.tscn`, `tools/bench/check_readability.py`), rules 2, 4, 5 and 6 above | all pass |
 | Look | Side-by-side captures against the look-dev reference frames committed with WP-47 to WP-52, judged by the technical-artist and code reviewer | approved in the PR |
 | Fallbacks | Each tier starts on hardware without the higher tier's features without errors or missing materials | clean log |
@@ -175,14 +179,19 @@ variants, and each export carries only its own:
 | Fire flipbooks | 8×8 sheets | 4×4 sheets | 4×4 sheets |
 | Bake outputs | lightmaps at desktop texel density | lightmaps at mobile density | lightmaps at mobile density |
 
-- **Selection at run time.** The quality tier system (WP-45) resolves an
-  asset path to the variant for the active tier
-  (`QualityTiers::resolve_variant`) and falls back to the base variant
-  when a tier variant is missing.
-- **Stripping at export.** The Android, iOS and web export presets
-  exclude the desktop-only folders and LOD files with export
-  `exclude_filter`s, so the desktop sets never reach a phone or the web
-  build. The desktop presets keep everything.
+No Android or iOS export preset exists yet; when one is added, the mobile
+column is produced the way the web column is, by manifest variants
+([Board themes](board-themes.md#manifest)).
+
+- **One material set.** Materials are not varied at run time: each
+  material is one file in `game/assets/materials/<theme>/`, and names
+  the `hi/` texture set directly where the theme gives that material a
+  `hi` block ([Board themes](board-themes.md#texture-sizes)).
+- **Stripped at export.** The web build leaves the 2048² `hi/` sets out
+  and uses the `web/` materials that name the base sets, picked through
+  the manifest's `.web` entries ([Board themes](board-themes.md#manifest));
+  desktop builds leave the `web/` set out. The export job checks the web
+  demo's size against its 40 MB budget.
 - **Checked, not trusted.** The asset validator checks that every desktop
   variant has a base variant, and the release checks that the mobile
   install stays under 150 MB and the web demo under 40 MB compressed.

@@ -245,19 +245,16 @@ These replace the placeholders `row_clear`, `random_blast`, `color_bomb`
 
 The LevelData fields above were agreed with the LevelData owner and land with WP-05 (#7).
 
-## Quality tiers (owner: graphics-programmer, WP-45) — implemented
+## Quality tiers (owner: graphics-programmer, WP-45) — withdrawn
 
-`/root/QualityTiers` (C++: `QualityTiers::get_singleton()`). Settings
-screen (ui-developer): the key `quality_tier`, values `auto` plus
-`get_available_tiers()`, read with `get_choice()`, written with
-`set_choice(value)`, which saves and applies at once; hide it when only
-one tier is available (implemented: the Graphics quality row). Content (technical-artist): node groups
-`quality:<feature id>`, `quality_fallback:<feature id>`,
-`quality_shadow_light`, `quality_fog_light`; texture variants through
-`resolve_variant(path)`; material variants are swapped by `QualityTiers`
-on every mesh, so content names the base material. Benchmark (WP-46): `-- --quality=<tier>` and
-`get_active_features()`. Ids, groups and settings:
-[quality-tiers.md](quality-tiers.md).
+Withdrawn in October 2026: the `QualityTiers` autoload, its settings key
+`quality_tier`, the `quality:*` node groups, the variant paths and the
+`--quality*` arguments are gone. The game runs on Godot's project
+settings in `game/project.godot`, per platform through feature tags
+([About quality settings](../explanation/about-quality-settings.md)).
+Content names its one material; the settings screen has no graphics
+quality row; the benchmark takes the tier to judge against as a label
+(`--bench-tier`, [Benchmark](benchmark.md#options)).
 
 ## UI requests (owner: ui-developer, WP-19) — proposed
 

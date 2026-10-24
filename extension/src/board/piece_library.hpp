@@ -63,6 +63,9 @@ public:
 private:
     godot::Node3D* make_visual(int kind) const;
     godot::Ref<godot::Resource> load_entry(const godot::String& name) const;
+    // `<name>.<tag>` variants replace the plain entries when the build has `tag` as a feature or
+    // `tag` is the rendering method in use; a platform tag wins over a renderer tag.
+    static godot::Dictionary resolve_features(const godot::Dictionary& entries);
     godot::Node3D* instantiate_entry(const godot::String& name) const;
 
     // The chosen theme's name -> path entries.

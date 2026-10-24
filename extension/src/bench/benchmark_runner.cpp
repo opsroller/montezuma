@@ -28,7 +28,6 @@
 
 #include "board/board_view_3d.hpp"
 #include "frame_stats.hpp"
-#include "render/quality_tiers.hpp"
 #include "render_probe.hpp"
 
 using namespace godot;
@@ -170,6 +169,13 @@ void BenchmarkRunner::read_command_line() {
 
 void BenchmarkRunner::_ready() {
     if (Engine::get_singleton()->is_editor_hint()) return;
+    start();
+}
+
+void BenchmarkRunner::start() {
+    if (BoardView3D* v = view(); v && !is_connected("bench_event", Callable(v, "play_effect"))) {
+        connect("bench_event", Callable(v, "play_effect"));
+    }
     if (!capture_) {
         ERR_FAIL_NULL_MSG(view(), "BenchmarkRunner: board_view_path does not point at a BoardView3D.");
         plan();
@@ -182,10 +188,6 @@ void BenchmarkRunner::_ready() {
         return;
     }
     read_command_line();
-    if (tier_.is_empty()) {
-        const QualityTiers* tiers = QualityTiers::get_singleton();
-        tier_ = tiers ? tiers->get_tier() : String("unset");
-    }
     // Visual target: p95 within one 60 Hz period, two on the web tier;
     // budget_ms is that p95 budget before the tolerance.
     const bench::BudgetSpec spec = bench::budget_for_tier(tier_.utf8().get_data(), tolerance_, budget_ms_);
@@ -494,7 +496,6 @@ void BenchmarkRunner::finish() {
     report_["render"] = render;
     report_["replay"] = replay;
     report_["features"] = features_;
-    if (const QualityTiers* tiers = QualityTiers::get_singleton()) report_["quality_features"] = tiers->get_active_features();
 
     const String dir = output_path_.get_base_dir();
     if (!dir.is_empty()) DirAccess::make_dir_recursive_absolute(ProjectSettings::get_singleton()->globalize_path(dir));

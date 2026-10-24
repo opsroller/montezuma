@@ -1,0 +1,35 @@
+[gd_scene load_steps=3 format=3]
+; SPDX-License-Identifier: GPL-2.0-or-later
+; Yardstick step 5: step 4 plus the four braziers (flame, smoke, embers, heat haze, flickering shadowed light) (docs/reference/render-tuner.md#yardstick).
+
+[ext_resource type="PackedScene" path="res://assets/models/temple/backdrop/PF_Environment.tscn" id="1_env"]
+
+[sub_resource type="CameraAttributesPractical" id="cam"]
+; The theme's attributes with the far depth of field where BoardCamera3D puts it for an 8x8 board.
+exposure_sensitivity = 440
+exposure_multiplier = 0.8
+dof_blur_far_enabled = true
+dof_blur_far_distance = 17.3
+dof_blur_far_transition = 2.0
+dof_blur_amount = 0.1
+
+[node name="Yardstick" type="Node3D"]
+
+[node name="Camera" type="Camera3D" parent="."]
+transform = Transform3D(1.000000, 0.000000, 0.000000, 0.000000, 0.258819, 0.965926, 0.000000, -0.965926, 0.258819, 0.0000, 15.0919, 4.0439)
+fov = 40.0
+attributes = SubResource("cam")
+current = true
+
+[node name="Environment" parent="." instance=ExtResource("1_env")]
+
+[node name="AtmosphereFog" parent="Environment"]
+visible = false
+
+[node name="Dust" parent="Environment"]
+visible = false
+
+[node name="Panel" type="CanvasLayer" parent="."]
+layer = 100
+
+[node name="RenderTuner" type="RenderTuner" parent="Panel"]

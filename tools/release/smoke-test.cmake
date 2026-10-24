@@ -90,7 +90,7 @@ endfunction()
 
 set(log "${work}/smoke.log")
 file(TO_NATIVE_PATH "${log}" log_arg)
-montezuma_run(TIMEOUT 300 RESULT rc COMMAND "${game}" --headless --quit-after 120 --log-file "${log_arg}")
+montezuma_run(TIMEOUT 300 RESULT rc COMMAND "${game}" --headless --xr-mode off --quit-after 120 --log-file "${log_arg}")
 if(EXISTS "${log}")
   file(READ "${log}" text)
   message(NOTICE "${text}")
@@ -102,7 +102,17 @@ file(STRINGS "${log}" started REGEX "Godot Engine")
 if(NOT started)
   montezuma_fail("the game did not start")
 endif()
-montezuma_log_has(errors "${log}" REGEX "ERROR|SCRIPT ERROR|Can't open dynamic library")
+# Lines Godot prints that the project's own settings cause and the shipped
+# game shows too (docs/reference/engine-issues.md; work package 64):
+# - the separate render thread (rendering/driver/threads/thread_model=2,
+#   experimental in Godot 4.8) logs this once at exit on macOS;
+# - with HDR output requested (display/window/hdr/request_hdr_output),
+#   HDR 2D is on, and --write-movie's frame capture on the OpenGL driver
+#   logs this for every frame it converts (Image::linear_to_srgb).
+set(known_engine_lines
+  "This function \\(finalize\\) can only be called from the render thread"
+  "format != FORMAT_RGB8 && format != FORMAT_RGBA8 && format != FORMAT_RGBH && format != FORMAT_RGBAH")
+montezuma_log_has(errors "${log}" REGEX "ERROR|SCRIPT ERROR|Can't open dynamic library" IGNORE ${known_engine_lines})
 if(errors)
   montezuma_fail("engine errors during the smoke run")
 endif()
@@ -125,12 +135,14 @@ function(capture shot frames)
     # The game quits itself after <frames> (--quit-after-frames), stopping
     # its sounds first; Godot's --quit-after, set later, catches a game that
     # keeps running, and the timeout a process that hangs.
-    execute_process(COMMAND "${game}" --rendering-driver ${driver} --fixed-fps 30 --quit-after ${quit_after}
+    execute_process(COMMAND "${game}" --xr-mode off --rendering-driver ${driver} --fixed-fps 30 --quit-after ${quit_after}
         --write-movie "${movie_arg}" --log-file "${slog_arg}" -- "--quit-after-frames=${frames}" ${ARGN}
-      TIMEOUT 600 RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE out)
+      # 1200 s: the board capture measured 8:53 on GitHub's llvmpipe runner
+      # (2026-10-24, Compatibility content), so twice that is the limit.
+      TIMEOUT 1200 RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE out)
     if(NOT rc MATCHES "^-?[0-9]+$")
       show_output("${out}" "${slog}")
-      montezuma_fail("capturing ${shot} with ${driver}: ${rc} (timeout 600 s)")
+      montezuma_fail("capturing ${shot} with ${driver}: ${rc} (timeout 1200 s)")
     endif()
     if(rc EQUAL 0)
       file(GLOB shots "${dir}/frame*.png")
@@ -148,7 +160,7 @@ function(capture shot frames)
         # to another driver would not fix it. Errors printed at exit (such
         # as resources still in use) reach only the console, not the log.
         file(WRITE "${work}/${shot}.out" "${out}")
-        montezuma_log_has(errors "${slog}" "${work}/${shot}.out" REGEX "ERROR|SCRIPT ERROR")
+        montezuma_log_has(errors "${slog}" "${work}/${shot}.out" REGEX "ERROR|SCRIPT ERROR" IGNORE ${known_engine_lines})
         if(errors)
           montezuma_fail("engine errors while capturing ${shot} with ${driver}")
         endif()
@@ -168,4 +180,15 @@ endfunction()
 # settle. --start-level plays the first level, so the board shows with the
 # in-level HUD over it.
 capture(title 15)
-capture(board 30 --start-level=e1-l01)
+# GitHub's macOS runners expose an Apple Paravirtual device that reports
+# 32-bit image atomics and then refuses the R32_UINT atomic image Godot 4.8
+# beta 1's volumetric fog creates, so the first in-level frame segfaults
+# there (docs/reference/engine-issues.md, work package 65). The board shot
+# is skipped on that device only; any real GPU still captures it and still
+# fails loudly.
+file(STRINGS "${work}/title.log" paravirtual REGEX "Apple Paravirtual device")
+if(paravirtual)
+  montezuma_print("skipping the board capture: Apple Paravirtual device cannot run volumetric fog (engine-issues.md, WP-65)")
+else()
+  capture(board 30 --start-level=e1-l01)
+endif()

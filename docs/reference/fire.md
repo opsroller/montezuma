@@ -13,15 +13,15 @@ way: [About the fire](../explanation/about-the-fire.md). How to change it:
 |---|---|---|
 | `tools/assets/fx/gen_fire.py` | Simulates the fire and bakes the flipbooks (numpy, Pillow) | yes |
 | `tools/assets/fx/fire.json` | Simulation, render and sheet parameters | yes |
-| `game/assets/textures/<theme>/fx/T_Fire_Flame.png`, `T_Fire_Motion.png` | 4×4 sheets (mobile, web) | no, build output |
-| `game/assets/textures/<theme>/fx/hi/T_Fire_Flame.png`, `T_Fire_Motion.png` | 8×8 sheets (desktop) | no, build output |
+| `game/assets/textures/<theme>/fx/T_Fire_Flame.png`, `T_Fire_Motion.png` | 4×4 sheets; generated, used by no material since the materials became one set | no, build output |
+| `game/assets/textures/<theme>/fx/hi/T_Fire_Flame.png`, `T_Fire_Motion.png` | 8×8 sheets, the ones `MI_Fire` and `MI_FireSmoke` name | no, build output |
 | `game/assets/materials/shaders/SH_Fire.gdshader` | Flame | yes |
 | `game/assets/materials/shaders/SH_FireSmoke.gdshader` | Smoke | yes |
 | `game/assets/materials/shaders/SH_Ember.gdshader`, `SH_EmberTrail.gdshader` | Embers without and with trails | yes |
 | `game/assets/materials/shaders/SH_HeatHaze.gdshader` | Heat haze | yes |
-| `game/assets/materials/<theme>/MI_Fire.tres`, `MI_FireSmoke.tres` (+ `hi/`), `MI_Ember.tres`, `MI_EmberTrail.tres`, `MI_HeatHaze.tres` | Materials, written by `gen_theme_scenes.py` | yes |
+| `game/assets/materials/<theme>/MI_Fire.tres`, `MI_FireSmoke.tres`, `MI_EmberTrail.tres`, `MI_HeatHaze.tres` (and `MI_Ember.tres`, written but unused) | Materials, written by `gen_theme_scenes.py` | yes |
 | `game/assets/models/<theme>/fx/fire/PF_BrazierFire.tscn` | One brazier's fire, written by `gen_theme_scenes.py` | yes |
-| `game/assets/lookdev/LD_Temple_Fire.tscn`, `LD_Temple_Fire_Hi.tscn` | Close look-dev view of a brazier, base and desktop materials | yes |
+| `game/assets/lookdev/LD_Temple_Fire.tscn` | Close look-dev view of a brazier | yes |
 | `extension/src/render/flicker.*`, `flicker_light_3d.*` | `FlickerLight3D` and its noise | yes |
 
 `PF_Environment` instances `PF_BrazierFire` as `Fire1` to `Fire4` at the
@@ -87,8 +87,8 @@ cross-faded into the first, so frame 63 runs into frame 0.
 
 | Variant | Size | Frames | Played at |
 |---|---|---|---|
-| `hi/` (desktop) | 1024×2048 | 64 (8×8) | 30 fps |
-| base (mobile, web) | 512×1024 | 16 (4×4, every 4th frame, emission averaged over the 4) | 7.5 fps |
+| `hi/` (the materials' sheets) | 1024×2048 | 64 (8×8) | 30 fps |
+| base (generated, unused) | 512×1024 | 16 (4×4, every 4th frame, emission averaged over the 4) | 7.5 fps |
 
 Both loops last 2.13 s, so the materials share `loop_seconds`.
 
@@ -103,14 +103,13 @@ Parameters come from the theme's `fire` block (`tools/assets/themes/temple.json`
 and the light's lumens, temperature, colour, size and range from `lighting.torch`
 ([Board themes: Lighting](board-themes.md#lighting)).
 
-| Node | Type | Group | What |
-|---|---|---|---|
-| `Smoke` | `GPUParticles3D` | | 12 particles, 2.6 s, rising 0.25 to 0.45 m/s from 0.55 m above the rim, growing, with turbulence; `MI_FireSmoke` |
-| `Flame` | `GPUParticles3D` | | 10 particles, 1.2 s, almost still, 0.6 × 1.2 m quads based 0.1 m inside the bowl; `MI_Fire` |
-| `Embers` | `GPUParticles3D` | `quality:particle_trails` | 18 particles, 1.6 s, 0.6 to 1.3 m/s up within 25°, turbulence, 0.12 s tube trails; `MI_EmberTrail` |
-| `EmbersNoTrail` | `GPUParticles3D` | `quality_fallback:particle_trails` | the same embers as dots; `MI_Ember` |
-| `HeatHaze` | `MeshInstance3D` | `quality:heat_haze` | 0.9 × 1.1 m quad 0.95 m above the rim; `MI_HeatHaze` |
-| `Light` | `FlickerLight3D` | `quality_shadow_light`, `quality_fog_light` | 0.42 m above the rim, turned so its dual paraboloid shadow seam lies flat; `lighting.torch` (temple: 90,000 lm at 1900 K); shadows on, blur 1.5; volumetric fog energy 2.0; bake mode dynamic |
+| Node | Type | What |
+|---|---|---|
+| `Smoke` | `GPUParticles3D` | 12 particles, 2.6 s, rising 0.25 to 0.45 m/s from 0.55 m above the rim, growing, with turbulence; `MI_FireSmoke` |
+| `Flame` | `GPUParticles3D` | 10 particles, 1.2 s, almost still, 0.6 × 1.2 m quads based 0.1 m inside the bowl; `MI_Fire` |
+| `Embers` | `GPUParticles3D` | 18 particles, 1.6 s, 0.6 to 1.3 m/s up within 25°, turbulence, 0.12 s tube trails (`trail_enabled`, the tube mesh as the draw pass); `MI_EmberTrail` |
+| `HeatHaze` | `MeshInstance3D` | 0.9 × 1.1 m quad 0.95 m above the rim; `MI_HeatHaze` |
+| `Light` | `FlickerLight3D` | 0.42 m above the rim, cube-map shadows (the Compatibility renderer has no dual paraboloid mode, and on Forward+ the four braziers cost the same either way); `lighting.torch` (temple: 90,000 lm at 1900 K); shadows on, blur 1.5; volumetric fog energy 2.0; bake mode dynamic |
 
 Every particle system starts full (`preprocess` = lifetime) and casts no
 shadow. The particles and the heat haze are on render layer 2, which
@@ -135,8 +134,8 @@ soft edges.
 | Uniform | Range | Default | Meaning |
 |---|---|---|---|
 | `flame_sheet`, `motion_sheet` | | | the sheets (data, not `source_color`) |
-| `sheet_grid` | 1 to 16 | 4 (8 in `hi/`) | tiles per side |
-| `motion_scale` | 0.001 to 0.5 | 0.12 (0.03 in `hi/`) | must equal the sheet's `motion_scale` in `fire.json` |
+| `sheet_grid` | 1 to 16 | 8 (the 8×8 sheet) | tiles per side |
+| `motion_scale` | 0.001 to 0.5 | 0.03 (the 8×8 sheet's) | must equal the sheet's `motion_scale` in `fire.json` |
 | `loop_seconds` | 0.1 to 10 | 2.1333 | loop length |
 | `emission_gamma` | 0.1 to 4 | 1.0 | must equal `render.emission_gamma` |
 | `temperature_min_k`, `temperature_max_k` | 600 to 2500, 1000 to 4000 | 1100, 1900 | kelvin for the sheet's temperature 0 and 1; keep min below max (a min above max inverts the colours but cannot blow out, since brightness is relative to the larger of the two) |
@@ -205,30 +204,21 @@ stays as authored.
 | `sway` | 0 to 0.2 m | 0.04 (scene: 0) | largest drift; the temple keeps it at 0 because a moving light would invalidate its baked bounce light |
 | `seed` | int | 0 | 0: seed from the light's global position, so no two braziers flicker in step |
 
-Shadows, volumetric fog energy and tier switches are handled by
-`QualityTiers` through the light's groups, as for any light.
+Shadows and volumetric fog energy are the light's own properties, as
+the generator writes them.
 
-## Per tier
+## On every renderer
 
-| | `desktop-high` | `desktop-standard` | `mobile` | `web` |
-|---|---|---|---|---|
-| Flame flipbook | 8×8, motion vectors (`hi/` materials)\* | 8×8\* | 4×4 | 4×4 |
-| Smoke | lit, 8×8\* | lit, 8×8\* | lit, 4×4 | lit, 4×4 |
-| Embers | trails | trails | trails | dots, no trails |
-| Heat haze | yes | yes | no | no |
-| Fire light shadows | all four | nearest two | none | none |
-| Fire light in volumetric fog | yes\*\* | no | no fog | no fog |
-
-\* The `hi/` materials reach the game through `QualityTiers`, which swaps
-the particles' `material_override` for its `hi/` variant on the desktop
-tiers ([Quality tiers](quality-tiers.md)); the look-dev scene
-`LD_Temple_Fire_Hi` sets them directly. The web export strips `hi/`, so it
-never carries the 8×8 sheets.
-
-\*\* The light carries `light_volumetric_fog_energy` 2.0 and lights the
-temple's dusty air where it reaches it
-([Board themes: Atmosphere](board-themes.md#atmosphere)), including the
-thin veil over the board.
+The materials are one set ([About quality settings](../explanation/about-quality-settings.md)),
+so every renderer gets the same brazier: the 8×8 flipbook with motion
+vectors, lit 8×8 smoke, embers with trails, the heat haze, and all four
+fire lights casting shadows; the lights carry
+`light_volumetric_fog_energy` 2.0 and light the temple's dusty air where
+Forward+'s volumetric fog reaches it
+([Board themes: Atmosphere](board-themes.md#atmosphere)), the thin veil
+over the board included. Which of these the Mobile and Compatibility
+renderers can draw is noted per shader in
+[Board themes: Shaders](board-themes.md#shaders).
 
 ## Cost
 
@@ -240,11 +230,9 @@ thin veil over the board.
 | Flame pixel | 4 texture samples + 1 depth sample, about 110 ALU (blackbody fit, four tile lookups, edge fades) |
 | Measured | Benchmark, `web` tier, llvmpipe software renderer: mean GPU frame 868 ms with the fire against 819 ms without (+6 %). Software timings only rank costs; the tier budgets are checked on reference hardware with [Run the benchmark](../how-to/run-the-benchmark.md). |
 
-`Embers` is authored without trails and with its tube mesh in
-`metadata/trail_mesh`; `QualityTiers` attaches the mesh and turns trails on
-only on tiers that have them, and `SH_EmberTrail` drops the `particle_trails`
-render mode on Compatibility, so the web build logs no trail warnings (the
-web smoke test fails on any browser console warning).
+`Embers` is written with `trail_enabled = true` and its tube mesh as the
+draw pass on every renderer; `SH_EmberTrail` drops the `particle_trails`
+render mode on Compatibility.
 
 ## Readability
 

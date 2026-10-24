@@ -32,32 +32,31 @@ with the extension built and the lightmaps baked
    game's full-screen setting, or the `override.cfg` below for 4K):
 
    ```sh
-   godot --path game -- --start-level=e1-l01 --quality=desktop-high
-   godot --path game -- --start-level=e1-l01 --quality=desktop-standard
+   godot --path game -- --start-level=e1-l01
    ```
 
    The patches drift; watch for a minute rather than judging one frame.
 
-## Check rule 2 on both fog tiers
+## Check rule 2
 
-The veil shows only on `desktop-high` and `desktop-standard`, and
-`desktop-standard`'s coarser fog grid smears patches sideways, so it is
-the tier that runs out of clear cells first. Run the readability capture
-and checks on both:
+The veil needs Forward+'s volumetric fog; a coarser fog grid
+(`rendering/environment/volumetric_fog/volume_size` in a temporary
+`game/override.cfg`) smears patches sideways and runs out of clear cells
+first, so check the grid you ship. Run the readability capture and
+checks:
 
 ```sh
-cmake -DTIER=desktop-high -DREADABILITY=ON -DOUT=bench-out/high -P tools/bench/run_bench.cmake
-cmake -DTIER=desktop-standard -DREADABILITY=ON -DOUT=bench-out/standard -P tools/bench/run_bench.cmake
+cmake -DREADABILITY=ON -DOUT=bench-out/high -P tools/bench/run_bench.cmake
 ```
 
 These capture at 540×1170. To check at 4K as well, put a landscape 4K
 full-screen window in `game/override.cfg` (it is not committed; move any
 you have aside first), capture the readability scene and run the check
-on it, for each tier:
+on it:
 
 ```sh
 printf '[display]\nwindow/size/viewport_width=3840\nwindow/size/viewport_height=2160\nwindow/size/mode=3\n' > game/override.cfg
-godot --path game res://scenes/bench/readability.tscn -- --capture-out=bench-out/high-4k --quality=desktop-high
+godot --path game res://scenes/bench/readability.tscn -- --capture-out=bench-out/high-4k
 python3 tools/bench/check_readability.py bench-out/high-4k
 rm game/override.cfg
 ```

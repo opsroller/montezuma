@@ -1,0 +1,27 @@
+[gd_scene load_steps=2 format=3]
+; SPDX-License-Identifier: GPL-2.0-or-later
+; Yardstick: the board demo seen through a plain Camera3D (Godot defaults: fov 75, near 0.05, far 4000) instead of BoardCamera3D.
+
+[ext_resource type="PackedScene" uid="uid://bmzboardview3d" path="res://scenes/board/board.tscn" id="1_board"]
+
+[node name="Tuner" type="Node3D"]
+
+[node name="Board" parent="." instance=ExtResource("1_board")]
+
+[node name="Camera" parent="Board"]
+current = false
+
+[node name="PlainCamera" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.258819, 0.965926, 0, -0.965926, 0.258819, 0, 15.0919, 4.0439)
+current = true
+
+[node name="Demo" type="BenchmarkRunner" parent="."]
+board_view_path = NodePath("../Board/View")
+seed = 52
+capture = false
+
+[node name="Panel" type="CanvasLayer" parent="."]
+
+[node name="RenderTuner" type="RenderTuner" parent="Panel"]
+
+[connection signal="bench_event" from="Demo" to="Board/View" method="play_effect"]

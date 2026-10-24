@@ -27,15 +27,17 @@ or a cloud machine without a GPU do not count against the
    open dynamic library` and every game class is missing. The Godot app's
    binary is `/Applications/Godot.app/Contents/MacOS/Godot`.
 
-2. Run the benchmark and the readability capture for the tier the machine
-   stands for (the same command on Windows, macOS and Linux):
+2. Run the benchmark and the readability capture (the same command on
+   Windows, macOS and Linux), naming the tier the machine stands for as
+   the budget to judge against (`--bench-tier`, default `desktop-high`;
+   it changes no setting):
 
    ```sh
-   cmake -DTIER=desktop-standard -DREADABILITY=ON -DOUT=bench-out -P tools/bench/run_bench.cmake
+   cmake -DGAME_ARGS=--bench-tier=desktop-standard -DREADABILITY=ON -DOUT=bench-out -P tools/bench/run_bench.cmake
    ```
 
    Add `-DDRIVER=vulkan`, `metal`, `d3d12` or `opengl3` to pick the
-   rendering driver, `-DSIZE=2560x1440` for `desktop-high`, and
+   rendering driver, `-DSIZE=2560x1440` for a `desktop-high` run, and
    `-DGODOT=PATH` when Godot is not on `PATH` (every `-D` goes before
    `-P`). The runner locks the render at
    `SIZE` (default 1920x1080) and fails the run if any frame rendered
@@ -62,8 +64,6 @@ or a cloud machine without a GPU do not count against the
    - `benchmark.json`: the full report; `budget`, `resolution` and
      `timing` explain the verdict. See the
      notes in [Benchmark results](../reference/benchmark-results.md#frame-time).
-   - `features.txt`: one line per feature row of the tier, `FAIL` where
-     the scene does not match the target.
    - `readability.txt`: one line per rule; open the PNGs in
      `bench-out/readability/` to see what failed.
 
@@ -81,32 +81,33 @@ or a cloud machine without a GPU do not count against the
 To run the benchmark alone, without the script:
 
 ```sh
-godot --path game res://scenes/bench/bench.tscn -- --quality=desktop-high --bench-size=2560x1440 --bench-out=/tmp/bench.json
+godot --path game res://scenes/bench/bench.tscn -- --bench-tier=desktop-high --bench-size=2560x1440 --bench-out=/tmp/bench.json
 python3 tools/bench/check_run.py /tmp/bench.json --size 2560x1440
 ```
 
 ### Check what one effect or edit costs with a short run
 
 Run the way players see the game: full screen, at the screen's own
-resolution, with no render-scale cut or upscaler. The script does that
-by default (`NATIVE`, `--quality-native`); `-DFULLSCREEN=ON` makes the
-window exclusive full screen at the screen's size and ignores `SIZE`.
+resolution, with the project's own scaling settings (3D at 100% in
+`game/project.godot`); `-DFULLSCREEN=ON` makes the window exclusive full
+screen at the screen's size and ignores `SIZE`.
 For a quick look at where GPU time goes, or what a small change did,
 run a short capture with Godot's per-pass profile instead of the full
 minute:
 
 ```sh
-cmake -DTIER=desktop-high -DFULLSCREEN=ON -DVSYNC=off -DSECONDS=6 -DWARMUP=3 -DGPU_PROFILE=ON -P tools/bench/run_bench.cmake
+cmake -DFULLSCREEN=ON -DVSYNC=off -DSECONDS=6 -DWARMUP=3 -DGPU_PROFILE=ON -P tools/bench/run_bench.cmake
 ```
 
 The run takes about 15 s. Each `GPU PROFILE` block it prints gives the
 GPU time of every render pass in one frame (depth pre-pass, opaque pass,
 SSAO, glow, TAA and so on), and `gpu_ms` in `benchmark.json` gives the
-whole frame. Add `-DQUALITY_OFF=glow` (any
-[feature ids](../reference/quality-tiers.md#feature-ids), comma-separated)
-and compare `gpu_ms` p50 with a run without it to get that effect's cost;
-the feature check then fails for those rows, which is expected. Run the
-two back to back: run-to-run spread is a few tenths of a millisecond.
+whole frame. To get one effect's or one setting's cost, take it out for
+the second run (an effect of the theme's environment in a copy of the
+scene, a project setting through a temporary `game/override.cfg`, as in
+[Measure what a frame costs, step by step](measure-a-frame-step-by-step.md))
+and compare `gpu_ms` p50 between the two. Run the two back to back:
+run-to-run spread is a few tenths of a millisecond.
 An effect that is off unless asked for, such as the optional
 [ray-traced reflections](../reference/ray-traced-reflections.md), is
 measured the other way round: add `-DGAME_ARGS=--rt-reflections` (any
@@ -131,7 +132,7 @@ To check that a change leaves the picture alone, capture the same frame
 of the replay before and after the change, and once more before it:
 
 ```sh
-godot --path game --resolution 1920x1080 --write-movie /tmp/before/f.png --fixed-fps 30 --quit-after 82 res://scenes/bench/bench.tscn -- --quality=desktop-high --quality-native --bench-size=1920x1080 --bench-seconds=100 --bench-warmup=1
+godot --path game --resolution 1920x1080 --write-movie /tmp/before/f.png --fixed-fps 30 --quit-after 82 res://scenes/bench/bench.tscn -- --bench-size=1920x1080 --bench-seconds=100 --bench-warmup=1
 ```
 
 Compare `f00000080.png` from each pair with any image tool that reports
@@ -146,16 +147,17 @@ Two captures of one build differ a little on their own (about 0.3 of
 255 on this scene); a change that keeps the look stays at that level.
 The measured costs per pass and per effect are in
 [Benchmark results](../reference/benchmark-results.md#gpu-time-per-pass-and-per-effect),
-and why cost is cut this way in
-[About quality tiers](../explanation/about-quality-tiers.md#cutting-cost-without-changing-the-look).
+and why the temple theme gave up depth of field and SSIL in
+[About quality settings](../explanation/about-quality-settings.md).
 
 ## On an Android or iOS phone
 
 Phones take no command-line arguments, so the benchmark scene becomes the
 main scene of a local debug export. Do not commit these changes.
 
-1. In `game/scenes/bench/bench.tscn`, change the `BenchmarkRunner`'s
-   `measure_seconds` if needed (phones run the `mobile` tier on their own).
+1. In `game/scenes/bench/bench.tscn`, set the `BenchmarkRunner`'s `tier`
+   to `mobile` (the budget to judge against) and change its
+   `measure_seconds` if needed.
    In `game/project.godot`,
    set `run/main_scene="res://scenes/bench/bench.tscn"` under
    `[application]`.

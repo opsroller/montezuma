@@ -5,7 +5,7 @@
 
 namespace montezuma::godot_binding {
 
-// Registers the rendering classes (quality tiers).
+// Registers the rendering classes.
 void register_render();
 
 }  // namespace montezuma::godot_binding

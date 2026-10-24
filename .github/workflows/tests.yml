@@ -129,40 +129,31 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           ./godot --headless --path game --import
-          ./godot --headless --path game --quit-after 120 2>&1 | tee run.log
+          ./godot --headless --xr-mode off --path game --quit-after 120 2>&1 | tee run.log
           if grep -E "ERROR|SCRIPT ERROR|Can't open dynamic library" run.log; then exit 1; fi
       - name: Audio self-test
         if: runner.os == 'Linux'
         run: |
-          ./godot --headless --path game --quit-after 120 -- --audio-selftest 2>&1 | tee audio.log
+          ./godot --headless --xr-mode off --path game --quit-after 120 -- --audio-selftest 2>&1 | tee audio.log
           grep -E "GameAudio self-test: [0-9]+ cues, 0 failures" audio.log
       - name: Game self-test
         if: runner.os == 'Linux'
         run: |
-          ./godot --headless --path game --quit-after 120 -- --game-selftest 2>&1 | tee game.log
+          ./godot --headless --xr-mode off --path game --quit-after 120 -- --game-selftest 2>&1 | tee game.log
           grep -E "Match3Game self-test: [0-9]+ moves, outcome 1, [0-9]+ cues, 0 failures" game.log
       # The web demo's scene: the intro level is won in play and completes once.
       - name: Intro level self-test
         if: runner.os == 'Linux'
         run: |
-          ./godot --headless --path game --quit-after 120 res://scenes/demo/intro_level.tscn -- --intro-selftest 2>&1 | tee intro.log
+          ./godot --headless --xr-mode off --path game --quit-after 120 res://scenes/demo/intro_level.tscn -- --intro-selftest 2>&1 | tee intro.log
           grep -E "IntroLevel self-test: [0-9]+ moves, outcome 1, 1 completions, 0 failures" intro.log
       # Quits from inside a level, with music and ambience playing, the way
       # a player does: no resources may be left in use at exit.
       - name: In-level quit
         if: runner.os == 'Linux'
         run: |
-          ./godot --headless --path game --quit-after 600 -- --start-level=e1-l01 --quit-after-frames=60 2>&1 | tee level.log
+          ./godot --headless --xr-mode off --path game --quit-after 600 -- --start-level=e1-l01 --quit-after-frames=60 2>&1 | tee level.log
           if grep -E "ERROR|SCRIPT ERROR|leaked at exit" level.log; then exit 1; fi
-      # Each rendering method offers different quality tiers (desktop pair,
-      # mobile, web); switch through them on every method.
-      - name: Quality tier self-test
-        if: runner.os == 'Linux'
-        run: |
-          for method in forward_plus mobile gl_compatibility; do
-            ./godot --headless --path game --rendering-method "$method" --quit-after 120 -- --quality-selftest 2>&1 | tee "quality-$method.log"
-            grep -E "QualityTiers self-test: [0-9]+ checks, 0 failures" "quality-$method.log"
-          done
       # The benchmark replay runs headless for a few seconds: it must plan,
       # replay without drifting from the plan, hold its locked render size
       # and write its report. Frame
@@ -172,7 +163,7 @@ jobs:
         if: runner.os == 'Linux'
         shell: bash
         run: |
-          ./godot --headless --path game --quit-after 3600 res://scenes/bench/bench.tscn -- \
+          ./godot --headless --xr-mode off --path game --quit-after 3600 res://scenes/bench/bench.tscn -- \
             --bench-seconds=3 --bench-warmup=1 --bench-size=640x360 --bench-out="$RUNNER_TEMP/bench.json" 2>&1 | tee bench.log
           if grep -E "ERROR|SCRIPT ERROR" bench.log; then exit 1; fi
           python3 tools/bench/check_run.py "$RUNNER_TEMP/bench.json" --size 640x360 --no-budget

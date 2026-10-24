@@ -4,8 +4,8 @@
 # Generates the theme textures, then checks game/assets against the theme
 # manifest and the asset rules: every referenced file exists and parses,
 # meshes and textures stay in budget, every theme has a provenance record,
-# source files carry the SPDX line, and export presets strip hi/ variants
-# from mobile and web builds.
+# source files carry the SPDX line, and no export preset strips the hi/
+# texture sets the materials name.
 # Reference: docs/reference/ci-pipeline.md
 name: assets
 

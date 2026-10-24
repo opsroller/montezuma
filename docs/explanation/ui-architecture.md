@@ -35,8 +35,10 @@ and tells the UI about the end with `show_results`.
 ## Scaled to a reference size
 
 Layouts are made for 1280×720 and scaled uniformly to the window's short
-side, with the long side getting the extra room. This is what Godot's
-`canvas_items` stretch mode does, applied to the UI layer only so the 3D
+side, with the long side getting the extra room. Since 24 October 2026
+that is Godot's own `canvas_items` stretch mode with the `expand` aspect
+(`display/window/stretch` in `project.godot`); before, UiRoot did the same
+scaling itself on the UI layer only so the 3D
 view keeps rendering at the window's native resolution. On phones the
 layout also sits inside the safe area.
 
@@ -52,8 +54,8 @@ text pair at least 4.5:1).
 
 ## Accessibility defaults
 
-Text size scales to 200% (headings and titles grow more slowly so the
-layout still fits), settings take effect immediately and persist, reduced
+Settings take effect immediately and persist (a Text size setting existed
+until 23 October 2026 and is to return on Godot's scaling: work package 61), reduced
 motion turns off transitions, every screen opens with focus on a sensible
 control and a visible focus ring, and locked levels say "locked" in words
 rather than by colour.

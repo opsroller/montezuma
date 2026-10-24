@@ -1,0 +1,10 @@
+[gd_scene format=3]
+; SPDX-License-Identifier: GPL-2.0-or-later
+; Yardstick: a camera alone, no tuner, for --print-fps.
+
+[node name="Yardstick" type="Node3D"]
+
+[node name="Camera" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.258819, 0.965926, 0, -0.965926, 0.258819, 0, 15.0919, 4.0439)
+fov = 40.0
+current = true

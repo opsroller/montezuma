@@ -75,6 +75,7 @@ private:
     enum class Phase { Idle, Demo, Warmup, Measure, Done };
 
     BoardView3D* view() const;
+    void start();
     void read_command_line();
     void lock_render_size();
     godot::Vector2i current_render_size() const;
@@ -91,9 +92,9 @@ private:
     double warmup_seconds_ = 10.0;
     double measure_seconds_ = 60.0;
     godot::String output_path_ = "user://bench/benchmark.json";
-    // Empty: the tier QualityTiers has in effect.
-    godot::String tier_;
-    // 0: the tier's p95 budget from the visual target.
+    // The visual target's budget to judge against (bench::budget_for_tier).
+    godot::String tier_ = "desktop-high";
+    // 0: the p95 budget from the visual target.
     double budget_ms_ = 0.0;
     double tolerance_ = bench::kDefaultTolerance;
     godot::Vector2i render_size_;

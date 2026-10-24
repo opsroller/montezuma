@@ -114,13 +114,12 @@ ScreenStack* UiRoot::get_stack() const {
 void UiRoot::relayout() {
     if (!scaled_ || !get_viewport()) return;
     const Vector2 window = get_viewport()->get_visible_rect().size;
-    if (window.x <= 0 || window.y <= 0 || reference_size_.x <= 0 || reference_size_.y <= 0) return;
-    // Uniform scale so the reference layout fits; the long side gets the
-    // extra room (like the canvas_items / expand stretch mode, UI only).
-    const real_t s = std::min(window.x / reference_size_.x, window.y / reference_size_.y);
-    set_scale(Vector2(s, s));
+    if (window.x <= 0 || window.y <= 0) return;
+    // The UI fills the viewport; Godot's stretch settings (project settings,
+    // display/window/stretch) decide any scaling.
+    const real_t s = 1;
     scaled_->set_position(Vector2());
-    scaled_->set_size(window / s);
+    scaled_->set_size(window);
 
     // Notches, rounded corners and system bars: phones only report them.
     real_t left = 0, top = 0, right = 0, bottom = 0;
@@ -138,7 +137,7 @@ void UiRoot::relayout() {
 }
 
 void UiRoot::apply_theme() {
-    if (scaled_) scaled_->set_theme(UiTheme::build(tokens_, settings_.text_scale));
+    if (scaled_) scaled_->set_theme(UiTheme::build(tokens_, 1.0));
 }
 
 void UiRoot::load_settings() {
@@ -176,11 +175,16 @@ void UiRoot::apply_settings(const String& key) {
     if (all || key == "locale")
         TranslationServer::get_singleton()->set_locale(settings_.locale.empty() ? OS::get_singleton()->get_locale()
                                                                                 : String::utf8(settings_.locale.c_str()));
-    if ((all || key == "fullscreen") && is_desktop()) {
+    // At startup the window keeps the project's display mode; only the player's
+    // toggle changes it.
+    if (key == "fullscreen" && is_desktop()) {
         DisplayServer* ds = DisplayServer::get_singleton();
-        const bool full = ds->window_get_mode() == DisplayServer::WINDOW_MODE_FULLSCREEN;
+        const DisplayServer::WindowMode mode = ds->window_get_mode();
+        const bool full = mode == DisplayServer::WINDOW_MODE_FULLSCREEN ||
+                          mode == DisplayServer::WINDOW_MODE_EXCLUSIVE_FULLSCREEN;
         if (full != settings_.fullscreen)
-            ds->window_set_mode(settings_.fullscreen ? DisplayServer::WINDOW_MODE_FULLSCREEN : DisplayServer::WINDOW_MODE_WINDOWED);
+            ds->window_set_mode(settings_.fullscreen ? DisplayServer::WINDOW_MODE_EXCLUSIVE_FULLSCREEN
+                                                     : DisplayServer::WINDOW_MODE_WINDOWED);
     }
     if (all || key == "reduced_motion") {
         if (ScreenStack* stack = get_stack())

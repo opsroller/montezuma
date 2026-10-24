@@ -171,11 +171,12 @@ margin with it off.
   scene's lights.
 - Only geometry in the `ray_traced` group is traced; stone, water, fire
   and the backdrop are neither reflected nor traced from.
-- The first frame a new material or mesh is seen (first board, tier
-  switch, theme change) reads its textures and arrays back from the GPU
+- The first frame a new material or mesh is seen (first board, theme
+  change) reads its textures and arrays back from the GPU
   on the main thread: a one-off hitch.
-- Every compositor `QualityTiers` touches gets its own effect, each
-  compiling its pipelines; only the one Godot draws with traces.
+- The board view attaches an effect to the compositor of every
+  `WorldEnvironment` under the theme's environment, each compiling its
+  pipelines; only the one Godot draws with traces.
 - No CI job builds with `MONTEZUMA_RAY_TRACING=ON`.
 - Godot 4.7.2's shader reflection does not understand acceleration
   structures: it prints `OpTypeAccelerationStructureKHR is not supported
