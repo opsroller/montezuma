@@ -20,7 +20,6 @@
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
-#include "../../render/quality_tiers.hpp"
 #include "../feel.hpp"
 #include "../piece_library.hpp"
 
@@ -56,12 +55,7 @@ void BoardEffects::load(double cell, const PieceLibrary& library) {
     library_ = &library;
     cell_ = r(cell);
     counts_.fill(0);
-    // Mobile and web carry half the sparks (visual target, particle budgets).
     particle_scale_ = 1.0f;
-    if (const QualityTiers* q = QualityTiers::get_singleton()) {
-        const String tier = q->get_tier();
-        if (tier == "mobile" || tier == "web") particle_scale_ = 0.5f;
-    }
     Ref<SphereMesh> sphere;
     sphere.instantiate();
     sphere->set_radius(0.5f);

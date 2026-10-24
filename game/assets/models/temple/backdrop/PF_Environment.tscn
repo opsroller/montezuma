@@ -19,8 +19,8 @@
 [ext_resource type="Mesh" path="res://assets/models/temple/backdrop/SM_Backdrop_WaterNear.obj" id="15"]
 [ext_resource type="Mesh" path="res://assets/models/temple/backdrop/SM_Backdrop_WaterFar.obj" id="16"]
 [ext_resource type="Texture3D" path="res://assets/textures/temple/grade/T_Grade_LUT.png" id="17"]
-[ext_resource type="Material" path="res://assets/materials/temple/MI_Dust.tres" id="18"]
-[ext_resource type="Material" path="res://assets/materials/temple/MI_LightShaft.tres" id="19"]
+[ext_resource type="Material" path="res://assets/materials/temple/MI_AtmosphereFog.tres" id="18"]
+[ext_resource type="Material" path="res://assets/materials/temple/MI_Dust.tres" id="19"]
 [ext_resource type="PackedScene" path="res://assets/models/temple/fx/fire/PF_BrazierFire.tscn" id="20"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
@@ -36,11 +36,6 @@ sky_material = SubResource("sky_mat")
 [sub_resource type="CameraAttributesPractical" id="camera"]
 exposure_sensitivity = 440
 exposure_multiplier = 0.8
-dof_blur_far_enabled = true
-dof_blur_far_distance = 0.5
-dof_blur_far_transition = 2.0
-dof_blur_amount = 0.1
-metadata/dof_far_beyond_board = 0.5
 
 [sub_resource type="Environment" id="env"]
 background_mode = 2
@@ -56,7 +51,6 @@ ssao_enabled = true
 ssao_intensity = 3.0
 ssao_power = 1.5
 ssao_light_affect = 0.3
-ssil_enabled = true
 glow_enabled = true
 glow_levels/1 = 0.0
 glow_levels/2 = 1.0
@@ -72,8 +66,6 @@ glow_blend_mode = 0
 glow_hdr_threshold = 8.0
 glow_hdr_scale = 2.0
 glow_hdr_luminance_cap = 12.0
-metadata/glow_hdr_threshold_mobile = 0.6
-metadata/glow_hdr_threshold_web = 0.6
 volumetric_fog_enabled = true
 volumetric_fog_density = 0.0
 volumetric_fog_anisotropy = 0.0
@@ -115,8 +107,6 @@ turbulence_influence_max = 0.03
 
 [sub_resource type="QuadMesh" id="dust_quad"]
 size = Vector2(0.05, 0.05)
-
-[sub_resource type="QuadMesh" id="shaft_quad"]
 
 [node name="Environment" type="Node3D"]
 
@@ -194,10 +184,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.5, 0.44, 5.5)
 [node name="Fire4" parent="." instance=ExtResource("20")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0.44, 5.5)
 
-[node name="SkyFill" type="AreaLight3D" parent="." groups=["quality:area_light"]]
+[node name="SkyFill" type="AreaLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 6, 0)
 light_intensity_lumens = 6000
-light_color = Color(0.7216, 0.8314, 1.0000, 1.0000)
+light_color = Color(1.0000, 0.7882, 0.5412, 1.0000)
 light_bake_mode = 0
 area_size = Vector2(10.0, 10.0)
 area_range = 12.0
@@ -207,12 +197,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 1.0, 0.0)
 size = Vector3(12.0, 4.0, 12.0)
 box_projection = true
 cull_mask = 1048573
-
-[node name="VoxelGI" type="VoxelGI" parent="." groups=["quality:voxel_gi"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-subdiv = 0
-size = Vector3(14, 4, 14)
-camera_attributes = SubResource("camera")
 
 [node name="Lightmap" type="LightmapGI" parent="."]
 quality = 1
@@ -226,13 +210,13 @@ environment_custom_energy = 0.5
 camera_attributes = SubResource("camera")
 metadata/light_data_path = "res://assets/models/temple/backdrop/PF_Environment.lmbake"
 
-[node name="AtmosphereFog" type="FogVolume" parent="." groups=["quality:volumetric_fog"]]
+[node name="AtmosphereFog" type="FogVolume" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.075, 0)
 size = Vector3(38.0, 3.05, 38.0)
 shape = 3
-metadata/fog_material_path = "res://assets/materials/temple/MI_AtmosphereFog.tres"
+material = ExtResource("18")
 
-[node name="Dust" type="GPUParticles3D" parent="." groups=["quality:volumetric_fog"]]
+[node name="Dust" type="GPUParticles3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 0)
 cast_shadow = 0
 amount = 320
@@ -241,102 +225,4 @@ preprocess = 12.0
 visibility_aabb = AABB(-14.0, -3, -14.0, 28.0, 6, 28.0)
 process_material = SubResource("dust_process")
 draw_pass_1 = SubResource("dust_quad")
-material_override = ExtResource("18")
-
-[node name="LightShaftCards" type="Node3D" parent="." groups=["quality_fallback:volumetric_fog"]]
-
-[node name="Card01" type="MeshInstance3D" parent="LightShaftCards"]
-transform = Transform3D(0.79575, -2.27365, -0.3838, 0.0, 3.5692, -0.74314, 0.55719, 3.24712, 0.54812, 6.4768, -0.1154, -3.965)
-layers = 2
-cast_shadow = 0
-gi_mode = 0
-mesh = SubResource("shaft_quad")
-material_override = ExtResource("19")
-
-[node name="Card02" type="MeshInstance3D" parent="LightShaftCards"]
-transform = Transform3D(0.77382, -1.97743, -0.3838, 0.0, 3.10418, -0.74314, 0.54183, 2.82406, 0.54812, 9.1347, -0.3479, 3.5799)
-layers = 2
-cast_shadow = 0
-gi_mode = 0
-mesh = SubResource("shaft_quad")
-material_override = ExtResource("19")
-
-[node name="Card03" type="MeshInstance3D" parent="LightShaftCards"]
-transform = Transform3D(0.7648, -2.2106, -0.3838, 0.0, 3.47022, -0.74314, 0.53552, 3.15707, 0.54812, -7.2846, -0.1649, 6.6934)
-layers = 2
-cast_shadow = 0
-gi_mode = 0
-mesh = SubResource("shaft_quad")
-material_override = ExtResource("19")
-
-[node name="Card04" type="MeshInstance3D" parent="LightShaftCards"]
-transform = Transform3D(0.96042, -2.04995, -0.3838, 0.0, 3.21804, -0.74314, 0.67249, 2.92764, 0.54812, -7.7186, -0.291, -2.5414)
-layers = 2
-cast_shadow = 0
-gi_mode = 0
-mesh = SubResource("shaft_quad")
-material_override = ExtResource("19")
-
-[node name="Card05" type="MeshInstance3D" parent="LightShaftCards"]
-transform = Transform3D(0.81992, -1.87085, -0.3838, 0.0, 2.93688, -0.74314, 0.57412, 2.67186, 0.54812, -11.0012, -0.4316, 4.6658)
-layers = 2
-cast_shadow = 0
-gi_mode = 0
-mesh = SubResource("shaft_quad")
-material_override = ExtResource("19")
-
-[node name="Card06" type="MeshInstance3D" parent="LightShaftCards"]
-transform = Transform3D(0.97795, -1.74616, -0.3838, 0.0, 2.74113, -0.74314, 0.68477, 2.49378, 0.54812, -4.9309, -0.5294, 7.9127)
-layers = 2
-cast_shadow = 0
-gi_mode = 0
-mesh = SubResource("shaft_quad")
-material_override = ExtResource("19")
-
-[node name="Card07" type="MeshInstance3D" parent="LightShaftCards"]
-transform = Transform3D(0.76343, -1.89456, -0.3838, 0.0, 2.9741, -0.74314, 0.53456, 2.70571, 0.54812, 3.5441, -0.413, 8.9492)
-layers = 2
-cast_shadow = 0
-gi_mode = 0
-mesh = SubResource("shaft_quad")
-material_override = ExtResource("19")
-
-[node name="Card08" type="MeshInstance3D" parent="LightShaftCards"]
-transform = Transform3D(0.90228, -1.69815, -0.3838, 0.0, 2.66578, -0.74314, 0.63178, 2.42522, 0.54812, -1.494, -0.5671, 12.3726)
-layers = 2
-cast_shadow = 0
-gi_mode = 0
-mesh = SubResource("shaft_quad")
-material_override = ExtResource("19")
-
-[node name="Card09" type="MeshInstance3D" parent="LightShaftCards"]
-transform = Transform3D(0.52554, -2.15363, -0.3838, 0.0, 3.38079, -0.74314, 0.36799, 3.07571, 0.54812, 6.986, -0.2096, 5.3557)
-layers = 2
-cast_shadow = 0
-gi_mode = 0
-mesh = SubResource("shaft_quad")
-material_override = ExtResource("19")
-
-[node name="Card10" type="MeshInstance3D" parent="LightShaftCards"]
-transform = Transform3D(0.7351, -1.64358, -0.3838, 0.0, 2.58011, -0.74314, 0.51472, 2.34728, 0.54812, -7.6479, -0.6099, -4.1531)
-layers = 2
-cast_shadow = 0
-gi_mode = 0
-mesh = SubResource("shaft_quad")
-material_override = ExtResource("19")
-
-[node name="Card11" type="MeshInstance3D" parent="LightShaftCards"]
-transform = Transform3D(0.95295, -1.68431, -0.3838, 0.0, 2.64405, -0.74314, 0.66726, 2.40545, 0.54812, -5.2701, -0.578, -6.4214)
-layers = 2
-cast_shadow = 0
-gi_mode = 0
-mesh = SubResource("shaft_quad")
-material_override = ExtResource("19")
-
-[node name="Card12" type="MeshInstance3D" parent="LightShaftCards"]
-transform = Transform3D(1.01982, -2.24682, -0.3838, 0.0, 3.52708, -0.74314, 0.71409, 3.20879, 0.54812, -3.1376, -0.1365, -6.3882)
-layers = 2
-cast_shadow = 0
-gi_mode = 0
-mesh = SubResource("shaft_quad")
 material_override = ExtResource("19")

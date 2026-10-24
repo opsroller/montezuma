@@ -479,7 +479,7 @@ void Match3Game::buy_hint() {
 }
 
 void Match3Game::_process(double delta) {
-    if (!session_ || session_->outcome() != montezuma::Outcome::Playing) return;
+    if (!timer_enabled_ || !session_ || session_->outcome() != montezuma::Outcome::Playing) return;
     std::optional<TickReport> t;
     try {
         t = session_->tick(std::max(0.0, delta));
@@ -899,6 +899,9 @@ void Match3Game::run_self_test() {
 // ---- Binding ---------------------------------------------------------------------
 
 void Match3Game::_bind_methods() {
+    ClassDB::bind_method(D_METHOD("set_timer_enabled", "enabled"), &Match3Game::set_timer_enabled);
+    ClassDB::bind_method(D_METHOD("get_timer_enabled"), &Match3Game::get_timer_enabled);
+    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "timer_enabled"), "set_timer_enabled", "get_timer_enabled");
     ClassDB::bind_method(D_METHOD("start_level", "level_id", "difficulty"), &Match3Game::start_level);
     ClassDB::bind_method(D_METHOD("stop_level"), &Match3Game::stop_level);
     ClassDB::bind_method(D_METHOD("shuffle"), &Match3Game::shuffle);

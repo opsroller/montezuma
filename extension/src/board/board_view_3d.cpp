@@ -26,7 +26,11 @@
 #include "animator.hpp"
 #include "feel.hpp"
 #include "../render/baked_lighting.hpp"
-#include "../render/quality_tiers.hpp"
+#ifdef MONTEZUMA_RAY_TRACING
+#include <godot_cpp/classes/world_environment.hpp>
+
+#include "../render/rt/rt_reflections.hpp"
+#endif
 
 using namespace godot;
 
@@ -364,13 +368,22 @@ void BoardView3D::rebuild() {
         environment_ = library_.make_environment();
         environment_->set_name("Environment");
         add_child(environment_);
+#ifdef MONTEZUMA_RAY_TRACING
+        // Optional ray-traced reflections on the pieces, asked for per run
+        // (docs/reference/ray-traced-reflections.md).
+        const TypedArray<Node> worlds = environment_->find_children("*", "WorldEnvironment", true, false);
+        for (int64_t i = 0; i < worlds.size(); ++i) {
+            if (auto* world = Object::cast_to<WorldEnvironment>(worlds[i]))
+                world->set_compositor(RtReflections::attach(world->get_compositor()));
+        }
+#endif
     }
     slab_ = library_.make_board(grid_.width, grid_.height, grid_.cell);
     slab_->set_name("Slab");
     add_child(slab_);
     slab_->add_to_group("ray_traced");  // pieces reflect the board when ray tracing runs
     // The theme's lightmap finds the slab's meshes by path, so it re-attaches
-    // to each new slab; VoxelGI bakes from both once the tier wants it.
+    // to each new slab.
     attach_baked_lighting(environment_, this);
     AABB box;
     bool any = false;
@@ -470,6 +483,9 @@ void BoardView3D::finish_grow() {
 
 Ref<Tween> BoardView3D::begin_animation() {
     if (tween_.is_valid()) tween_->kill();
+    // Effects free themselves on the move's tween; killing it leaves them, so
+    // they go now instead of piling up for the rest of the level.
+    clear_effects();
     finish_grow();
     clear_selection();
     clear_hints();
@@ -898,23 +914,8 @@ void BoardView3D::_notification(int what) {
     // click (pointer grab), which would cancel every swipe.
     if (what == NOTIFICATION_APPLICATION_FOCUS_OUT) gesture_.cancel();
     if (what == NOTIFICATION_READY) {
-        if (QualityTiers* tiers = QualityTiers::get_singleton()) {
-            tiers->connect("tier_changed", callable_mp(this, &BoardView3D::on_tier_changed));
-        }
         attach_baked_lighting(environment_, this);
     }
-    // The pieces' batches follow the pieces once every tween has moved them
-    // (tweens run after _process), so they never trail by a frame.
-    RenderingServer* rs = RenderingServer::get_singleton();
-    const Callable sync = callable_mp(this, &BoardView3D::sync_batches);
-    if (what == NOTIFICATION_ENTER_TREE && !rs->is_connected("frame_pre_draw", sync)) rs->connect("frame_pre_draw", sync);
-    if (what == NOTIFICATION_EXIT_TREE && rs->is_connected("frame_pre_draw", sync)) rs->disconnect("frame_pre_draw", sync);
-}
-
-void BoardView3D::sync_batches() {
-    if (!pieces_root_) return;
-    const QualityTiers* tiers = QualityTiers::get_singleton();
-    batcher_.sync(pieces_root_, tiers && tiers->get_profile().batch_pieces);
 }
 
 Dictionary BoardView3D::get_piece_draws() const {
@@ -923,8 +924,6 @@ Dictionary BoardView3D::get_piece_draws() const {
     out["meshes_batched"] = batcher_.meshes_batched();
     return out;
 }
-
-void BoardView3D::on_tier_changed(const String&) { attach_baked_lighting(environment_, this); }
 
 input::Output BoardView3D::press(int pointer, Vector2 screen_pos) {
     // Taps during an animation are ignored by design: the board is about to

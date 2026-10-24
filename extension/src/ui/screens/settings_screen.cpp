@@ -12,7 +12,6 @@
 #include <godot_cpp/classes/window.hpp>
 #include <godot_cpp/core/class_db.hpp>
 
-#include "../../render/quality_tiers.hpp"
 #include "../ui_root.hpp"
 
 using namespace godot;
@@ -31,7 +30,6 @@ void SettingsScreen::on_open(const Dictionary& params) {
     if (root()) {
         bind_slider("Music", "music_volume");
         bind_slider("Sfx", "sfx_volume");
-        bind_slider("TextSize", "text_scale");
         bind_toggle("ReducedMotion", "reduced_motion");
         bind_toggle("Fullscreen", "fullscreen");
 
@@ -50,7 +48,6 @@ void SettingsScreen::on_open(const Dictionary& params) {
         bind_option("Difficulty", "difficulty", PackedStringArray({"normal", "hard"}),
                     PackedStringArray({"settings.difficulty.normal", "settings.difficulty.hard"}));
     }
-    bind_quality();
     // Window mode only means something on desktop.
     OS* os = OS::get_singleton();
     if (os->has_feature("mobile") || os->has_feature("web")) {
@@ -90,36 +87,6 @@ void SettingsScreen::bind_option(const char* node, const char* key, const Packed
         if (values[i] == current) option->select(static_cast<int32_t>(i));
     }
     option->connect("item_selected", callable_mp(this, &SettingsScreen::on_option).bind(String(node), String(key)));
-}
-
-void SettingsScreen::bind_quality() {
-    // The tier is QualityTiers' setting (user://quality.cfg), not UiRoot's:
-    // set_choice saves it and applies it at once.
-    auto* option = Object::cast_to<OptionButton>(unique(this, "Quality"));
-    QualityTiers* tiers = QualityTiers::get_singleton();
-    const PackedStringArray available = tiers ? tiers->get_available_tiers() : PackedStringArray();
-    if (!option || available.size() < 2) {
-        if (auto* row = Object::cast_to<CanvasItem>(unique(this, "QualityRow"))) row->hide();
-        return;
-    }
-    option->clear();
-    PackedStringArray values({"auto"});
-    values.append_array(available);
-    const String current = tiers->get_choice();
-    for (int64_t i = 0; i < values.size(); ++i) {
-        const auto index = static_cast<int32_t>(i);
-        option->add_item("settings.quality." + values[i]);
-        option->set_item_metadata(index, values[i]);
-        if (values[i] == current) option->select(index);
-    }
-    option->connect("item_selected", callable_mp(this, &SettingsScreen::on_quality));
-}
-
-void SettingsScreen::on_quality(int64_t index) {
-    auto* option = Object::cast_to<OptionButton>(unique(this, "Quality"));
-    if (QualityTiers* tiers = QualityTiers::get_singleton(); option && tiers) {
-        tiers->set_choice(option->get_item_metadata(static_cast<int32_t>(index)));
-    }
 }
 
 void SettingsScreen::on_value(double value, const String& key) {

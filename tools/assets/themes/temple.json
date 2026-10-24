@@ -142,13 +142,7 @@
       "backlight": "#5e2306",
       "emission": "#5e2306",
       "emission_energy": 0.5,
-      "hi": {
-        "subsurface": {
-          "strength": 0.6,
-          "transmittance": "#ff8a3a",
-          "depth": 0.3
-        }
-      }
+      "hi": {}
     },
     "MI_Gold": {
       "albedo": "#ffcc4d",
@@ -169,14 +163,7 @@
       "backlight": "#1d6b3a",
       "emission": "#0b3a1e",
       "emission_energy": 0.5,
-      "hi": {
-        "subsurface": {
-          "strength": 0.8,
-          "transmittance": "#5fd38a",
-          "depth": 0.25,
-          "boost": 0.1
-        }
-      }
+      "hi": {}
     },
     "MI_Lapis": {
       "albedo": "#2350c8",
@@ -223,12 +210,7 @@
       "emission": "#3a4258",
       "emission_energy": 0.4,
       "hi": {
-        "clearcoat": 0.8,
-        "subsurface": {
-          "strength": 0.7,
-          "transmittance": "#c8d4ff",
-          "depth": 0.2
-        }
+        "clearcoat": 0.8
       }
     },
     "MI_StoneTileLight": {
@@ -488,7 +470,7 @@
     }
   },
   "lighting": {
-    "_comment": "Physical light units (lux, lumens, nits, Kelvin, ISO). Lights, GI and exposure: docs/reference/board-themes.md#lighting; per-tier behaviour: docs/reference/quality-tiers.md.",
+    "_comment": "Physical light units (lux, lumens, nits, Kelvin, ISO). Lights, GI and exposure: docs/reference/board-themes.md#lighting.",
     "sky_nits": 15000,
     "agx_white": 8.0,
     "agx_contrast": 1.5,
@@ -520,7 +502,7 @@
     "sky_fill": {
       "transform": "Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 6, 0)",
       "lumens": 6000,
-      "color": "#b8d4ff",
+      "color": "#ffc98a",
       "size": [
         10.0,
         10.0
@@ -628,14 +610,8 @@
       "bloom": 0.0,
       "blend": "additive",
       "hdr_threshold": 8.0,
-      "hdr_threshold_by_tier": {"mobile": 0.6, "web": 0.6},
       "hdr_scale": 2.0,
       "hdr_luminance_cap": 12.0
-    },
-    "depth_of_field": {
-      "beyond_board": 0.5,
-      "transition": 2.0,
-      "amount": 0.1
     }
   },
   "lookdev": {

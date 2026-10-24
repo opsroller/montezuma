@@ -87,26 +87,6 @@ max_value = 1.0
 step = 0.05
 size_flags_vertical = 4
 
-[node name="TextSizeRow" type="HBoxContainer" parent="Center/Panel/Column/Scroll/Rows"]
-layout_mode = 2
-
-[node name="Label" type="Label" parent="Center/Panel/Column/Scroll/Rows/TextSizeRow"]
-layout_mode = 2
-text = "settings.text_size"
-size_flags_horizontal = 3
-custom_minimum_size = Vector2(300, 0)
-autowrap_mode = 3
-
-[node name="TextSize" type="HSlider" parent="Center/Panel/Column/Scroll/Rows/TextSizeRow"]
-layout_mode = 2
-unique_name_in_owner = true
-custom_minimum_size = Vector2(340, 48)
-min_value = 1.0
-max_value = 2.0
-step = 0.25
-value = 1.0
-size_flags_vertical = 4
-
 [node name="ReducedMotionRow" type="HBoxContainer" parent="Center/Panel/Column/Scroll/Rows"]
 layout_mode = 2
 
@@ -164,22 +144,6 @@ custom_minimum_size = Vector2(300, 0)
 autowrap_mode = 3
 
 [node name="Difficulty" type="OptionButton" parent="Center/Panel/Column/Scroll/Rows/DifficultyRow"]
-layout_mode = 2
-unique_name_in_owner = true
-custom_minimum_size = Vector2(340, 48)
-
-[node name="QualityRow" type="HBoxContainer" parent="Center/Panel/Column/Scroll/Rows"]
-layout_mode = 2
-unique_name_in_owner = true
-
-[node name="Label" type="Label" parent="Center/Panel/Column/Scroll/Rows/QualityRow"]
-layout_mode = 2
-text = "settings.quality"
-size_flags_horizontal = 3
-custom_minimum_size = Vector2(300, 0)
-autowrap_mode = 3
-
-[node name="Quality" type="OptionButton" parent="Center/Panel/Column/Scroll/Rows/QualityRow"]
 layout_mode = 2
 unique_name_in_owner = true
 custom_minimum_size = Vector2(340, 48)

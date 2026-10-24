@@ -7,9 +7,6 @@
 #
 # Usage: cmake [-D<OPTION>=<value>...] -P tools/bench/run_bench.cmake
 #   GODOT        Godot 4.7.2 editor binary (default: godot on PATH)
-#   TIER         desktop-high, desktop-standard, mobile or web: runs with
-#                that quality tier (--quality) and checks the feature list
-#                against it (default: the tier QualityTiers picks)
 #   DRIVER       --rendering-driver for Godot, e.g. vulkan, metal, d3d12,
 #                opengl3 (default: the project's)
 #   SIZE         render size for the benchmark, WxH (default 1920x1080); the
@@ -22,14 +19,8 @@
 #   SECONDS      capture length (default 60)
 #   WARMUP       warm-up before the capture (default 10)
 #   OUT          where reports and captures go (default bench-out/)
-#   NATIVE=OFF   use the tier's render scale and upscaler (FSR 2, MetalFX);
-#                by default the 3D renders at SIZE with no upscaler
-#                (--quality-native), so the upscale costs nothing
 #   FULLSCREEN=ON  run the benchmark exclusive full screen at the screen's
 #                size (--bench-fullscreen); SIZE is then ignored
-#   QUALITY_OFF  comma-separated feature ids to turn off for the runs
-#                (--quality-off), to measure what each costs; the feature
-#                check then fails for those rows
 #   GAME_ARGS    more user arguments for every Godot run, ;-separated,
 #                e.g. --rt-reflections for the optional ray-traced
 #                reflections (docs/reference/ray-traced-reflections.md)
@@ -40,7 +31,7 @@
 # Each Godot run is stopped after SECONDS + WARMUP + 300 s (the readability
 # capture after 600 s) and counts as a failure.
 # Exit status: 0 when every run and check passed (budget, render size,
-# replay, features, readability), non-zero otherwise.
+# replay, readability), non-zero otherwise.
 include("${CMAKE_CURRENT_LIST_DIR}/../release/steps.cmake")
 if(NOT GODOT)
   set(GODOT godot)
@@ -124,18 +115,9 @@ function(check report)
   endif()
 endfunction()
 
-set(quality "")
-if(TIER)
-  set(quality "--quality=${TIER}")
-endif()
-if(NOT DEFINED NATIVE OR NATIVE)
-  list(APPEND quality --quality-native)
-endif()
-if(QUALITY_OFF)
-  list(APPEND quality "--quality-off=${QUALITY_OFF}")
-endif()
+set(game_args "")
 if(GAME_ARGS)
-  list(APPEND quality ${GAME_ARGS})
+  set(game_args ${GAME_ARGS})
 endif()
 set(engine "")
 if(GPU_PROFILE)
@@ -157,7 +139,7 @@ set(status 0)
 # A stale report from an earlier run must not pass for this one.
 file(REMOVE "${OUT}/benchmark.json")
 window("${SIZE}")
-run_godot(${bench_timeout} rc ${engine} res://scenes/bench/bench.tscn -- ${bench} ${quality})
+run_godot(${bench_timeout} rc ${engine} res://scenes/bench/bench.tscn -- ${bench} ${game_args})
 if(NOT rc EQUAL 0)
   set(status 1)
 endif()
@@ -167,7 +149,6 @@ if(EXISTS "${OUT}/benchmark.json")
     set(size_check "")
   endif()
   check("${OUT}/run.txt" "${bench_tools}/check_run.py" "${OUT}/benchmark.json" ${size_check})
-  check("${OUT}/features.txt" "${bench_tools}/check_features.py" "${OUT}/benchmark.json")
 else()
   message(NOTICE "FAIL benchmark: no report written")
   set(status 1)
@@ -175,7 +156,7 @@ endif()
 
 if(READABILITY)
   window(540x1170)
-  run_godot(600 rc res://scenes/bench/readability.tscn -- "--capture-out=${OUT}/readability" ${quality})
+  run_godot(600 rc res://scenes/bench/readability.tscn -- "--capture-out=${OUT}/readability" ${game_args})
   if(NOT rc EQUAL 0)
     set(status 1)
   endif()

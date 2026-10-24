@@ -34,6 +34,9 @@ class Match3Game : public godot::Node3D {
     GDCLASS(Match3Game, godot::Node3D)
 
 public:
+    // false stops the level clock (and everything that runs on it) where it is.
+    void set_timer_enabled(bool v) { timer_enabled_ = v; }
+    bool get_timer_enabled() const { return timer_enabled_; }
     enum Outcome { PLAYING = 0, WON = 1, LOST = 2 };  // LevelState.Outcome
 
     Match3Game();
@@ -149,6 +152,7 @@ private:
     std::vector<std::vector<godot::String>> step_cues_;
     bool finish_pending_ = false;
     bool finished_ = false;
+    bool timer_enabled_ = true;
     bool warned_ = false;
 
     godot::NodePath board_view_path_;

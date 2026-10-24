@@ -3,6 +3,8 @@
 
 #include "render_tuner.hpp"
 
+#include "render/flicker_light_3d.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <string>
@@ -50,7 +52,9 @@
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/scene_tree_timer.hpp>
 #include <godot_cpp/classes/scroll_container.hpp>
+#include <godot_cpp/classes/shader.hpp>
 #include <godot_cpp/classes/shader_material.hpp>
+#include <godot_cpp/classes/standard_material3d.hpp>
 #include <godot_cpp/classes/spin_box.hpp>
 #include <godot_cpp/classes/style_box_flat.hpp>
 #include <godot_cpp/classes/text_server.hpp>
@@ -66,14 +70,10 @@
 #include <godot_cpp/variant/typed_array.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
-#include "render/quality.hpp"
-#include "render/quality_tiers.hpp"
 
 using namespace godot;
 
 namespace montezuma::godot_binding {
-
-namespace q = quality;
 
 namespace {
 
@@ -87,15 +87,53 @@ constexpr double kAverageMs = 1000.0;
 // `--tuner-shot` waits this long so the scan, the demo and the readout have run.
 constexpr double kShotSeconds = 6.0;
 
+// The project's own shaders (game/assets/materials/shaders). Surface shaders
+// fall back to a stock material when switched off; the rest hide their nodes.
+constexpr const char* kSurfaceShaders[] = {"SH_Gem", "SH_TriplanarPBR", "SH_Water", "SH_WaterSimple"};
+constexpr const char* kEffectShaders[] = {"SH_Fire",     "SH_FireSmoke",     "SH_Ember", "SH_EmberTrail", "SH_Spark",
+                                          "SH_HeatHaze", "SH_AtmosphereFog", "SH_Dust",  "SH_CellHighlight"};
+constexpr const char* kStockMeta = "tuner_stock_override";
+
+String shader_name(const Ref<Material>& material) {
+    const Ref<ShaderMaterial> sm = material;
+    if (sm.is_null() || sm->get_shader().is_null()) return String();
+    return sm->get_shader()->get_path().get_file().get_basename();
+}
+
+// The materials a node draws with, from overrides, its mesh or its particles.
+std::vector<Ref<Material>> materials_of(Node* node) {
+    std::vector<Ref<Material>> out;
+    if (auto* fog = Object::cast_to<FogVolume>(node)) out.push_back(fog->get_material());
+    auto* geometry = Object::cast_to<GeometryInstance3D>(node);
+    if (!geometry) return out;
+    out.push_back(geometry->get_material_override());
+    out.push_back(geometry->get_material_overlay());
+    std::vector<Ref<Mesh>> meshes;
+    if (auto* mi = Object::cast_to<MeshInstance3D>(node)) {
+        for (int32_t i = 0; i < mi->get_surface_override_material_count(); ++i)
+            out.push_back(mi->get_surface_override_material(i));
+        meshes.push_back(mi->get_mesh());
+    } else if (auto* gpu = Object::cast_to<GPUParticles3D>(node)) {
+        for (int32_t i = 0; i < gpu->get_draw_passes(); ++i) meshes.push_back(gpu->get_draw_pass_mesh(i));
+    } else if (auto* cpu = Object::cast_to<CPUParticles3D>(node)) {
+        meshes.push_back(cpu->get_mesh());
+    }
+    for (const Ref<Mesh>& mesh : meshes) {
+        if (mesh.is_null()) continue;
+        for (int32_t i = 0; i < mesh->get_surface_count(); ++i) out.push_back(mesh->surface_get_material(i));
+    }
+    return out;
+}
+
+bool draws_with(Node* node, const String& shader) {
+    for (const Ref<Material>& m : materials_of(node))
+        if (shader_name(m) == shader) return true;
+    return false;
+}
+
 String ms(double v) { return String::num(v, 2) + " ms"; }
 
 String mib(double bytes) { return String::num(bytes / (1024.0 * 1024.0), 0) + " MB"; }
-
-String feature_label(const String& id) {
-    if (id == "ssao" || id == "ssil" || id == "ssr" || id == "sdfgi") return id.to_upper();
-    if (id == "voxel_gi") return "VoxelGI";
-    return id.capitalize();
-}
 
 const char* scaling_name(Viewport::Scaling3DMode mode) {
     switch (mode) {
@@ -247,20 +285,19 @@ void RenderTuner::_ready() {
     if (Engine::get_singleton()->is_editor_hint()) return;
     set_anchors_and_offsets_preset(PRESET_FULL_RECT);
     set_mouse_filter(MOUSE_FILTER_IGNORE);
-    const Vector2i window = DisplayServer::get_singleton()->window_get_size();
-    ui_scale_ = std::max(1.0f, std::floor(static_cast<float>(std::min(window.x, window.y)) / 1080.0f * 4.0f) / 4.0f);
-    apply_ui_scale();
-    if (QualityTiers* tiers = QualityTiers::get_singleton()) {
-        original_choice_ = tiers->get_choice();
-        tiers->connect("tier_changed", callable_mp(this, &RenderTuner::on_tier_changed));
-    }
     make_settings();
+    // Everything we draw on top of Godot starts off; the panel turns it on.
+    set_custom("effects", false);
+    set_custom("flicker", false);
+    for (const char* name : kSurfaceShaders) set_custom(name, false);
+    for (const char* name : kEffectShaders) set_custom(name, false);
     build_layout();
     RenderingServer::get_singleton()->viewport_set_measure_render_time(get_viewport()->get_viewport_rid(), true);
     last_frame_usec_ = Time::get_singleton()->get_ticks_usec();
     // The board view adds the theme (environment, lights) as it shows the
     // first board, so the first scan waits a moment.
     get_tree()->create_timer(0.5)->connect("timeout", callable_mp(this, &RenderTuner::rebuild));
+    gpu_profile_ = OS::get_singleton()->get_cmdline_args().has("--gpu-profile");
     for (const String& arg : OS::get_singleton()->get_cmdline_user_args()) {
         if (arg.begins_with("--tuner-shot=")) shot_path_ = arg.substr(13);
         if (arg == "--tuner-selftest")
@@ -268,6 +305,7 @@ void RenderTuner::_ready() {
     }
     set_process(true);
     set_process_input(true);
+    get_tree()->connect("node_added", callable_mp(this, &RenderTuner::apply_custom));
 }
 
 void RenderTuner::save_screenshot(const String& path) {
@@ -279,10 +317,8 @@ void RenderTuner::save_screenshot(const String& path) {
 }
 
 void RenderTuner::_exit_tree() {
-    if (QualityTiers* tiers = QualityTiers::get_singleton()) {
-        const Callable changed = callable_mp(this, &RenderTuner::on_tier_changed);
-        if (tiers->is_connected("tier_changed", changed)) tiers->disconnect("tier_changed", changed);
-    }
+    if (SceneTree* tree = get_tree(); tree && tree->is_connected("node_added", callable_mp(this, &RenderTuner::apply_custom)))
+        tree->disconnect("node_added", callable_mp(this, &RenderTuner::apply_custom));
     if (Viewport* vp = get_viewport())
         RenderingServer::get_singleton()->viewport_set_measure_render_time(vp->get_viewport_rid(), false);
 }
@@ -300,46 +336,24 @@ void RenderTuner::_input(const Ref<InputEvent>& event) {
     }
 }
 
-void RenderTuner::apply_ui_scale() { get_tree()->get_root()->set_content_scale_factor(ui_scale_); }
-
 void RenderTuner::make_settings() {
     RenderingServer* rs = RenderingServer::get_singleton();
-    QualityTiers* tiers = QualityTiers::get_singleton();
 
-    // Quality tier and its features.
-    quality_.instantiate();
-    if (tiers) {
-        PackedStringArray choices;
-        choices.push_back("auto");
-        choices.append_array(tiers->get_available_tiers());
-        quality_->add(
-            PropertyInfo(Variant::INT, "tier", PROPERTY_HINT_ENUM, String(",").join(choices)),
-            [tiers, choices] { return std::max<int64_t>(0, choices.find(tiers->get_choice())); },
-            [tiers, choices](const Variant& v) {
-                const int64_t i = v;
-                if (i >= 0 && i < choices.size()) tiers->preview_choice(choices[i]);
-            },
-            [] { return String("Tier (not saved)"); });
-        quality_->add_group("Features");
-        for (std::size_t i = 0; i < q::kFeatureCount; ++i) {
-            const String id = String(std::string(q::feature_id(static_cast<q::Feature>(i))).c_str());
-            // 0 follows the tier, 1 forces off, 2 forces on.
-            quality_->add(
-                PropertyInfo(Variant::INT, id, PROPERTY_HINT_ENUM, "Tier,Off,On"),
-                [tiers, id] {
-                    const int64_t o = tiers->get_feature_override(id);
-                    return o < 0 ? 0 : (o == 0 ? 1 : 2);
-                },
-                [tiers, id](const Variant& v) {
-                    const int64_t m = v;
-                    tiers->set_feature_override(id, m == 0 ? -1 : (m == 1 ? 0 : 1));
-                },
-                [tiers, id] {
-                    return feature_label(id) + "  (tier: " + (tiers->tier_has_feature(id) ? "on" : "off") +
-                           ", now " + (tiers->has_feature(id) ? "on" : "off") + ")";
-                });
-        }
-    }
+    // On/off for everything the project draws on top of Godot's own rendering.
+    custom_.instantiate();
+    const auto toggle = [this](const String& key, const String& label) {
+        custom_->add(
+            PropertyInfo(Variant::BOOL, key), [this, key] { return !custom_off_.has(key); },
+            [this, key](const Variant& v) { set_custom(key, v); }, [label] { return label; });
+    };
+    custom_->add_group("Our code");
+    toggle("timer", "Level timer (Match3Game)");
+    toggle("effects", "Match effects (BoardEffects)");
+    toggle("flicker", "Brazier light flicker (FlickerLight3D)");
+    custom_->add_group("Our surface shaders (off: stock material)");
+    for (const char* name : kSurfaceShaders) toggle(name, name);
+    custom_->add_group("Our effect shaders (off: hidden)");
+    for (const char* name : kEffectShaders) toggle(name, name);
 
     // Window and frame pacing.
     display_.instantiate();
@@ -359,17 +373,9 @@ void RenderTuner::make_settings() {
                      "Windowed:0,Maximized:2,Fullscreen:3,Exclusive fullscreen:4"),
         [ds] { return static_cast<int64_t>(ds->window_get_mode()); },
         [ds](const Variant& v) { ds->window_set_mode(static_cast<DisplayServer::WindowMode>(int64_t(v))); });
-    display_->add(
-        PropertyInfo(Variant::FLOAT, "ui_scale", PROPERTY_HINT_RANGE, "0.5,4,0.25"),
-        [this] { return ui_scale_; },
-        [this](const Variant& v) {
-            ui_scale_ = static_cast<float>(double(v));
-            apply_ui_scale();
-        },
-        [] { return String("Panel scale"); });
 
     // RenderingServer's global quality settings: setters with no getters, so
-    // the values are kept here, seeded from the project settings and the tier.
+    // the values are kept here, seeded from the project settings.
     renderer_.instantiate();
     const auto row = [this](const char* name, const PropertyInfo& info, const Variant& initial,
                             std::function<void()> apply, const char* label = nullptr) {
@@ -463,28 +469,6 @@ void RenderTuner::make_settings() {
     row("roughness_limiter_amount", PropertyInfo(Variant::FLOAT, "roughness_limiter_amount", PROPERTY_HINT_RANGE, "0.01,4,0.01"), setting("rendering/anti_aliasing/screen_space_roughness_limiter/amount", 0.25), limiter);
     row("roughness_limiter_limit", PropertyInfo(Variant::FLOAT, "roughness_limiter_limit", PROPERTY_HINT_RANGE, "0.01,1,0.01"), setting("rendering/anti_aliasing/screen_space_roughness_limiter/limit", 0.18), limiter);
 
-    seed_tier_settings();
-}
-
-// The values QualityTiers sets for the tier (apply_engine_settings), which
-// override the project settings.
-void RenderTuner::seed_tier_settings() {
-    const QualityTiers* tiers = QualityTiers::get_singleton();
-    if (!tiers || !renderer_.is_valid()) return;
-    const q::Profile& p = tiers->get_profile();
-    renderer_state_["sun_shadow_size"] = p.sun_shadow_size;
-    renderer_state_["sun_shadow_16_bits"] = true;
-    renderer_state_["sun_soft_shadows"] = static_cast<int64_t>(p.soft_shadows);
-    renderer_state_["positional_soft_shadows"] = static_cast<int64_t>(p.soft_shadows);
-    renderer_state_["subsurface_quality"] = static_cast<int64_t>(p.subsurface);
-    renderer_state_["ssr_half_size"] = p.ssr_half_size;
-    renderer_state_["volumetric_fog_size"] = p.volumetric_fog_size;
-    renderer_state_["volumetric_fog_depth"] = p.volumetric_fog_depth;
-}
-
-void RenderTuner::on_tier_changed(const String&) {
-    seed_tier_settings();
-    call_deferred("rebuild");
 }
 
 void RenderTuner::build_layout() {
@@ -661,7 +645,7 @@ void RenderTuner::rebuild() {
     }
 
     VBoxContainer* box = section_box_;
-    add_section(box, "Quality tier and effects", [this](VBoxContainer* b) { add_properties(b, quality_.ptr(), {}); },
+    add_section(box, "Custom rendering (on/off)", [this](VBoxContainer* b) { add_properties(b, custom_.ptr(), {}); },
                 false);
     add_section(box, "Display and frame pacing", [this](VBoxContainer* b) { add_properties(b, display_.ptr(), {}); });
     add_section(box, "Viewport: resolution, AA, debug views", [this](VBoxContainer* b) {
@@ -834,6 +818,8 @@ void RenderTuner::add_property_row(VBoxContainer* box, Object* object, const Dic
     if (type == Variant::BOOL) {
         auto* check = memnew(CheckBox);
         check->set_pressed_no_signal(value);
+        // Spelled out: an empty box is hard to see on the dark panel.
+        check->set_text(bool(value) ? "On" : "Off");
         check->connect("toggled", callable_mp(this, &RenderTuner::on_toggled).bind(index));
         row->add_child(check);
         b.control = check;
@@ -907,7 +893,12 @@ void RenderTuner::apply_binding(int64_t index, const Variant& value) {
     object->set(b.property, value);
 }
 
-void RenderTuner::on_toggled(bool on, int64_t index) { apply_binding(index, on); }
+void RenderTuner::on_toggled(bool on, int64_t index) {
+    if (index >= 0 && index < static_cast<int64_t>(bindings_.size()))
+        if (auto* check = Object::cast_to<CheckBox>(bindings_[static_cast<std::size_t>(index)].control))
+            check->set_text(on ? "On" : "Off");
+    apply_binding(index, on);
+}
 
 void RenderTuner::on_item_selected(int64_t item, int64_t index) {
     if (index < 0 || index >= static_cast<int64_t>(bindings_.size())) return;
@@ -933,7 +924,7 @@ void RenderTuner::on_spin_changed(double value, int64_t index) {
     apply_binding(index, b.integer_range ? Variant(static_cast<int64_t>(std::llround(value))) : Variant(value));
 }
 
-// Shows what each setting holds now: the tier, other settings and the
+// Shows what each setting holds now: other settings and the
 // engine (a resize changes the 3D scale) can change values the panel shows.
 void RenderTuner::sync_controls() {
     for (const Binding& b : bindings_) {
@@ -944,6 +935,7 @@ void RenderTuner::sync_controls() {
             b.text->set_text(settings->label_of(b.property));
         if (auto* check = Object::cast_to<CheckBox>(b.control)) {
             if (check->is_pressed() != bool(value)) check->set_pressed_no_signal(value);
+            check->set_text(bool(value) ? "On" : "Off");
         } else if (auto* options = Object::cast_to<OptionButton>(b.control)) {
             const int32_t item = options->get_item_index(static_cast<int32_t>(int64_t(value)));
             if (options->get_selected() != item) options->select(item);
@@ -960,17 +952,8 @@ void RenderTuner::sync_controls() {
 }
 
 void RenderTuner::reset_all() {
-    // Saved values first, the tier last: a value first shown under a feature
-    // override or another tier is then put right by the tier itself.
-    const uint64_t quality_id = quality_.is_valid() ? quality_->get_instance_id() : 0;
     for (const Original& o : originals_) {
-        if (uint64_t(o.object) == quality_id) continue;
         if (Object* object = ObjectDB::get_instance(o.object)) object->set(o.property, o.value);
-    }
-    if (QualityTiers* tiers = QualityTiers::get_singleton()) {
-        for (std::size_t i = 0; i < q::kFeatureCount; ++i)
-            tiers->set_feature_override(String(std::string(q::feature_id(static_cast<q::Feature>(i))).c_str()), -1);
-        tiers->preview_choice(original_choice_);
     }
     sync_controls();
 }
@@ -1020,7 +1003,6 @@ void RenderTuner::update_readout() {
     while (frames < window_.size() && covered < kAverageMs) covered += window_.at(window_.size() - 1 - frames++).frame_ms;
     const tuner::WindowStats w = window_.stats(frames);
 
-    const QualityTiers* tiers = QualityTiers::get_singleton();
     const Ref<ViewportTexture> texture = root->get_texture();
     const Vector2i out = texture.is_valid() ? Vector2i(texture->get_size()) : root->get_size();
     const float scale = root->get_scaling_3d_scale();
@@ -1031,7 +1013,7 @@ void RenderTuner::update_readout() {
     const double hz = ds->screen_get_refresh_rate(ds->window_get_current_screen());
 
     String text;
-    text += (tiers ? tiers->get_tier() : String("no tier")) + " | " + rs->get_current_rendering_method() + " | " +
+    text += rs->get_current_rendering_method() + " | " +
             rs->get_current_rendering_driver_name() + " | " + rs->get_video_adapter_name() + "\n";
     text += "Output " + String::num_int64(out.x) + "x" + String::num_int64(out.y) + " | 3D " +
             String::num_int64(inner.x) + "x" + String::num_int64(inner.y) + " (" + String::num(scale * 100.0, 0) +
@@ -1052,7 +1034,13 @@ void RenderTuner::update_readout() {
             mib(perf->get_monitor(Performance::RENDER_BUFFER_MEM_USED)) + ")";
     readout_->set_text(text);
 
-    // Per-pass GPU times exist only when Godot captures timestamps (--gpu-profile).
+    // Per-pass GPU times exist only when Godot captures timestamps
+    // (--gpu-profile); without it, leave the RenderingDevice alone (it may
+    // belong to a separate render thread).
+    if (!gpu_profile_) {
+        passes_->set_text("Per-pass GPU times: start Godot with --gpu-profile.");
+        return;
+    }
     RenderingDevice* rd = rs->get_rendering_device();
     const uint32_t count = rd ? rd->get_captured_timestamps_count() : 0;
     if (count < 2) {
@@ -1076,6 +1064,63 @@ void RenderTuner::update_readout() {
     passes_->set_text(lines);
 }
 
+void RenderTuner::set_custom(const String& key, bool on) {
+    if (on) custom_off_.erase(key);
+    else custom_off_.insert(key, true);
+    std::vector<Node*> stack{get_tree()->get_root()};
+    while (!stack.empty()) {
+        Node* n = stack.back();
+        stack.pop_back();
+        apply_custom_to(n, key, on);
+        for (int32_t i = 0; i < n->get_child_count(true); ++i) stack.push_back(n->get_child(i, true));
+    }
+}
+
+void RenderTuner::apply_custom(Node* node) {
+    for (const KeyValue<String, bool>& off : custom_off_) apply_custom_to(node, off.key, false);
+}
+
+void RenderTuner::apply_custom_to(Node* node, const String& key, bool on) {
+    if (key == "timer") {
+        // Match3Game is in another module; its timer_enabled property is bound.
+        if (node->is_class("Match3Game")) node->set("timer_enabled", on);
+        return;
+    }
+    if (key == "flicker") {
+        if (auto* light = Object::cast_to<FlickerLight3D>(node)) light->set_process(on);
+        return;
+    }
+    if (key == "effects") {
+        auto* fx = Object::cast_to<Node3D>(node);
+        if (fx && node->get_name() == StringName("Effects") && node->get_parent() &&
+            node->get_parent()->is_class("BoardView3D"))
+            fx->set_visible(on);
+        return;
+    }
+    if (!draws_with(node, key)) return;
+    bool surface = false;
+    for (const char* name : kSurfaceShaders) surface = surface || key == name;
+    if (surface) {
+        auto* geometry = Object::cast_to<GeometryInstance3D>(node);
+        if (!geometry) return;
+        if (!on && !geometry->has_meta(kStockMeta)) {
+            if (stock_.is_null()) {
+                Ref<StandardMaterial3D> m;
+                m.instantiate();
+                m->set_albedo(Color(0.6f, 0.6f, 0.6f));
+                stock_ = m;
+            }
+            geometry->set_meta(kStockMeta, geometry->get_material_override());
+            geometry->set_material_override(stock_);
+        } else if (on && geometry->has_meta(kStockMeta)) {
+            geometry->set_material_override(geometry->get_meta(kStockMeta));
+            geometry->remove_meta(kStockMeta);
+        }
+    } else if (auto* n3 = Object::cast_to<Node3D>(node)) {
+        n3->set_visible(on);
+    }
+}
+
 int64_t RenderTuner::find_binding(Object* object, const StringName& property) const {
     for (std::size_t i = 0; i < bindings_.size(); ++i)
         if (uint64_t(bindings_[i].object) == object->get_instance_id() && bindings_[i].property == property)
@@ -1092,11 +1137,6 @@ void RenderTuner::run_self_test() {
             UtilityFunctions::printerr("RenderTuner self-test FAIL: ", what);
         }
     };
-    QualityTiers* tiers = QualityTiers::get_singleton();
-    // A feature changed before its section is first opened: reset must still
-    // bring it back (the saved value is then the overridden one).
-    const bool glow_case = tiers && tiers->tier_has_feature("glow");
-    if (glow_case) tiers->set_feature_override("glow", 0);
     rebuild();
     // Open every section, nested ones included, as a person clicking through would.
     for (std::size_t i = 0; i < sections_.size(); ++i) {
@@ -1118,21 +1158,7 @@ void RenderTuner::run_self_test() {
     check(changed == 0, String::num_int64(changed) + " settings changed when written back unchanged");
 
     auto* env = Object::cast_to<Environment>(environments_.empty() ? nullptr : ObjectDB::get_instance(environments_[0]));
-    if (glow_case && env) {
-        reset_all();
-        check(tiers->has_feature("glow") && env->is_glow_enabled(),
-              "reset turns glow back on after it was off when its section first opened");
-    }
-    if (tiers && env && tiers->tier_has_feature("glow")) {
-        // The feature list forces glow off; the environment follows.
-        const int64_t row = find_binding(quality_.ptr(), "glow");
-        auto* options = row < 0 ? nullptr : Object::cast_to<OptionButton>(bindings_[std::size_t(row)].control);
-        check(options != nullptr, "the glow feature has a row");
-        if (options) {
-            options->select(options->get_item_index(1));
-            options->emit_signal("item_selected", options->get_selected());
-            check(!tiers->has_feature("glow") && !env->is_glow_enabled(), "forcing glow off turns the environment's glow off");
-        }
+    if (env) {
         // A slider drives an Environment value.
         const double intensity = env->get_glow_intensity();
         const int64_t slider_row = find_binding(env, "glow_intensity");
@@ -1143,7 +1169,6 @@ void RenderTuner::run_self_test() {
             check(std::abs(env->get_glow_intensity() - (intensity + 0.5)) < 1e-3, "the slider sets glow intensity");
         }
         reset_all();
-        check(tiers->has_feature("glow") && env->is_glow_enabled(), "reset puts the tier's glow back");
         check(std::abs(env->get_glow_intensity() - intensity) < 1e-6, "reset puts glow intensity back");
     }
     UtilityFunctions::print("RenderTuner self-test: ", checks, " checks, ", failures, " failures");

@@ -32,7 +32,7 @@ class VBoxContainer;
 namespace montezuma::godot_binding {
 
 // Settings that live outside any one object (RenderingServer globals, the
-// window, the quality tier), shown as properties so the tuning screen edits
+// window), shown as properties so the tuning screen edits
 // them like any engine object's.
 class TunerSettings : public godot::RefCounted {
     GDCLASS(TunerSettings, godot::RefCounted)
@@ -87,8 +87,7 @@ private:
 // The render tuning screen (docs/reference/render-tuner.md): a panel over
 // the running board demo with a live performance readout and a control
 // for every rendering and lighting setting it finds, built from the
-// engine's own property lists: the quality tier and its features, the
-// window, the root viewport, RenderingServer's global quality settings,
+// engine's own property lists: the window, the root viewport, RenderingServer's global quality settings,
 // every Environment, CameraAttributes and compositor effect, every light,
 // GI node, fog volume, particle system and decal, and the parameters of
 // every ShaderMaterial in the scene. Changes apply at once and last for
@@ -106,10 +105,10 @@ public:
     // Saves the window as a PNG (F12 saves to user://tuner/).
     void save_screenshot(const godot::String& path);
 
-    // Scans the scene again and rebuilds the sections (new nodes, a tier switch).
+    // Scans the scene again and rebuilds the sections (new nodes).
     void rebuild();
     // Puts every setting shown so far back to the value it had when first
-    // shown, and the tier and feature overrides back to the start.
+    // shown.
     void reset_all();
 
 protected:
@@ -132,7 +131,6 @@ private:
     using Filter = std::function<bool(const godot::String&)>;
 
     void build_layout();
-    void apply_ui_scale();
     godot::FoldableContainer* add_section(godot::VBoxContainer* parent, const godot::String& title, Builder build,
                                           bool folded = true);
     void on_folding_changed(bool folded, int64_t section);
@@ -151,8 +149,10 @@ private:
     void on_slider_changed(double value, int64_t index);
     void on_spin_changed(double value, int64_t index);
     void sync_controls();
-    void on_tier_changed(const godot::String& tier);
-    void seed_tier_settings();
+    // Custom rendering toggles: `key` is a shader name, "effects" or "flicker".
+    void set_custom(const godot::String& key, bool on);
+    void apply_custom(godot::Node* node);
+    void apply_custom_to(godot::Node* node, const godot::String& key, bool on);
     void scan();
     void make_settings();
     void update_readout();
@@ -175,9 +175,11 @@ private:
     godot::HashMap<godot::String, bool> seen_;
     // Titles of the sections open now, so a rebuild keeps them open.
     godot::HashMap<godot::String, bool> open_titles_;
-    godot::String original_choice_;
 
-    godot::Ref<TunerSettings> quality_;
+    bool gpu_profile_ = false;
+    godot::Ref<TunerSettings> custom_;
+    godot::HashMap<godot::String, bool> custom_off_;
+    godot::Ref<godot::Material> stock_;
     godot::Ref<TunerSettings> display_;
     godot::Ref<TunerSettings> renderer_;
     // Values for RenderingServer setters that take several at once and have no getters.
@@ -199,7 +201,6 @@ private:
     uint64_t last_frame_usec_ = 0;
     double readout_timer_ = 0.0;
     double sync_timer_ = 0.0;
-    float ui_scale_ = 1.0f;
     // `-- --tuner-shot=<png>`: save a screenshot this long after start, then quit.
     godot::String shot_path_;
     double shot_timer_ = 0.0;

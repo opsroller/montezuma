@@ -14,8 +14,8 @@ namespace montezuma::godot_binding {
 // its energy follows flicker::fire() around the energy the scene gave it,
 // and it drifts a few centimetres so the shadows it casts move. Lights in
 // different places never flicker in step (the seed comes from the
-// position unless one is set). Shadows, fog energy and tier switches stay
-// with the light and QualityTiers as usual (docs/reference/fire.md).
+// position unless one is set). Shadows and fog energy stay with the light
+// as authored (docs/reference/fire.md).
 class FlickerLight3D : public godot::OmniLight3D {
     GDCLASS(FlickerLight3D, godot::OmniLight3D)
 
