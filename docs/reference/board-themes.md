@@ -32,16 +32,24 @@ one: [Make a board theme](../how-to/make-a-board-theme.md).*
 All values are `res://` paths to `PackedScene`s. A missing name falls back
 to the view's placeholder.
 
-A name may have variants keyed `<name>.<feature>`, the same convention as
+A name may have variants keyed `<name>.<tag>`, the same convention as
 Godot's `application/run/main_scene.web`: `PieceLibrary` takes the variant
-whose feature tag the running build has (`OS.has_feature`) in place of the
-plain entry and drops the rest. The generator writes `.web` variants for
-`environment`, `board` and the artifacts: the same prefabs under a `web/`
-folder, naming the `web/` materials that use the base texture sets, so the
-web build ships no 2048² textures and stays inside its 40 MB download
-budget. The web export preset excludes `*/hi/*`, the desktop presets
-`*/web/*`; the validator checks both and that no web material names a
-`hi/` texture.
+whose tag the running build has as a feature (`OS.has_feature`), or whose
+tag is the rendering method in use (`RenderingServer.get_current_rendering_method`;
+Godot 4.8 does not report the method as a feature tag), in place of the
+plain entry and drops the rest. The generator writes two kinds of variant for
+`environment`, `board` and the artifacts. `.gl_compatibility` (Godot's
+name for that rendering method) carries what that renderer can run: no fog volume
+and no volumetric fog (its shader type does not exist there), no brazier
+shadows and no ember trails (too slow on the GPUs that run it, a browser
+or CI's software renderer); the prefabs sit under a `gl_compatibility/`
+folder. `.web` is the same content naming the `web/` materials that use
+the base texture sets, so the web build ships no 2048² textures and stays
+inside its 40 MB download budget. When a platform tag and a renderer tag
+both match, the platform's variant wins (the web build is always
+Compatibility). The web export preset excludes `*/hi/*`, the desktop
+presets `*/web/*`; the validator checks both and that no web material
+names a `hi/` texture. Nothing changes for Forward+.
 
 ## Space and scale
 

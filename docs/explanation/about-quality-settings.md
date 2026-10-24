@@ -101,8 +101,11 @@ were moved to cube-map shadows for every renderer. The web build's textures
 are handled that way already: the manifest's `.web` entries, resolved like
 Godot's `run/main_scene.web`, point the web build at prefabs whose
 materials name the base texture sets ([Board themes](../reference/board-themes.md#manifest)).
-The fog volume on Compatibility is work package 62, the same mechanism
-applied to a scene node.
+The Compatibility renderer gets the same mechanism for content:
+`.gl_compatibility` variants (matched against the rendering method Godot
+reports) carry prefabs without the fog volume, brazier shadows and ember
+trails, so that renderer logs no error and CI's software renderer draws
+frames (work package 62).
 
 ## Consequences
 

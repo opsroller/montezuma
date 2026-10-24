@@ -114,8 +114,15 @@ EMISSION_NITS = {"scale": 1.0}
 # that PieceLibrary resolves like Godot's own `run/main_scene.web`
 # (docs/reference/board-themes.md#manifest). VARIANT["web"] is on while
 # those are written.
+# A `.gl_compatibility` variant (keyed by the rendering method's name, which
+# PieceLibrary matches against RenderingServer's) carries what that renderer can run: no fog
+# volume and no volumetric fog (its shader type does not exist there), no
+# brazier shadows and no ember trails (too slow on the GPUs that run it,
+# such as a browser or CI's software renderer). The web variant is the same
+# content with the base textures, since the web build is always
+# Compatibility. VARIANT["folder"] names the prefab folder being written.
 WEB_MATERIALS = set()
-VARIANT = {"web": False}
+VARIANT = {"web": False, "compat": False, "folder": ""}
 
 
 def material_res(theme, name):
@@ -355,6 +362,8 @@ def brazier_fire(p, theme):
              '[sub_resource type="TubeTrailMesh" id="ember_tube"]', f"radius = {em['size'] / 2}",
              "radial_steps = 4", "sections = 4", "section_length = 0.05", "section_rings = 1", "cap_top = false",
              "cap_bottom = false", "",
+             *(['[sub_resource type="QuadMesh" id="ember_quad"]', f"size = Vector2({em['size']}, {em['size']})", ""]
+               if VARIANT["compat"] else []),
              '[sub_resource type="QuadMesh" id="haze_quad"]', f"size = Vector2({hz['size'][0]}, {hz['size'][1]})",
              f"center_offset = {vec3(0, hz['size'][1] / 2, 0)}", ""]
     aabb = "AABB(-1.5, -0.5, -1.5, 3, 4, 3)"
@@ -370,8 +379,12 @@ def brazier_fire(p, theme):
     r.body += particles("Smoke", sm["amount"], sm["lifetime"], "smoke_process", "smoke_quad", mat["MI_FireSmoke"],
                         ["draw_order = 1"])
     r.body += particles("Flame", fl["amount"], fl["lifetime"], "flame_process", "flame_quad", mat["MI_Fire"])
-    r.body += particles("Embers", em["amount"], em["lifetime"], "ember_process", "ember_tube", mat["MI_EmberTrail"],
-                        ["trail_enabled = true", f"trail_lifetime = {em['trail_lifetime']}"])
+    if VARIANT["compat"]:
+        r.body += particles("Embers", em["amount"], em["lifetime"], "ember_process", "ember_quad",
+                            r.ext_id("Material", material_res(theme, "MI_Ember")))
+    else:
+        r.body += particles("Embers", em["amount"], em["lifetime"], "ember_process", "ember_tube", mat["MI_EmberTrail"],
+                            ["trail_enabled = true", f"trail_lifetime = {em['trail_lifetime']}"])
     r.body += ["", '[node name="HeatHaze" type="MeshInstance3D" parent="."]',
                f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, {hz['offset']}, 0)", f"layers = {FX_LAYER}", "cast_shadow = 0",
                'mesh = SubResource("haze_quad")', f"surface_material_override/0 = {mat['MI_HeatHaze']}"]
@@ -385,7 +398,8 @@ def brazier_fire(p, theme):
                # Cube shadows: the Compatibility renderer has no dual paraboloid mode, and on
                # Forward+ the four braziers cost the same either way (docs/reference/benchmark-results.md).
                "omni_shadow_mode = 1",
-               f"light_volumetric_fog_energy = {li['fog_energy']}", "light_bake_mode = 2", "shadow_enabled = true",
+               f"light_volumetric_fog_energy = {li['fog_energy']}", "light_bake_mode = 2",
+               f"shadow_enabled = {'false' if VARIANT['compat'] else 'true'}",
                f"shadow_blur = {li['shadow_blur']}", f"omni_range = {torch['range']}", "omni_attenuation = 1.4",
                f"flicker = {li['flicker']}", f"speed = {li['speed']}", f"sway = {li['sway']}"]
     return r.text("[gd_scene load_steps={steps} format=3]")
@@ -443,7 +457,10 @@ def atmosphere(r, p, models):
     half = p["board"]["width"] * p["cell_size"] / 2 + p["board"]["frame_width"]
     keep_out = half + a["board_clearance"]
     top = vol["top"]
-    fog_mat = r.ext_id("Material", f"res://assets/materials/{theme}/MI_AtmosphereFog.tres")
+    # The fog material is referenced only where the FogVolume is written: a
+    # dangling ext_resource would still load it, and its shader type does not
+    # exist on the Compatibility renderer.
+    fog_mat = None if VARIANT["compat"] else r.ext_id("Material", f"res://assets/materials/{theme}/MI_AtmosphereFog.tres")
     dust_mat = r.ext_id("Material", f"res://assets/materials/{theme}/MI_Dust.tres")
     size = 2 * vol["outer"]
     subs = ['[sub_resource type="ParticleProcessMaterial" id="dust_process"]', "emission_shape = 6",
@@ -468,10 +485,11 @@ def atmosphere(r, p, models):
             if over_board(c, keep_out) and not inside_platform(c, p):
                 raise SystemExit(f"{theme}: dust can drift over the board (inner radius {dust['inner_radius']})")
 
-    body = ["", '[node name="AtmosphereFog" type="FogVolume" parent="."]',
+    body = [] if VARIANT["compat"] else [
+            "", '[node name="AtmosphereFog" type="FogVolume" parent="."]',
             f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, {round((vol['bottom'] + top) / 2, 3)}, 0)",
-            f"size = {vec3(size, round(top - vol['bottom'], 3), size)}", "shape = 3", f"material = {fog_mat}",
-            "", '[node name="Dust" type="GPUParticles3D" parent="."]',
+            f"size = {vec3(size, round(top - vol['bottom'], 3), size)}", "shape = 3", f"material = {fog_mat}"]
+    body += ["", '[node name="Dust" type="GPUParticles3D" parent="."]',
             f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, {round((dust['bottom'] + dust['top']) / 2, 3)}, 0)",
             "cast_shadow = 0", f"amount = {dust['amount']}", f"lifetime = {dust['lifetime']}",
             f"preprocess = {dust['lifetime']}",
@@ -513,7 +531,7 @@ def main():
 
     def vdir(sub):
         """models/<theme>/<sub>, with /web appended while the web variant is written."""
-        return f"models/{theme}/{sub}" + ("/web" if VARIANT["web"] else "")
+        return f"models/{theme}/{sub}" + (f"/{VARIANT['folder']}" if VARIANT["folder"] else "")
 
     def write_prefabs(suffix):
         """The prefabs the manifest names; `suffix` ('' or '.web') is added to their manifest keys."""
@@ -643,7 +661,7 @@ def main():
                 f"volumetric_fog_ambient_inject = {fog3['ambient_inject']}",
                 "volumetric_fog_sky_affect = 0.0",
                 f"volumetric_fog_temporal_reprojection_amount = {fog3['temporal_amount']}",
-            ] if fog3 else []),
+            ] if fog3 and not VARIANT["compat"] else []),
             # The colour grade: a 3D LUT applied after tonemapping, in display
             # space (gen_theme_textures.py writes it from the theme's "grade").
             "adjustment_enabled = true",
@@ -704,9 +722,11 @@ def main():
         entry["environment" + suffix] = f"res://assets/{vdir('backdrop')}/PF_Environment.tscn"
 
     write_prefabs("")
-    VARIANT["web"] = True
+    VARIANT.update(web=True, compat=True, folder="web")
     write_prefabs(".web")
-    VARIANT["web"] = False
+    VARIANT.update(web=False, compat=True, folder="gl_compatibility")
+    write_prefabs(".gl_compatibility")
+    VARIANT.update(web=False, compat=False, folder="")
 
     # Selected-cell glow, a 1x1 plane just above the tile tops.
     r = Resource()

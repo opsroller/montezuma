@@ -15,6 +15,7 @@
 #include <godot_cpp/classes/json.hpp>
 #include <godot_cpp/classes/mesh_instance3d.hpp>
 #include <godot_cpp/classes/os.hpp>
+#include <godot_cpp/classes/rendering_server.hpp>
 #include <godot_cpp/classes/plane_mesh.hpp>
 #include <godot_cpp/classes/prism_mesh.hpp>
 #include <godot_cpp/classes/procedural_sky_material.hpp>
@@ -176,11 +177,26 @@ Dictionary PieceLibrary::resolve_features(const Dictionary& entries) {
         if (!key.contains(".")) out[key] = entries[key];
     }
     const OS* os = OS::get_singleton();
-    for (int64_t i = 0; i < keys.size(); ++i) {
-        const String key = keys[i];
-        const int64_t dot = key.find(".");
-        if (dot < 0) continue;
-        if (os->has_feature(key.substr(dot + 1))) out[key.substr(0, dot)] = entries[key];
+    // A tag matches when the build has it as a feature (platform tags) or
+    // when it is the rendering method Godot is running (Godot 4.8 does not
+    // report the method as a feature tag; RenderingServer names it).
+    // Renderer tags first, platform tags after, so a platform's variant wins
+    // over the renderer's when both match (the web build is always
+    // Compatibility, and its variant also names the web materials).
+    const String method = RenderingServer::get_singleton()->get_current_rendering_method();
+    const auto is_renderer = [](const String& tag) {
+        return tag == "forward_plus" || tag == "mobile" || tag == "gl_compatibility";
+    };
+    const auto matches = [&](const String& tag) { return tag == method || os->has_feature(tag); };
+    for (const bool platform_pass : {false, true}) {
+        for (int64_t i = 0; i < keys.size(); ++i) {
+            const String key = keys[i];
+            const int64_t dot = key.find(".");
+            if (dot < 0) continue;
+            const String tag = key.substr(dot + 1);
+            if (is_renderer(tag) == platform_pass) continue;
+            if (matches(tag)) out[key.substr(0, dot)] = entries[key];
+        }
     }
     return out;
 }
