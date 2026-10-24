@@ -159,6 +159,7 @@ Downloads stop after 600 s in all, or after 60 s with no data.
 | `version.cmake` | each git call 60 s |
 | `export-desktop.cmake`, `web-export.cmake` | Godot import 900 s, export 900 s; each Python helper 300 s; packaging 600 s |
 | `web-fetch-emsdk.cmake` | clone 300 s; `emsdk install` 1200 s; `emsdk activate` 300 s |
+| `tools/assets/bake_lightmaps.cmake` | Godot import 900 s; each scene's bake 1500 s (the temple took 11:21 on the Linux runner on 24 October 2026, the editor drawing its Forward+ viewport on the software renderer through the bake) |
 | `smoke-test.cmake` | headless run 300 s; each screenshot capture 1200 s (the board took 8:53 on the Linux runner's software renderer on 24 October 2026) |
 | `tools/bench/run_bench.cmake` | benchmark run `SECONDS` + `WARMUP` + 300 s; readability capture 600 s; each check 300 s |
 
