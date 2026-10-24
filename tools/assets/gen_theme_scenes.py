@@ -107,6 +107,23 @@ def look_at(eye, target):
 EMISSION_NITS = {"scale": 1.0}
 
 
+# Materials whose theme entry has a `hi` block name the desktop-size texture
+# sets. For the web build the generator also writes each of them under
+# materials/<theme>/web/ naming the base sets, and the prefabs that use them
+# under models/<theme>/<sub>/web/, listed in the manifest with a `.web` key
+# that PieceLibrary resolves like Godot's own `run/main_scene.web`
+# (docs/reference/board-themes.md#manifest). VARIANT["web"] is on while
+# those are written.
+WEB_MATERIALS = set()
+VARIANT = {"web": False}
+
+
+def material_res(theme, name):
+    """res:// path of a theme material; the web/ copy while the web variant is written."""
+    folder = "web/" if VARIANT["web"] and name in WEB_MATERIALS else ""
+    return f"res://assets/materials/{theme}/{folder}{name}.tres"
+
+
 def texture_path(theme, tex_set, suffix, hi):
     """res:// path of one map of a texture set; the hi/ variant when asked for and the set has one."""
     name = f"T_{tex_set}_{suffix}.png"
@@ -258,7 +275,7 @@ def mesh_scene(root_name, parts, theme, dynamic=False):
     r.body.append(f'[node name="{root_name}" type="Node3D"]')
     for name, mesh_path, mat in parts:
         mesh = r.ext_id("Mesh", mesh_path)
-        mat_ref = r.ext_id("Material", f"res://assets/materials/{theme}/{mat}.tres")
+        mat_ref = r.ext_id("Material", material_res(theme, mat))
         r.body += ["", f'[node name="{name}" type="MeshInstance3D" parent="."]', f"mesh = {mesh}",
                    f"surface_material_override/0 = {mat_ref}"]
         if dynamic:
@@ -295,7 +312,7 @@ def brazier_fire(p, theme):
     f, torch = p["fire"], p["lighting"]["torch"]
     fl, sm, em, li, hz = f["flame"], f["smoke"], f["embers"], f["light"], f["haze"]
     r = Resource()
-    mat = {n: r.ext_id("Material", f"res://assets/materials/{theme}/{n}.tres")
+    mat = {n: r.ext_id("Material", material_res(theme, n))
            for n in ("MI_Fire", "MI_FireSmoke", "MI_EmberTrail", "MI_HeatHaze")}
     white0, white1 = "Color(1, 1, 1, 0)", "Color(1, 1, 1, 1)"
     subs = []
@@ -489,191 +506,207 @@ def main():
 
     for name, spec in p["materials"].items():
         write(assets / "materials" / theme / f"{name}.tres", material(spec, theme, hi="hi" in spec))
+    WEB_MATERIALS.clear()
+    WEB_MATERIALS.update(name for name, spec in p["materials"].items() if "hi" in spec)
+    for name in sorted(WEB_MATERIALS):
+        write(assets / "materials" / theme / "web" / f"{name}.tres", material(p["materials"][name], theme, hi=False))
 
-    for kind in p["artifacts"]["kinds"]:
-        r = mesh_scene(kind["name"], [("Mesh", f"{models}/artifacts/SM_Artifact_{kind['name']}.obj", kind["material"])],
-                       theme, dynamic=True)
-        rel = f"models/{theme}/artifacts/PF_Artifact_{kind['name']}.tscn"
-        write(assets / rel, r.text("[gd_scene load_steps={steps} format=3]"))
-        entry[f"artifact_{kind['index']}"] = f"res://assets/{rel}"
+    def vdir(sub):
+        """models/<theme>/<sub>, with /web appended while the web variant is written."""
+        return f"models/{theme}/{sub}" + ("/web" if VARIANT["web"] else "")
 
-    board_parts = [("TilesLight", "MI_StoneTileLight"), ("TilesDark", "MI_StoneTileDark"), ("Base", "MI_StoneDark"),
-                   ("Frame", "MI_StoneFrame"), ("Fret", "MI_StoneFrame"), ("Gold", "MI_Gold")]
-    r = mesh_scene("Board", [(n, f"{models}/board/SM_Board_{n}.obj", m) for n, m in board_parts], theme)
-    write(assets / f"models/{theme}/board/PF_Board.tscn", r.text("[gd_scene load_steps={steps} format=3]"))
-    entry["board"] = f"{models}/board/PF_Board.tscn"
+    def write_prefabs(suffix):
+        """The prefabs the manifest names; `suffix` ('' or '.web') is added to their manifest keys."""
 
-    backdrop_parts = [("Stone", "MI_StoneFrame"), ("StoneDark", "MI_StoneDark"), ("Bronze", "MI_Bronze"),
-                      ("Ground", "MI_Ground"), ("Foliage", "MI_Foliage"), ("Rocks", "MI_StoneDark")]
-    if WATER:
-        backdrop_parts += [(n, "MI_Water") for n in WATER_STRIPS]
-    r = mesh_scene("Environment", [(n, f"{models}/backdrop/SM_Backdrop_{n}.obj", m) for n, m in backdrop_parts], theme)
-    if WATER:
-        # Water casts no shadow (its slabs would darken the floor under it)
-        # and stays out of baked GI and the lightmap: it moves.
-        for i, line in enumerate(r.body):
-            if any(line == f'[node name="{n}" type="MeshInstance3D" parent="."]' for n in WATER_STRIPS):
-                r.body[i + 1:i + 1] = ["cast_shadow = 0", "gi_mode = 0"]
-    env = p["environment"]
-    light = p["lighting"]
-    exposure, fog, ssao = light["exposure"], light.get("fog"), light["ssao"]
-    post = p["post"]
-    glow, dof = post["glow"], post.get("depth_of_field")
-    lut = f"res://assets/textures/{theme}/grade/T_Grade_LUT.png"
-    fog3 = light.get("atmosphere", {}).get("fog")
-    sky = [
-        "[sub_resource type=\"ProceduralSkyMaterial\" id=\"sky_mat\"]",
-        f"sky_top_color = {color(env['sky_top'])}",
-        f"sky_horizon_color = {color(env['sky_horizon'])}",
-        f"ground_bottom_color = {color(env['ground_bottom'])}",
-        f"ground_horizon_color = {color(env['sky_horizon'])}",
-        "sun_angle_max = 20.0",
-        "",
-        "[sub_resource type=\"Sky\" id=\"sky\"]",
-        "sky_material = SubResource(\"sky_mat\")",
-        "",
-        # Physical light units (project setting): the sky in nits, lights in
-        # lux and lumens, and the camera's sensitivity sets the exposure.
-        "[sub_resource type=\"CameraAttributesPractical\" id=\"camera\"]",
-        f"exposure_sensitivity = {exposure['sensitivity']}",
-        f"exposure_multiplier = {exposure['multiplier']}",
-        # Auto exposure is the theme's choice ("auto").
-        *([
-            "auto_exposure_enabled = true",
-            f"auto_exposure_scale = {exposure['auto_scale']}",
-            f"auto_exposure_speed = {exposure['auto_speed']}",
-            f"auto_exposure_min_sensitivity = {exposure['auto_min_sensitivity']}",
-            f"auto_exposure_max_sensitivity = {exposure['auto_max_sensitivity']}",
-        ] if exposure["auto"] else []),
-        # Depth of field on the backdrop only: BoardCamera3D moves the far
-        # blur to start dof_far_beyond_board metres past the board's far edge
-        # whenever it refits, so the board stays sharp at every window size.
-        *([
-            "dof_blur_far_enabled = true",
-            f"dof_blur_far_distance = {dof['beyond_board']}",
-            f"dof_blur_far_transition = {dof['transition']}",
-            f"dof_blur_amount = {dof['amount']}",
-            f"metadata/dof_far_beyond_board = {dof['beyond_board']}",
-        ] if dof else []),
-        "",
-        "[sub_resource type=\"Environment\" id=\"env\"]",
-        "background_mode = 2",
-        f"background_intensity = {light['sky_nits']}",
-        "sky = SubResource(\"sky\")",
-        "ambient_light_source = 3",
-        f"ambient_light_energy = {env['ambient_energy']}",
-        "reflected_light_source = 2",
-        "tonemap_mode = 4",
-        f"tonemap_agx_white = {light['agx_white']}",
-        f"tonemap_agx_contrast = {light['agx_contrast']}",
-        "ssao_enabled = true",
-        f"ssao_intensity = {ssao['intensity']}",
-        f"ssao_power = {ssao['power']}",
-        f"ssao_light_affect = {ssao['light_affect']}",
-        # Screen-space indirect light is the theme's choice ("ssil", default
-        # on): it costs about 30 ms a frame at 5K on an M4.
-        *(["ssil_enabled = true"] if light.get("ssil", True) else []),
-        # Glow runs before tonemapping (Godot 4.6+), on exposed scene values:
-        # only what is brighter than hdr_threshold blooms, on the small mip
-        # levels the theme picks (readability rule 6).
-        "glow_enabled = true",
-        *[f"glow_levels/{i + 1} = {v}" for i, v in enumerate(glow["levels"])],
-        f"glow_intensity = {glow['intensity']}",
-        f"glow_strength = {glow['strength']}",
-        f"glow_bloom = {glow['bloom']}",
-        f"glow_blend_mode = {GLOW_BLEND[glow['blend']]}",
-        f"glow_hdr_threshold = {glow['hdr_threshold']}",
-        f"glow_hdr_scale = {glow['hdr_scale']}",
-        f"glow_hdr_luminance_cap = {glow['hdr_luminance_cap']}",
-        # Mobile and Compatibility put lower values in the buffer glow reads;
-        # the per-tier thresholds are written as metadata for a reader to apply
-        # (nothing applies them since the tier system went).
-        *[f"metadata/glow_hdr_threshold_{tier.replace('-', '_')} = {v}"
-          for tier, v in sorted(glow.get("hdr_threshold_by_tier", {}).items())],
-        # Optional height fog. The temple has none: in the game's board view
-        # on Forward+ even height fog that starts below the platform left a
-        # haze over the board (readability rule 2), so atmosphere is
-        # FogVolumes, with only a thin veil over the board (WP-51).
-        *([
-            "fog_enabled = true",
-            f"fog_light_color = {color(fog['color'])}",
-            "fog_density = 0.0",
-            f"fog_height = {fog['height']}",
-            f"fog_height_density = {fog['height_density']}",
-            f"fog_sky_affect = {fog['sky_affect']}",
-        ] if fog else []),
-        # Volumetric fog with no density of its own: only the theme's FogVolume
-        # adds any, outside the board (WP-51). The tier turns it off where it
-        # has none; the froxel grid size is the tier's.
-        *([
-            "volumetric_fog_enabled = true",
-            "volumetric_fog_density = 0.0",
-            f"volumetric_fog_anisotropy = {fog3['anisotropy']}",
-            f"volumetric_fog_length = {fog3['length']}",
-            f"volumetric_fog_detail_spread = {fog3['detail_spread']}",
-            f"volumetric_fog_gi_inject = {fog3['gi_inject']}",
-            f"volumetric_fog_ambient_inject = {fog3['ambient_inject']}",
-            "volumetric_fog_sky_affect = 0.0",
-            f"volumetric_fog_temporal_reprojection_amount = {fog3['temporal_amount']}",
-        ] if fog3 else []),
-        # The colour grade: a 3D LUT applied after tonemapping, in display
-        # space (gen_theme_textures.py writes it from the theme's "grade").
-        "adjustment_enabled = true",
-        f"adjustment_color_correction = {r.ext_id('Texture3D', lut)}",
-        "",
-    ]
-    atmo_subs, atmo_body = atmosphere(r, p, models) if fog3 else ([], [])
-    r.body = sky + atmo_subs + r.body
-    r.body += ["", '[node name="WorldEnvironment" type="WorldEnvironment" parent="."]', 'environment = SubResource("env")',
-               'camera_attributes = SubResource("camera")']
-    # A theme may have a sun (the temple does); the braziers and the fill
-    # above the board light the rest.
-    if "sun" in light:
-        sun = light["sun"]
-        r.body += ["", '[node name="Sun" type="DirectionalLight3D" parent="."]', f"transform = {env['sun']['transform']}",
-                   f"light_intensity_lux = {sun['lux']}", f"light_temperature = {sun['kelvin']}",
-                   f"light_color = {color(sun['color'])}",
-                   f"light_angular_distance = {sun['angular_distance']}",
-                   # How strongly the sun lights the volumetric fog (WP-51): it stands
-                   # in for the multiple scattering Godot's single-scattering fog leaves out.
-                   *([f"light_volumetric_fog_energy = {sun['fog_energy']}"] if "fog_energy" in sun else []),
-                   "shadow_enabled = true", "directional_shadow_max_distance = 40.0"]
-    # A fire in each brazier (the braziers stand on pillars at the corners,
-    # gen_theme_meshes.py); each carries its own flickering light.
-    half = p["board"]["width"] * p["cell_size"] / 2 + p["board"]["frame_width"] + 0.95
-    fire_scene = f"{models}/fx/fire/PF_BrazierFire.tscn"
-    write(assets / f"models/{theme}/fx/fire/PF_BrazierFire.tscn", brazier_fire(p, theme))
-    for i, (sx, sz) in enumerate(((-1, -1), (1, -1), (-1, 1), (1, 1))):
-        r.body += ["", f'[node name="Fire{i + 1}" parent="." instance={r.ext_id("PackedScene", fire_scene)}]',
-                   f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, {sx * half}, {p['fire']['rim_height']}, {sz * half})"]
-    fill = light["sky_fill"]
-    r.body += ["", '[node name="SkyFill" type="AreaLight3D" parent="."]',
-               f"transform = {fill['transform']}", f"light_intensity_lumens = {fill['lumens']}",
-               f"light_color = {color(fill['color'])}", "light_bake_mode = 0",
-               f"area_size = Vector2({fill['size'][0]}, {fill['size'][1]})", f"area_range = {fill['range']}"]
-    probe = light["reflection_probe"]
-    r.body += ["", '[node name="ReflectionProbe" type="ReflectionProbe" parent="."]',
-               f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, {', '.join(map(str, probe['position']))})",
-               f"size = Vector3({', '.join(map(str, probe['size']))})", "box_projection = true",
-               f"cull_mask = {ALL_LAYERS & ~FX_LAYER}"]
-    # Static lighting baked by tools/assets/bake_lightmaps.cmake into the file the
-    # metadata names (a build output); the board view attaches it when present.
-    lm = light["lightmap"]
-    r.body += ["", '[node name="Lightmap" type="LightmapGI" parent="."]', f"quality = {lm['quality']}",
-               f"bounces = {lm['bounces']}", f"texel_scale = {lm['texel_scale']}",
-               f"max_texture_size = {lm['max_texture_size']}", f"generate_probes_subdiv = {lm['probes_subdiv']}",
-               # Bake a dimmed copy of the sky: lightmapped surfaces get their indirect
-               # light only from the bake, so ambient_energy does not reach them
-               # (docs/explanation/about-lighting.md, WP-60).
-               *(["environment_mode = 2", 'environment_custom_sky = SubResource("sky")',
-                  f"environment_custom_energy = {lm['sky_energy']}"] if "sky_energy" in lm else []),
-               # Bake at the theme's exposure: with physical light units the raw
-               # lux values would otherwise overflow the lightmap's range.
-               'camera_attributes = SubResource("camera")',
-               f'metadata/light_data_path = "{models}/backdrop/PF_Environment.lmbake"']
-    r.body += atmo_body
-    write(assets / f"models/{theme}/backdrop/PF_Environment.tscn", r.text("[gd_scene load_steps={steps} format=3]"))
-    entry["environment"] = f"{models}/backdrop/PF_Environment.tscn"
+        for kind in p["artifacts"]["kinds"]:
+            r = mesh_scene(kind["name"], [("Mesh", f"{models}/artifacts/SM_Artifact_{kind['name']}.obj", kind["material"])],
+                           theme, dynamic=True)
+            rel = f"{vdir('artifacts')}/PF_Artifact_{kind['name']}.tscn"
+            write(assets / rel, r.text("[gd_scene load_steps={steps} format=3]"))
+            entry[f"artifact_{kind['index']}{suffix}"] = f"res://assets/{rel}"
+
+        board_parts = [("TilesLight", "MI_StoneTileLight"), ("TilesDark", "MI_StoneTileDark"), ("Base", "MI_StoneDark"),
+                       ("Frame", "MI_StoneFrame"), ("Fret", "MI_StoneFrame"), ("Gold", "MI_Gold")]
+        r = mesh_scene("Board", [(n, f"{models}/board/SM_Board_{n}.obj", m) for n, m in board_parts], theme)
+        write(assets / f"{vdir('board')}/PF_Board.tscn", r.text("[gd_scene load_steps={steps} format=3]"))
+        entry["board" + suffix] = f"res://assets/{vdir('board')}/PF_Board.tscn"
+
+        backdrop_parts = [("Stone", "MI_StoneFrame"), ("StoneDark", "MI_StoneDark"), ("Bronze", "MI_Bronze"),
+                          ("Ground", "MI_Ground"), ("Foliage", "MI_Foliage"), ("Rocks", "MI_StoneDark")]
+        if WATER:
+            backdrop_parts += [(n, "MI_Water") for n in WATER_STRIPS]
+        r = mesh_scene("Environment", [(n, f"{models}/backdrop/SM_Backdrop_{n}.obj", m) for n, m in backdrop_parts], theme)
+        if WATER:
+            # Water casts no shadow (its slabs would darken the floor under it)
+            # and stays out of baked GI and the lightmap: it moves.
+            for i, line in enumerate(r.body):
+                if any(line == f'[node name="{n}" type="MeshInstance3D" parent="."]' for n in WATER_STRIPS):
+                    r.body[i + 1:i + 1] = ["cast_shadow = 0", "gi_mode = 0"]
+        env = p["environment"]
+        light = p["lighting"]
+        exposure, fog, ssao = light["exposure"], light.get("fog"), light["ssao"]
+        post = p["post"]
+        glow, dof = post["glow"], post.get("depth_of_field")
+        lut = f"res://assets/textures/{theme}/grade/T_Grade_LUT.png"
+        fog3 = light.get("atmosphere", {}).get("fog")
+        sky = [
+            "[sub_resource type=\"ProceduralSkyMaterial\" id=\"sky_mat\"]",
+            f"sky_top_color = {color(env['sky_top'])}",
+            f"sky_horizon_color = {color(env['sky_horizon'])}",
+            f"ground_bottom_color = {color(env['ground_bottom'])}",
+            f"ground_horizon_color = {color(env['sky_horizon'])}",
+            "sun_angle_max = 20.0",
+            "",
+            "[sub_resource type=\"Sky\" id=\"sky\"]",
+            "sky_material = SubResource(\"sky_mat\")",
+            "",
+            # Physical light units (project setting): the sky in nits, lights in
+            # lux and lumens, and the camera's sensitivity sets the exposure.
+            "[sub_resource type=\"CameraAttributesPractical\" id=\"camera\"]",
+            f"exposure_sensitivity = {exposure['sensitivity']}",
+            f"exposure_multiplier = {exposure['multiplier']}",
+            # Auto exposure is the theme's choice ("auto").
+            *([
+                "auto_exposure_enabled = true",
+                f"auto_exposure_scale = {exposure['auto_scale']}",
+                f"auto_exposure_speed = {exposure['auto_speed']}",
+                f"auto_exposure_min_sensitivity = {exposure['auto_min_sensitivity']}",
+                f"auto_exposure_max_sensitivity = {exposure['auto_max_sensitivity']}",
+            ] if exposure["auto"] else []),
+            # Depth of field on the backdrop only: BoardCamera3D moves the far
+            # blur to start dof_far_beyond_board metres past the board's far edge
+            # whenever it refits, so the board stays sharp at every window size.
+            *([
+                "dof_blur_far_enabled = true",
+                f"dof_blur_far_distance = {dof['beyond_board']}",
+                f"dof_blur_far_transition = {dof['transition']}",
+                f"dof_blur_amount = {dof['amount']}",
+                f"metadata/dof_far_beyond_board = {dof['beyond_board']}",
+            ] if dof else []),
+            "",
+            "[sub_resource type=\"Environment\" id=\"env\"]",
+            "background_mode = 2",
+            f"background_intensity = {light['sky_nits']}",
+            "sky = SubResource(\"sky\")",
+            "ambient_light_source = 3",
+            f"ambient_light_energy = {env['ambient_energy']}",
+            "reflected_light_source = 2",
+            "tonemap_mode = 4",
+            f"tonemap_agx_white = {light['agx_white']}",
+            f"tonemap_agx_contrast = {light['agx_contrast']}",
+            "ssao_enabled = true",
+            f"ssao_intensity = {ssao['intensity']}",
+            f"ssao_power = {ssao['power']}",
+            f"ssao_light_affect = {ssao['light_affect']}",
+            # Screen-space indirect light is the theme's choice ("ssil", default
+            # on): it costs about 30 ms a frame at 5K on an M4.
+            *(["ssil_enabled = true"] if light.get("ssil", True) else []),
+            # Glow runs before tonemapping (Godot 4.6+), on exposed scene values:
+            # only what is brighter than hdr_threshold blooms, on the small mip
+            # levels the theme picks (readability rule 6).
+            "glow_enabled = true",
+            *[f"glow_levels/{i + 1} = {v}" for i, v in enumerate(glow["levels"])],
+            f"glow_intensity = {glow['intensity']}",
+            f"glow_strength = {glow['strength']}",
+            f"glow_bloom = {glow['bloom']}",
+            f"glow_blend_mode = {GLOW_BLEND[glow['blend']]}",
+            f"glow_hdr_threshold = {glow['hdr_threshold']}",
+            f"glow_hdr_scale = {glow['hdr_scale']}",
+            f"glow_hdr_luminance_cap = {glow['hdr_luminance_cap']}",
+            # Mobile and Compatibility put lower values in the buffer glow reads;
+            # the per-tier thresholds are written as metadata for a reader to apply
+            # (nothing applies them since the tier system went).
+            *[f"metadata/glow_hdr_threshold_{tier.replace('-', '_')} = {v}"
+              for tier, v in sorted(glow.get("hdr_threshold_by_tier", {}).items())],
+            # Optional height fog. The temple has none: in the game's board view
+            # on Forward+ even height fog that starts below the platform left a
+            # haze over the board (readability rule 2), so atmosphere is
+            # FogVolumes, with only a thin veil over the board (WP-51).
+            *([
+                "fog_enabled = true",
+                f"fog_light_color = {color(fog['color'])}",
+                "fog_density = 0.0",
+                f"fog_height = {fog['height']}",
+                f"fog_height_density = {fog['height_density']}",
+                f"fog_sky_affect = {fog['sky_affect']}",
+            ] if fog else []),
+            # Volumetric fog with no density of its own: only the theme's FogVolume
+            # adds any, outside the board (WP-51). The tier turns it off where it
+            # has none; the froxel grid size is the tier's.
+            *([
+                "volumetric_fog_enabled = true",
+                "volumetric_fog_density = 0.0",
+                f"volumetric_fog_anisotropy = {fog3['anisotropy']}",
+                f"volumetric_fog_length = {fog3['length']}",
+                f"volumetric_fog_detail_spread = {fog3['detail_spread']}",
+                f"volumetric_fog_gi_inject = {fog3['gi_inject']}",
+                f"volumetric_fog_ambient_inject = {fog3['ambient_inject']}",
+                "volumetric_fog_sky_affect = 0.0",
+                f"volumetric_fog_temporal_reprojection_amount = {fog3['temporal_amount']}",
+            ] if fog3 else []),
+            # The colour grade: a 3D LUT applied after tonemapping, in display
+            # space (gen_theme_textures.py writes it from the theme's "grade").
+            "adjustment_enabled = true",
+            f"adjustment_color_correction = {r.ext_id('Texture3D', lut)}",
+            "",
+        ]
+        atmo_subs, atmo_body = atmosphere(r, p, models) if fog3 else ([], [])
+        r.body = sky + atmo_subs + r.body
+        r.body += ["", '[node name="WorldEnvironment" type="WorldEnvironment" parent="."]', 'environment = SubResource("env")',
+                   'camera_attributes = SubResource("camera")']
+        # A theme may have a sun (the temple does); the braziers and the fill
+        # above the board light the rest.
+        if "sun" in light:
+            sun = light["sun"]
+            r.body += ["", '[node name="Sun" type="DirectionalLight3D" parent="."]', f"transform = {env['sun']['transform']}",
+                       f"light_intensity_lux = {sun['lux']}", f"light_temperature = {sun['kelvin']}",
+                       f"light_color = {color(sun['color'])}",
+                       f"light_angular_distance = {sun['angular_distance']}",
+                       # How strongly the sun lights the volumetric fog (WP-51): it stands
+                       # in for the multiple scattering Godot's single-scattering fog leaves out.
+                       *([f"light_volumetric_fog_energy = {sun['fog_energy']}"] if "fog_energy" in sun else []),
+                       "shadow_enabled = true", "directional_shadow_max_distance = 40.0"]
+        # A fire in each brazier (the braziers stand on pillars at the corners,
+        # gen_theme_meshes.py); each carries its own flickering light.
+        half = p["board"]["width"] * p["cell_size"] / 2 + p["board"]["frame_width"] + 0.95
+        fire_scene = f"res://assets/{vdir('fx/fire')}/PF_BrazierFire.tscn"
+        write(assets / f"{vdir('fx/fire')}/PF_BrazierFire.tscn", brazier_fire(p, theme))
+        for i, (sx, sz) in enumerate(((-1, -1), (1, -1), (-1, 1), (1, 1))):
+            r.body += ["", f'[node name="Fire{i + 1}" parent="." instance={r.ext_id("PackedScene", fire_scene)}]',
+                       f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, {sx * half}, {p['fire']['rim_height']}, {sz * half})"]
+        fill = light["sky_fill"]
+        r.body += ["", '[node name="SkyFill" type="AreaLight3D" parent="."]',
+                   f"transform = {fill['transform']}", f"light_intensity_lumens = {fill['lumens']}",
+                   f"light_color = {color(fill['color'])}", "light_bake_mode = 0",
+                   f"area_size = Vector2({fill['size'][0]}, {fill['size'][1]})", f"area_range = {fill['range']}"]
+        probe = light["reflection_probe"]
+        r.body += ["", '[node name="ReflectionProbe" type="ReflectionProbe" parent="."]',
+                   f"transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, {', '.join(map(str, probe['position']))})",
+                   f"size = Vector3({', '.join(map(str, probe['size']))})", "box_projection = true",
+                   f"cull_mask = {ALL_LAYERS & ~FX_LAYER}"]
+        # Static lighting baked by tools/assets/bake_lightmaps.cmake into the file the
+        # metadata names (a build output); the board view attaches it when present.
+        lm = light["lightmap"]
+        r.body += ["", '[node name="Lightmap" type="LightmapGI" parent="."]', f"quality = {lm['quality']}",
+                   f"bounces = {lm['bounces']}", f"texel_scale = {lm['texel_scale']}",
+                   f"max_texture_size = {lm['max_texture_size']}", f"generate_probes_subdiv = {lm['probes_subdiv']}",
+                   # Bake a dimmed copy of the sky: lightmapped surfaces get their indirect
+                   # light only from the bake, so ambient_energy does not reach them
+                   # (docs/explanation/about-lighting.md, WP-60).
+                   *(["environment_mode = 2", 'environment_custom_sky = SubResource("sky")',
+                      f"environment_custom_energy = {lm['sky_energy']}"] if "sky_energy" in lm else []),
+                   # Bake at the theme's exposure: with physical light units the raw
+                   # lux values would otherwise overflow the lightmap's range.
+                   'camera_attributes = SubResource("camera")',
+                   f'metadata/light_data_path = "{models}/backdrop/PF_Environment.lmbake"']
+        r.body += atmo_body
+        write(assets / f"{vdir('backdrop')}/PF_Environment.tscn", r.text("[gd_scene load_steps={steps} format=3]"))
+        entry["environment" + suffix] = f"res://assets/{vdir('backdrop')}/PF_Environment.tscn"
+
+    write_prefabs("")
+    VARIANT["web"] = True
+    write_prefabs(".web")
+    VARIANT["web"] = False
 
     # Selected-cell glow, a 1x1 plane just above the tile tops.
     r = Resource()

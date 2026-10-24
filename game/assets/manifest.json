@@ -11,6 +11,15 @@
       "artifact_6": "res://assets/models/temple/artifacts/PF_Artifact_Moonstone.tscn",
       "board": "res://assets/models/temple/board/PF_Board.tscn",
       "environment": "res://assets/models/temple/backdrop/PF_Environment.tscn",
+      "artifact_0.web": "res://assets/models/temple/artifacts/web/PF_Artifact_Ruby.tscn",
+      "artifact_1.web": "res://assets/models/temple/artifacts/web/PF_Artifact_Carnelian.tscn",
+      "artifact_2.web": "res://assets/models/temple/artifacts/web/PF_Artifact_SunDisc.tscn",
+      "artifact_3.web": "res://assets/models/temple/artifacts/web/PF_Artifact_Jade.tscn",
+      "artifact_4.web": "res://assets/models/temple/artifacts/web/PF_Artifact_Lapis.tscn",
+      "artifact_5.web": "res://assets/models/temple/artifacts/web/PF_Artifact_Amethyst.tscn",
+      "artifact_6.web": "res://assets/models/temple/artifacts/web/PF_Artifact_Moonstone.tscn",
+      "board.web": "res://assets/models/temple/board/web/PF_Board.tscn",
+      "environment.web": "res://assets/models/temple/backdrop/web/PF_Environment.tscn",
       "cell_highlight": "res://assets/models/temple/fx/PF_CellHighlight.tscn",
       "fx_match": "res://assets/models/temple/fx/PF_MatchBurst.tscn"
     }

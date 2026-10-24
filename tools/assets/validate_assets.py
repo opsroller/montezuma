@@ -14,7 +14,8 @@ colour space of its suffix, is wired to the matching material slot, and
 holds physically plausible values; no material or shader filters
 anisotropically with repeat (it does not compile on 16-slot Metal GPUs);
 every desktop-size texture under hi/ has a
-base file, and no export preset leaves the hi/ folder out.
+base file, the web material set names only base textures, and the export
+presets split hi/ (desktop) from web/ (web).
 Every texture under game/assets/textures has a .import beside it that turns
 mipmaps on (or off on purpose), sets its compression and turns detect_3d off;
 texture maps carry exactly the settings of tools/assets/texture_import.py.
@@ -55,7 +56,7 @@ MAPS = {
 # Shader samplers by colour space: colour data needs source_color, data maps must not have it.
 SRGB_SAMPLERS = {"texture_albedo", "texture_emission"}
 DATA_SAMPLERS = {"texture_normal", "texture_orm", "texture_height", "texture_roughness", "flame_sheet", "motion_sheet"}
-TIERED = "hi"  # desktop-size texture folder; the folded materials name these files
+TIERED = "hi"  # desktop-size texture folder; the desktop materials name these files, the web/ set the base ones
 SPDX = "SPDX-License-Identifier: GPL-2.0-or-later"
 HEADERS = {".tscn": "[gd_scene", ".tres": "[gd_resource"}
 
@@ -277,19 +278,28 @@ def anisotropic_repeat_errors(path, rel):
 
 
 def export_errors():
-    """Every preset ships every texture a material references: there is one material set, and the
-    desktop-size (`hi/`) texture sets are what the folded materials name (docs/reference/board-themes.md#texture-sizes)."""
+    """The web build ships the web material set (materials/<theme>/web/, base textures) and leaves the
+    desktop-size hi/ textures out; desktop builds ship the hi/ textures and leave the web set out
+    (docs/reference/board-themes.md#manifest)."""
     path = GAME / "export_presets.cfg"
     if not path.exists():
         return []
     errors = []
     for block in re.split(r"^\[preset\.\d+\]$", path.read_text(), flags=re.M)[1:]:
         name = re.search(r'^name="([^"]*)"', block, re.M)
+        platform = re.search(r'^platform="([^"]*)"', block, re.M)
         exclude = re.search(r'^exclude_filter="([^"]*)"', block, re.M)
+        name = name.group(1) if name else "?"
+        platform = platform.group(1) if platform else ""
         filters = [f.strip() for f in (exclude.group(1) if exclude else "").split(",") if f.strip()]
-        if any(f"/{TIERED}/" in f for f in filters):
-            errors.append(f"game/export_presets.cfg: preset '{name.group(1) if name else '?'}' excludes {TIERED}/ "
-                          "textures that the materials reference")
+        if platform == "Web" and f"*/{TIERED}/*" not in filters:
+            errors.append(f"game/export_presets.cfg: preset '{name}' (Web) must list */{TIERED}/* in exclude_filter; "
+                          "the web build uses the web material set")
+        if platform in ("Windows Desktop", "Linux", "macOS") and "*/web/*" not in filters:
+            errors.append(f"game/export_presets.cfg: desktop preset '{name}' must list */web/* in exclude_filter")
+    for mat in sorted(GAME.glob("assets/materials/*/web/*.tres")):
+        if f"/{TIERED}/" in mat.read_text():
+            errors.append(f"{mat.relative_to(ROOT)}: a web material names a {TIERED}/ texture the web build leaves out")
     return errors
 
 

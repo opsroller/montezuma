@@ -14,6 +14,7 @@
 #include <godot_cpp/classes/image_texture.hpp>
 #include <godot_cpp/classes/json.hpp>
 #include <godot_cpp/classes/mesh_instance3d.hpp>
+#include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/classes/plane_mesh.hpp>
 #include <godot_cpp/classes/prism_mesh.hpp>
 #include <godot_cpp/classes/procedural_sky_material.hpp>
@@ -128,7 +129,7 @@ void PieceLibrary::load(double cell, const String& theme) {
             const Variant entries =
                 themes.get_type() == Variant::DICTIONARY ? Dictionary(themes).get(name, Variant()) : Variant();
             if (entries.get_type() == Variant::DICTIONARY) {
-                entries_ = entries;
+                entries_ = resolve_features(entries);
             } else {
                 UtilityFunctions::push_warning("Asset manifest has no theme '", name, "'; using placeholders.");
             }
@@ -160,6 +161,28 @@ void PieceLibrary::load(double cell, const String& theme) {
         mat->set_metallic(k == 2 ? 0.8f : 0.1f);  // gold reads as gold
         materials_[k] = mat;
     }
+}
+
+// An entry may have variants keyed `<name>.<feature>`, the way Godot's own
+// `application/run/main_scene.web` works: the variant for a feature this
+// build has (OS::has_feature) replaces the plain entry, and the suffixed
+// keys are dropped. The theme generator writes `.web` variants that name
+// the base texture sets (docs/reference/board-themes.md#manifest).
+Dictionary PieceLibrary::resolve_features(const Dictionary& entries) {
+    Dictionary out;
+    const Array keys = entries.keys();
+    for (int64_t i = 0; i < keys.size(); ++i) {
+        const String key = keys[i];
+        if (!key.contains(".")) out[key] = entries[key];
+    }
+    const OS* os = OS::get_singleton();
+    for (int64_t i = 0; i < keys.size(); ++i) {
+        const String key = keys[i];
+        const int64_t dot = key.find(".");
+        if (dot < 0) continue;
+        if (os->has_feature(key.substr(dot + 1))) out[key.substr(0, dot)] = entries[key];
+    }
+    return out;
 }
 
 Ref<Resource> PieceLibrary::load_entry(const String& name) const {

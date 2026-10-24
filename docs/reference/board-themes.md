@@ -32,6 +32,17 @@ one: [Make a board theme](../how-to/make-a-board-theme.md).*
 All values are `res://` paths to `PackedScene`s. A missing name falls back
 to the view's placeholder.
 
+A name may have variants keyed `<name>.<feature>`, the same convention as
+Godot's `application/run/main_scene.web`: `PieceLibrary` takes the variant
+whose feature tag the running build has (`OS.has_feature`) in place of the
+plain entry and drops the rest. The generator writes `.web` variants for
+`environment`, `board` and the artifacts: the same prefabs under a `web/`
+folder, naming the `web/` materials that use the base texture sets, so the
+web build ships no 2048² textures and stays inside its 40 MB download
+budget. The web export preset excludes `*/hi/*`, the desktop presets
+`*/web/*`; the validator checks both and that no web material names a
+`hi/` texture.
+
 ## Space and scale
 
 - 1 unit = 1 m = one cell (`cell_size` 1.0). Y up; board `y` grows toward
@@ -48,6 +59,8 @@ to the view's placeholder.
 | `tools/assets/themes/<theme>.json` | the theme's parameters: seed, sizes, kinds, materials, environment, look-dev |
 | `game/assets/models/<theme>/{artifacts,board,backdrop,fx}/` | `SM_*.obj` meshes and `PF_*.tscn` scenes |
 | `game/assets/materials/<theme>/` | `MI_*.tres` materials, one file per material for every renderer |
+| `game/assets/materials/<theme>/web/` | the materials with a `hi` block again, naming the base texture sets; the web build's set ([Manifest](#manifest)) |
+| `game/assets/models/<theme>/{artifacts,board,backdrop,fx/fire}/web/` | the prefabs that use those materials, for the web build |
 | `game/assets/materials/shaders/` | `SH_*.gdshader` and `SH_*.gdshaderinc`, shared by all themes |
 | `game/assets/textures/<theme>/` | `T_<Set>_{BC,N,ORM,H}.png` base texture sets, at most 1024²; build outputs, ignored by git (see below) |
 | `game/assets/textures/<theme>/hi/` | the hero sets at up to 2048², same file names, which the materials with a `hi` block name directly (see [Texture sizes](#texture-sizes)); build outputs too |
@@ -81,8 +94,9 @@ A texture set with `hi: true` is drawn at `hi_size` (2048²) into
 `textures/<theme>/hi/` and box-filtered down to the 1024² base set next
 to it. A material whose theme entry has a `hi` block is written with
 those keys merged in and names the `hi/` set where the set has one; a
-material without a `hi` block names the base set. Every export preset
-ships both folders: the materials name what they need.
+material without a `hi` block names the base set. The web build uses the
+`web/` copies of the `hi`-block materials, which name the base sets
+([Manifest](#manifest)); its export preset leaves `hi/` out.
 
 | Material | What it is |
 |---|---|
@@ -475,8 +489,8 @@ each as `error: <file>: <rule and fix>`:
   `grade/T_Grade_LUT.png` matches the parameters, and its `.import`
   imports it as a 3D texture ([Colour grade](#colour-grade)). Grade LUTs
   are exempt from the texture map rules above.
-- No export preset excludes the `hi/` texture folder: the folded
-  materials name those files.
+- The Web export preset lists `*/hi/*` in `exclude_filter` and the desktop
+  presets `*/web/*`; no `web/` material names a `hi/` texture.
 - `PROVENANCE.md` has a record for each theme.
 - Every board and backdrop OBJ has a committed `.obj.import` with
   `generate_lightmap_uv2=true`, and each theme has

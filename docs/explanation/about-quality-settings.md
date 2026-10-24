@@ -97,10 +97,12 @@ The tier system also switched content per renderer: no fog volume and
 cube-map omni shadows on Compatibility, fewer particles on mobile and
 web. With one material set and one scene, the Compatibility renderer
 now logs that the fog volume's shader is unsupported, and the braziers
-were moved to cube-map shadows for every renderer. A replacement that is
-Godot's own would be per-feature-tag entries in the asset manifest (as
-`run/main_scene.web` already picks the web demo's scene); that is a
-work package of its own, not part of the change that removed the tiers.
+were moved to cube-map shadows for every renderer. The web build's textures
+are handled that way already: the manifest's `.web` entries, resolved like
+Godot's `run/main_scene.web`, point the web build at prefabs whose
+materials name the base texture sets ([Board themes](../reference/board-themes.md#manifest)).
+The fog volume on Compatibility is work package 62, the same mechanism
+applied to a scene node.
 
 ## Consequences
 

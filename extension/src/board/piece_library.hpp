@@ -63,6 +63,8 @@ public:
 private:
     godot::Node3D* make_visual(int kind) const;
     godot::Ref<godot::Resource> load_entry(const godot::String& name) const;
+    // `<name>.<feature>` variants for the features this build has replace the plain entries.
+    static godot::Dictionary resolve_features(const godot::Dictionary& entries);
     godot::Node3D* instantiate_entry(const godot::String& name) const;
 
     // The chosen theme's name -> path entries.

@@ -61,7 +61,7 @@ Each role loads `engineering-practices` plus its own plugin from
 | `game-designer` | `docs/reference/rules-*.md`, `docs/reference/progression.md`, `docs/explanation/about-the-rules.md`, `docs/explanation/about-rule-sets-and-themes.md`, `docs/reference/balance.md`, `game/data/levels/` | Level files are JSON in the LevelData contract. Sim targets in `docs/reference/balance.md` |
 | `gameplay-programmer` | `core/`, `extension/src/match3_board.*`, `tools/sim/` | Namespace `montezuma`; bindings in `montezuma::godot_binding` |
 | `graphics-programmer` | `extension/src/board/`, `extension/src/game/`, `extension/src/render/`, `extension/src/bench/`, `game/scenes/`, `tools/bench/` | Feel constants in `extension/src/board/feel.hpp` |
-| `technical-artist` | `game/assets/models/`, `game/assets/materials/`, `game/assets/textures/`, `game/assets/lookdev/`, `game/assets/manifest.json`, `tools/assets/` | Budgets below; themes, naming and validator in `docs/reference/board-themes.md`; look in `docs/explanation/art-direction.md` |
+| `technical-artist` | `game/assets/models/`, `game/assets/materials/`, `game/assets/textures/`, `game/assets/lookdev/`, `game/assets/manifest.json` (entries may carry `.<feature>` variants, as `run/main_scene.web` does), `tools/assets/` | Budgets below; themes, naming and validator in `docs/reference/board-themes.md`; look in `docs/explanation/art-direction.md` |
 | `sound-designer` | `game/assets/audio/`, `extension/src/audio/`, `tools/audio/` | Cue list in contracts |
 | `ui-developer` | `game/ui/`, `extension/src/ui/` | Credits screen reads `CREDITS.md`; implements the graphic designer's specs |
 | `devops-engineer` | `.github/`, `game/export_presets.cfg`, `tools/release/`, `docs/stores/` | Builds every target including the wasm demo; store checklists in `docs/stores/` |
@@ -134,12 +134,12 @@ credits screen and the website both read from it.
 
 These are the caps for everything the mobile and web builds ship.
 Desktop builds also carry larger texture and LOD variants (up to 2048²,
-8k-triangle pieces); since 23 October 2026 every export ships them, because the materials are one set that names them; per-tier
+8k-triangle pieces) that the web export strips (its materials are the `web/` set, picked through the manifest's `.web` entries); per-tier
 budgets, frame times and the look each tier must show are in
 [Visual target](visual-target.md#how-each-tier-gets-its-assets).
 
 - 60 fps on mid-range Android and older iPhones.
-- Pieces under 2k triangles, board under 20k; textures 1024² max for the base sets (the `hi/` sets are 2048² and ship everywhere, [Board themes](board-themes.md#texture-sizes)).
+- Pieces under 2k triangles, board under 20k; textures 1024² max for the base sets, which the web build ships; desktop builds ship the 2048² `hi/` sets ([Board themes](board-themes.md#texture-sizes)).
 - Install size target under 150 MB on mobile; web demo under 40 MB
   compressed, playable within 10 s on broadband.
 
