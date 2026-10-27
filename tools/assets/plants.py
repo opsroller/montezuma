@@ -1646,22 +1646,27 @@ def _banana(parts, rng, p, s):
     leaves = int(_lerp(4, 8, age) * p.detail(1.0, 0.6, 0.4))
     for i, a in enumerate(rosette(max(3, leaves), start=rng.uniform(0, 6.28))):
         old = i / max(1, leaves - 1)
-        length = height * _lerp(0.52, 0.40, old)
+        # 1.0-1.8 m of blade on a mature plant, 2.5-3.5:1 - each half carries half the
+        # width, so the full blade comes out at 2.9:1.
+        length = height * _lerp(0.40, 0.31, old)
         # Each half is built as its own strip so the midrib reads as a spine, and the
         # halves shred independently: 5-15 splits per leaf, only the newest blade whole,
-        # and the strips beyond a split hang free.
+        # and the strips beyond a split hang free. A split runs 20-60% of the HALF WIDTH,
+        # inward from the margin - it is not a separation down to the midrib. Letting
+        # any interior column tear took the blade apart into loose ribbons and a mature
+        # banana came back looking like a dracaena, so only the outer columns may go.
         for side, u0, u1 in ((-1, 0.0, 0.5), (1, 0.5, 1.0)):
             cols = p.detail(9, 5, 3)
             shred = 0.25 + 0.55 * old + 0.3 * (1 - p.health)
-            tears = () if old < 0.2 else tuple(
-                k for k in range(1, cols - 1) if rng.random() < shred)
+            outer = range(max(1, int(cols * 0.6)), cols - 1)
+            tears = () if old < 0.2 else tuple(k for k in outer if rng.random() < shred)
             blade(b, crown, a, length, length * 0.17,
                   rise=length * _lerp(0.55, 0.15, old), droop=length * _lerp(0.3, 0.95, old),
                   fold=(0.9, 0.2, 0.45), curl=(0.0, 0.1 * side, 0.3),
                   twist=side * rng.uniform(0.1, 0.5),
                   tilt=_lerp(0.85, 0.0, old), segs=p.detail(8, 5, 3), cols=cols,
                   outline="strap", ripple=0.22 * (0.4 + old), u0=u0, u1=u1,
-                  tears=tears, tear_from=_lerp(0.55, 0.2, old), sag=0.6)
+                  tears=tears, tear_from=_lerp(0.72, 0.45, old), sag=0.6)
     litter_skirt(parts("leaf"), rng, max(0.8, height * 0.25), 7, height * 0.12, p, frond=True)
 
 
@@ -1963,21 +1968,36 @@ def _canopy_tree(parts, rng, p, s):
     tube(t, axis, [r0 * _lerp(1.4, 0.5, i / segs) for i in range(segs + 1)],
          sides=p.detail(8, 6, 4), v_scale=0.6, u_repeat=3.0)
     top = axis[-1]
-    for k in range(p.detail(4, 3, 2)):
-        a = 2 * math.pi * k / 4 + rng.uniform(-0.4, 0.4)
-        reach = height * rng.uniform(0.12, 0.22)
-        branch = arc(top, a, reach, height * 0.10, 0.0, 3, tilt=0.7)
-        tube(t, branch, [r0 * 0.4, r0 * 0.3, r0 * 0.2, r0 * 0.12], sides=4, v_scale=1.2)
-        for leafy in range(p.detail(3, 2, 1)):
-            tip = branch[-1]
-            size = height * rng.uniform(0.10, 0.16)
-            la = a + rng.uniform(-1.0, 1.0)
-            blade(c, (tip[0] + rng.uniform(-1, 1) * size * 0.2,
-                      tip[1] + rng.uniform(-1, 1) * size * 0.2,
-                      tip[2] + rng.uniform(-0.3, 0.5) * size * 0.3), la, size, size * 0.75,
-                  rise=size * 0.18, droop=size * 0.35, fold=0.15, curl=0.3,
-                  twist=rng.uniform(-0.6, 0.6), segs=p.detail(4, 3, 2), cols=p.detail(5, 3, 3),
-                  outline="ovate", lobes=2, ripple=0.25)
+    # A ramon leaf is 5-15 cm. Twelve leaves scaled to a fraction of the TREE's height
+    # made twelve three-metre paddles on four branches - a parasol, not a crown - which
+    # is what the first frame of this species showed. So: leaves at their own real size,
+    # on a branch system big enough to carry a crown, and enough of them that the
+    # silhouette is leaves rather than sticks.
+    primaries = p.detail(6, 4, 3)
+    for k in range(primaries):
+        a = 2 * math.pi * k / primaries + rng.uniform(-0.5, 0.5)
+        reach = height * rng.uniform(0.18, 0.30)
+        branch = arc(top, a, reach, height * rng.uniform(0.06, 0.14), 0.0, 3,
+                     tilt=rng.uniform(0.5, 0.9))
+        tube(t, branch, [r0 * 0.45, r0 * 0.34, r0 * 0.22, r0 * 0.13], sides=4, v_scale=1.2)
+        for sec in range(p.detail(3, 2, 1)):
+            sa = a + rng.uniform(-0.9, 0.9)
+            start = branch[1 + sec % 2]
+            sub = arc(start, sa, reach * rng.uniform(0.4, 0.7), height * 0.04, height * 0.02,
+                      2, tilt=rng.uniform(0.2, 0.8))
+            tube(t, sub, [r0 * 0.18, r0 * 0.12, r0 * 0.07], sides=3, v_scale=1.6)
+            # Leaves sit in sprays along the twig, which is how a crown fills: a spray
+            # of six 10 cm leaves reads as foliage where one 3 m leaf reads as a sail.
+            for node in sub[1:] + branch[2:]:
+                for _ in range(p.detail(5, 3, 2)):
+                    size = rng.uniform(0.06, 0.15)
+                    la = sa + rng.uniform(-2.2, 2.2)
+                    blade(c, (node[0] + rng.uniform(-1, 1) * size * 1.6,
+                              node[1] + rng.uniform(-1, 1) * size * 1.6,
+                              node[2] + rng.uniform(-1, 1) * size * 1.2), la, size, size * 0.42,
+                          rise=size * 0.1, droop=size * 0.45, fold=0.2, curl=0.15,
+                          twist=rng.uniform(-0.8, 0.8), segs=2, cols=3,
+                          outline="ovate", tilt=rng.uniform(-0.6, 0.3))
 
 
 # --- Epiphytes ------------------------------------------------------------
@@ -2293,6 +2313,10 @@ def _shed(parts, rng, p, s):
         return
     height = s.height_at(p.age) * p.scale
     spread = s.spread_at(p.age) * p.scale
+    # Measured before anything is added, because the skirt goes into the same bmesh and
+    # a mat of litter is a lot of area: counted in, it would swamp the dead-leaf budget
+    # below and no plant would get a dying leaf at all.
+    live_area = sum(f.calc_area() for f in b.bm.faces)
     if s.litter == "auto":
         # 0.6-1.0 m of skirt around a crown-sized plant, scaled with the plant, and
         # dense enough that the ground does not read through it.
@@ -2300,12 +2324,20 @@ def _shed(parts, rng, p, s):
         leaf_len = _clamp(spread * 0.3, 0.06, 0.55)
         litter_skirt(b, rng, radius, round(18 + 26 * _clamp(spread / 3.0)), leaf_len, p)
     if s.dying == "auto":
-        # One dead leaf per six to twelve live ones, hung from where the oldest leaves
-        # sit: low on a rosette, under the crown of anything with a stem.
+        # The reference's figure is an *area* one: 10-20% of a crown's leaf area is dead
+        # or dying. Sizing the dead leaves off the plant's spread instead gave a
+        # calathea - one big paddle on a 2.6 m spread - a brown sail as large as its
+        # living blade. So measure the live leaf area first and add dead leaves until
+        # they are about 15% of it, which self-corrects for a plant with one big leaf
+        # and for one with forty small ones.
         base = (0.0, 0.0, height * (0.18 if height < 1.2 else 0.62))
-        length = _clamp(spread * 0.42, 0.05, 1.4)
-        dying_leaves(b, rng, base, round(2 + 4 * _clamp(spread / 3.0)),
-                     length, length * 0.22, p)
+        length = _clamp(height * 0.30, 0.05, 1.6)
+        after_litter = sum(f.calc_area() for f in b.bm.faces)
+        for _ in range(12):
+            dead_so_far = sum(f.calc_area() for f in b.bm.faces) - after_litter
+            if dead_so_far >= live_area * 0.15:
+                break
+            dying_leaves(b, rng, base, 1, length * rng.uniform(0.7, 1.0), length * 0.22, p)
 
 
 def merge_into(dst, src, free=True):
