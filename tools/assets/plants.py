@@ -381,10 +381,20 @@ class Build:
         return f
 
     def tile_uv(self, u, v):
-        """Map a 0..1 leaf-local coordinate into this specimen's atlas tile."""
+        """Map a 0..1 leaf-local coordinate into this specimen's atlas tile.
+
+        v is written upside down on purpose. A Wavefront OBJ's v runs from the bottom
+        of the image, Godot's from the top, and Godot's OBJ importer flips it on the
+        way in; the atlas is written top row first (`_leaf_tile` puts the blade's base
+        at the top of its tile). Without the flip every specimen samples the tile
+        mirrored in ty: a plant's own litter skirt, which asks for the dead tile at
+        (1,1), came back the bright young flush at (1,0) - green ribbons of fresh leaf
+        lying round the base of every plant, which is what the first rendered frame
+        showed.
+        """
         gx, gy = self.grid
         tx, ty = self.tile
-        return ((tx + _clamp(u)) / gx, (ty + _clamp(v)) / gy)
+        return ((tx + _clamp(u)) / gx, 1.0 - (ty + _clamp(v)) / gy)
 
     def dead(self):
         """The same bmesh, reading the atlas's dead tile: for the dying leaves every plant
@@ -2308,7 +2318,13 @@ def obj_text(mesh, name):
 
 def write_obj(bm, path, smooth_angle=38.0):
     """Triangulate, shade and write one part. Face winding is authored, so the normals
-    are never recalculated: a leaf is an open surface and recalculation would flip it."""
+    are never recalculated: a leaf is an open surface and recalculation would flip it.
+
+    Returns (triangles, bounds) with bounds in Godot's axes and metres, because what a
+    build actually measures is not what its species' range says: the monstera's range
+    runs to 12 m because one of its three variants climbs, and the ground mat is half a
+    metre. A look-dev camera framed off the range put that mat 15 m away.
+    """
     import bpy
 
     bmesh = _bm_module()
@@ -2321,8 +2337,18 @@ def write_obj(bm, path, smooth_angle=38.0):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(obj_text(mesh, path.stem))
     count = len(mesh.polygons)
+    lo = [min((v.co[i] for v in mesh.vertices), default=0.0) for i in range(3)]
+    hi = [max((v.co[i] for v in mesh.vertices), default=0.0) for i in range(3)]
+    # Blender Z-up to Godot Y-up, the same swap obj_text writes the positions with.
+    bounds = {"min": [round(lo[0], 3), round(lo[2], 3), round(-hi[1], 3)],
+              "max": [round(hi[0], 3), round(hi[2], 3), round(-lo[1], 3)]}
     bpy.data.meshes.remove(mesh)
-    return count
+    return count, bounds
+
+
+def union_bounds(a, b):
+    return {"min": [min(a["min"][i], b["min"][i]) for i in range(3)],
+            "max": [max(a["max"][i], b["max"][i]) for i in range(3)]}
 
 
 def camel(key):
@@ -2333,8 +2359,122 @@ def obj_name(key, variant, part, lod):
     return f"SM_Plant_{camel(key)}{variant}_{part.capitalize()}" + (f"_LOD{lod}" if lod else "")
 
 
+# --------------------------------------------------------------------------
+# The catalogue. There is one for the whole project - game/assets/library.json,
+# whose schema and seeded selection rule are docs/reference/asset-library.md -
+# and the prop library writes its own section of the same file, so this one
+# merges rather than replaces.
+
+CATALOGUE = ROOT / "game/assets/library.json"
+LIBRARY_VERSION = 1
+BIOME = "lowland-rainforest"
+
+
+def entry_tags(s, variant):
+    """The scatter weights entries by tag; these are the ones the species data proves.
+
+    Nothing is invented here: `shade` comes from the band, `mossy` from the species
+    carrying moss or lichen in its own texture, `ruined` from a variant that grows on
+    stone (which is the whole direction - the temple is an overgrown ruin), and
+    `post-contact` from the species' own historical flag, so a pre-contact level can
+    exclude it the same way `pick()` does.
+    """
+    tags = {s.band}
+    if s.band in ("litter", "groundcover", "understory"):
+        tags.add("shade")
+    if s.band in ("canopy", "mid"):
+        tags.add("edge")
+    if s.key in ("moss_patch", "lichen_crust", "spikemoss"):
+        tags.add("mossy")
+    if s.bark_tex and (s.bark_tex.moss >= 0.3 or s.bark_tex.lichen >= 0.35):
+        tags.add("mossy")
+    if variant in ("Masonry", "Stone", "Log"):
+        tags.add("ruined")
+    if s.historical:
+        tags.add("post-contact")
+    return sorted(tags)
+
+
+def library_entries(catalogue):
+    """The build record as catalogue entries, one per build, in the shared schema.
+
+    One entry per (species, variant) rather than per generator: a generator here makes
+    builds of very different size - a 3 m young strangler fig and a 30 m enveloping one
+    off the same function - and they cannot share one `height_m`, one `tris` ladder or
+    one set of tags. `variants` still says how many builds the generator makes, and
+    `species` links the siblings, so a query can go either way.
+    """
+    entries = {}
+    for key, sp in catalogue.items():
+        s = get(key)
+        for variant, data in sp["variants"].items():
+            lods = data["lods"]
+            entries[f"plant.{key.replace('_', '-')}.{variant.lower()}"] = {
+                "kind": "plant",
+                "name": f"{sp['common']} ({variant.lower()})",
+                "species": key,
+                "variant": variant,
+                "variants": len(sp["variants"]),
+                "latin": sp["latin"],
+                "reference": sp["reference"],
+                "assumed": sp["assumed"] or None,
+                "tells": sp["tells"],
+                "culture": None,
+                "era": None,
+                "biome": BIOME,
+                "band": sp["band"],
+                "height_m": sp["height_m"],
+                "spread_m": sp["spread_m"],
+                "generator": "plants:build",
+                "generator_call": f"plants.build({key!r}, rng, plants.Params(variant="
+                                  f"{list(sp['variants']).index(variant)}, lod=0))",
+                "textures": sorted(sp["textures"].values()),
+                "tris": [lod["triangles"] for lod in lods],
+                "bounds_m": lods[0]["bounds"],
+                "budget_triangles": sp["budget_triangles"],
+                "parts": {lod["lod"]: lod["parts"] for lod in lods},
+                "tags": entry_tags(s, variant),
+                "seed": f"plants:{key}:{variant}",
+            }
+    return entries
+
+
+def write_library(entries, partial=False):
+    """Merge the plant entries into the one catalogue, leaving every other key alone.
+
+    Two generators write this file, so neither may rewrite it whole: props.py owns its
+    own section and the vocabulary keys it needs, and this only ever replaces `plants`
+    (or, for a `--only` build, the entries it rebuilt) and adds the band names plants
+    use to the shared vocabulary.
+    """
+    doc = {}
+    if CATALOGUE.exists():
+        try:
+            doc = json.loads(CATALOGUE.read_text())
+        except json.JSONDecodeError:
+            doc = {}
+    doc.setdefault("$description",
+                   "The shared asset library catalogue a level dresses itself from. "
+                   "Generated by tools/assets/plants.py and tools/assets/props.py; edit "
+                   "those, not this file. Schema and selection rule: "
+                   "docs/reference/asset-library.md. "
+                   "SPDX-License-Identifier: GPL-2.0-or-later")
+    doc["version"] = max(doc.get("version", 0), LIBRARY_VERSION)
+    plants = doc.get("plants", {}) if partial else {}
+    plants.update(entries)
+    doc["plants"] = dict(sorted(plants.items()))
+    vocab = doc.setdefault("vocabulary", {})
+    vocab["band"] = sorted(set(vocab.get("band", [])) | set(BANDS))
+    vocab["kind"] = sorted(set(vocab.get("kind", [])) | {"plant"})
+    vocab["biome"] = sorted(set(vocab.get("biome", [])) | {BIOME})
+    doc["plant_triangle_budget"] = dict(TRI_BUDGET)
+    CATALOGUE.parent.mkdir(parents=True, exist_ok=True)
+    CATALOGUE.write_text(json.dumps(doc, indent=2) + "\n")
+    return CATALOGUE
+
+
 def build_all(only=None, seed=7):
-    """Build every species and variant, write the OBJs, materials and manifest."""
+    """Build every species and variant, write the OBJs, materials and the catalogue."""
     catalogue, totals = {}, {"objs": 0, "triangles": 0}
     errors = [] if only else colour_separation_errors()
     for s in sorted(SPECIES.values(), key=lambda s: s.key):
@@ -2357,11 +2497,13 @@ def build_all(only=None, seed=7):
             while True:
                 rng = random.Random(f"{seed}:{s.key}:{variant}:{lod}")
                 meshes = build(s.key, rng, Params(variant=vi, lod=lod))
-                record = {"lod": lod, "triangles": 0, "parts": {}}
+                record = {"lod": lod, "triangles": 0, "parts": {}, "bounds": None}
                 for part, bm in sorted(meshes.items()):
                     count = tris(bm)
                     name = obj_name(s.key, variant, part, lod)
-                    written = write_obj(bm, MODELS / f"{name}.obj")
+                    written, bounds = write_obj(bm, MODELS / f"{name}.obj")
+                    record["bounds"] = (bounds if record["bounds"] is None
+                                        else union_bounds(record["bounds"], bounds))
                     key = s.parts.get(part, part)
                     record["parts"][part] = {
                         "mesh": f"res://assets/models/plants/{name}.obj",
@@ -2398,8 +2540,6 @@ def build_all(only=None, seed=7):
         path.write_text(material_text(key, spec))
 
     manifest = {
-        "_comment": "Generated by tools/assets/plants.py; the species are defined there. "
-                    "Triangle counts are measured after triangulation.",
         "bands": list(BANDS),
         "triangle_budget": TRI_BUDGET,
         "totals": totals,
@@ -2408,7 +2548,11 @@ def build_all(only=None, seed=7):
         "species": catalogue,
     }
     MODELS.mkdir(parents=True, exist_ok=True)
-    (MODELS / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=False) + "\n")
+    write_library(library_entries(catalogue), partial=bool(only))
+    stale_manifest = MODELS / "manifest.json"
+    if stale_manifest.exists():
+        # There is one catalogue, and it is game/assets/library.json.
+        stale_manifest.unlink()
     if not only:
         # A full build owns the folder: how many LODs a variant needs falls out of its
         # triangle count, so cutting triangles leaves the LOD a species no longer has
@@ -2432,24 +2576,150 @@ def build_all(only=None, seed=7):
 ENVIRONMENT = "res://assets/models/temple/backdrop/PF_Environment.tscn"
 
 
-def lookdev_scenes(manifest):
+def lookdev_scenes(plants):
+    """One scene per band, from the catalogue's plant entries."""
     written = []
     for band in BANDS:
-        keys = [k for k, e in manifest["species"].items() if e["band"] == band]
-        if not keys:
-            continue
-        rows = []
-        for key in sorted(keys):
-            for variant, data in sorted(manifest["species"][key]["variants"].items()):
-                rows.append((key, variant, data["lods"][0]))
-        written.append(_lookdev_scene(band, rows, manifest))
+        rows = [(eid, e) for eid, e in sorted(plants.items()) if e["band"] == band]
+        if rows:
+            written.append(_lookdev_scene(band, rows))
     return written
 
 
 GROUND_MATERIAL = "res://assets/materials/temple/MI_Ground.tres"
+THEME_PARAMS = ROOT / "tools/assets/themes/temple.json"
+# Atmosphere the theme puts between the player and the temple, which has no business
+# between the camera and a plant that is three metres away. The braziers go too: their
+# flipbooks are built by tools/assets/fx/gen_fire.py, and a page rendered without that
+# step shows four white cards the size of a door and nothing else.
+HIDE_IN_LOOKDEV = ("AtmosphereFog", "Dust", "LightShaftCards",
+                   "Fire1", "Fire2", "Fire3", "Fire4")
 
 
-def _lookdev_scene(band, rows, manifest):
+def _camera_attributes():
+    """The theme's exposure, without the theme's depth of field.
+
+    `PF_Environment` carries both on one `CameraAttributesPractical`, and its far blur
+    starts at 0.5 m because it is there to push the backdrop away from the board. On a
+    look-dev page it blurs the subject: the first frame of the library came back soft
+    from front to back. A Camera3D's own attributes override the WorldEnvironment's, so
+    the page keeps the theme's exposure - which is the thing the grey card is for - and
+    drops the blur.
+    """
+    exposure = json.loads(THEME_PARAMS.read_text())["lighting"]["exposure"]
+    return ('[sub_resource type="CameraAttributesPractical" id="camera"]\n'
+            f'exposure_sensitivity = {exposure["sensitivity"]}\n'
+            f'exposure_multiplier = {exposure["multiplier"]}\n'
+            "dof_blur_far_enabled = false\n")
+
+
+def _hide_atmosphere():
+    return [f'[node name="{name}" parent="Environment"]\nvisible = false\n'
+            for name in HIDE_IN_LOOKDEV]
+
+
+def closeup_scenes(plants, only=None):
+    """One scene per specimen, framed so a leaf is big enough to judge.
+
+    The band rows are the wrong page for the only question that matters - does this
+    read as a plant or as folded cardboard - because a band's row is as wide as the
+    sum of its spreads: the understory row is 68 m across, so its camera stands 55 m
+    back and a 1 m blade lands on 40 pixels of a 4K frame. Nothing about a keel, an
+    age mix or a litter skirt survives that.
+
+    So: one plant, filling the frame, from a three-quarter view at human eye height,
+    with the 1.8 m grey card beside it for scale and exposure.
+    """
+    written = []
+    for eid, e in sorted(plants.items()):
+        if only and e["species"] not in only:
+            continue
+        written.append(_closeup_scene(eid, e))
+    return written
+
+
+def _closeup_scene(eid, e):
+    ext, nodes = [], []
+    next_id = [1]
+
+    def resource(kind, path):
+        rid = str(next_id[0])
+        next_id[0] += 1
+        ext.append(f'[ext_resource type="{kind}" path="{path}" id="{rid}"]')
+        return rid
+
+    env_id = resource("PackedScene", ENVIRONMENT)
+    ground_id = resource("Material", GROUND_MATERIAL)
+    box = e.get("bounds_m")
+    if box:
+        height = max(0.25, box["max"][1])
+        spread = max(0.4, max(box["max"][0] - box["min"][0], box["max"][2] - box["min"][2]))
+    else:
+        height = max(0.25, e["height_m"][1])
+        spread = max(0.4, e["spread_m"][1])
+    lod0 = e["parts"]["0"] if "0" in e["parts"] else e["parts"][0]
+    for part, info in sorted(lod0.items()):
+        mesh_id = resource("Mesh", info["mesh"])
+        mat_id = resource("Material", info["material"])
+        nodes.append(f'[node name="{part.capitalize()}" type="MeshInstance3D" parent="."]\n'
+                     f'mesh = ExtResource("{mesh_id}")\n'
+                     f'surface_material_override/0 = ExtResource("{mat_id}")\n')
+    ground = max(12.0, spread * 4 + height * 2)
+    subs = [f'[sub_resource type="BoxMesh" id="ground"]\nsize = Vector3({ground:.1f}, 0.1, '
+            f'{ground:.1f})\n',
+            '[sub_resource type="BoxMesh" id="ref"]\nsize = Vector3(0.45, 1.8, 0.25)\n',
+            '[sub_resource type="StandardMaterial3D" id="grey"]\n'
+            "albedo_color = Color(0.4600, 0.4600, 0.4600, 1.0000)\nroughness = 0.9\n",
+            _camera_attributes()]
+    nodes.extend(_hide_atmosphere())
+    nodes.append('[node name="Ground" type="MeshInstance3D" parent="."]\n'
+                 "transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)\n"
+                 'mesh = SubResource("ground")\n'
+                 f'surface_material_override/0 = ExtResource("{ground_id}")\n')
+    nodes.append('[node name="GreyCard" type="MeshInstance3D" parent="."]\n'
+                 "transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, "
+                 f"{spread * 0.5 + 0.6:.2f}, 0.9, {-spread * 0.3:.2f})\n"
+                 'mesh = SubResource("ref")\n'
+                 'surface_material_override/0 = SubResource("grey")\n')
+    # Frame the plant: 50 degrees vertical over the taller of its height and its spread,
+    # with a quarter of a frame of air, from three quarters round so the depth of the
+    # mass reads rather than a flat elevation.
+    extent = max(height, spread * 0.75)
+    distance = max(1.2, extent * 1.34)          # the plant fills about 80% of the frame
+    eye = max(1.65, height * 0.55)
+    target = (0.0, height * 0.5, 0.0)
+    yaw = math.radians(35.0)
+    pos = (math.sin(yaw) * distance, eye, math.cos(yaw) * distance)
+    nodes.append('[node name="Camera" type="Camera3D" parent="."]\n'
+                 f"transform = {look_at(pos, target)}\nfov = 50.0\n"
+                 'attributes = SubResource("camera")\n')
+    text = ("[gd_scene load_steps=%d format=3]\n" % (len(ext) + len(subs) + 1)
+            + f"; {SPDX}\n"
+            + f"; Generated by tools/assets/plants.py closeups ({eid}); not shipped.\n\n"
+            + "\n".join(ext) + "\n\n" + "\n".join(subs)
+            + f'\n[node name="LookDev_{camel(e["species"])}{e["variant"]}" type="Node3D"]\n\n'
+            + f'[node name="Environment" parent="." instance=ExtResource("{env_id}")]\n\n'
+            + "\n".join(nodes))
+    path = LOOKDEV / f"LD_Plant_{camel(e['species'])}{e['variant']}.tscn"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text)
+    return path
+
+
+def look_at(eye, target, up=(0.0, 1.0, 0.0)):
+    """A Transform3D looking from `eye` at `target`, written basis-rows first."""
+    f = [target[i] - eye[i] for i in range(3)]
+    fl = math.sqrt(sum(c * c for c in f)) or 1.0
+    z = [-c / fl for c in f]
+    x = [up[1] * z[2] - up[2] * z[1], up[2] * z[0] - up[0] * z[2], up[0] * z[1] - up[1] * z[0]]
+    xl = math.sqrt(sum(c * c for c in x)) or 1.0
+    x = [c / xl for c in x]
+    y = [z[1] * x[2] - z[2] * x[1], z[2] * x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]]
+    rows = [x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], eye[0], eye[1], eye[2]]
+    return "Transform3D(" + ", ".join(f"{v:.6f}" for v in rows) + ")"
+
+
+def _lookdev_scene(band, rows):
     """One scene: the band's specimens in a row, spaced by their own spread.
 
     The row stands on the temple's own plaza material under the temple's own sun
@@ -2469,17 +2739,19 @@ def _lookdev_scene(band, rows, manifest):
     env_id = resource("PackedScene", ENVIRONMENT)
     ground_id = resource("Material", GROUND_MATERIAL)
     positions = []
-    for key, variant, lod in rows:
-        spread = max(0.6, manifest["species"][key]["spread_m"][1])
+    for eid, e in rows:
+        spread = max(0.6, e["spread_m"][1])
         step += spread * 0.6
-        positions.append((key, variant, lod, step))
+        positions.append((eid, e, step))
         step += spread * 0.6
-    tallest = max(manifest["species"][k]["height_m"][1] for k, _, _, _ in positions)
-    for key, variant, lod, x in positions:
-        for part, info in sorted(lod["parts"].items()):
+    tallest = max(e["height_m"][1] for _, e, _ in positions)
+    for eid, e, x in positions:
+        lod0 = e["parts"]["0"] if "0" in e["parts"] else e["parts"][0]
+        for part, info in sorted(lod0.items()):
             mesh_id = resource("Mesh", info["mesh"])
             mat_id = resource("Material", info["material"])
-            nodes.append(f'[node name="{camel(key)}{variant}{part.capitalize()}" '
+            nodes.append(f'[node name="{camel(e["species"])}{e["variant"]}'
+                         f'{part.capitalize()}" '
                          'type="MeshInstance3D" parent="."]\n'
                          "transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, "
                          f"{x - step / 2:.3f}, 0, 0)\n"
@@ -2488,7 +2760,9 @@ def _lookdev_scene(band, rows, manifest):
     subs = [f'[sub_resource type="BoxMesh" id="ground"]\nsize = Vector3({step + 6:.1f}, 0.1, 14)\n',
             '[sub_resource type="BoxMesh" id="ref"]\nsize = Vector3(0.45, 1.8, 0.25)\n',
             '[sub_resource type="StandardMaterial3D" id="grey"]\n'
-            "albedo_color = Color(0.4600, 0.4600, 0.4600, 1.0000)\nroughness = 0.9\n"]
+            "albedo_color = Color(0.4600, 0.4600, 0.4600, 1.0000)\nroughness = 0.9\n",
+            _camera_attributes()]
+    nodes.extend(_hide_atmosphere())
     nodes.append('[node name="Ground" type="MeshInstance3D" parent="."]\n'
                  "transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)\n"
                  'mesh = SubResource("ground")\n'
@@ -2506,7 +2780,8 @@ def _lookdev_scene(band, rows, manifest):
     nodes.append('[node name="Camera" type="Camera3D" parent="."]\n'
                  f"transform = Transform3D(1, 0, 0, 0, {c:.6f}, {-sn:.6f}, 0, {sn:.6f}, {c:.6f}, "
                  f"0, {height:.2f}, {distance:.2f})\n"
-                 "fov = 50.0\n")
+                 "fov = 50.0\n"
+                 'attributes = SubResource("camera")\n')
     text = ("[gd_scene load_steps=%d format=3]\n" % (len(ext) + len(subs) + 1)
             + f"; {SPDX}\n"
             + "; Generated by tools/assets/plants.py lookdev; not shipped.\n\n"
@@ -2561,11 +2836,23 @@ def cmd_textures(args):
         print(f"warning: {e}")
 
 
+def _catalogue_plants():
+    if not CATALOGUE.exists():
+        sys.exit(f"{CATALOGUE} is missing; run `plants.py build` first")
+    plants = json.loads(CATALOGUE.read_text()).get("plants")
+    if not plants:
+        sys.exit(f"{CATALOGUE} holds no plant entries; run `plants.py build` first")
+    return plants
+
+
 def cmd_lookdev(args):
-    path = MODELS / "manifest.json"
-    if not path.exists():
-        sys.exit(f"{path} is missing; run `plants.py build` first")
-    for scene in lookdev_scenes(json.loads(path.read_text())):
+    for scene in lookdev_scenes(_catalogue_plants()):
+        print(scene.relative_to(ROOT))
+
+
+def cmd_closeups(args):
+    only = set(args.only.split(",")) if args.only else None
+    for scene in closeup_scenes(_catalogue_plants(), only=only):
         print(scene.relative_to(ROOT))
 
 
@@ -2580,6 +2867,9 @@ def main(argv=None):
     sub.add_parser("textures", help="write tools/assets/themes/plants.json").set_defaults(
         run=cmd_textures)
     sub.add_parser("lookdev", help="write the look-dev scenes").set_defaults(run=cmd_lookdev)
+    close_cmd = sub.add_parser("closeups", help="write one look-dev scene per specimen")
+    close_cmd.add_argument("--only", help="comma-separated species keys")
+    close_cmd.set_defaults(run=cmd_closeups)
     if argv is None:
         # Inside Blender (`blender -b -P plants.py -- build`) everything before the
         # `--` belongs to Blender, not to us.

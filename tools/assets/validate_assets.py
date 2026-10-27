@@ -40,6 +40,12 @@ ASSETS = GAME / "assets"
 TEXTURES = ASSETS / "textures"
 REQUIRED = [f"artifact_{k}" for k in range(7)] + ["board", "environment", "cell_highlight", "fx_match"]
 PIECE_TRIS, BOARD_TRIS, MAX_TEXTURE, MAX_TEXTURE_HI = 2000, 20000, 1024, 2048
+# The board's caps above are per board tile, where one tile covers one cell and the
+# tile material tints it. A library set is not a board tile: a leaf atlas holds four
+# whole leaves and a bark set tiles at about 1.5 m, so the quality floor in CLAUDE.md
+# (desktop sets at 4096, mobile and web stripped down by the export presets) applies
+# to them instead. Keyed by the folder under game/assets/textures.
+MAX_TEXTURE_BY_SET = {"plants": 4096}
 PREFIXES = {".obj": "SM_", ".png": "T_", ".tres": "MI_", ".gdshader": "SH_", ".gdshaderinc": "SH_"}
 # Texture map suffix -> (allowed PIL modes, colour space, material slots that may use it).
 MAPS = {
@@ -138,7 +144,10 @@ def texture_errors(path, rel):
     except (UnidentifiedImageError, OSError, SyntaxError) as problem:
         return [f"{rel}: not a readable PNG ({problem}); regenerate it"]
     (w, h), mode = image.size, image.mode
-    limit = MAX_TEXTURE_HI if path.parent.name == TIERED else MAX_TEXTURE
+    set_dir = path.parent.parent.name if path.parent.name == TIERED else path.parent.name
+    limit = MAX_TEXTURE_BY_SET.get(set_dir)
+    if limit is None:
+        limit = MAX_TEXTURE_HI if path.parent.name == TIERED else MAX_TEXTURE
     if w > limit or h > limit or w & (w - 1) or h & (h - 1):
         errors.append(f"{rel}: {w}x{h}; textures must be power-of-two and at most {limit}px"
                       f"{' (hi/ desktop variant)' if limit == MAX_TEXTURE_HI else ''}")
