@@ -222,6 +222,15 @@ def import_errors(path, rel):
     if not imp.exists():
         return [f"{rel}: no {imp.name}, so Godot would import it without mipmaps; {fix}"]
     text = imp.read_text()
+    if "valid=false" in text:
+        # Godot writes this when an import fails, and then skips the file on every later
+        # import pass, so the asset renders untextured for good. It happened here to one
+        # leaf atlas whose PNG was read while it was still being written: the material
+        # lost its ORM map and the palm came back white in every frame, with nothing in
+        # any log to say why.
+        return [f"{rel}.import: carries valid=false, so Godot has given up importing it and "
+                f"the material will render without this map; delete the .import file and "
+                f"{fix}"]
     suffix = map_suffix(path)
     if suffix in texture_import.PARAMS:
         wrong = texture_import.mismatches(suffix, text)

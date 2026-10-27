@@ -957,8 +957,12 @@ def _leaf_litter(parts, rng, p, s):
           "it, hugging the bottom metre and the seeping joints only.",
     variants=("Stone", "Log"),
     parts={"moss": "Moss"},
+    # Moss on damp stone is a deep, saturated green, not a pale one. At 22% saturation
+    # and value 62 it was the lightest thing in any frame it appeared in and rendered as
+    # a blob of butter on the plaza; it was also under the 25% floor that brings a
+    # species into the band's colour separation, so nothing pulled it back.
     leaf_tex=LeafTex(name="Leaf_Moss", venation="dichotomous", outline="pinnule",
-                     green=hsv(90, 22, 62), young=hsv(84, 30, 70), dead=hsv(44, 26, 44),
+                     green=hsv(104, 48, 26), young=hsv(96, 58, 34), dead=hsv(44, 26, 36),
                      under=1.1, vein=0.25, vein_count=40, midrib=1.2,
                      blotch=0.45, damage=0.1, gloss=0.3),
 )
@@ -995,8 +999,11 @@ def _moss_patch(parts, rng, p, s):
           "irregular dark edges, lighter than the stone, and no free margins anywhere.",
     variants=("Pale", "Ochre"),
     parts={"lichen": "Lichen"},
+    # Crustose lichen is genuinely pale cream - that is the tell, and it is why it reads
+    # lighter than the bark or stone it grows on - but at value 76 it was lighter than
+    # the limestone plaza itself and read as a spill rather than a crust.
     leaf_tex=LeafTex(name="Leaf_Lichen", venation="dichotomous", outline="pinnule",
-                     green=hsv(58, 12, 76), young=hsv(44, 24, 78), dead=hsv(28, 44, 52),
+                     green=hsv(58, 14, 62), young=hsv(44, 24, 66), dead=hsv(28, 40, 44),
                      under=1.0, vein=0.15, vein_count=60, midrib=1.1,
                      blotch=0.8, damage=0.3, gloss=0.1),
 )
@@ -1862,22 +1869,34 @@ def _ceiba(parts, rng, p, s):
             tube(t, pts, [r0 * 0.22, r0 * 0.13, r0 * 0.07], sides=4, v_scale=1.0,
                  cap_end=True, squash=(1.0, 0.6))
     c = parts("canopy")
+    # A ceiba crown is horizontal and layered: a few tiers of long, nearly level limbs.
+    # Each tier used to be ONE limb carrying three leaves sized off the tree's height -
+    # 5 m leaves on a 45 m tree - which rendered as a bent lamp-post with three paddles.
+    # A ceiba leaflet is 5-20 cm, palmately in fives to nines, so the crown is made of
+    # thousands of small things and has to be built as limbs, twigs and sprays.
     tiers = p.detail(4, 3, 2)
     for k in range(tiers):
         up = _lerp(0.74, 1.0, k / max(1, tiers - 1))
-        a = rng.uniform(0, 6.28)
-        reach = height * _lerp(0.22, 0.38, up)
-        branch = arc((0, 0, height * up), a, reach, height * 0.05, 0.0, 3, tilt=0.25)
-        tube(t, branch, [r0 * 0.30, r0 * 0.22, r0 * 0.15, r0 * 0.10], sides=4, v_scale=1.0)
-        # Foliage as flattened, drooping shells: a ceiba crown is horizontal, not a ball.
-        for leafy in range(p.detail(3, 2, 1)):
-            tip = branch[-1]
-            la = a + rng.uniform(-0.8, 0.8)
-            size = height * rng.uniform(0.07, 0.12)
-            blade(c, (tip[0], tip[1], tip[2]), la, size, size * 0.8,
-                  rise=size * 0.05, droop=size * 0.28, fold=0.1, curl=0.25,
-                  segs=p.detail(4, 3, 2), cols=p.detail(5, 3, 3), outline="ovate", lobes=3,
-                  ripple=0.2)
+        for limb in range(p.detail(4, 3, 2)):
+            a = rng.uniform(0, 6.28)
+            reach = height * _lerp(0.22, 0.38, up) * rng.uniform(0.7, 1.0)
+            branch = arc((0, 0, height * up), a, reach, height * 0.04, 0.0, 3,
+                         tilt=rng.uniform(0.1, 0.35))
+            tube(t, branch, [r0 * 0.30, r0 * 0.22, r0 * 0.15, r0 * 0.10], sides=4, v_scale=1.0)
+            for twig in range(p.detail(3, 2, 1)):
+                ta = a + rng.uniform(-1.0, 1.0)
+                sub = arc(branch[1 + twig % 2], ta, reach * rng.uniform(0.25, 0.5),
+                          height * 0.012, height * 0.02, 2, tilt=rng.uniform(0.0, 0.5))
+                tube(t, sub, [r0 * 0.11, r0 * 0.07, r0 * 0.04], sides=3, v_scale=1.6)
+                for node in sub[1:]:
+                    # One palmate leaf: a whorl of five to nine leaflets off one point.
+                    for leaflet in range(p.detail(6, 4, 3)):
+                        size = rng.uniform(0.05, 0.20)
+                        la = ta + leaflet * 2.39996 + rng.uniform(-0.2, 0.2)
+                        blade(c, node, la, size, size * 0.34,
+                              rise=size * 0.06, droop=size * 0.3, fold=0.12, curl=0.2,
+                              twist=rng.uniform(-0.5, 0.5), segs=2, cols=3,
+                              outline="ovate", tilt=rng.uniform(-0.5, 0.2))
 
 
 @species(
@@ -2318,11 +2337,17 @@ def _shed(parts, rng, p, s):
     # below and no plant would get a dying leaf at all.
     live_area = sum(f.calc_area() for f in b.bm.faces)
     if s.litter == "auto":
-        # 0.6-1.0 m of skirt around a crown-sized plant, scaled with the plant, and
-        # dense enough that the ground does not read through it.
+        # 0.6-1.0 m of skirt around a crown-sized plant, dense enough that the ground
+        # does not read through it - but sized against the plant that shed it, not just
+        # against its spread. A shade-grass tuft has a 1.5 m spread and two blades, and
+        # off spread alone it got 124 pieces of litter: a pile of straw with a plant
+        # somewhere in it. The reference does say there is often more dead material by
+        # area than green at ground level, so the target is a little under one to one.
         radius = _clamp(spread * 0.45, 0.12, 1.1)
         leaf_len = _clamp(spread * 0.3, 0.06, 0.55)
-        litter_skirt(b, rng, radius, round(18 + 26 * _clamp(spread / 3.0)), leaf_len, p)
+        piece = max(1e-4, 0.35 * leaf_len * leaf_len)
+        count = int(_clamp(live_area * 0.8 / (4 * piece), 2, 44))
+        litter_skirt(b, rng, radius, count, leaf_len, p)
     if s.dying == "auto":
         # The reference's figure is an *area* one: 10-20% of a crown's leaf area is dead
         # or dying. Sizing the dead leaves off the plant's spread instead gave a
