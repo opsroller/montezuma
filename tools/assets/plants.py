@@ -307,7 +307,12 @@ def pick(rng, band=None, exclude=(), pre_contact=True):
     return rng.choice(sorted(pool, key=lambda s: s.key))
 
 
-TEXTURE_SIZE = 512       # one leaf tile is 256 px; a 2 cm petiole cannot show more
+# The project's quality floor (CLAUDE.md): desktop texture sets are 4096 square, and the
+# export caps strip them down for mobile and web. A leaf atlas is 2x2, so one leaf tile is
+# 2048 px; across a 0.6-0.9 m blade that is 23-34 px/cm, enough for the vein net and the
+# 1-2 mm pale halo on a chewed margin to survive the game's close camera. A bark set at
+# 4096 tiles at about 1.5 m, so 27 px/cm on a trunk.
+TEXTURE_SIZE = 4096
 
 
 def texture_sets():
@@ -2111,7 +2116,31 @@ def build(key, rng=None, params=None):
     meshes = parts.meshes()
     for bm in meshes.values():
         lean_all(bm, p.lean, p.lean_dir)
+        weld_collapsed(bm)
     return meshes
+
+
+def weld_collapsed(bm, dist=1e-5):
+    """Collapse zero-length edges, which a blade's own outline produces by the hundred.
+
+    Every `_profile` is zero at the base and the tip - that is what makes a leaf a
+    leaf and not a rectangle - so the first and last row of a blade's vertex grid sit
+    on one point, and the quads of those two rows triangulate into one real triangle
+    and one with no area at all. Left in, they were 17% of the whole library's
+    triangles: budget spent on nothing, and zero-length normals feeding into the
+    smooth-shading pass at exactly the base and tip of every leaf. The same thing
+    happens at a tube whose end radius is zero and at the centre of a `disc` fan.
+
+    Welding the coincident vertices (not `remove_doubles`, which would also weld the
+    UV seam that runs up the midrib) turns each collapsed quad into the single
+    triangle it always was.
+    """
+    bmesh = _bm_module()
+    bmesh.ops.dissolve_degenerate(bm, dist=dist, edges=list(bm.edges))
+    dead = [f for f in bm.faces if f.calc_area() < dist * dist]
+    if dead:
+        bmesh.ops.delete(bm, geom=dead, context="FACES")
+    bm.verts.index_update()
 
 
 def merge_into(dst, src, free=True):
@@ -2380,6 +2409,19 @@ def build_all(only=None, seed=7):
     }
     MODELS.mkdir(parents=True, exist_ok=True)
     (MODELS / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=False) + "\n")
+    if not only:
+        # A full build owns the folder: how many LODs a variant needs falls out of its
+        # triangle count, so cutting triangles leaves the LOD a species no longer has
+        # behind. Stale meshes are worse than clutter - nothing references them, so
+        # nothing notices they are stale, and they ship.
+        wanted = {Path(part["mesh"]).name
+                  for sp in catalogue.values() for v in sp["variants"].values()
+                  for lod in v["lods"] for part in lod["parts"].values()}
+        for obj in sorted(MODELS.glob("SM_Plant_*.obj")):
+            if obj.name not in wanted:
+                obj.unlink()
+                obj.with_name(obj.name + ".import").unlink(missing_ok=True)
+                print(f"removed stale {obj.name}")
     return manifest, errors
 
 
