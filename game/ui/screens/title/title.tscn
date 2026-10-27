@@ -80,11 +80,3 @@ layout_mode = 2
 text = "menu.quit"
 action = "quit"
 hidden_on = PackedStringArray("web", "ios", "android")
-
-[node name="Inspired" type="Label" parent="Center/Panel/Column"]
-layout_mode = 2
-text = "title.inspired"
-horizontal_alignment = 1
-theme_type_variation = &"CaptionLabel"
-autowrap_mode = 3
-custom_minimum_size = Vector2(360, 0)
