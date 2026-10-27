@@ -338,6 +338,38 @@ def grade_errors(params_path):
     return errors
 
 
+def recipe_errors(params_path):
+    """Every texture set a theme names resolves to a real recipe.
+
+    A set naming a recipe that does not exist is not a missing texture: it is
+    a KeyError inside gen_theme_textures.py, and because CMake runs that script
+    over every file in tools/assets/themes/ with no arguments, one bad set
+    fails the asset step for the whole checkout. It is worth catching here,
+    where the message can say which set and which file.
+
+    It happens when a parameter file and the recipes it needs are split across
+    commits -- they are one unit and belong in the same one.
+    """
+    try:
+        import gen_theme_textures
+    except ImportError:
+        return []                       # numpy or Pillow absent; the build says so already
+    known = set(gen_theme_textures.RECIPES)
+    rel = params_path.relative_to(ROOT)
+    try:
+        sets = json.loads(params_path.read_text()).get("textures", {}).get("sets", {})
+    except (json.JSONDecodeError, OSError) as exc:
+        return [f"{rel}: cannot be read: {exc}"]
+    errors = []
+    for name, cfg in sorted(sets.items()):
+        recipe = cfg.get("recipe", name) if isinstance(cfg, dict) else name
+        if recipe not in known:
+            errors.append(f"{rel}: texture set '{name}' names recipe '{recipe}', which is not in "
+                          f"gen_theme_textures.py RECIPES ({', '.join(sorted(known))}); add the "
+                          "recipe or drop the set -- both live in the same commit")
+    return errors
+
+
 def main():
     errors, warnings = [], []
     manifest_path = ASSETS / "manifest.json"
@@ -413,6 +445,7 @@ def main():
     errors += export_errors()
     for params_path in sorted((ROOT / "tools/assets/themes").glob("*.json")):
         errors += grade_errors(params_path)
+        errors += recipe_errors(params_path)
 
     tokens_path = ROOT / "design/tokens/temple-board.json"
     params_path = ROOT / "tools/assets/themes/temple.json"
