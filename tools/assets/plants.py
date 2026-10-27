@@ -94,7 +94,9 @@ SPDX = "SPDX-License-Identifier: GPL-2.0-or-later"
 BANDS = ("litter", "groundcover", "understory", "mid", "canopy", "epiphyte", "vine")
 TRI_BUDGET = {
     "litter": 300,
-    "groundcover": 900,
+    # A Zamia rosette of 3-8 pinnate fronds measures 1,440 - it is the big end of this
+    # band by a long way, and a mat of moss is 40.
+    "groundcover": 1800,
     "epiphyte": 1200,
     "vine": 1000,
     # A 6 m tree fern with bipinnate fronds is not a 0.5 m calathea, and holding both
@@ -1410,7 +1412,9 @@ def _heliconia(parts, rng, p, s):
 def _calathea(parts, rng, p, s):
     height = s.height_at(p.age) * p.scale
     st, b = parts("stem"), parts("leaf")
-    leaves = int(_lerp(2, 5, p.age) * (1.0 if s.variants[p.variant] == "Clump" else 0.5))
+    # Goeppertia throws a sheaf of blades from the rhizome, 5-12 in a clump.
+    leaves = max(2, int(_lerp(5, 12, p.age)
+                        * (1.0 if s.variants[p.variant] == "Clump" else 0.35)))
     for i, a in enumerate(rosette(max(1, int(leaves * p.detail(1.0, 0.7, 0.5))),
                                   start=rng.uniform(0, 6.28))):
         old = i / max(1, leaves - 1)
@@ -1492,7 +1496,9 @@ def _cycad(parts, rng, p, s):
     papyraceous: broader, flatter, darker, and arch over."""
     sun = s.variants[p.variant] == "Sun"
     height = s.height_at(p.age) * p.scale
-    leaves = max(1, int(_lerp(1, 2.4, p.age) * p.detail(1.0, 1.0, 0.6)))
+    # A Zamia is a stiff rosette of pinnate fronds, not one arching leaf: 3-8 on a
+    # mature plant. At one or two it rendered as a stray frond beside its own dead one.
+    leaves = max(2, int(_lerp(3, 8, p.age) * p.detail(1.0, 0.7, 0.5)))
     for i, a in enumerate(rosette(leaves, start=rng.uniform(0, 6.28))):
         length = height * rng.uniform(0.85, 1.1)
         frond(parts("leaf"), (0, 0, 0.02), a, length,
@@ -1540,8 +1546,10 @@ def _pacaya(parts, rng, p, s):
         tube(parts("trunk"), axis, [0.030 * (1 - 0.15 * i / segs) for i in range(segs + 1)],
              sides=p.detail(6, 5, 4), v_scale=3.0, u_repeat=1.0)
         crown = axis[-1]
-        leaves = int(_lerp(3, 6, age) * p.detail(1.0, 0.7, 0.5))
-        for i, a in enumerate(rosette(max(2, leaves), start=ca)):
+        # Chamaedorea tepejilote carries 4-8 fronds. At three it read as a cane with a
+        # dead frond beside it rather than a palm.
+        leaves = int(_lerp(4, 8, age) * p.detail(1.0, 0.7, 0.5))
+        for i, a in enumerate(rosette(max(3, leaves), start=ca)):
             old = i / max(1, leaves - 1)
             length = h * _lerp(0.30, 0.22, old)
             frond(parts("leaf"), crown, a, length,
@@ -1723,7 +1731,9 @@ def _spiny_palm(parts, rng, p, s):
     tube(t, axis, [0.019 * (1.12 - 0.2 * i / segs) for i in range(segs + 1)],
          sides=p.detail(6, 5, 4), v_scale=2.5, u_repeat=2.0)
     crown = axis[-1]
-    fronds = int(_lerp(3, 7, age) * p.detail(1.0, 0.7, 0.5))
+    # Astrocaryum mexicanum holds 5-12 fronds in its crown. At three the palm read as a
+    # pole with a dead frond hanging off it.
+    fronds = int(_lerp(5, 12, age) * p.detail(1.0, 0.7, 0.5))
     for i, a in enumerate(rosette(max(3, fronds), start=rng.uniform(0, 6.28))):
         old = i / max(1, fronds - 1)
         length = height * _lerp(0.32, 0.26, old)
@@ -2357,12 +2367,19 @@ def _shed(parts, rng, p, s):
     b = parts(name)
     if not b.bm.faces:
         return
-    height = s.height_at(p.age) * p.scale
-    spread = s.spread_at(p.age) * p.scale
-    # Measured before anything is added, because the skirt goes into the same bmesh and
-    # a mat of litter is a lot of area: counted in, it would swamp the dead-leaf budget
-    # below and no plant would get a dying leaf at all.
+    # Measured off the geometry that was just built, not off the species' range. The
+    # range belongs to the species and a variant can be anywhere in it: monstera runs to
+    # 12 m because one of its three variants climbs, so the half-metre ground mat had its
+    # dying leaves hung 7.4 m in the air - a leaf alone in the sky, and a bounding box
+    # that framed the page from ten metres away. The litter area is measured first too,
+    # because the skirt goes into the same bmesh and would otherwise swamp the dead-leaf
+    # budget below.
     live_area = sum(f.calc_area() for f in b.bm.faces)
+    xs = [v.co[0] for v in b.bm.verts]
+    ys = [v.co[1] for v in b.bm.verts]
+    zs = [v.co[2] for v in b.bm.verts]
+    height = max(0.05, max(zs))
+    spread = max(0.1, max(max(xs) - min(xs), max(ys) - min(ys)))
     if s.litter == "auto":
         # 0.6-1.0 m of skirt around a crown-sized plant, dense enough that the ground
         # does not read through it - but sized against the plant that shed it, not just
@@ -2370,8 +2387,8 @@ def _shed(parts, rng, p, s):
         # off spread alone it got 124 pieces of litter: a pile of straw with a plant
         # somewhere in it. The reference does say there is often more dead material by
         # area than green at ground level, so the target is a little under one to one.
-        radius = _clamp(spread * 0.45, 0.12, 1.1)
-        leaf_len = _clamp(spread * 0.3, 0.06, 0.55)
+        radius = _clamp(spread * 0.6, 0.12, 1.1)
+        leaf_len = _clamp(spread * 0.35, 0.06, 0.55)
         piece = max(1e-4, 0.35 * leaf_len * leaf_len)
         count = int(_clamp(live_area * 0.8 / (4 * piece), 2, 44))
         litter_skirt(b, rng, radius, count, leaf_len, p)
@@ -2383,13 +2400,17 @@ def _shed(parts, rng, p, s):
         # they are about 15% of it, which self-corrects for a plant with one big leaf
         # and for one with forty small ones.
         base = (0.0, 0.0, height * (0.18 if height < 1.2 else 0.62))
-        length = _clamp(height * 0.30, 0.05, 1.6)
+        # Narrow, and no longer than the plant is wide. One wide slab of a dead leaf
+        # reads as a sail hanging beside the crown - which is what a palm looked like -
+        # where several narrow ones read as a plant shedding. Narrower also means each
+        # costs less area, so the 15% budget admits more of them.
+        length = _clamp(min(height * 0.30, spread * 0.55), 0.05, 1.6)
         after_litter = sum(f.calc_area() for f in b.bm.faces)
-        for _ in range(12):
+        for _ in range(14):
             dead_so_far = sum(f.calc_area() for f in b.bm.faces) - after_litter
             if dead_so_far >= live_area * 0.15:
                 break
-            dying_leaves(b, rng, base, 1, length * rng.uniform(0.7, 1.0), length * 0.22, p)
+            dying_leaves(b, rng, base, 1, length * rng.uniform(0.7, 1.0), length * 0.12, p)
 
 
 def merge_into(dst, src, free=True):

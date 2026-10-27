@@ -31,8 +31,8 @@
         "Leaf_Banana"
       ],
       "tris": [
-        1977,
-        350
+        2001,
+        366
       ],
       "bounds_m": {
         "min": [
@@ -52,7 +52,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_BananaMature_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_BananaLeaf.tres",
-            "triangles": 1891
+            "triangles": 1915
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_BananaMature_Trunk.obj",
@@ -64,7 +64,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_BananaMature_Leaf_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_BananaLeaf.tres",
-            "triangles": 298
+            "triangles": 314
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_BananaMature_Trunk_LOD1.obj",
@@ -109,8 +109,8 @@
         "Leaf_Banana"
       ],
       "tris": [
-        1271,
-        268
+        1295,
+        276
       ],
       "bounds_m": {
         "min": [
@@ -120,7 +120,7 @@
         ],
         "max": [
           0.988,
-          3.72,
+          3.333,
           1.12
         ]
       },
@@ -130,7 +130,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_BananaYoung_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_BananaLeaf.tres",
-            "triangles": 1185
+            "triangles": 1209
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_BananaYoung_Trunk.obj",
@@ -142,7 +142,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_BananaYoung_Leaf_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_BananaLeaf.tres",
-            "triangles": 216
+            "triangles": 224
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_BananaYoung_Trunk_LOD1.obj",
@@ -186,12 +186,12 @@
         "Leaf_BromeliadEpi"
       ],
       "tris": [
-        594
+        654
       ],
       "bounds_m": {
         "min": [
           -0.669,
-          0.002,
+          -0.448,
           -0.727
         ],
         "max": [
@@ -206,7 +206,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_BromeliadEpiphyteCluster_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_EpiBromeliadLeaf.tres",
-            "triangles": 594
+            "triangles": 654
           }
         }
       },
@@ -243,12 +243,12 @@
         "Leaf_BromeliadEpi"
       ],
       "tris": [
-        210
+        246
       ],
       "bounds_m": {
         "min": [
           -0.401,
-          0.002,
+          -0.311,
           -0.446
         ],
         "max": [
@@ -263,7 +263,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_BromeliadEpiphyteSingle_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_EpiBromeliadLeaf.tres",
-            "triangles": 210
+            "triangles": 246
           }
         }
       },
@@ -300,18 +300,18 @@
         "Leaf_BromeliadGround"
       ],
       "tris": [
-        382
+        394
       ],
       "bounds_m": {
         "min": [
-          -0.968,
+          -1.009,
           -0.086,
-          -1.104
+          -1.195
         ],
         "max": [
           1.155,
           2.214,
-          1.034
+          1.124
         ]
       },
       "budget_triangles": 5500,
@@ -320,7 +320,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_BromeliadGroundRosette_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_BromeliadLeaf.tres",
-            "triangles": 382
+            "triangles": 394
           }
         }
       },
@@ -358,13 +358,13 @@
         "Leaf_BromeliadGround"
       ],
       "tris": [
-        752
+        776
       ],
       "bounds_m": {
         "min": [
-          -1.019,
+          -1.091,
           -0.059,
-          -1.097
+          -1.203
         ],
         "max": [
           1.455,
@@ -378,7 +378,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_BromeliadGroundThicket_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_BromeliadLeaf.tres",
-            "triangles": 752
+            "triangles": 776
           }
         }
       },
@@ -416,18 +416,19 @@
         "Leaf_Calathea"
       ],
       "tris": [
-        494
+        1208,
+        458
       ],
       "bounds_m": {
         "min": [
-          -1.011,
-          -0.092,
-          -1.022
+          -1.047,
+          -0.119,
+          -1.24
         ],
         "max": [
-          0.83,
+          1.187,
           2.932,
-          1.098
+          1.148
         ]
       },
       "budget_triangles": 5500,
@@ -436,12 +437,24 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_CalatheaClump_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_CalatheaLeaf.tres",
-            "triangles": 324
+            "triangles": 800
           },
           "stem": {
             "mesh": "res://assets/models/plants/SM_Plant_CalatheaClump_Stem.obj",
             "material": "res://assets/materials/plants/MI_Plant_CalatheaStem.tres",
-            "triangles": 170
+            "triangles": 408
+          }
+        },
+        "1": {
+          "leaf": {
+            "mesh": "res://assets/models/plants/SM_Plant_CalatheaClump_Leaf_LOD1.obj",
+            "material": "res://assets/materials/plants/MI_Plant_CalatheaLeaf.tres",
+            "triangles": 186
+          },
+          "stem": {
+            "mesh": "res://assets/models/plants/SM_Plant_CalatheaClump_Stem_LOD1.obj",
+            "material": "res://assets/materials/plants/MI_Plant_CalatheaStem.tres",
+            "triangles": 272
           }
         }
       },
@@ -479,16 +492,16 @@
         "Leaf_Calathea"
       ],
       "tris": [
-        200
+        412
       ],
       "bounds_m": {
         "min": [
-          -0.978,
-          -0.009,
-          -1.222
+          -1.054,
+          -0.064,
+          -0.923
         ],
         "max": [
-          0.781,
+          0.855,
           2.932,
           0.854
         ]
@@ -499,12 +512,12 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_CalatheaSingle_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_CalatheaLeaf.tres",
-            "triangles": 132
+            "triangles": 276
           },
           "stem": {
             "mesh": "res://assets/models/plants/SM_Plant_CalatheaSingle_Stem.obj",
             "material": "res://assets/materials/plants/MI_Plant_CalatheaStem.tres",
-            "triangles": 68
+            "triangles": 136
           }
         }
       },
@@ -543,8 +556,8 @@
         "Leaf_Canopy"
       ],
       "tris": [
-        5846,
-        810,
+        5918,
+        818,
         291
       ],
       "bounds_m": {
@@ -565,7 +578,7 @@
           "canopy": {
             "mesh": "res://assets/models/plants/SM_Plant_CanopyTreeMature_Canopy.obj",
             "material": "res://assets/materials/plants/MI_Plant_CanopyFoliage.tres",
-            "triangles": 4928
+            "triangles": 5000
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_CanopyTreeMature_Trunk.obj",
@@ -577,7 +590,7 @@
           "canopy": {
             "mesh": "res://assets/models/plants/SM_Plant_CanopyTreeMature_Canopy_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_CanopyFoliage.tres",
-            "triangles": 502
+            "triangles": 510
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_CanopyTreeMature_Trunk_LOD1.obj",
@@ -634,8 +647,8 @@
         "Leaf_Canopy"
       ],
       "tris": [
-        5846,
-        810,
+        5918,
+        818,
         291
       ],
       "bounds_m": {
@@ -646,7 +659,7 @@
         ],
         "max": [
           5.288,
-          21.7,
+          17.229,
           4.041
         ]
       },
@@ -656,7 +669,7 @@
           "canopy": {
             "mesh": "res://assets/models/plants/SM_Plant_CanopyTreeSapling_Canopy.obj",
             "material": "res://assets/materials/plants/MI_Plant_CanopyFoliage.tres",
-            "triangles": 4928
+            "triangles": 5000
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_CanopyTreeSapling_Trunk.obj",
@@ -668,7 +681,7 @@
           "canopy": {
             "mesh": "res://assets/models/plants/SM_Plant_CanopyTreeSapling_Canopy_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_CanopyFoliage.tres",
-            "triangles": 502
+            "triangles": 510
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_CanopyTreeSapling_Trunk_LOD1.obj",
@@ -725,9 +738,9 @@
         "Leaf_Ceiba"
       ],
       "tris": [
-        54200,
-        3830,
-        701
+        54224,
+        3854,
+        705
       ],
       "bounds_m": {
         "min": [
@@ -747,7 +760,7 @@
           "canopy": {
             "mesh": "res://assets/models/plants/SM_Plant_CeibaEmergent_Canopy.obj",
             "material": "res://assets/materials/plants/MI_Plant_CeibaCanopy.tres",
-            "triangles": 49496
+            "triangles": 49520
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_CeibaEmergent_Trunk.obj",
@@ -759,7 +772,7 @@
           "canopy": {
             "mesh": "res://assets/models/plants/SM_Plant_CeibaEmergent_Canopy_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_CeibaCanopy.tres",
-            "triangles": 3110
+            "triangles": 3134
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_CeibaEmergent_Trunk_LOD1.obj",
@@ -771,7 +784,7 @@
           "canopy": {
             "mesh": "res://assets/models/plants/SM_Plant_CeibaEmergent_Canopy_LOD2.obj",
             "material": "res://assets/materials/plants/MI_Plant_CeibaCanopy.tres",
-            "triangles": 458
+            "triangles": 462
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_CeibaEmergent_Trunk_LOD2.obj",
@@ -816,9 +829,9 @@
         "Leaf_Ceiba"
       ],
       "tris": [
-        54200,
-        3822,
-        701
+        54224,
+        3854,
+        705
       ],
       "bounds_m": {
         "min": [
@@ -838,7 +851,7 @@
           "canopy": {
             "mesh": "res://assets/models/plants/SM_Plant_CeibaYoung_Canopy.obj",
             "material": "res://assets/materials/plants/MI_Plant_CeibaCanopy.tres",
-            "triangles": 49496
+            "triangles": 49520
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_CeibaYoung_Trunk.obj",
@@ -850,7 +863,7 @@
           "canopy": {
             "mesh": "res://assets/models/plants/SM_Plant_CeibaYoung_Canopy_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_CeibaCanopy.tres",
-            "triangles": 3102
+            "triangles": 3134
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_CeibaYoung_Trunk_LOD1.obj",
@@ -862,7 +875,7 @@
           "canopy": {
             "mesh": "res://assets/models/plants/SM_Plant_CeibaYoung_Canopy_LOD2.obj",
             "material": "res://assets/materials/plants/MI_Plant_CeibaCanopy.tres",
-            "triangles": 458
+            "triangles": 462
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_CeibaYoung_Trunk_LOD2.obj",
@@ -1065,27 +1078,35 @@
         "Leaf_Cycad"
       ],
       "tris": [
-        352
+        1440,
+        642
       ],
       "bounds_m": {
         "min": [
-          -0.548,
-          -0.039,
-          -0.98
+          -0.866,
+          -0.395,
+          -1.091
         ],
         "max": [
-          0.872,
-          0.893,
-          0.794
+          0.937,
+          0.973,
+          1.093
         ]
       },
-      "budget_triangles": 900,
+      "budget_triangles": 1800,
       "parts": {
         "0": {
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_CycadShade_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_CycadLeaf.tres",
-            "triangles": 352
+            "triangles": 1440
+          }
+        },
+        "1": {
+          "leaf": {
+            "mesh": "res://assets/models/plants/SM_Plant_CycadShade_Leaf_LOD1.obj",
+            "material": "res://assets/materials/plants/MI_Plant_CycadLeaf.tres",
+            "triangles": 642
           }
         }
       },
@@ -1123,27 +1144,35 @@
         "Leaf_Cycad"
       ],
       "tris": [
-        352
+        1320,
+        602
       ],
       "bounds_m": {
         "min": [
-          -0.718,
-          -0.037,
-          -0.621
+          -0.721,
+          -0.014,
+          -0.981
         ],
         "max": [
-          0.876,
-          1.848,
-          0.658
+          0.899,
+          1.878,
+          1.096
         ]
       },
-      "budget_triangles": 900,
+      "budget_triangles": 1800,
       "parts": {
         "0": {
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_CycadSun_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_CycadLeaf.tres",
-            "triangles": 352
+            "triangles": 1320
+          }
+        },
+        "1": {
+          "leaf": {
+            "mesh": "res://assets/models/plants/SM_Plant_CycadSun_Leaf_LOD1.obj",
+            "material": "res://assets/materials/plants/MI_Plant_CycadLeaf.tres",
+            "triangles": 602
           }
         }
       },
@@ -1260,7 +1289,7 @@
         "Leaf_FanPalm"
       ],
       "tris": [
-        1614,
+        1626,
         533
       ],
       "bounds_m": {
@@ -1271,7 +1300,7 @@
         ],
         "max": [
           1.468,
-          4.96,
+          4.634,
           1.311
         ]
       },
@@ -1281,7 +1310,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_FanPalmYoung_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_FanPalmLeaf.tres",
-            "triangles": 1420
+            "triangles": 1432
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_FanPalmYoung_Trunk.obj",
@@ -1337,27 +1366,27 @@
         "Leaf_Grass"
       ],
       "tris": [
-        349
+        361
       ],
       "bounds_m": {
         "min": [
-          -0.399,
-          -0.009,
+          -0.402,
+          -0.006,
           -0.314
         ],
         "max": [
           0.48,
           1.772,
-          0.637
+          0.632
         ]
       },
-      "budget_triangles": 900,
+      "budget_triangles": 1800,
       "parts": {
         "0": {
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_ForestGrassClump_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_GrassBlade.tres",
-            "triangles": 349
+            "triangles": 361
           }
         }
       },
@@ -1395,27 +1424,27 @@
         "Leaf_Grass"
       ],
       "tris": [
-        211
+        223
       ],
       "bounds_m": {
         "min": [
-          -0.545,
-          -0.054,
+          -0.513,
+          -0.044,
           -0.479
         ],
         "max": [
-          0.652,
+          0.606,
           1.799,
           0.313
         ]
       },
-      "budget_triangles": 900,
+      "budget_triangles": 1800,
       "parts": {
         "0": {
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_ForestGrassSparse_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_GrassBlade.tres",
-            "triangles": 211
+            "triangles": 223
           }
         }
       },
@@ -1453,9 +1482,9 @@
         "Leaf_Heliconia"
       ],
       "tris": [
-        4911,
-        416,
-        256
+        4959,
+        432,
+        264
       ],
       "bounds_m": {
         "min": [
@@ -1475,7 +1504,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_HeliconiaClump_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_HeliconiaLeaf.tres",
-            "triangles": 3819
+            "triangles": 3867
           },
           "stem": {
             "mesh": "res://assets/models/plants/SM_Plant_HeliconiaClump_Stem.obj",
@@ -1487,7 +1516,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_HeliconiaClump_Leaf_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_HeliconiaLeaf.tres",
-            "triangles": 234
+            "triangles": 250
           },
           "stem": {
             "mesh": "res://assets/models/plants/SM_Plant_HeliconiaClump_Stem_LOD1.obj",
@@ -1499,7 +1528,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_HeliconiaClump_Leaf_LOD2.obj",
             "material": "res://assets/materials/plants/MI_Plant_HeliconiaLeaf.tres",
-            "triangles": 74
+            "triangles": 82
           },
           "stem": {
             "mesh": "res://assets/models/plants/SM_Plant_HeliconiaClump_Stem_LOD2.obj",
@@ -1542,8 +1571,8 @@
         "Leaf_Heliconia"
       ],
       "tris": [
-        2548,
-        430
+        2596,
+        438
       ],
       "bounds_m": {
         "min": [
@@ -1568,7 +1597,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_HeliconiaFlowering_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_HeliconiaLeaf.tres",
-            "triangles": 1939
+            "triangles": 1987
           },
           "stem": {
             "mesh": "res://assets/models/plants/SM_Plant_HeliconiaFlowering_Stem.obj",
@@ -1580,7 +1609,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_HeliconiaFlowering_Leaf_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_HeliconiaLeaf.tres",
-            "triangles": 248
+            "triangles": 256
           },
           "stem": {
             "mesh": "res://assets/models/plants/SM_Plant_HeliconiaFlowering_Stem_LOD1.obj",
@@ -1623,8 +1652,8 @@
         "Leaf_Heliconia"
       ],
       "tris": [
-        1843,
-        300
+        1903,
+        316
       ],
       "bounds_m": {
         "min": [
@@ -1644,7 +1673,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_HeliconiaYoung_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_HeliconiaLeaf.tres",
-            "triangles": 1453
+            "triangles": 1513
           },
           "stem": {
             "mesh": "res://assets/models/plants/SM_Plant_HeliconiaYoung_Stem.obj",
@@ -1656,7 +1685,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_HeliconiaYoung_Leaf_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_HeliconiaLeaf.tres",
-            "triangles": 170
+            "triangles": 186
           },
           "stem": {
             "mesh": "res://assets/models/plants/SM_Plant_HeliconiaYoung_Stem_LOD1.obj",
@@ -1991,18 +2020,18 @@
         "Leaf_Liana"
       ],
       "tris": [
-        232
+        244
       ],
       "bounds_m": {
         "min": [
-          -0.298,
+          -0.098,
           -0.001,
           -0.12
         ],
         "max": [
-          0.384,
+          0.203,
           18.003,
-          0.627
+          0.122
         ]
       },
       "budget_triangles": 1000,
@@ -2011,7 +2040,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_LianaHanging_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_LianaLeaf.tres",
-            "triangles": 92
+            "triangles": 104
           },
           "stem": {
             "mesh": "res://assets/models/plants/SM_Plant_LianaHanging_Stem.obj",
@@ -2059,14 +2088,14 @@
       ],
       "bounds_m": {
         "min": [
-          -0.644,
+          -0.138,
           -0.002,
-          -0.427
+          -0.12
         ],
         "max": [
           0.155,
           18.004,
-          0.131
+          0.122
         ]
       },
       "budget_triangles": 1000,
@@ -2132,7 +2161,7 @@
           0.092
         ]
       },
-      "budget_triangles": 900,
+      "budget_triangles": 1800,
       "parts": {
         "0": {
           "lichen": {
@@ -2191,7 +2220,7 @@
           0.194
         ]
       },
-      "budget_triangles": 900,
+      "budget_triangles": 1800,
       "parts": {
         "0": {
           "lichen": {
@@ -2236,7 +2265,7 @@
         "Leaf_Monstera"
       ],
       "tris": [
-        650
+        662
       ],
       "bounds_m": {
         "min": [
@@ -2256,7 +2285,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_MonsteraClimber_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_MonsteraLeaf.tres",
-            "triangles": 432
+            "triangles": 444
           },
           "stem": {
             "mesh": "res://assets/models/plants/SM_Plant_MonsteraClimber_Stem.obj",
@@ -2299,18 +2328,18 @@
         "Leaf_Monstera"
       ],
       "tris": [
-        652
+        664
       ],
       "bounds_m": {
         "min": [
-          -0.903,
-          -0.051,
-          -0.772
+          -0.482,
+          -0.367,
+          -0.472
         ],
         "max": [
-          1.078,
-          7.44,
-          0.663
+          0.575,
+          1.167,
+          0.475
         ]
       },
       "budget_triangles": 5500,
@@ -2319,7 +2348,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_MonsteraGround_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_MonsteraLeaf.tres",
-            "triangles": 434
+            "triangles": 446
           },
           "stem": {
             "mesh": "res://assets/models/plants/SM_Plant_MonsteraGround_Stem.obj",
@@ -2366,14 +2395,14 @@
       ],
       "bounds_m": {
         "min": [
-          -0.925,
-          -0.116,
-          -0.637
+          -0.199,
+          -0.018,
+          -0.138
         ],
         "max": [
-          0.952,
+          0.37,
           12.781,
-          1.185
+          0.262
         ]
       },
       "budget_triangles": 5500,
@@ -2439,7 +2468,7 @@
           0.29
         ]
       },
-      "budget_triangles": 900,
+      "budget_triangles": 1800,
       "parts": {
         "0": {
           "moss": {
@@ -2499,7 +2528,7 @@
           0.332
         ]
       },
-      "budget_triangles": 900,
+      "budget_triangles": 1800,
       "parts": {
         "0": {
           "moss": {
@@ -2545,7 +2574,7 @@
         "Leaf_NestFern"
       ],
       "tris": [
-        258
+        270
       ],
       "bounds_m": {
         "min": [
@@ -2565,7 +2594,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_NestFernMature_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_NestFernLeaf.tres",
-            "triangles": 258
+            "triangles": 270
           }
         }
       },
@@ -2602,12 +2631,12 @@
         "Leaf_NestFern"
       ],
       "tris": [
-        222
+        270
       ],
       "bounds_m": {
         "min": [
           -0.382,
-          -0.002,
+          -0.327,
           -0.393
         ],
         "max": [
@@ -2622,7 +2651,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_NestFernYoung_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_NestFernLeaf.tres",
-            "triangles": 222
+            "triangles": 270
           }
         }
       },
@@ -2660,18 +2689,19 @@
         "Leaf_Pacaya"
       ],
       "tris": [
-        864
+        1124,
+        557
       ],
       "bounds_m": {
         "min": [
-          -0.829,
-          -0.013,
-          -1.015
+          -0.894,
+          -0.043,
+          -1.021
         ],
         "max": [
           1.069,
           4.105,
-          0.978
+          0.997
         ]
       },
       "budget_triangles": 5500,
@@ -2680,12 +2710,24 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_PacayaPalmMature_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_PacayaLeaf.tres",
-            "triangles": 788
+            "triangles": 1048
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_PacayaPalmMature_Trunk.obj",
             "material": "res://assets/materials/plants/MI_Plant_PacayaCane.tres",
             "triangles": 76
+          }
+        },
+        "1": {
+          "leaf": {
+            "mesh": "res://assets/models/plants/SM_Plant_PacayaPalmMature_Leaf_LOD1.obj",
+            "material": "res://assets/materials/plants/MI_Plant_PacayaLeaf.tres",
+            "triangles": 514
+          },
+          "trunk": {
+            "mesh": "res://assets/models/plants/SM_Plant_PacayaPalmMature_Trunk_LOD1.obj",
+            "material": "res://assets/materials/plants/MI_Plant_PacayaCane.tres",
+            "triangles": 43
           }
         }
       },
@@ -2725,17 +2767,17 @@
         "Leaf_Pacaya"
       ],
       "tris": [
-        1716,
-        457
+        2236,
+        557
       ],
       "bounds_m": {
         "min": [
-          -1.022,
-          -0.034,
-          -0.958
+          -0.982,
+          -0.035,
+          -0.967
         ],
         "max": [
-          0.97,
+          1.014,
           4.105,
           1.108
         ]
@@ -2746,7 +2788,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_PacayaPalmPair_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_PacayaLeaf.tres",
-            "triangles": 1564
+            "triangles": 2084
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_PacayaPalmPair_Trunk.obj",
@@ -2758,7 +2800,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_PacayaPalmPair_Leaf_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_PacayaLeaf.tres",
-            "triangles": 414
+            "triangles": 514
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_PacayaPalmPair_Trunk_LOD1.obj",
@@ -2803,18 +2845,18 @@
         "Leaf_Pacaya"
       ],
       "tris": [
-        616
+        740
       ],
       "bounds_m": {
         "min": [
-          -0.523,
-          -0.003,
-          -0.598
+          -0.417,
+          -0.031,
+          -0.606
         ],
         "max": [
           0.579,
-          2.48,
-          0.534
+          2.399,
+          0.545
         ]
       },
       "budget_triangles": 5500,
@@ -2823,7 +2865,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_PacayaPalmYoung_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_PacayaLeaf.tres",
-            "triangles": 540
+            "triangles": 664
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_PacayaPalmYoung_Trunk.obj",
@@ -2943,18 +2985,18 @@
         "Leaf_Philodendron"
       ],
       "tris": [
-        476
+        584
       ],
       "bounds_m": {
         "min": [
-          -0.88,
-          -0.051,
-          -0.948
+          -0.785,
+          -0.24,
+          -0.859
         ],
         "max": [
           0.924,
-          1.24,
-          0.644
+          0.662,
+          0.572
         ]
       },
       "budget_triangles": 5500,
@@ -2963,7 +3005,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_PhilodendronJuvenile_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_PhilodendronLeaf.tres",
-            "triangles": 340
+            "triangles": 448
           },
           "stem": {
             "mesh": "res://assets/models/plants/SM_Plant_PhilodendronJuvenile_Stem.obj",
@@ -3006,17 +3048,18 @@
         "Leaf_Philodendron"
       ],
       "tris": [
-        860
+        968,
+        350
       ],
       "bounds_m": {
         "min": [
-          -1.099,
+          -1.118,
           -0.068,
           -1.129
         ],
         "max": [
           1.468,
-          1.24,
+          1.238,
           1.565
         ]
       },
@@ -3026,12 +3069,24 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_PhilodendronTerrestrial_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_PhilodendronLeaf.tres",
-            "triangles": 622
+            "triangles": 730
           },
           "stem": {
             "mesh": "res://assets/models/plants/SM_Plant_PhilodendronTerrestrial_Stem.obj",
             "material": "res://assets/materials/plants/MI_Plant_PhilodendronStem.tres",
             "triangles": 238
+          }
+        },
+        "1": {
+          "leaf": {
+            "mesh": "res://assets/models/plants/SM_Plant_PhilodendronTerrestrial_Leaf_LOD1.obj",
+            "material": "res://assets/materials/plants/MI_Plant_PhilodendronLeaf.tres",
+            "triangles": 214
+          },
+          "stem": {
+            "mesh": "res://assets/models/plants/SM_Plant_PhilodendronTerrestrial_Stem_LOD1.obj",
+            "material": "res://assets/materials/plants/MI_Plant_PhilodendronStem.tres",
+            "triangles": 136
           }
         }
       },
@@ -3183,27 +3238,27 @@
         "Leaf_ShadeGrass"
       ],
       "tris": [
-        82
+        118
       ],
       "bounds_m": {
         "min": [
-          -0.442,
-          -0.311,
-          -0.621
+          -0.265,
+          -0.099,
+          -0.271
         ],
         "max": [
-          0.412,
+          0.152,
           0.286,
-          0.637
+          0.223
         ]
       },
-      "budget_triangles": 900,
+      "budget_triangles": 1800,
       "parts": {
         "0": {
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_ShadeGrassSingle_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_ShadeGrassLeaf.tres",
-            "triangles": 82
+            "triangles": 118
           }
         }
       },
@@ -3241,27 +3296,27 @@
         "Leaf_ShadeGrass"
       ],
       "tris": [
-        136
+        148
       ],
       "bounds_m": {
         "min": [
-          -0.432,
-          -0.319,
-          -0.6
+          -0.314,
+          -0.227,
+          -0.27
         ],
         "max": [
-          0.604,
+          0.267,
           0.597,
           0.291
         ]
       },
-      "budget_triangles": 900,
+      "budget_triangles": 1800,
       "parts": {
         "0": {
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_ShadeGrassTuft_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_ShadeGrassLeaf.tres",
-            "triangles": 136
+            "triangles": 148
           }
         }
       },
@@ -3299,12 +3354,12 @@
         "Leaf_Spikemoss"
       ],
       "tris": [
-        168
+        240
       ],
       "bounds_m": {
         "min": [
           -0.316,
-          -0.104,
+          -0.068,
           -0.383
         ],
         "max": [
@@ -3313,13 +3368,13 @@
           0.343
         ]
       },
-      "budget_triangles": 900,
+      "budget_triangles": 1800,
       "parts": {
         "0": {
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_SpikemossMat_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_Spikemoss.tres",
-            "triangles": 168
+            "triangles": 240
           }
         }
       },
@@ -3359,19 +3414,19 @@
         "Leaf_SpinyPalm"
       ],
       "tris": [
-        1276,
-        521
+        2108,
+        985
       ],
       "bounds_m": {
         "min": [
           -1.598,
-          -0.139,
-          -1.547
+          -0.083,
+          -1.571
         ],
         "max": [
-          1.623,
+          1.637,
           5.112,
-          1.542
+          1.592
         ]
       },
       "budget_triangles": 5500,
@@ -3380,7 +3435,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_SpinyPalmMature_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_SpinyPalmLeaf.tres",
-            "triangles": 1200
+            "triangles": 2032
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_SpinyPalmMature_Trunk.obj",
@@ -3392,7 +3447,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_SpinyPalmMature_Leaf_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_SpinyPalmLeaf.tres",
-            "triangles": 478
+            "triangles": 942
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_SpinyPalmMature_Trunk_LOD1.obj",
@@ -3437,18 +3492,19 @@
         "Leaf_SpinyPalm"
       ],
       "tris": [
-        784
+        1288,
+        637
       ],
       "bounds_m": {
         "min": [
-          -0.751,
-          -0.043,
-          -0.679
+          -0.757,
+          -0.063,
+          -0.721
         ],
         "max": [
-          0.555,
-          3.41,
-          0.776
+          0.715,
+          2.473,
+          0.783
         ]
       },
       "budget_triangles": 5500,
@@ -3457,12 +3513,24 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_SpinyPalmYoung_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_SpinyPalmLeaf.tres",
-            "triangles": 708
+            "triangles": 1212
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_SpinyPalmYoung_Trunk.obj",
             "material": "res://assets/materials/plants/MI_Plant_SpinyPalmTrunk.tres",
             "triangles": 76
+          }
+        },
+        "1": {
+          "leaf": {
+            "mesh": "res://assets/models/plants/SM_Plant_SpinyPalmYoung_Leaf_LOD1.obj",
+            "material": "res://assets/materials/plants/MI_Plant_SpinyPalmLeaf.tres",
+            "triangles": 594
+          },
+          "trunk": {
+            "mesh": "res://assets/models/plants/SM_Plant_SpinyPalmYoung_Trunk_LOD1.obj",
+            "material": "res://assets/materials/plants/MI_Plant_SpinyPalmTrunk.tres",
+            "triangles": 43
           }
         }
       },
@@ -3502,8 +3570,8 @@
         "Leaf_Fig"
       ],
       "tris": [
-        1116,
-        340
+        1128,
+        348
       ],
       "bounds_m": {
         "min": [
@@ -3523,7 +3591,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_StranglerFigEnveloping_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_FigLeaf.tres",
-            "triangles": 548
+            "triangles": 560
           },
           "root": {
             "mesh": "res://assets/models/plants/SM_Plant_StranglerFigEnveloping_Root.obj",
@@ -3535,7 +3603,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_StranglerFigEnveloping_Leaf_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_FigLeaf.tres",
-            "triangles": 120
+            "triangles": 128
           },
           "root": {
             "mesh": "res://assets/models/plants/SM_Plant_StranglerFigEnveloping_Root_LOD1.obj",
@@ -3580,8 +3648,8 @@
         "Leaf_Fig"
       ],
       "tris": [
-        1116,
-        338
+        1140,
+        346
       ],
       "bounds_m": {
         "min": [
@@ -3601,7 +3669,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_StranglerFigMasonry_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_FigLeaf.tres",
-            "triangles": 548
+            "triangles": 572
           },
           "root": {
             "mesh": "res://assets/models/plants/SM_Plant_StranglerFigMasonry_Root.obj",
@@ -3613,7 +3681,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_StranglerFigMasonry_Leaf_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_FigLeaf.tres",
-            "triangles": 118
+            "triangles": 126
           },
           "root": {
             "mesh": "res://assets/models/plants/SM_Plant_StranglerFigMasonry_Root_LOD1.obj",
@@ -3659,7 +3727,8 @@
         "Leaf_Fig"
       ],
       "tris": [
-        888
+        912,
+        260
       ],
       "bounds_m": {
         "min": [
@@ -3679,12 +3748,24 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_StranglerFigYoung_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_FigLeaf.tres",
-            "triangles": 548
+            "triangles": 572
           },
           "root": {
             "mesh": "res://assets/models/plants/SM_Plant_StranglerFigYoung_Root.obj",
             "material": "res://assets/materials/plants/MI_Plant_FigRoot.tres",
             "triangles": 340
+          }
+        },
+        "1": {
+          "leaf": {
+            "mesh": "res://assets/models/plants/SM_Plant_StranglerFigYoung_Leaf_LOD1.obj",
+            "material": "res://assets/materials/plants/MI_Plant_FigLeaf.tres",
+            "triangles": 128
+          },
+          "root": {
+            "mesh": "res://assets/models/plants/SM_Plant_StranglerFigYoung_Root_LOD1.obj",
+            "material": "res://assets/materials/plants/MI_Plant_FigRoot.tres",
+            "triangles": 132
           }
         }
       },
@@ -3723,12 +3804,12 @@
         "Leaf_Tillandsia"
       ],
       "tris": [
-        226
+        274
       ],
       "bounds_m": {
         "min": [
           -0.225,
-          -0.141,
+          -0.17,
           -0.31
         ],
         "max": [
@@ -3743,7 +3824,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_TillandsiaClump_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_TillandsiaLeaf.tres",
-            "triangles": 226
+            "triangles": 274
           }
         }
       },
@@ -3781,9 +3862,9 @@
         "Leaf_TreeFern"
       ],
       "tris": [
-        4485,
-        1691,
-        688
+        4545,
+        1707,
+        692
       ],
       "bounds_m": {
         "min": [
@@ -3803,7 +3884,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernLeaning_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_FernFrond.tres",
-            "triangles": 4396
+            "triangles": 4456
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernLeaning_Trunk.obj",
@@ -3815,7 +3896,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernLeaning_Leaf_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_FernFrond.tres",
-            "triangles": 1648
+            "triangles": 1664
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernLeaning_Trunk_LOD1.obj",
@@ -3827,7 +3908,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernLeaning_Leaf_LOD2.obj",
             "material": "res://assets/materials/plants/MI_Plant_FernFrond.tres",
-            "triangles": 662
+            "triangles": 666
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernLeaning_Trunk_LOD2.obj",
@@ -3872,9 +3953,9 @@
         "Leaf_TreeFern"
       ],
       "tris": [
-        4497,
-        1691,
-        688
+        4545,
+        1707,
+        692
       ],
       "bounds_m": {
         "min": [
@@ -3894,7 +3975,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernMature_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_FernFrond.tres",
-            "triangles": 4408
+            "triangles": 4456
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernMature_Trunk.obj",
@@ -3906,7 +3987,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernMature_Leaf_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_FernFrond.tres",
-            "triangles": 1648
+            "triangles": 1664
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernMature_Trunk_LOD1.obj",
@@ -3918,7 +3999,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernMature_Leaf_LOD2.obj",
             "material": "res://assets/materials/plants/MI_Plant_FernFrond.tres",
-            "triangles": 662
+            "triangles": 666
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernMature_Trunk_LOD2.obj",
@@ -3963,8 +4044,8 @@
         "Leaf_TreeFern"
       ],
       "tris": [
-        2645,
-        983
+        2681,
+        999
       ],
       "bounds_m": {
         "min": [
@@ -3974,7 +4055,7 @@
         ],
         "max": [
           1.669,
-          4.34,
+          3.488,
           1.816
         ]
       },
@@ -3984,7 +4065,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernYoung_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_FernFrond.tres",
-            "triangles": 2556
+            "triangles": 2592
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernYoung_Trunk.obj",
@@ -3996,7 +4077,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernYoung_Leaf_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_FernFrond.tres",
-            "triangles": 940
+            "triangles": 956
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernYoung_Trunk_LOD1.obj",
@@ -4032,7 +4113,7 @@
   },
   "plant_triangle_budget": {
     "litter": 300,
-    "groundcover": 900,
+    "groundcover": 1800,
     "epiphyte": 1200,
     "vine": 1000,
     "understory": 5500,

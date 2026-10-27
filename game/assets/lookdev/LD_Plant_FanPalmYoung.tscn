@@ -10,7 +10,7 @@
 [ext_resource type="Material" path="res://assets/materials/plants/MI_Plant_FanPalmTrunk.tres" id="6"]
 
 [sub_resource type="BoxMesh" id="ground"]
-size = Vector3(20.9, 0.1, 20.9)
+size = Vector3(20.2, 0.1, 20.2)
 
 [sub_resource type="BoxMesh" id="ref"]
 size = Vector3(0.45, 1.8, 0.25)
@@ -68,10 +68,10 @@ mesh = SubResource("ref")
 surface_material_override/0 = SubResource("grey")
 
 [node name="Sun" parent="Environment"]
-directional_shadow_max_distance = 14.9
+directional_shadow_max_distance = 13.9
 directional_shadow_blend_splits = true
 
 [node name="Camera" type="Camera3D" parent="."]
-transform = Transform3D(0.819152, -0.021387, 0.573178, 0.000000, 0.999305, 0.037287, -0.573576, -0.030544, 0.818582, 3.812218, 2.728000, 5.444412)
+transform = Transform3D(0.819152, -0.021387, 0.573178, 0.000000, 0.999305, 0.037287, -0.573576, -0.030544, 0.818582, 3.561657, 2.548700, 5.086574)
 fov = 50.0
 attributes = SubResource("camera")
