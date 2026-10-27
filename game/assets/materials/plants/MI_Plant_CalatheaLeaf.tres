@@ -16,4 +16,4 @@ normal_scale = 1.0
 normal_texture = ExtResource("3")
 cull_mode = 2
 backlight_enabled = true
-backlight = Color(0.3901, 0.6270, 0.2352, 1.0000)
+backlight = Color(0.2415, 0.6270, 0.2873, 1.0000)

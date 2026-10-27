@@ -56,6 +56,8 @@ TARGETS = {
     "sheen_value": (1.15, 1.60, "value of the brightest 1% over the lamina median"),
     "dead_area": (0.10, 0.20, "fraction of foliage area that is dead or dying"),
     "clipped": (None, 0.002, "fraction of foliage at or above value 99/100"),
+    # Only measurable with --against: how far the plant darkens the ground it stands on.
+    "contact_shadow": (0.30, 0.55, "shaded ground over the same ground unshaded"),
 }
 
 
@@ -75,15 +77,33 @@ def rgb_to_hsv(a):
     return h % 360.0, s, mx
 
 
-def measure(path):
+def measure(path, against=None):
     img = np.asarray(Image.open(path).convert("RGB"), np.float32) / 255.0
     h, s, v = rgb_to_hsv(img)
     coloured = s >= SAT_FLOOR
     green = coloured & (h >= GREEN[0]) & (h <= GREEN[1])
     dead = coloured & (h >= DEAD[0]) & (h < DEAD[1])
     leaf = green | dead
+    contact = None
+    if against is not None:
+        # The exact mask: whatever the plant changed. Hue alone cannot separate a dead
+        # leaf from the limestone plaza it lies on - both are warm tan - so a page
+        # rendered with the plant removed is differenced against this one.
+        bare = np.asarray(Image.open(against).convert("RGB"), np.float32) / 255.0
+        if bare.shape != img.shape:
+            raise SystemExit(f"{against}: {bare.shape[1]}x{bare.shape[0]} does not match "
+                             f"{path}: {img.shape[1]}x{img.shape[0]}")
+        changed = np.abs(img - bare).max(axis=-1) > 0.02
+        leaf = leaf & changed
+        _, _, bare_v = rgb_to_hsv(bare)
+        # Ground the plant darkened but did not cover: its contact shadow.
+        shade = changed & ~leaf & (bare_v > 0.02)
+        if shade.sum() > 500:
+            contact = round(float(np.median(v[shade]) / max(np.median(bare_v[shade]), 1e-3)), 3)
     out = {"frame": str(path), "size": f"{img.shape[1]}x{img.shape[0]}",
            "foliage_fraction": round(float(leaf.mean()), 4)}
+    if contact is not None:
+        out["contact_shadow"] = contact
     if leaf.sum() < 5000:
         out["error"] = "almost no foliage in the frame; is this the right scene?"
         return out
@@ -116,6 +136,8 @@ def report(m):
         return 1
     bad = 0
     for key, (lo, hi, what) in TARGETS.items():
+        if key not in m:
+            continue
         got = m[key]
         ok = (lo is None or got >= lo) and (hi is None or got <= hi)
         want = (f"{lo}-{hi}" if lo is not None and hi is not None
@@ -130,9 +152,12 @@ def report(m):
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("frames", nargs="+", type=Path)
+    ap.add_argument("--against", type=Path,
+                    help="the same page rendered with the plant removed "
+                         "(plants.py closeups --empty), for an exact foliage mask")
     ap.add_argument("--json", action="store_true", help="print the measurements as JSON")
     args = ap.parse_args()
-    out = [measure(f) for f in args.frames]
+    out = [measure(f, args.against) for f in args.frames]
     if args.json:
         print(json.dumps(out, indent=2))
         return 0

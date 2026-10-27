@@ -17,7 +17,7 @@ With a Blender install instead of `bpy`, run the mesh steps as
 
 Everything happens in `tools/assets/plants.py` and, for the pixels, in the two
 plant recipes in `tools/assets/gen_theme_textures.py`. Nothing else needs
-editing: the generator writes the meshes, the materials, the manifest and the
+editing: the generator writes the meshes, the materials, the catalogue entry and the
 look-dev scenes.
 
 ## 1. Settle the plant before writing any code
@@ -114,35 +114,57 @@ Then regenerate, in this order:
 
 ```sh
 python3 tools/assets/plants.py textures          # themes/plants.json
-python3 tools/assets/gen_theme_textures.py       # the PNG sets
-.venv/bin/python tools/assets/plants.py build    # meshes, materials, manifest
-python3 tools/assets/validate_assets.py
+.venv/bin/python tools/assets/gen_theme_textures.py tools/assets/themes/plants.json
+.venv/bin/python tools/assets/plants.py build    # meshes, materials, catalogue
+.venv/bin/python tools/assets/validate_assets.py
 ```
 
-`build` prints the triangle chain per variant and fails if one is over its
-band's budget, or if two species in a band are too close in hue and
-saturation. Cut leaf counts or segments in the builder rather than raising the
-budget.
+The 36 sets take about forty minutes at 4096 px, so put the kettle on.
+
+`build` prints the triangle chain per variant and fails if one goes over its
+band's ceiling. That ceiling catches a builder that has run away, not a plant
+that is simply large: if the species genuinely needs the geometry, raise the
+ceiling and say so in the PR. Do not cut leaves or segments to fit a number —
+the look is not traded for frame time.
+
+Your species' colours are spread against its band-mates automatically
+(`separate_greens()`), so expect the hue and saturation you wrote to move. What
+you are choosing is where it sits *relative to* the others: the yellow-green
+one, the grey one, the deep blue-green one.
 
 ## 4. Judge it in the engine, not in the abstract
 
 Render it at real metre size under the temple's own sun and sky, and look at
 the frames. A plant that reads on paper and not in the frame is not finished.
 
+Use the **close-up** page, not the band row: a row is as wide as the sum of its
+spreads, so its camera stands tens of metres back and nothing about a keel or a
+margin survives the frame.
+
 ```sh
-.venv/bin/python tools/assets/plants.py lookdev
+python3 tools/assets/plants.py closeups --only <species> --empty
 flock /home/claude/work/montezuma/.godot-gpu.lock \
-  gamescope --backend headless -W 1920 -H 1080 -- \
+  gamescope --backend headless -W 3840 -H 2160 -- \
   godot --path game --rendering-driver vulkan \
-  res://assets/lookdev/LD_Plants_Understory.tscn \
-  --write-movie /tmp/plants/f.png --fixed-fps 30 --quit-after 60
+  res://assets/lookdev/LD_Plant_<Species><Variant>.tscn \
+  --write-movie /tmp/plants/f.png --fixed-fps 30 --quit-after 10 -- --start-screen=
+.venv/bin/python tools/assets/measure_foliage.py /tmp/plants/f00000009.png \
+  --against /tmp/plants-empty/f00000009.png
 ```
 
-Window size comes from the gitignored `game/override.cfg`; there is no xvfb on
-the build host, so use `gamescope --backend headless`. If you pass `--import`,
-run `git checkout game/project.godot` afterwards, because the import rewrites
-it. The grey block in the frame is 1.8 m tall and an 18% grey card: check the
-plant against it for scale and the frame against it for exposure.
+**3840×2160 or larger, always** — that is the project's quality floor, and a
+1080p frame will not show you what you are deciding. Window size comes from the
+gitignored `game/override.cfg`; there is no xvfb on the build host, so use
+`gamescope --backend headless`. A 4K frame costs about two seconds to encode, so
+ten frames is plenty for a static page. If you pass `--import`, run `git checkout
+game/project.godot` afterwards, because the import rewrites it. The grey block in
+the frame is 1.8 m tall and an 18% grey card: check the plant against it for
+scale and the frame against it for exposure.
+
+`measure_foliage.py` reads the reference's figures back off the frame; `--against`
+takes the matching `_Empty` page and masks the plant exactly, which also gives
+the contact-shadow number. Treat a FAIL as a question, not a verdict — then look
+at the frame yourself, because the numbers cannot see folded cardboard.
 
 Iterate until the specimen reads as a plant rather than folded cardboard. What
 usually fixes it, in order: the keel (`fold` as a triple), the within-plant age
@@ -154,5 +176,5 @@ dead leaves and the litter skirt, and only then the texture.
 - Add a line to `game/assets/PROVENANCE.md` only if the species family is new
   there; the library has one record covering all of it.
 - `docs/reference/plant-library.md` carries the species table: add the row.
-- If you changed a budget, a band or the atlas layout, say so in the same PR
+- If you changed a band's triangle ceiling, a band or the atlas layout, say so in the same PR
   and tell the graphics-programmer, who owns what the backdrop does with it.

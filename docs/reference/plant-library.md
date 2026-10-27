@@ -33,29 +33,35 @@ a level picks from the library, so the library is wider than any one level.
 |---|---|---|
 | `python3 tools/assets/plants.py list` | stdlib | nothing; prints the catalogue |
 | `python3 tools/assets/plants.py textures` | stdlib | `tools/assets/themes/plants.json` |
-| `.venv/bin/python tools/assets/plants.py build` | `bpy` | `game/assets/models/plants/`, `game/assets/materials/plants/`, the manifest |
-| `.venv/bin/python tools/assets/plants.py lookdev` | `bpy` | `game/assets/lookdev/LD_Plants_<Band>.tscn` |
+| `.venv/bin/python tools/assets/plants.py build` | `bpy` | `game/assets/models/plants/`, `game/assets/materials/plants/`, the plant section of `game/assets/library.json` |
+| `python3 tools/assets/plants.py lookdev` | stdlib | `game/assets/lookdev/LD_Plants_<Band>.tscn`, one row per band |
+| `python3 tools/assets/plants.py closeups [--empty]` | stdlib | `game/assets/lookdev/LD_Plant_<Species><Variant>.tscn`, one page per specimen |
+| `.venv/bin/python tools/assets/measure_foliage.py <frame.png>` | numpy, Pillow | nothing; prints a frame's figures against [Foliage reference](foliage-reference.md) |
 
 The order is `plants.py textures`, then `gen_theme_textures.py` (which picks
 `themes/plants.json` up from that folder like any other parameter file and
 draws the PNG sets into `game/assets/textures/plants/`), then `plants.py
 build`. `build --only <keys>` limits the run to a few species.
 
-## Bands and budgets
+## Bands and ceilings
 
-A band is where a plant sits in the forest and, with it, what one specimen may
-cost. Groundcover is placed by the hundred and a canopy tree once or twice, so
-the budgets differ by a factor of forty.
+A band is where a plant sits in the forest. The triangle figure beside it is a
+**ceiling, not a budget**: it catches a builder that has run away — a loop that
+puts four hundred leaflets on one frond — and it is set from what the species in
+that band measure, with room above them. It is not a quality lever. A plant that
+needs more geometry to stop reading as folded cardboard gets more geometry, and
+nothing here is cut to buy frame time (the project's performance work is about
+object scale, not polygon counts).
 
-| Band | Triangles at LOD0 | What it holds |
+| Band | Triangle ceiling at LOD0 | What it holds |
 |---|---|---|
-| `litter` | 160 | fallen leaves and frond segments |
-| `groundcover` | 400 | moss, lichen, grasses, spikemoss, the cycad |
-| `understory` | 1,400 | ferns, aroids, heliconia, calathea, small palms |
-| `mid` | 3,000 | banana, fan palm, the strangler fig |
+| `litter` | 300 | fallen leaves and frond segments |
+| `groundcover` | 900 | moss, lichen, grasses, spikemoss, the cycad |
+| `understory` | 4,000 | ferns, aroids, heliconia, calathea, small palms |
+| `mid` | 4,000 | banana, fan palm, the strangler fig |
 | `canopy` | 7,000 | ceiba, cohune, ramón |
-| `epiphyte` | 600 | bromeliads, air plants, the nest fern |
-| `vine` | 700 | lianas, aerial-root curtains |
+| `epiphyte` | 1,200 | bromeliads, air plants, the nest fern |
+| `vine` | 1,000 | lianas, aerial-root curtains |
 
 A variant over 900 triangles also gets an authored LOD1, and over 3,000 an
 LOD2. They are authored rather than decimated because decimation eats whole
@@ -63,11 +69,13 @@ leaves at random, while a lower LOD here drops the smallest leaves, the
 fenestrations and the segment counts on purpose. Godot's OBJ importer still
 generates its own chain below those.
 
-Measured triangle counts per species, variant and LOD, with the material and
-mesh path of every part, are in `game/assets/models/plants/manifest.json`,
-which `plants.py build` writes and which fails the build if a variant is over
-its band's budget. Nothing in this page states a count: the generator measures
-them, so they are never out of date in the manifest and never right here.
+Measured triangle counts per species, variant and LOD, with each build's real
+bounding box and the material and mesh path of every part, are in the plant
+section of `game/assets/library.json` — the one shared catalogue, described in
+[Asset library](asset-library.md) — which `plants.py build` writes and which
+fails the build if a variant goes over its band's ceiling. Nothing in this page
+states a count: the generator measures them, so they are never out of date in
+the catalogue and never right here.
 
 ## The species
 
@@ -141,6 +149,54 @@ cannot plant one by accident.
   plant reading as folded cardboard from the game's low camera.
 - Face winding is authored and normals are never recalculated: a leaf is an
   open surface, and recalculation flips it at random.
+- Every blade's profile is zero wide at its base and its tip — that is what
+  makes it a leaf and not a rectangle — so the first and last row of its vertex
+  grid sits on one point. `build()` welds those zero-length edges; without it
+  17% of the library's triangles had no area, and zero-length normals fed the
+  smooth-shading pass at exactly the base and tip of every leaf.
+
+## What every plant gets
+
+Three things the measured reference says are on every plant, and that are easy
+to leave off one species at a time, are applied to the whole library at once
+rather than left to each builder to remember.
+
+- **A litter skirt.** "Every plant sits in its own litter skirt… green never
+  meets bare soil." `build()` adds one, sized from the species' own spread,
+  unless `Species.litter` says `own` (the builder sheds something more specific
+  — a banana's 1.5 m sheaths, a palm's whole fronds) or `none` (a ground mat, an
+  epiphyte on a branch, a hanging vine).
+- **Dead leaves hanging vertically**, 10–20% of leaf area, drawn from the
+  atlas's dead tile so they cost no extra material. `Species.dying` works the
+  same way. This is a silhouette cue, and a plant with a complete set of live
+  leaves reads as generated from any distance.
+- **Bitten margins.** Damage is on a third to a half of all leaves. The
+  3–15 mm holes the reference describes are drawn into the leaf atlas, but past
+  about two metres the texture is gone and the silhouette carries everything, so
+  `blade()` also takes notches out of the margin by default — moving the margin
+  column inward, which costs no triangles. Pass `bite=()` for a leaf that must
+  be intact.
+
+## Colour separation
+
+Each species' hue and saturation is sampled from its own reference plates, and
+sampled independently they land on top of each other: twenty pairs of this
+library sat within 18° of hue and 20 points of saturation of a neighbour in the
+same band, which is the "one global green" the reference calls the loudest
+failure. `separate_greens()` runs once at import, after every species is
+registered, and spreads each band's greens across a 50–96° window in the order
+their own sources put them, alternating saturation high and low along that
+order. Every neighbouring pair then differs by the full saturation split and
+every other pair by more than 20° of hue, which is what the reference asks for —
+20–35° of hue *and* 20–30 points of saturation between adjacent species — in a
+way eight understory species can actually satisfy inside the green part of the
+spectrum.
+
+What is sourced survives: the ranking, which species is the yellow-green one and
+which the blue-green one, each plant's value (its band decides how much light it
+gets), and the young, dead and backlit colours, recomputed from the new green
+with the offsets the species declared. A species whose colour is not a green —
+the lichen crust, the grey Tillandsia, the litter — is left alone.
 
 ## Textures
 
@@ -166,10 +222,14 @@ carries three live readings from one material and one draw call, and no two
 plants read identically. `Params.health` biases that choice toward the old
 tile.
 
-Sets are 512 px (256 px per tile), `_BC` + `_N` + `_ORM`, no `hi/` variant.
-That is roughly 0.6 MB of VRAM per set once compressed, so a level planting a
-dozen species pays something like 8 MB — an estimate from the format, not a
-measurement; measure it with the GPU profiler before relying on it.
+Sets are 4096 px (2048 px per tile), `_BC` + `_N` + `_ORM`, no `hi/` variant,
+per the quality floor in `CLAUDE.md`: across a real 0.6–0.9 m blade that is
+23–34 px/cm, which is what the vein net and the 1–2 mm pale halo on a chewed
+margin need to survive the game's camera. The mobile and web export presets
+strip them down. Roughly 11 MB of VRAM per map once compressed, so the whole
+36-set library is on the order of a gigabyte on desktop — an estimate from the
+format, not a measurement; measure it with the GPU profiler before relying on
+it.
 
 ### Colour rules the recipes follow
 
@@ -212,12 +272,58 @@ one per material key named in `Species.parts`:
 
 Both are stock Godot materials: no custom shader.
 
+## The catalogue
+
+There is one catalogue for the whole project, `game/assets/library.json`, whose
+schema and seeded selection rule are in [Asset library](asset-library.md). The
+plant library writes the `plants` section of it and the prop library writes its
+own, so each generator merges key by key and never rewrites the file whole.
+
+Three places where plants could not follow that page as written, which whoever
+builds the scatter has to settle:
+
+| The page says | What plants do | Why |
+|---|---|---|
+| one entry per generator, with `variants` counting the builds | one entry per (species, variant), with `variants` still counting them and `species` linking the siblings | one generator makes a 3 m young strangler fig and a 30 m enveloping one; they cannot share one `height_m`, one `tris` ladder or one set of tags |
+| `generator` is `module:function`, called `(bm, rng, x, y, z, params)` | `plants:build`, called `plants.build(key, rng, Params(...))`, returning one bmesh per material | a plant is several surfaces with several materials, and the caller decides where it stands |
+| props instance through a `scene` | plants give `parts`: mesh and material per part, per LOD | plants write no per-variant scene yet; the two have to converge before a scatter can place either |
+
+The page's `band` vocabulary also has no `litter`, which this library needs, so
+`plants.py` adds its band names to the shared `vocabulary` rather than mapping
+them onto the prop library's. Each entry additionally carries `bounds_m`, the
+build's measured bounding box, which the scatter wants for spacing and the
+look-dev page uses for framing.
+
 ## Look-dev
 
-`plants.py lookdev` writes one scene per band, `LD_Plants_<Band>.tscn`: the
-band's specimens in a row at real metre size, spaced by their own spread,
-standing on the temple's plaza material under the temple's own sun and sky,
-with a 1.8 m block at the end of the row that is also an 18% grey card, so
-scale and exposure are readable off the frame instead of argued about. Capture
-them with the headless recipe in
-[Capture the effects showcase](../how-to/capture-the-effects-showcase.md).
+Two kinds of page, both standing on the temple's plaza material under the
+temple's own sun and sky, with a 1.8 m block that is also an 18% grey card so
+scale and exposure are readable off the frame instead of argued about.
+
+- `plants.py lookdev` writes one scene per band, `LD_Plants_<Band>.tscn`: the
+  band's specimens in a row at real metre size, spaced by their own spread.
+  This is the page for comparing species — whether two neighbours share a
+  green, whether the sizes are right against each other.
+- `plants.py closeups` writes one scene per specimen,
+  `LD_Plant_<Species><Variant>.tscn`, framed from its measured bounding box so
+  the plant fills about 80% of the frame, from three quarters round at eye
+  height. **This is the page for judging whether a plant reads as a plant.** A
+  band row cannot answer that: a row is as wide as the sum of its spreads, so
+  the understory row is 68 m across, its camera stands 55 m back, and a 1 m
+  blade lands on 40 pixels of a 4K frame. `--empty` writes each page a second
+  time with the plant removed, which is what `measure_foliage.py --against`
+  needs to tell foliage from ground.
+
+Both pages give the camera its own `CameraAttributesPractical`: the theme's
+exposure, without the theme's depth of field, whose far blur starts at 0.5 m
+because it exists to push the backdrop away from the board and which otherwise
+blurs the subject of the page. They also hide the theme's atmosphere fog, dust,
+light shafts and braziers.
+
+Capture them with the headless recipe in
+[Capture the effects showcase](../how-to/capture-the-effects-showcase.md), at
+3840×2160 or larger, then read the figures back with
+`measure_foliage.py`, which checks a frame against
+[Foliage reference](foliage-reference.md): value range inside the mass, hue
+spread, lamina saturation, whether the sheen stayed neutral, dead leaf area and
+the contact shadow under the plant.

@@ -85,20 +85,23 @@ TEXTURES = "res://assets/textures/plants"
 
 SPDX = "SPDX-License-Identifier: GPL-2.0-or-later"
 
-# Vertical bands of a rainforest, and the triangle budget one specimen of each may
-# cost at LOD0. A band's budget is what the backdrop can afford when a plaza carries
-# a few hundred plants: groundcover is placed in quantity, a canopy tree once or
-# twice. Measured counts per variant are in game/assets/models/plants/manifest.json.
+# Vertical bands of a rainforest, and the triangle ceiling one specimen of each may
+# cost at LOD0. These are a guard against a builder running away - a loop that puts
+# 400 leaflets on a frond - not a quality lever: a band's ceiling is set from what the
+# species in it actually measure, with room above, and the answer to a plant that
+# needs more geometry to read as a plant is more geometry. Nothing here is cut to buy
+# frame time. Measured counts per variant are in game/assets/library.json.
 BANDS = ("litter", "groundcover", "understory", "mid", "canopy", "epiphyte", "vine")
 TRI_BUDGET = {
-    "litter": 160,
-    # Groundcover is placed by the hundred, so it is the tightest budget that still
-    # allows a metre-high Zamia its handful of very large leaflets.
-    "groundcover": 400,
-    "epiphyte": 600,
-    "vine": 700,
-    "understory": 1400,
-    "mid": 3000,
+    "litter": 300,
+    "groundcover": 900,
+    "epiphyte": 1200,
+    "vine": 1000,
+    # A 6 m tree fern with bipinnate fronds is not a 0.5 m calathea, and holding both
+    # to one number is what made five variants read as over budget when they were
+    # simply the big end of their band.
+    "understory": 4000,
+    "mid": 4000,
     "canopy": 7000,
 }
 # Above this many triangles a variant also gets a reduced LOD1 (and LOD2 above the
@@ -262,6 +265,15 @@ class Species:
     assumed: str = ""              # what is invented rather than sourced
     historical: str = ""           # a note when the plant does not belong in every scene
     tells: str = ""                # what makes it unmistakable at 5-15 m
+    # Two things the measured reference says are on every plant and are easy to leave
+    # off, so `build()` adds them for the whole library rather than each builder
+    # remembering: the skirt of its own shed leaves a plant stands in, and the 10-20%
+    # of its leaf area that is dead and hanging vertically.
+    #   "auto"  build() adds it, sized from the species
+    #   "own"   the builder makes its own, better informed; build() leaves it alone
+    #   "none"  the plant genuinely has neither (a ground mat, an epiphyte on a branch)
+    litter: str = "auto"
+    dying: str = "auto"
 
     def height_at(self, age):
         return _lerp(self.height[0], self.height[1], _clamp(age) ** 0.8)
@@ -365,11 +377,12 @@ def texture_params():
 
 
 class Build:
-    def __init__(self, bm, tile=(0, 0), grid=(2, 2)):
+    def __init__(self, bm, tile=(0, 0), grid=(2, 2), rng=None):
         self.bm = bm
         self.uv = bm.loops.layers.uv.verify()
         self.tile = tile
         self.grid = grid
+        self.rng = rng or random.Random(0)
 
     def vert(self, x, y, z):
         return self.bm.verts.new((x, y, z))
@@ -401,6 +414,7 @@ class Build:
         carries (10-20% of its leaf area) and for its own litter skirt."""
         clone = Build.__new__(Build)
         clone.bm, clone.uv, clone.grid = self.bm, self.uv, self.grid
+        clone.rng = self.rng
         clone.tile = (self.grid[0] - 1, self.grid[1] - 1)
         return clone
 
@@ -553,9 +567,39 @@ def _cut(lobes, t, side, phase):
     return 1.0 - depth * (1.0 - wave ** 0.55)
 
 
+def bites(rng, chance=0.42, most=3):
+    """Notches to take out of one blade's margin, or () for an undamaged leaf.
+
+    The measured reference puts damage on a third to a half of all leaves and calls an
+    intact leaf set the loudest tell that something was generated. The holes it
+    describes are 3-15 mm, which is texture work and is drawn into the leaf atlas
+    already - but past about two metres the texture is gone and the silhouette carries
+    everything, so the margin has to be nicked in the mesh as well. Each notch is
+    (position along the blade, which side, how deep as a fraction of the half width)
+    and costs no triangles: it moves the margin column in, it does not subdivide.
+    """
+    if rng.random() > chance:
+        return ()
+    return tuple((rng.uniform(0.12, 0.95), 1 if rng.random() < 0.5 else -1,
+                  rng.uniform(0.18, 0.55))
+                 for _ in range(rng.randint(1, most)))
+
+
+def _bitten(bite, t, side):
+    """How much of the half width survives at `t` on one side, 1.0 where nothing bit."""
+    keep = 1.0
+    for at, which, depth in bite:
+        if which != side:
+            continue
+        # A bite is a smooth notch about 12% of the blade long, not a sawtooth.
+        keep -= depth * math.exp(-((t - at) / 0.12) ** 2)
+    return max(0.08, keep)
+
+
 def blade(b, base, azim, length, width, *, rise=0.0, droop=0.0, fold=0.2, curl=0.0,
           twist=0.0, tilt=0.0, segs=7, cols=3, outline="ovate", lobes=0, ripple=0.0,
-          holes=(), tears=(), tear_from=0.35, sag=0.0, phase=0.0, u0=0.0, u1=1.0):
+          holes=(), tears=(), tear_from=0.35, sag=0.0, phase=0.0, u0=0.0, u1=1.0,
+          bite=None):
     """One leaf blade as a curved, folded, twisted surface.
 
     `fold` is the keel: how far the midrib stands above the margins, as a fraction of
@@ -567,8 +611,14 @@ def blade(b, base, azim, length, width, *, rise=0.0, droop=0.0, fold=0.2, curl=0
     pinnatifid margin, `holes` are closed fenestrations (t, s, radius) and `tears` are
     the open splits a banana or heliconia blade shreds into, given as column indices;
     every strip beyond a tear sags by `sag` as it is no longer braced by its neighbour.
+    `bite` is what has been eaten out of the margin: left alone, every blade in the
+    library draws its own from `bites()` off its builder's rng, which is what puts
+    damage on a third to a half of all leaves without each of the twenty-one callers
+    having to remember to ask. Pass `bite=()` for a leaf that must be intact.
     `cols` must be odd so a column of vertices sits on the midrib.
     """
+    if bite is None:
+        bite = bites(b.rng)
     cols = max(3, cols | 1)
     mid = (cols - 1) // 2
     pts = arc(base, azim, length, rise, droop, segs, tilt=tilt)
@@ -585,7 +635,7 @@ def blade(b, base, azim, length, width, *, rise=0.0, droop=0.0, fold=0.2, curl=0
         for j in range(cols):
             s = j / (cols - 1) * 2 - 1
             side = 1 if s >= 0 else -1
-            off = s * w * _cut(lobes, t, side, phase)
+            off = s * w * _cut(lobes, t, side, phase) * (_bitten(bite, t, side) if bite else 1.0)
             lift = fold_t * w * (1 - s * s) - curl_t * w * s * s
             if ripple:
                 lift += ripple * w * math.sin(2.6 * math.pi * t) * (0.2 + 0.8 * abs(s))
@@ -797,6 +847,7 @@ def lean_all(bm, lean, lean_dir):
 
 @species(
     key="leaf_litter",
+    litter="none", dying="none",       # this IS the litter the others stand in
     common="Forest-floor leaf litter",
     latin="(mixed)",
     band="litter",
@@ -856,6 +907,7 @@ def _leaf_litter(parts, rng, p, s):
 
 @species(
     key="moss_patch",
+    litter="none", dying="none",       # a mat on stone or a log; it has no stem to shed from
     common="Moss mat",
     latin="(Bryophyta, mixed)",
     band="groundcover",
@@ -894,6 +946,7 @@ def _moss_patch(parts, rng, p, s):
 
 @species(
     key="lichen_crust",
+    litter="none", dying="none",       # crust on stone, 2-10 mm thick
     common="Crustose lichen",
     latin="(Lecanoromycetes, mixed)",
     band="groundcover",
@@ -1007,6 +1060,7 @@ def _shade_grass(parts, rng, p, s):
 
 @species(
     key="spikemoss",
+    litter="none",                     # the mat lies on the litter rather than in a skirt
     common="Spikemoss mat",
     latin="Selaginella spp.",
     band="groundcover",
@@ -1216,6 +1270,7 @@ def _monstera(parts, rng, p, s):
 
 @species(
     key="heliconia",
+    litter="own",                      # its builder sheds its own strap blades
     common="Platanillo",
     latin="Heliconia latispatha",
     band="understory",
@@ -1391,6 +1446,7 @@ def _cycad(parts, rng, p, s):
 
 @species(
     key="pacaya_palm",
+    litter="own",                      # its builder sheds pinnae
     common="Pacaya palm",
     latin="Chamaedorea tepejilote",
     band="understory",
@@ -1438,6 +1494,7 @@ def _pacaya(parts, rng, p, s):
 
 @species(
     key="fan_palm",
+    litter="own",                      # its builder sheds fan segments, not blades
     common="Give-and-take palm / escoba",
     latin="Cryosophila stauracantha (= C. argentea)",
     band="mid",
@@ -1502,6 +1559,7 @@ def _fan_palm(parts, rng, p, s):
 
 @species(
     key="banana",
+    litter="own",                      # its builder sheds whole 1.5 m sheaths, not leaf flakes
     common="Banana / plantain",
     latin="Musa x paradisiaca",
     band="mid",
@@ -1562,6 +1620,7 @@ def _banana(parts, rng, p, s):
 
 @species(
     key="spiny_palm",
+    litter="own",                      # its builder sheds pinnae
     common="Chocho / spiny understory palm",
     latin="Astrocaryum mexicanum",
     band="understory",
@@ -1771,6 +1830,7 @@ def _ceiba(parts, rng, p, s):
 
 @species(
     key="corozo_palm",
+    litter="own", dying="own",         # its builder hangs whole dead fronds and sheds them
     common="Corozo / cohune palm",
     latin="Attalea cohune",
     band="canopy",
@@ -1878,6 +1938,7 @@ def _canopy_tree(parts, rng, p, s):
 
 @species(
     key="bromeliad_epiphyte",
+    litter="none",                     # it sits on a branch; its litter falls to someone else's
     common="Tank bromeliad",
     latin="Aechmea bracteata",
     band="epiphyte",
@@ -1913,6 +1974,7 @@ def _bromeliad_epiphyte(parts, rng, p, s):
 
 @species(
     key="tillandsia",
+    litter="none",                     # on a branch
     common="Grey air plant",
     latin="Tillandsia spp.",
     band="epiphyte",
@@ -1942,6 +2004,7 @@ def _tillandsia(parts, rng, p, s):
 
 @species(
     key="nest_fern",
+    litter="none",                     # on a branch; it catches litter in its basket instead
     common="Bird's-nest fern",
     latin="Asplenium serratum",
     band="epiphyte",
@@ -1977,6 +2040,7 @@ def _nest_fern(parts, rng, p, s):
 
 @species(
     key="liana",
+    litter="none",                     # it hangs from the canopy, with no base of its own here
     common="Monkey-ladder liana / escalera de mono",
     latin="Bauhinia herrerae (= Schnella herrerae)",
     band="vine",
@@ -2045,6 +2109,7 @@ def _liana(parts, rng, p, s):
 
 @species(
     key="root_curtain",
+    litter="none", dying="none",       # roots, no leaves
     common="Aerial root curtain",
     latin="Ficus / Philodendron spp.",
     band="vine",
@@ -2087,14 +2152,15 @@ def _root_curtain(parts, rng, p, s):
 class Parts:
     """The bmeshes one specimen fills, one per material, created on demand."""
 
-    def __init__(self, tile, grid):
+    def __init__(self, tile, grid, rng=None):
         self.tile = tile
         self.grid = grid
+        self.rng = rng
         self.builds = {}
 
     def __call__(self, name):
         if name not in self.builds:
-            self.builds[name] = Build(new_bmesh(), self.tile, self.grid)
+            self.builds[name] = Build(new_bmesh(), self.tile, self.grid, self.rng)
         return self.builds[name]
 
     def meshes(self):
@@ -2121,8 +2187,9 @@ def build(key, rng=None, params=None):
         tile_index = 2 if rng.random() < (1.0 - p.health) else rng.randrange(live)
     else:
         tile_index = rng.randrange(live)
-    parts = Parts((tile_index % grid[0], tile_index // grid[0]), grid)
+    parts = Parts((tile_index % grid[0], tile_index // grid[0]), grid, rng)
     s.build(parts, rng, p, s)
+    _shed(parts, rng, p, s)
     meshes = parts.meshes()
     for bm in meshes.values():
         lean_all(bm, p.lean, p.lean_dir)
@@ -2151,6 +2218,47 @@ def weld_collapsed(bm, dist=1e-5):
     if dead:
         bmesh.ops.delete(bm, geom=dead, context="FACES")
     bm.verts.index_update()
+
+
+def leaf_part(s):
+    """The part that reads off the species' leaf atlas, so the dead tile is available."""
+    for name in ("leaf", "canopy", "litter", "moss", "lichen"):
+        if name in s.parts:
+            return name
+    return next(iter(s.parts), None)
+
+
+def _shed(parts, rng, p, s):
+    """Add the litter skirt and the hanging dead leaves to any plant missing them.
+
+    The reference is blunt about both - "every plant sits in its own litter skirt",
+    "dead leaves hanging vertically on nearly every stem", "green never meets bare
+    soil" - and the first rendered frames showed the library honouring neither on
+    twenty of its twenty-six species: the helpers existed and six builders called
+    them. A plant standing on clean stone with a full set of live leaves is the
+    loudest tell in the frame, so this is done once, for everything, here.
+    """
+    name = leaf_part(s)
+    if name is None or not s.leaf_tex:
+        return
+    b = parts(name)
+    if not b.bm.faces:
+        return
+    height = s.height_at(p.age) * p.scale
+    spread = s.spread_at(p.age) * p.scale
+    if s.litter == "auto":
+        # 0.6-1.0 m of skirt around a crown-sized plant, scaled with the plant, and
+        # dense enough that the ground does not read through it.
+        radius = _clamp(spread * 0.45, 0.12, 1.1)
+        leaf_len = _clamp(spread * 0.3, 0.06, 0.55)
+        litter_skirt(b, rng, radius, round(18 + 26 * _clamp(spread / 3.0)), leaf_len, p)
+    if s.dying == "auto":
+        # One dead leaf per six to twelve live ones, hung from where the oldest leaves
+        # sit: low on a rosette, under the crown of anything with a stem.
+        base = (0.0, 0.0, height * (0.18 if height < 1.2 else 0.62))
+        length = _clamp(spread * 0.42, 0.05, 1.4)
+        dying_leaves(b, rng, base, round(2 + 4 * _clamp(spread / 3.0)),
+                     length, length * 0.22, p)
 
 
 def merge_into(dst, src, free=True):
@@ -2185,6 +2293,80 @@ STEM_COLOUR = {
     "HeliconiaBract": hsv(14, 78, 62),
 }
 FOLIAGE_PARTS = ("leaf", "canopy", "litter", "moss", "lichen", "bract")
+
+
+def _hsv_of(rgb):
+    import colorsys
+
+    h, s, v = colorsys.rgb_to_hsv(*rgb)
+    return h * 360.0, s * 100.0, v * 100.0
+
+
+def separate_greens():
+    """Spread each band's greens apart, because one global green is the loudest failure.
+
+    Every species' hue and saturation is sampled from its own reference plates, and
+    sampled independently they land on top of each other: twenty pairs of the library
+    sat within 18 degrees of hue and 20 points of saturation of a neighbour, and the
+    first rendered frame of a clump was one plastic green from the outside of the mass
+    to the inside. The measured reference asks for 20-35 degrees of hue and 20-30
+    points of saturation between adjacent species, over a 50-100 degree spread within
+    one frame.
+
+    Eight understory species cannot each be 20 degrees from all the others inside the
+    green part of the spectrum, and the reference does not ask them to: it asks that a
+    plant differ from *the plant beside it*, in both hue and saturation. So each band's
+    greens are placed evenly across a wide window in the order their own sources put
+    them - a yellow-green species stays the yellow-green one - and saturation
+    alternates high and low along that order, which gives every neighbouring pair the
+    full saturation split and every other pair more than 20 degrees of hue.
+
+    What is sourced survives: the ranking, which species is yellower or greyer, each
+    plant's value (its band decides how much light it gets), and the young, dead and
+    backlit colours, which are recomputed from the new green with the offsets the
+    species declared. Species whose colour is not a green at all - the lichen crust,
+    the grey Tillandsia, the litter - are left alone.
+    """
+    import colorsys
+    from dataclasses import replace
+
+    for band in BANDS:
+        members = [s for s in sorted(by_band(band), key=lambda s: s.key)
+                   if s.leaf_tex and 60 <= _hsv_of(s.leaf_tex.green)[0] <= 185
+                   and _hsv_of(s.leaf_tex.green)[1] >= 25]
+        if len(members) < 2:
+            continue
+        ranked = sorted(members, key=lambda s: _hsv_of(s.leaf_tex.green)[0])
+        hues = [_hsv_of(s.leaf_tex.green)[0] for s in ranked]
+        sats = [_hsv_of(s.leaf_tex.green)[1] for s in ranked]
+        n = len(ranked)
+        centre = sorted(hues)[n // 2]
+        width = min(96.0, max(50.0, 13.0 * (n - 1)))
+        lo = _clamp(centre - width / 2, 74.0, 170.0 - width)
+        sat_centre = sorted(sats)[n // 2]
+        sat_lo = _clamp(sat_centre - 17.0, 22.0, 70.0)
+        sat_hi = _clamp(sat_centre + 17.0, sat_lo + 22.0, 92.0)
+        # Two ways to alternate; take the one that moves the sourced saturations least.
+        phase = 0 if (sum(abs(sats[i] - (sat_lo if i % 2 == 0 else sat_hi))
+                          for i in range(n))
+                      <= sum(abs(sats[i] - (sat_hi if i % 2 == 0 else sat_lo))
+                             for i in range(n))) else 1
+        for i, s in enumerate(ranked):
+            tex = s.leaf_tex
+            h0, s0, v0 = _hsv_of(tex.green)
+            hue = lo + width * (i / (n - 1))
+            sat = (sat_lo if (i + phase) % 2 == 0 else sat_hi)
+            moved = {}
+            for field_name in ("green", "young", "dead"):
+                ch, cs, cv = _hsv_of(getattr(tex, field_name))
+                # Keep each state's own offset from the mature green.
+                dh = ((ch - h0 + 180) % 360) - 180
+                moved[field_name] = tuple(
+                    round(c, 4) for c in colorsys.hsv_to_rgb(
+                        ((hue + dh) % 360) / 360.0,
+                        _clamp(sat + (cs - s0), 4.0, 96.0) / 100.0,
+                        _clamp(cv, 4.0, 96.0) / 100.0))
+            SPECIES[s.key] = replace(s, leaf_tex=replace(tex, **moved))
 
 
 def colour_separation_errors():
@@ -2618,7 +2800,7 @@ def _hide_atmosphere():
             for name in HIDE_IN_LOOKDEV]
 
 
-def closeup_scenes(plants, only=None):
+def closeup_scenes(plants, only=None, empty=False):
     """One scene per specimen, framed so a leaf is big enough to judge.
 
     The band rows are the wrong page for the only question that matters - does this
@@ -2635,10 +2817,18 @@ def closeup_scenes(plants, only=None):
         if only and e["species"] not in only:
             continue
         written.append(_closeup_scene(eid, e))
+        if empty:
+            # The same page with the plant taken out. Measuring a frame means telling
+            # foliage from ground, and hue cannot do it here: the temple's limestone
+            # plaza is a warm tan that lands squarely in the dead-leaf hue window, so
+            # the first measurement counted the floor as 43% dead leaf. Differencing
+            # the two frames gives an exact mask, and the ground that the plant covers
+            # also gives the contact-shadow figure for free.
+            written.append(_closeup_scene(eid, e, empty=True))
     return written
 
 
-def _closeup_scene(eid, e):
+def _closeup_scene(eid, e, empty=False):
     ext, nodes = [], []
     next_id = [1]
 
@@ -2658,12 +2848,13 @@ def _closeup_scene(eid, e):
         height = max(0.25, e["height_m"][1])
         spread = max(0.4, e["spread_m"][1])
     lod0 = e["parts"]["0"] if "0" in e["parts"] else e["parts"][0]
-    for part, info in sorted(lod0.items()):
-        mesh_id = resource("Mesh", info["mesh"])
-        mat_id = resource("Material", info["material"])
-        nodes.append(f'[node name="{part.capitalize()}" type="MeshInstance3D" parent="."]\n'
-                     f'mesh = ExtResource("{mesh_id}")\n'
-                     f'surface_material_override/0 = ExtResource("{mat_id}")\n')
+    if not empty:
+        for part, info in sorted(lod0.items()):
+            mesh_id = resource("Mesh", info["mesh"])
+            mat_id = resource("Material", info["material"])
+            nodes.append(f'[node name="{part.capitalize()}" type="MeshInstance3D" parent="."]\n'
+                         f'mesh = ExtResource("{mesh_id}")\n'
+                         f'surface_material_override/0 = ExtResource("{mat_id}")\n')
     ground = max(12.0, spread * 4 + height * 2)
     subs = [f'[sub_resource type="BoxMesh" id="ground"]\nsize = Vector3({ground:.1f}, 0.1, '
             f'{ground:.1f})\n',
@@ -2695,12 +2886,16 @@ def _closeup_scene(eid, e):
                  'attributes = SubResource("camera")\n')
     text = ("[gd_scene load_steps=%d format=3]\n" % (len(ext) + len(subs) + 1)
             + f"; {SPDX}\n"
-            + f"; Generated by tools/assets/plants.py closeups ({eid}); not shipped.\n\n"
+            + f"; Generated by tools/assets/plants.py closeups ({eid}"
+            + ("; the same page with the plant removed, for measuring against" if empty else "")
+            + "); not shipped.\n\n"
             + "\n".join(ext) + "\n\n" + "\n".join(subs)
-            + f'\n[node name="LookDev_{camel(e["species"])}{e["variant"]}" type="Node3D"]\n\n'
+            + f'\n[node name="LookDev_{camel(e["species"])}{e["variant"]}'
+            + f'{"Empty" if empty else ""}" type="Node3D"]\n\n'
             + f'[node name="Environment" parent="." instance=ExtResource("{env_id}")]\n\n'
             + "\n".join(nodes))
-    path = LOOKDEV / f"LD_Plant_{camel(e['species'])}{e['variant']}.tscn"
+    path = (LOOKDEV
+            / f"LD_Plant_{camel(e['species'])}{e['variant']}{'_Empty' if empty else ''}.tscn")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text)
     return path
@@ -2852,7 +3047,7 @@ def cmd_lookdev(args):
 
 def cmd_closeups(args):
     only = set(args.only.split(",")) if args.only else None
-    for scene in closeup_scenes(_catalogue_plants(), only=only):
+    for scene in closeup_scenes(_catalogue_plants(), only=only, empty=args.empty):
         print(scene.relative_to(ROOT))
 
 
@@ -2869,6 +3064,8 @@ def main(argv=None):
     sub.add_parser("lookdev", help="write the look-dev scenes").set_defaults(run=cmd_lookdev)
     close_cmd = sub.add_parser("closeups", help="write one look-dev scene per specimen")
     close_cmd.add_argument("--only", help="comma-separated species keys")
+    close_cmd.add_argument("--empty", action="store_true",
+                           help="also write each page with the plant removed, to measure against")
     close_cmd.set_defaults(run=cmd_closeups)
     if argv is None:
         # Inside Blender (`blender -b -P plants.py -- build`) everything before the
@@ -2876,6 +3073,12 @@ def main(argv=None):
         argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else sys.argv[1:]
     args = parser.parse_args(argv)
     args.run(args)
+
+
+# Every species is registered by now, so the band-wide colour separation can run. It
+# has to happen here rather than inside a command: `textures`, `build` and an importing
+# caller must all see the same greens.
+separate_greens()
 
 
 if __name__ == "__main__":
