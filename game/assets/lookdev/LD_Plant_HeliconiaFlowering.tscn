@@ -12,7 +12,7 @@
 [ext_resource type="Material" path="res://assets/materials/plants/MI_Plant_HeliconiaStem.tres" id="8"]
 
 [sub_resource type="BoxMesh" id="ground"]
-size = Vector3(18.2, 0.1, 18.2)
+size = Vector3(17.8, 0.1, 17.8)
 
 [sub_resource type="BoxMesh" id="ref"]
 size = Vector3(0.45, 1.8, 0.25)
@@ -69,7 +69,7 @@ mesh = SubResource("ground")
 surface_material_override/0 = ExtResource("2")
 
 [node name="GreyCard" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.10, 0.9, -0.90)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.04, 0.9, -0.86)
 mesh = SubResource("ref")
 surface_material_override/0 = SubResource("grey")
 

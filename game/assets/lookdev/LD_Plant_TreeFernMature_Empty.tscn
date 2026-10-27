@@ -6,7 +6,7 @@
 [ext_resource type="Material" path="res://assets/materials/temple/MI_Ground.tres" id="2"]
 
 [sub_resource type="BoxMesh" id="ground"]
-size = Vector3(36.2, 0.1, 36.2)
+size = Vector3(38.2, 0.1, 38.2)
 
 [sub_resource type="BoxMesh" id="ref"]
 size = Vector3(0.45, 1.8, 0.25)
@@ -51,7 +51,7 @@ mesh = SubResource("ground")
 surface_material_override/0 = ExtResource("2")
 
 [node name="GreyCard" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.55, 0.9, -1.77)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.80, 0.9, -1.92)
 mesh = SubResource("ref")
 surface_material_override/0 = SubResource("grey")
 
