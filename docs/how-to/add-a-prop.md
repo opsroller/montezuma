@@ -109,15 +109,30 @@ Then look at it in the engine, at real metre size, under the temple theme's
 sun and sky. Never judge a prop from the numbers or from a mental picture:
 
 ```sh
-printf '[display]\nwindow/size/window_width_override=1920\nwindow/size/window_height_override=1080\n' \
-  > game/override.cfg
+cat > game/override.cfg <<'CFG'
+[display]
+window/size/window_width_override=3840
+window/size/window_height_override=2160
+window/size/mode=4
+
+[autoload]
+UiRoot=""
+GameAudio=""
+CFG
 godot --headless --path game --import && git checkout game/project.godot
 mkdir -p /tmp/props
-flock /home/claude/work/montezuma/.godot-gpu.lock gamescope --backend headless -W 1920 -H 1080 -- \
+flock /home/claude/work/montezuma/.godot-gpu.lock gamescope --backend headless -W 3840 -H 2160 -- \
   godot --path game res://assets/lookdev/LD_Props_Ruin1.tscn \
-  --write-movie /tmp/props/f.png --fixed-fps 30 --quit-after 60
+  --write-movie /tmp/props/f.png --fixed-fps 30 --quit-after 8
 rm game/override.cfg
 ```
+
+Capture at 3840×2160: nothing is judged below it. `window/size/mode=4` is
+needed for the window to actually reach 4K. Blanking `UiRoot` and `GameAudio`
+in the override keeps the game's HUD out of the frame — leave them in and the
+totem panel and a dark bar sit over the top corners of every shot. Eight
+frames is enough for the view to settle; each 4K frame costs about two
+seconds to encode, so asking for sixty just makes you wait.
 
 Frames land as `/tmp/props/fNNNNNNNN.png`; the last one is the one to look at.
 Each family has a page and a `_Top` twin shot from the game's near-top-down

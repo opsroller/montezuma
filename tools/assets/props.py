@@ -56,7 +56,7 @@ LIBRARY_VERSION = 1
 # with 40 props therefore has roughly 2k triangles each to spend, and the
 # classes below sit inside that with room for the board and the backdrop.
 # Godot's OBJ importer builds the lower LODs (generate_lods, on by default).
-TRI_BUDGET = {"tiny": 200, "small": 600, "medium": 1600, "large": 3200, "huge": 6000}
+TRI_BUDGET = {"tiny": 800, "small": 2500, "medium": 7500, "large": 13000, "huge": 22000}
 # Longest side in metres per size class; a prop is classified from its bounds.
 SIZE_CLASS = (("tiny", 0.3), ("small", 1.0), ("medium", 2.5), ("large", 6.0), ("huge", 1e9))
 
@@ -303,6 +303,160 @@ class Mesh:
         lo, _ = self.bounds()
         return self.transform(move=(0.0, y - lo[1], 0.0))
 
+    def largest_part(self):
+        """Keep only the biggest piece joined by shared vertices.
+
+        Cutting can shear a corner clean off; the loose piece is a sliver that
+        hangs in the air beside the prop. There is no reason to keep one.
+        """
+        if not self.faces:
+            return self
+        parent = list(range(len(self.verts)))
+
+        def find(i):
+            while parent[i] != i:
+                parent[i] = parent[parent[i]]
+                i = parent[i]
+            return i
+
+        for f in self.faces:
+            r = find(f[0])
+            for i in f[1:]:
+                parent[find(i)] = r
+        area = {}
+        for f in self.faces:
+            nx, ny, nz = self.newell(f)
+            area[find(f[0])] = area.get(find(f[0]), 0.0) + math.sqrt(nx * nx + ny * ny + nz * nz)
+        best = max(area, key=area.get)
+        self.faces = [f for f in self.faces if find(f[0]) == best]
+        return self.clean()
+
+    def cut(self, point, normal, bevel=0.0):
+        """Slice with a plane, keep the half the normal points away from, and
+        cap the cut with a flat face whose arris is chamfered by `bevel` metres.
+
+        This is a real fracture, not a dent: the cap is a new flat surface that
+        stops where the weathered surface starts, which is what makes broken
+        stone read as broken rather than as dented. `bevel` is the width of the
+        rounded-off arris; stone that has stood in the rain carries 10-30 mm.
+        """
+        length = math.sqrt(sum(c * c for c in normal))
+        if length < 1e-12:
+            return self
+        n = tuple(c / length for c in normal)
+
+        def dist(v):
+            return sum((v[a] - point[a]) * n[a] for a in range(3))
+
+        d = [dist(v) for v in self.verts]
+        if max(d) <= 0:          # nothing to remove
+            return self
+        if min(d) >= 0:          # everything removed; refuse rather than empty it
+            return self
+        # A plane that takes most of the body turns a solid into an open shell.
+        # Refuse it: a fracture is a face off a rock, not half the rock.
+        if sum(1 for x in d if x > 0) > 0.45 * len(d):
+            return self
+
+        kept, cuts = [], []
+        for f in self.faces:
+            poly, made = [], []
+            for k in range(len(f)):
+                i, j = f[k], f[(k + 1) % len(f)]
+                di, dj = d[i], d[j]
+                if di <= 0:
+                    poly.append(i)
+                if (di <= 0) != (dj <= 0):
+                    a, bv = self.verts[i], self.verts[j]
+                    t = di / (di - dj)
+                    x = self.vert(a[0] + (bv[0] - a[0]) * t,
+                                  a[1] + (bv[1] - a[1]) * t,
+                                  a[2] + (bv[2] - a[2]) * t)
+                    poly.append(x)
+                    made.append(x)
+            if len(poly) > 2:
+                kept.append(tuple(poly))
+            # A face crossing the plane makes exactly two new points; the
+            # segment between them is one edge of the cap's boundary.
+            if len(made) == 2:
+                cuts.append(tuple(made))
+        self.faces = kept
+
+        # Record the boundary by position, not by index, and weld before
+        # capping. Every intersection point is built once per face that touches
+        # it, so until the weld there are two or more vertices at each one;
+        # moving only one of them for the chamfer would tear the surface open.
+        def key_of(v):
+            return (round(v[0], 4), round(v[1], 4), round(v[2], 4))
+
+        edges = [(key_of(self.verts[a]), key_of(self.verts[bv])) for a, bv in cuts]
+        self.weld()
+        at = {key_of(v): i for i, v in enumerate(self.verts)}
+
+        link = {}
+        for ka, kb in edges:
+            if ka == kb or ka not in at or kb not in at:
+                continue
+            link.setdefault(ka, set()).add(kb)
+            link.setdefault(kb, set()).add(ka)
+
+        seen, loops = set(), []
+        for start in link:
+            if start in seen:
+                continue
+            loop, prev, cur = [start], None, start
+            seen.add(start)
+            while True:
+                nxt = next((c for c in link.get(cur, ()) if c != prev and c not in seen), None)
+                if nxt is None:
+                    break
+                loop.append(nxt)
+                seen.add(nxt)
+                prev, cur = cur, nxt
+            # Only a loop that returns to where it started bounds a face.
+            if len(loop) > 2 and loop[0] in link.get(loop[-1], ()):
+                loops.append([at[k] for k in loop])
+
+        for loop in loops:
+            self._cap(loop, n, bevel)
+        return self.weld().clean()
+
+    def _cap(self, loop, n, bevel):
+        """Close one cut loop with a flat cap, chamfering the arris by `bevel`."""
+        pts = [self.verts[i] for i in loop]
+        c = tuple(sum(p[a] for p in pts) / len(pts) for a in range(3))
+        # Wind the cap so it faces along +n, which is out of the solid.
+        area = 0.0
+        for k in range(len(pts)):
+            a, bv = pts[k], pts[(k + 1) % len(pts)]
+            area += (a[1] - bv[1]) * (a[2] + bv[2]) * n[0] \
+                + (a[2] - bv[2]) * (a[0] + bv[0]) * n[1] \
+                + (a[0] - bv[0]) * (a[1] + bv[1]) * n[2]
+        if area < 0:
+            loop, pts = loop[::-1], pts[::-1]
+
+        if bevel <= 0:
+            self.face(*loop)
+            return
+
+        # Chamfer: drop the boundary ring into the solid by `bevel`, and lay the
+        # cap on the plane inset by `bevel` towards the loop's centre. The band
+        # between the two rings is the rounded-off arris.
+        inset = []
+        for i, p in zip(loop, pts):
+            to_c = [c[a] - p[a] for a in range(3)]
+            length = math.sqrt(sum(t * t for t in to_c))
+            if length < 1e-9:
+                inset.append(i)
+                continue
+            step = min(bevel, length * 0.45)
+            inset.append(self.vert(*[p[a] + to_c[a] / length * step for a in range(3)]))
+            self.verts[i] = tuple(p[a] - n[a] * bevel for a in range(3))
+        for k in range(len(loop)):
+            j = (k + 1) % len(loop)
+            self.face(loop[k], loop[j], inset[j], inset[k])
+        self.face(*inset)
+
 
 # --------------------------------------------------------------------------
 # Primitives. Every one is star-shaped about a reference point, so orient_by()
@@ -348,6 +502,56 @@ def rounded_box(hx, hy, hz, radius, seg=3):
                 for iv in range(seg):
                     m.face(grid[iu][iv], grid[iu][iv + 1], grid[iu + 1][iv + 1], grid[iu + 1][iv])
     m.weld()
+    m.orient_by((0.0, 0.0, 0.0))
+    return m
+
+
+def icosphere(subdiv=2, radius=1.0):
+    """A geodesic sphere: an icosahedron with each face split `subdiv` times.
+
+    Unlike a rounded box this has no edges, no poles and near-uniform triangle
+    size, so noise displacement reads the same in every direction. Every rock
+    in the library starts here; a rounded box cannot stop looking like a box
+    however hard it is displaced, because its silhouette is still six flats and
+    twelve arrises.
+
+    Triangle count is 20 * 4**subdiv: 80, 320, 1280, 5120.
+    """
+    t = (1.0 + math.sqrt(5.0)) / 2.0
+    verts = [(-1, t, 0), (1, t, 0), (-1, -t, 0), (1, -t, 0),
+             (0, -1, t), (0, 1, t), (0, -1, -t), (0, 1, -t),
+             (t, 0, -1), (t, 0, 1), (-t, 0, -1), (-t, 0, 1)]
+    faces = [(0, 11, 5), (0, 5, 1), (0, 1, 7), (0, 7, 10), (0, 10, 11),
+             (1, 5, 9), (5, 11, 4), (11, 10, 2), (10, 7, 6), (7, 1, 8),
+             (3, 9, 4), (3, 4, 2), (3, 2, 6), (3, 6, 8), (3, 8, 9),
+             (4, 9, 5), (2, 4, 11), (6, 2, 10), (8, 6, 7), (9, 8, 1)]
+    verts = [tuple(c / math.sqrt(1 + t * t) for c in v) for v in verts]
+
+    # Split each edge once per round, sharing the midpoint between the two
+    # faces that own the edge so the sphere stays watertight.
+    for _ in range(max(0, subdiv)):
+        mid, out = {}, []
+
+        def midpoint(i, j):
+            key = (min(i, j), max(i, j))
+            if key not in mid:
+                a, b = verts[i], verts[j]
+                p = [(a[k] + b[k]) / 2 for k in range(3)]
+                length = math.sqrt(sum(c * c for c in p))
+                verts.append(tuple(c / length for c in p))
+                mid[key] = len(verts) - 1
+            return mid[key]
+
+        for a, b, c in faces:
+            ab, bc, ca = midpoint(a, b), midpoint(b, c), midpoint(c, a)
+            out += [(a, ab, ca), (b, bc, ab), (c, ca, bc), (ab, bc, ca)]
+        faces = out
+
+    m = Mesh()
+    for v in verts:
+        m.vert(v[0] * radius, v[1] * radius, v[2] * radius)
+    for f in faces:
+        m.face(*f)
     m.orient_by((0.0, 0.0, 0.0))
     return m
 
@@ -466,20 +670,79 @@ def slab(sx, sy, sz, rng, *, radius=0.03, seg=3, relief=0.02, frequency=4.0, chi
     return m
 
 
-def rock(rx, ry, rz, rng, *, angular=0.35, seg=4, relief=0.30, frequency=2.2, flatten=True):
-    """A boulder: a rounded box with large-scale noise, optionally flat-bottomed.
+def rock(rx, ry, rz, rng, *, angular=0.35, seg=4, relief=0.30, frequency=2.2, flatten=True,
+         fractures=None, bevel=None):
+    """A boulder: a displaced geodesic sphere with fracture planes cut through it.
 
-    `angular` from 0 (a weathered round boulder) to 1 (a freshly broken block).
+    `angular` from 0 (a weathered round boulder, few fractures, soft arrises) to
+    1 (a freshly broken block, many fractures, crisp arrises). `seg` is the
+    sphere's subdivision level, so the triangle count is about 20 * 4**seg
+    before the cuts.
+
+    The shape comes from three things, in the order the eye reads them: the
+    fracture planes give the flat faces and the straight arrises that say
+    "stone"; the low-frequency displacement gives the lumpy overall mass; the
+    high-frequency displacement gives the surface its grain. A rock with only
+    the last of these is a bevelled box with a bumpy texture, which is what the
+    library used to build.
     """
     seed = rng.randrange(1 << 20)
-    radius = min(rx, ry, rz) * (1.0 - 0.85 * angular)
-    m = rounded_box(rx, ry, rz, radius, seg)
-    m.displace(relief * min(rx, ry, rz), frequency / max(rx, ry, rz), seed, octaves=4)
-    m.displace(0.35 * relief * min(rx, ry, rz), frequency * 3.1 / max(rx, ry, rz), seed + 77, octaves=2)
+    seg = max(1, min(3, int(seg)))
+    m = icosphere(seg, 1.0)
+    m.transform(scale=(rx, ry, rz))
+
+    # Amplitudes go with the mean radius, not the smallest: a boulder that has
+    # been flattened in Y still has to wander as far in X and Z as a round one,
+    # and keying off the smallest radius is what left the old rocks smooth.
+    mean = (rx + ry + rz) / 3.0
+    span = max(rx, ry, rz)
+    # Three scales, in the order the eye reads them. The first is the one that
+    # decides whether the thing is a rock or a box, and it has to be large: a
+    # boulder is not a sphere with bumps, it is a lump.
+    m.displace(1.50 * relief * mean, 0.85 * frequency / span, seed, octaves=2)
+    m.displace(0.60 * relief * mean, 2.40 * frequency / span, seed + 77, octaves=3)
+    m.displace(0.18 * relief * mean, 6.80 * frequency / span, seed + 931, octaves=2)
+
+    # Real fracture planes. A weathered boulder keeps a couple of old break
+    # faces; a freshly split block is nearly all break face. The cut has to bite
+    # deep enough to leave a flat with an arris round it -- a plane that only
+    # grazes the surface reads as a scratch, not as a break.
+    if fractures is None:
+        fractures = int(round(2 + 4 * angular))
+    if bevel is None:
+        # Weathered arrises are 10-30 mm; a fresh break keeps a sharper one.
+        bevel = (0.030 - 0.018 * angular) * min(1.0, mean / 0.40)
+    bevel = max(0.004, min(bevel, mean * 0.20))
+    for _ in range(max(0, fractures)):
+        # Aim the plane at a point inside the rock so the cut always bites, and
+        # bias it away from straight down so the flat base stays the base.
+        nx = rng.gauss(0.0, 1.0)
+        ny = rng.gauss(0.0, 1.0) + 0.25
+        nz = rng.gauss(0.0, 1.0)
+        length = math.sqrt(nx * nx + ny * ny + nz * nz) or 1.0
+        n = (nx / length, ny / length, nz / length)
+        # Measure how far the rock actually reaches in this direction *now*,
+        # after the displacement and the cuts already made. Aiming at the
+        # original ellipsoid instead is what turned these into broken shells.
+        lo, hi = m.bounds()
+        c = tuple((lo[a] + hi[a]) / 2 for a in range(3))
+        reach = max(sum((v[a] - c[a]) * n[a] for a in range(3)) for v in m.verts)
+        if reach <= 1e-6:
+            continue
+        depth = rng.uniform(0.55, 0.78) if angular > 0.5 else rng.uniform(0.70, 0.90)
+        p = tuple(c[a] + n[a] * reach * depth for a in range(3))
+        m.cut(p, n, bevel=bevel)
+    m.largest_part()
+
     m.transform(yaw=rng.uniform(0, 2 * math.pi))
     m.drop_to(0.0)
     if flatten:
-        m.flatten_base(0.0)
+        # Cut the base off flat rather than folding it up: folding leaves a
+        # skirt of slivers all round the contact, which is where the contact
+        # shadow has to read.
+        lo, hi = m.bounds()
+        m.cut((0.0, lo[1] + (hi[1] - lo[1]) * 0.06, 0.0), (0.0, -1.0, 0.0), bevel=bevel * 0.5)
+        m.drop_to(0.0)
     return m
 
 
@@ -491,20 +754,30 @@ def moss_shell(mesh, rng, *, coverage=0.45, lift=0.012, up_bias=0.25, frequency=
     """
     seed = rng.randrange(1 << 20)
     out = Mesh()
-    threshold = 1.0 - coverage
     # Lift along the vertex normal, not the face normal: neighbouring patches
     # then land on exactly the same points and weld into one mat instead of
     # standing as separate quads with cracks between them.
     vn = mesh.vertex_normals()
     index = {}
+
+    # Score every face that could hold moss, then keep the dampest `coverage`
+    # of them. Comparing each score against a fixed threshold instead makes
+    # moss a lottery on the seed: on a prop as thin as a log the candidate
+    # faces lie almost in a line, so one unlucky noise field leaves it bare.
+    candidates = []
     for f in mesh.faces:
         n = mesh.normal(f)
         if n[1] < up_bias:
             continue
         c = mesh.centroid(f)
         damp = fbm(c[0] * frequency, c[1] * frequency * 0.6, c[2] * frequency, seed, 3)
-        if damp * (0.4 + 0.6 * n[1]) < threshold:
-            continue
+        candidates.append((damp * (0.4 + 0.6 * n[1]), damp, f))
+    if not candidates:
+        return out
+    candidates.sort(key=lambda row: -row[0])
+    keep = max(1, int(round(len(candidates) * max(0.0, min(1.0, coverage)))))
+
+    for _score, damp, f in candidates[:keep]:
         thick = lift * (0.6 + 0.8 * damp)
         corners = []
         for i in f:
@@ -699,19 +972,37 @@ def masonry(rng, length, height, depth, *, course=0.26, ruin=0.0, batter=0.05,
 
     y, row = 0.0, 0
     while y < height - 1e-6:
-        h = min(course * rng.uniform(0.9, 1.12), height - y)
+        # Courses in a Maya wall are not a module. Letting the height wander by
+        # a quarter is the difference between masonry and brickwork.
+        h = min(course * rng.uniform(0.78, 1.26), height - y)
         x = -length / 2 - (row % 2) * 0.27
+        lo_x, hi_x = None, None
         while x < length / 2 - 1e-6:
             w = min(rng.uniform(*block), length / 2 - x)
             cx = x + w / 2
             if w > 0.11 and cx > -length / 2 and y + h * 0.45 <= crest(cx):
                 d = max(0.14, depth - 2 * batter * y)
-                blk = slab(w * 0.96, h * 0.94, d, rng, radius=0.014, seg=2, relief=0.009,
+                # Full course height: the joint is the chamfer between two
+                # blocks, not a gap between them. Leaving one opened a 15 mm
+                # slot clean through the wall, and every joint showed sky.
+                blk = slab(w * 0.988, h, d, rng, radius=0.009, seg=2, relief=0.009,
                            frequency=7.0, chip=0.012)
                 blk.transform(yaw=rng.uniform(-0.035, 0.035),
-                              move=(cx, y, rng.uniform(-0.012, 0.012)))
+                              move=(cx, y - h * rng.uniform(0.0, 0.05),
+                                    rng.uniform(-0.012, 0.012)))
                 m.add(blk)
+                lo_x = cx - w / 2 if lo_x is None else min(lo_x, cx - w / 2)
+                hi_x = cx + w / 2 if hi_x is None else max(hi_x, cx + w / 2)
             x += w
+        # A rubble core behind the facing. Without it the wall is a row of
+        # loose boxes and daylight comes through every joint; with it a joint
+        # is a recess, which is what reads as a joint.
+        if lo_x is not None and hi_x - lo_x > 0.05:
+            d = max(0.10, depth - 2 * batter * y - 0.09)
+            core = slab(hi_x - lo_x, h * 1.04, d, rng, radius=0.01, seg=2, relief=0.012,
+                        frequency=6.0)
+            core.transform(move=((lo_x + hi_x) / 2, y - h * 0.02, 0.0))
+            m.add(core)
         y += h
         row += 1
     return m.weld().clean()
@@ -1028,17 +1319,23 @@ def p_stela(b, height=2.4, width=0.82, depth=0.34, lithology="limestone", painte
     # Frame: four thin bars around a sunken field.
     fw, fh = width * 0.74, height * 0.52
     cy = height * 0.60
+    # Each bar is centred on its own side of the frame. Offsetting every bar by
+    # half its own height suits the two horizontal ones and throws the two
+    # vertical ones half a frame upwards, which stood them out of the top of
+    # the stela like a pair of rods.
     for dx, dy, bw, bh in ((0, fh / 2, fw, 0.055), (0, -fh / 2, fw, 0.055),
                            (-fw / 2, 0, 0.055, fh), (fw / 2, 0, 0.055, fh)):
-        boss(rng, bw, bh, 0.035, dx, cy + dy + bh / 2, front, panel)
-    # The figure: a tall oval boss, shoulders and a headdress bar.
-    boss(rng, fw * 0.40, fh * 0.52, 0.045, 0.0, cy + fh * 0.12, front, panel)
-    boss(rng, fw * 0.56, fh * 0.10, 0.038, 0.0, cy + fh * 0.22, front, panel)
-    boss(rng, fw * 0.26, fh * 0.14, 0.050, 0.0, cy + fh * 0.30, front, panel)
+        boss(rng, bw, bh, 0.045, dx, cy + dy, front, panel)
+    # The figure: a tall oval boss, shoulders and a headdress bar. Maya low
+    # relief stands 30-80 mm proud; shallower than that and the sun cannot
+    # throw the shadow that makes it read as carving rather than as staining.
+    boss(rng, fw * 0.40, fh * 0.52, 0.062, 0.0, cy + fh * 0.12, front, panel)
+    boss(rng, fw * 0.56, fh * 0.10, 0.052, 0.0, cy + fh * 0.22, front, panel)
+    boss(rng, fw * 0.26, fh * 0.14, 0.074, 0.0, cy + fh * 0.30, front, panel)
     # Glyph cartouches down the lower register.
     for row in range(4):
         for col in (-1, 1):
-            boss(rng, fw * 0.21, fh * 0.11, 0.030, col * fw * 0.17,
+            boss(rng, fw * 0.21, fh * 0.11, 0.042, col * fw * 0.17,
                  cy - fh * 0.16 - row * fh * 0.135, front, panel)
     b.add("Mesh", m, mat(lithology), smooth=26.0)
     b.add("Relief", panel.weld(), "MI_Polychrome" if painted else mat(lithology), smooth=20.0)

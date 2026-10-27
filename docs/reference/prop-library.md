@@ -175,11 +175,19 @@ the library's own caps sit inside that:
 
 | `size_class` | Longest side | Triangles, LOD0, all parts |
 |---|---|---|
-| `tiny` | ≤ 0.3 m | 200 |
-| `small` | ≤ 1 m | 600 |
-| `medium` | ≤ 2.5 m | 1,600 |
-| `large` | ≤ 6 m | 3,200 |
-| `huge` | above | 6,000 |
+| `tiny` | ≤ 0.3 m | 800 |
+| `small` | ≤ 1 m | 2,500 |
+| `medium` | ≤ 2.5 m | 7,500 |
+| `large` | ≤ 6 m | 13,000 |
+| `huge` | above | 22,000 |
+
+These caps were raised from 200/600/1,600/3,200/6,000 once the props were
+first rendered. A rock at the old medium cap is a 192-triangle rounded box:
+there is no displacement or fracture the eye can read at that count, and the
+silhouette stays a box whatever the texture does. The whole library is 129
+entries and about 274,000 triangles, and a level places tens of props, not
+hundreds, so the binding limit is the per-frame budget below rather than the
+per-prop one.
 
 `tools/assets/props.py` prints each prop's measured count and class and exits
 non-zero when one is over its cap.
@@ -194,11 +202,29 @@ authored chain would be a reason to split it, not to hand-build one.
 
 These are known gaps, not oversights:
 
-- **Not yet verified in the engine.** The generators, the texture recipes and
-  the look-dev pages have not been run: the session that wrote them had no
-  working shell (see the hand-off notes). Nothing here may be treated as
-  measured until `tools/assets/props.py` and `validate_assets.py` have run and
-  the look-dev pages have been captured.
+- **The look is not finished.** The generators, the texture recipes and the
+  look-dev pages now run: 129 entries, about 274,000 triangles,
+  `validate_assets.py` clean, and the rock, ruin and carved pages captured at
+  3840×2160 on both cameras. The counts and sizes here are measured. The
+  *look* is not signed off: the rocks read as stone, the masonry now reads as
+  masonry rather than brickwork, but the carved pieces (stela, serpent head,
+  chacmool) still read as flat slabs, and the stucco wall is a blank panel.
+  Relief depth is at the 30–80 mm the reference gives and is not the
+  constraint; see the lighting item below.
+- **Carved relief does not read under the current theme lighting.** The
+  look-dev pages take the temple's own sun and sky from `temple.json`, where
+  the sun is 30,000 lux against a 15,000-nit sky dome. At that ratio a raised
+  boss throws almost no shadow, every stone comes out cool and chalky, and a
+  warm limestone albedo of `(166,158,143)` renders as `(178,183,190)` — the
+  hue inverts. Measured contact shadow is 54% of lit ground against the ~41%
+  [foliage reference](foliage-reference.md#ground) calls for. This is the
+  theme's lighting, not the props', so the library follows it rather than
+  diverging from it; the carved family cannot be judged until it is settled.
+- **At the game camera the crest carries the prop.** From the 15°-off-vertical
+  view a wall is a pale bar: the carefully coursed face is edge-on and
+  invisible, and what reads is the top course and the footprint shadow. The
+  generators currently spend their detail on the face. That is the wrong place
+  for every prop taller than it is wide.
 - **Water is opaque.** The shared material writer
   (`gen_theme_scenes.py::material`) has no transparency key, and the prop
   library does not own that file, so depth colour comes from a dark body
@@ -214,3 +240,34 @@ These are known gaps, not oversights:
   call each. If a level's draw-call count becomes the binding budget, batching
   identical props is the first thing to do.
 - **The selection contract is provisional** (see above).
+
+## What this differs from in the asset library contract
+
+[Asset library](asset-library.md) is the contract for the whole library —
+plants as well as props. `props.py` was written against an earlier reading of
+it and does not meet it yet. The differences, so whoever reconciles them is
+not discovering them twice:
+
+| Contract | What `props.py` writes | Note |
+|---|---|---|
+| `tools/assets/library/*.json`, one file per pack | one `game/assets/library.json` | no pack concept exists in the generator at all |
+| `game/assets/library/<pack>/` | `game/assets/models/props/<family>/` | |
+| a level names **packs** | nothing names packs | the whole selection contract hangs on this |
+| `id` dotted: `plant.heliconia.tall` | flat `altar_block_a`, and it is the dict key, not a field | |
+| `kind` ∈ `plant`,`prop`,`architecture`,`water`,`terrain` | `kind` is the sub-type (`altar`, `boulder`, `wall`); the contract's `kind` is nearest our `family` | a straight collision of meaning on one field name |
+| `name` in plain words | absent | |
+| `reference` — the real object and its source | **absent** | the contract says an entry without one is not in the library |
+| `culture`/`era`/`biome` `null` when neutral | arrays with `"neutral"`/`"any"` sentinels | |
+| `band` (`groundcover`…`ground`, `wall`, `water`, `focal`) | absent; `footing` (`sits`/`embedded`/`wall_tenon`) instead | `footing` answers a different question — how it meets the ground, not where it sits in the planting |
+| `height_m` `[min, max]` of the real thing | `size_m` `[x, y, z]` of the built mesh | |
+| `variants` count per generator | absent; each variant is its own entry (`_sa`, `_sb`, `_ma`) | |
+| `generator` `module:function` | absent; a `seed` string instead | a level cannot call the generator from the catalogue |
+| `textures` — texture sets | `materials` — `MI_` names | |
+| `tris` per LOD, highest first | `triangles`, one integer | LODs are built by the importer, so there is nothing to list |
+| `tags` free-form incl. `mossy` | `tags` plus a separate `surface` of `dry`/`mossy` | |
+
+The two that actually block a level being dressed are **packs** and
+**`generator`**: without them the scatter described in
+[Asset library](asset-library.md#how-a-level-is-dressed) cannot select or
+build anything. `reference` is the one that blocks the library's own rule
+about provenance. The rest are renames.

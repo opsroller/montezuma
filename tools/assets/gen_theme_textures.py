@@ -407,12 +407,23 @@ def limestone(rng, n):
     # Vugs: dissolution pores, bigger and in longer runs along the soft beds
     # than the board stone's, because a prop shows a metre and a half of stone.
     d1, _, pore_id = voronoi(rng, n, 2600)
-    (d1,) = warp([d1], rng, n, 4 * s, octaves=28)
-    vugs = np.clip(1.0 - d1 / ((1.1 + 3.0 * pore_id) * s), 0, 1) ** 0.7 * (pore_id > 0.955 - 0.5 * soft)
+    # Warp hard, and size each pore from a field of its own. Sizing them from
+    # the same number that selects them makes every pore the same radius, and a
+    # field of equal circles reads as printed dots, not as dissolved stone.
+    (d1,) = warp([d1], rng, n, 26 * s, octaves=20)
+    pore_size = fbm(rng, n, 38, 1.3)
+    radius = (0.5 + 5.5 * pore_size ** 2.2) * s
+    # Dissolution follows the softer beds, so the pores run in bands rather
+    # than scattering evenly over the face.
+    take = pore_id > (0.975 - 0.30 * soft - 0.10 * np.clip((mid - 0.5) * 2, 0, 1))
+    vugs = np.clip(1.0 - d1 / np.maximum(radius, 1e-6), 0, 1) ** 0.7 * take
     vugs *= np.clip((grain - 0.2) * 3, 0, 1)
     solution = np.clip((fbm(rng, n, 26, 1.3) - 0.62) * 4, 0, 1) * soft
     _, gap, _ = voronoi(rng, n, 10)
-    (gap,) = warp([gap], rng, n, 20 * s, octaves=20)
+    # A Voronoi edge is a straight line between two points; warped this little
+    # it stays one, and a straight crack reads as a pen stroke. Warp it far
+    # enough that the joint wanders the way a bedding break does.
+    (gap,) = warp([gap], rng, n, 44 * s, octaves=20)
     crack = np.clip(1.0 - gap / ((1.2 + 2.8 * fbm(rng, n, 28, 1.4)) * s), 0, 1)
     crack *= np.clip((fbm(rng, n, 7, 2.1) - 0.48) * 4, 0, 1)
     height = norm(0.34 * large + 0.20 * beds + 0.16 * mid + 0.08 * grain + 0.05 * peck
@@ -425,6 +436,9 @@ def limestone(rng, n):
     lichen *= np.clip((fbm(rng, n, 26, 1.2) - 0.40) * 4, 0, 1)
     lichen_orange = lichen * np.clip((fbm(rng, n, 20, 1.6) - 0.68) * 8, 0, 1)
     moss = np.clip(hollow * 1.8 + 0.9 * (fbm(rng, n, 30, 1.2) - 0.55) - 0.35, 0, 1)
+    # Moss needs a surface to sit on. A hairline joint is a shadow, not a bed
+    # for it, and filling one with green turns the crack into a drawn line.
+    moss *= 1.0 - crack
     v = 0.64 + 0.07 * (large - 0.5) + 0.11 * (beds - 0.5) + 0.07 * (mid - 0.5) + 0.07 * (grain - 0.5)
     v -= 0.10 * vugs + 0.08 * solution + 0.13 * crack + 0.03 * peck
     albedo = rgb(v, (1.04, 0.99, 0.90))
@@ -607,7 +621,11 @@ def bronze(rng, n):
     edge = blur(patina, max(1, int(1 * s)))
     bare = rgb(0.95 - 0.06 * (1 - cast) - 0.03 * scratch, (1.0, 0.82, 0.58))
     green = np.stack([0.22 + 0.06 * fine, 0.40 + 0.07 * fine, 0.34 + 0.05 * fine], axis=-1)
-    albedo = mix(bare, green, edge)
+    # Mix the colour on the same hard mask the metallic channel uses. Softening
+    # only the colour leaves pixels that claim to be raw metal while carrying a
+    # patina's base colour, which is unphysical and what the validator catches.
+    # Roughness may still feather: it is not tied to the metal/dielectric split.
+    albedo = mix(bare, green, patina)
     occ = cavity(height, max(1, int(5 * s)))
     rough = 0.20 + 0.14 * (1 - cast) + 0.10 * scratch + 0.48 * edge
     return albedo, height, occ, np.clip(rough, 0.05, 1.0), metal
