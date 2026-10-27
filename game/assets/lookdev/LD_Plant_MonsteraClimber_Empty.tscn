@@ -6,7 +6,7 @@
 [ext_resource type="Material" path="res://assets/materials/temple/MI_Ground.tres" id="2"]
 
 [sub_resource type="BoxMesh" id="ground"]
-size = Vector3(37.1, 0.1, 37.1)
+size = Vector3(37.2, 0.1, 37.2)
 
 [sub_resource type="BoxMesh" id="ref"]
 size = Vector3(0.45, 1.8, 0.25)

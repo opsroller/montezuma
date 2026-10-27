@@ -57,7 +57,7 @@ mesh = SubResource("ground")
 surface_material_override/0 = ExtResource("2")
 
 [node name="GreyCard" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.24, 0.9, -0.38)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.19, 0.9, -0.36)
 mesh = SubResource("ref")
 surface_material_override/0 = SubResource("grey")
 

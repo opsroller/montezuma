@@ -810,16 +810,29 @@ def litter_skirt(b, rng, radius, count, leaf_len, p, frond=False):
     0.6-1.0 m of its own shed sheaths and fronds, often 10-25 cm deep, and a generated
     plant without one reads as a model dropped onto a surface. Drawn from the atlas's
     dead tile, so it costs no extra material.
+
+    It is a *mat*, not a ring of whole leaves. Litter is mostly broken material - a leaf
+    that fell a season ago is in pieces - and a skirt built only from whole shed blades
+    reads as a handful of straw strips with stone showing between them, which is what
+    the frames showed. So two layers: a few whole leaves, and three times as many
+    fragments at a third to two thirds the length, laid thickest at the base and
+    thinning outward. Each piece is two triangles, so forty of them cost eighty.
     """
     d = b.dead()
-    for _ in range(max(2, int(count * p.detail(1.0, 0.5, 0.25)))):
+    whole = max(2, int(count * p.detail(1.0, 0.5, 0.25)))
+    for i in range(whole * 4):
+        fragment = i >= whole
         a = rng.uniform(0, 2 * math.pi)
-        r = radius * (0.35 + 0.65 * math.sqrt(rng.random()))
-        length = leaf_len * rng.uniform(0.6, 1.25)
-        flat_leaf(d, math.cos(a) * r, math.sin(a) * r, rng.uniform(0.005, 0.03),
+        # Fragments gather in close, whole leaves fall further out.
+        r = radius * ((0.12 + 0.75 * rng.random() ** 1.6) if fragment
+                      else (0.35 + 0.65 * math.sqrt(rng.random())))
+        length = leaf_len * (rng.uniform(0.3, 0.65) if fragment else rng.uniform(0.6, 1.25))
+        flat_leaf(d, math.cos(a) * r, math.sin(a) * r, rng.uniform(0.004, 0.05),
                   rng.uniform(0, 2 * math.pi), length,
-                  length * (0.07 if frond else rng.uniform(0.25, 0.45)), rng,
-                  curl=rng.uniform(0.1, 0.5))
+                  length * (0.07 if frond and not fragment else rng.uniform(0.25, 0.55)), rng,
+                  curl=rng.uniform(0.1, 0.6))
+        if fragment and p.lod:
+            break
 
 
 def dying_leaves(b, rng, base, count, length, width, p, **kw):

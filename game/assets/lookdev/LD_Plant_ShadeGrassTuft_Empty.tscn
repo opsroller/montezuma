@@ -60,6 +60,6 @@ directional_shadow_max_distance = 8.0
 directional_shadow_blend_splits = true
 
 [node name="Camera" type="Camera3D" parent="."]
-transform = Transform3D(0.819152, -0.356106, 0.449642, 0.000000, 0.783928, 0.620852, -0.573576, -0.508572, 0.642156, 0.978802, 1.650000, 1.397875)
+transform = Transform3D(0.819152, -0.354692, 0.450759, 0.000000, 0.785873, 0.618387, -0.573576, -0.506553, 0.643750, 0.985143, 1.650000, 1.406930)
 fov = 50.0
 attributes = SubResource("camera")
