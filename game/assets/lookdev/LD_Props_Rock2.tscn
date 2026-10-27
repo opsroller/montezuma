@@ -64,6 +64,14 @@ light_angular_distance = 0.6
 shadow_enabled = true
 directional_shadow_max_distance = 60.0
 
+[node name="SkyFill" type="AreaLight3D" parent="." groups=["quality:area_light"]]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 6, 0)
+light_intensity_lumens = 6000
+light_color = Color(0.7216, 0.8314, 1.0000, 1.0000)
+light_bake_mode = 0
+area_size = Vector2(10.0, 10.0)
+area_range = 12.0
+
 [node name="Ground" type="MeshInstance3D" parent="."]
 mesh = SubResource("ground")
 surface_material_override/0 = ExtResource("1")

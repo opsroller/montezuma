@@ -2197,6 +2197,20 @@ def lookdev_shell(r, p, ground=46.0):
         f"light_color = {c(sun['color'])}",
         f"light_angular_distance = {sun['angular_distance']}", "shadow_enabled = true",
         "directional_shadow_max_distance = 60.0",
+    ]
+    # The theme's fill light, when it has one. Without it a prop is judged
+    # under a different key than the board it will stand on, which is the whole
+    # thing these pages exist to avoid.
+    fill = light.get("sky_fill")
+    if fill:
+        nodes += [
+            "", '[node name="SkyFill" type="AreaLight3D" parent="." groups=["quality:area_light"]]',
+            f"transform = {fill['transform']}", f"light_intensity_lumens = {fill['lumens']}",
+            f"light_color = {c(fill['color'])}", "light_bake_mode = 0",
+            f"area_size = Vector2({fill['size'][0]}, {fill['size'][1]})",
+            f"area_range = {fill['range']}",
+        ]
+    nodes += [
         "", '[node name="Ground" type="MeshInstance3D" parent="."]',
         'mesh = SubResource("ground")', f"surface_material_override/0 = {plaza}",
     ]
