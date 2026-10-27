@@ -3703,19 +3703,20 @@
         "Leaf_TreeFern"
       ],
       "tris": [
-        2849,
-        1035
+        4221,
+        1695,
+        696
       ],
       "bounds_m": {
         "min": [
-          -2.718,
+          -3.432,
           -0.002,
-          -3.029
+          -2.633
         ],
         "max": [
-          3.005,
+          2.916,
           6.34,
-          2.883
+          3.293
         ]
       },
       "budget_triangles": 5500,
@@ -3724,7 +3725,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernLeaning_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_FernFrond.tres",
-            "triangles": 2760
+            "triangles": 4132
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernLeaning_Trunk.obj",
@@ -3736,12 +3737,24 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernLeaning_Leaf_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_FernFrond.tres",
-            "triangles": 992
+            "triangles": 1652
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernLeaning_Trunk_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_FernTrunk.tres",
             "triangles": 43
+          }
+        },
+        "2": {
+          "leaf": {
+            "mesh": "res://assets/models/plants/SM_Plant_TreeFernLeaning_Leaf_LOD2.obj",
+            "material": "res://assets/materials/plants/MI_Plant_FernFrond.tres",
+            "triangles": 670
+          },
+          "trunk": {
+            "mesh": "res://assets/models/plants/SM_Plant_TreeFernLeaning_Trunk_LOD2.obj",
+            "material": "res://assets/materials/plants/MI_Plant_FernTrunk.tres",
+            "triangles": 26
           }
         }
       },
@@ -3781,19 +3794,20 @@
         "Leaf_TreeFern"
       ],
       "tris": [
-        2849,
-        1035
+        4221,
+        1695,
+        696
       ],
       "bounds_m": {
         "min": [
-          -2.942,
+          -3.352,
           -0.003,
-          -2.386
+          -3.02
         ],
         "max": [
-          2.951,
+          3.05,
           6.295,
-          2.797
+          2.849
         ]
       },
       "budget_triangles": 5500,
@@ -3802,7 +3816,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernMature_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_FernFrond.tres",
-            "triangles": 2760
+            "triangles": 4132
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernMature_Trunk.obj",
@@ -3814,12 +3828,24 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernMature_Leaf_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_FernFrond.tres",
-            "triangles": 992
+            "triangles": 1652
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernMature_Trunk_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_FernTrunk.tres",
             "triangles": 43
+          }
+        },
+        "2": {
+          "leaf": {
+            "mesh": "res://assets/models/plants/SM_Plant_TreeFernMature_Leaf_LOD2.obj",
+            "material": "res://assets/materials/plants/MI_Plant_FernFrond.tres",
+            "triangles": 670
+          },
+          "trunk": {
+            "mesh": "res://assets/models/plants/SM_Plant_TreeFernMature_Trunk_LOD2.obj",
+            "material": "res://assets/materials/plants/MI_Plant_FernTrunk.tres",
+            "triangles": 26
           }
         }
       },
@@ -3859,19 +3885,19 @@
         "Leaf_TreeFern"
       ],
       "tris": [
-        1869,
-        771
+        2653,
+        1035
       ],
       "bounds_m": {
         "min": [
-          -1.37,
+          -1.383,
           -0.002,
-          -1.546
+          -1.395
         ],
         "max": [
-          1.437,
+          1.669,
           4.34,
-          1.566
+          1.816
         ]
       },
       "budget_triangles": 5500,
@@ -3880,7 +3906,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernYoung_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_FernFrond.tres",
-            "triangles": 1780
+            "triangles": 2564
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernYoung_Trunk.obj",
@@ -3892,7 +3918,7 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernYoung_Leaf_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_FernFrond.tres",
-            "triangles": 728
+            "triangles": 992
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_TreeFernYoung_Trunk_LOD1.obj",

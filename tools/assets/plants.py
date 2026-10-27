@@ -1136,7 +1136,10 @@ def _tree_fern(parts, rng, p, s):
          sides=p.detail(7, 5, 4), v_scale=1.2, u_repeat=2.0)
     crown = axis[-1]
     b = parts("leaf")
-    fronds = int(_lerp(5, 13, age) * p.detail(1.0, 0.6, 0.35))
+    # A mature Sphaeropteris crown carries 15-25 fronds. Thirteen left the crown
+    # transparent against the sky, which is the opposite of the reference's "sky
+    # through the mass is a few percent at most, as small scattered holes".
+    fronds = int(_lerp(7, 20, age) * p.detail(1.0, 0.6, 0.35))
     for i, a in enumerate(rosette(max(3, fronds), start=rng.uniform(0, 2 * math.pi))):
         old = i / max(1, fronds - 1)              # 0 newest .. 1 oldest and most arched
         length = height * _lerp(0.30, 0.46, old) * rng.uniform(0.9, 1.1)
