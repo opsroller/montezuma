@@ -121,6 +121,12 @@ def mix(a, b, t):
     return a * (1 - t) + b * t
 
 
+def norm(a):
+    """Stretch a field to the full 0..1 range (a _H map needs its whole range)."""
+    lo, hi = float(a.min()), float(a.max())
+    return (a - lo) / (hi - lo) if hi - lo > 1e-9 else np.zeros_like(a)
+
+
 def rgb(value, tint):
     return np.stack([value * tint[0], value * tint[1], value * tint[2]], axis=-1)
 
@@ -370,8 +376,359 @@ def moonstone(rng, n):
     return albedo, height, np.ones_like(v) * 0.98, rough, np.zeros_like(v)
 
 
+# --- Prop library recipes (tools/assets/themes/props.json, tools/assets/props.py) ---
+#
+# The board's sets above are tuned for one stone tile per cell and must stay
+# near-neutral, because the tile materials tint them. These are for props: they
+# map at roughly one tile to 1.5-2 m, they carry their own colour, and each is
+# a named lithology or material rather than a surface for the board to tint.
+# Everything is drawn here, from noise; no photograph is used, traced or
+# sampled anywhere in this file.
+
+
+def limestone(rng, n):
+    """Lowland limestone as it stands in the Peten: bedded, dissolving along the
+    softer beds, pecked by the mason, stained where the rain runs off, dark
+    biofilm in the hollows, crustose lichen on the exposed faces, moss in the
+    crevices.
+
+    This is the Maya lowland material set the reference settles on
+    (docs/reference/mesoamerican-reference.md): sedimentary limestone, in a
+    place with 2,000 mm of rain a year and 80% humidity, which is why the
+    weathering layers matter more than the stone.
+    """
+    s = n / 1024
+    (beds,) = warp([fbm(rng, n, 10, 2.0, stretch=(0.12, 1.0))], rng, n, 50 * s)
+    large = fbm(rng, n, 5, 2.4)
+    mid = fbm(rng, n, 20, 1.6)
+    grain = fbm(rng, n, 64, 1.1)
+    peck = np.clip((fbm(rng, n, 56, 0.9) - 0.52) * 4, 0, 1)      # the mason's point
+    soft = np.clip((beds - 0.42) * 3, 0, 1)
+    # Vugs: dissolution pores, bigger and in longer runs along the soft beds
+    # than the board stone's, because a prop shows a metre and a half of stone.
+    d1, _, pore_id = voronoi(rng, n, 2600)
+    (d1,) = warp([d1], rng, n, 4 * s, octaves=28)
+    vugs = np.clip(1.0 - d1 / ((1.1 + 3.0 * pore_id) * s), 0, 1) ** 0.7 * (pore_id > 0.955 - 0.5 * soft)
+    vugs *= np.clip((grain - 0.2) * 3, 0, 1)
+    solution = np.clip((fbm(rng, n, 26, 1.3) - 0.62) * 4, 0, 1) * soft
+    _, gap, _ = voronoi(rng, n, 10)
+    (gap,) = warp([gap], rng, n, 20 * s, octaves=20)
+    crack = np.clip(1.0 - gap / ((1.2 + 2.8 * fbm(rng, n, 28, 1.4)) * s), 0, 1)
+    crack *= np.clip((fbm(rng, n, 7, 2.1) - 0.48) * 4, 0, 1)
+    height = norm(0.34 * large + 0.20 * beds + 0.16 * mid + 0.08 * grain + 0.05 * peck
+                  - 0.22 * vugs - 0.16 * solution - 0.40 * crack)
+    hollow = np.clip((blur(height, max(1, int(12 * s))) - height) * 7, 0, 1)
+    (streak,) = warp([fbm(rng, n, 22, 1.5, stretch=(0.05, 1.0))], rng, n, 12 * s, octaves=14)
+    runoff = np.clip((streak - 0.52) * 3, 0, 1) * np.clip((large - 0.25) * 2, 0, 1)
+    biofilm = np.clip((fbm(rng, n, 28, 1.1) - 0.48) * 3 + hollow * 1.6 - 0.25, 0, 1) * 0.85
+    lichen = np.clip((fbm(rng, n, 44, 0.9) + 0.30 * (grain - 0.5) - 0.55) * 7, 0, 1) * (1 - hollow)
+    lichen *= np.clip((fbm(rng, n, 26, 1.2) - 0.40) * 4, 0, 1)
+    lichen_orange = lichen * np.clip((fbm(rng, n, 20, 1.6) - 0.68) * 8, 0, 1)
+    moss = np.clip(hollow * 1.8 + 0.9 * (fbm(rng, n, 30, 1.2) - 0.55) - 0.35, 0, 1)
+    v = 0.64 + 0.07 * (large - 0.5) + 0.11 * (beds - 0.5) + 0.07 * (mid - 0.5) + 0.07 * (grain - 0.5)
+    v -= 0.10 * vugs + 0.08 * solution + 0.13 * crack + 0.03 * peck
+    albedo = rgb(v, (1.04, 0.99, 0.90))
+    albedo = mix(albedo, albedo * np.array([0.88, 0.78, 0.63], np.float32), runoff * 0.65)
+    albedo = mix(albedo, rgb(0.27 + 0.06 * grain, (1.0, 1.0, 0.94)), biofilm * 0.5)
+    albedo = mix(albedo, rgb(0.80 + 0.08 * grain, (0.95, 1.0, 0.89)), lichen * (1 - lichen_orange) * 0.55)
+    albedo = mix(albedo, rgb(0.76 + 0.06 * grain, (1.0, 0.70, 0.36)), lichen_orange * 0.6)
+    albedo = mix(albedo, rgb(0.24 + 0.08 * grain, (0.66, 1.0, 0.48)), moss * 0.55)
+    height = np.clip(height + 0.04 * moss + 0.02 * lichen, 0, 1)
+    occ = cavity(height, max(1, int(7 * s))) * (1 - 0.40 * crack) * (1 - 0.25 * vugs)
+    rough = 0.78 + 0.10 * (grain - 0.5) + 0.12 * vugs + 0.06 * solution + 0.07 * biofilm + 0.06 * moss
+    rough -= 0.08 * np.clip(large - 0.60, 0, 1)
+    return albedo, height, occ, np.clip(rough, 0.05, 1.0), np.zeros_like(v)
+
+
+def basalt(rng, n):
+    """Dark vesicular basalt, the stone most Mexica sculpture is cut from: round
+    gas bubbles in clusters, a pecked and ground surface, pale weathering in the
+    run-off lines and dust in the hollows."""
+    s = n / 1024
+    body = fbm(rng, n, 14, 1.8)
+    grain = fbm(rng, n, 64, 1.0)
+    fine = fbm(rng, n, 48, 1.2)
+    peck = np.clip((fbm(rng, n, 50, 0.8) - 0.50) * 4, 0, 1)
+    d1, _, ident = voronoi(rng, n, 1800)
+    cluster = np.clip((fbm(rng, n, 10, 2.0) - 0.35) * 2.5, 0, 1)
+    vesicle = np.clip(1.0 - d1 / ((1.4 + 3.4 * ident) * s), 0, 1) ** 0.6 * (ident > 0.90 - 0.5 * cluster)
+    _, gap, _ = voronoi(rng, n, 7)
+    (gap,) = warp([gap], rng, n, 16 * s, octaves=18)
+    crack = np.clip(1.0 - gap / (1.8 * s), 0, 1) * np.clip((fbm(rng, n, 9, 2.0) - 0.55) * 4, 0, 1)
+    height = norm(0.42 * body + 0.22 * grain + 0.10 * peck - 0.46 * vesicle - 0.30 * crack)
+    hollow = np.clip((blur(height, max(1, int(8 * s))) - height) * 7, 0, 1)
+    (streak,) = warp([fbm(rng, n, 20, 1.5, stretch=(0.05, 1.0))], rng, n, 10 * s, octaves=12)
+    bleach = np.clip((streak - 0.60) * 3, 0, 1) * (1 - hollow)
+    dust = np.clip((fbm(rng, n, 34, 1.1) - 0.58) * 4, 0, 1) * hollow
+    v = 0.30 + 0.05 * (body - 0.5) + 0.06 * (grain - 0.5) - 0.05 * vesicle - 0.03 * peck
+    albedo = rgb(v, (1.0, 0.99, 1.01))
+    albedo = mix(albedo, rgb(0.44 + 0.05 * fine, (1.0, 0.98, 0.93)), bleach * 0.55)
+    albedo = mix(albedo, rgb(0.46 + 0.05 * fine, (1.02, 1.0, 0.94)), dust * 0.40)
+    occ = cavity(height, max(1, int(5 * s))) * (1 - 0.35 * vesicle)
+    rough = 0.72 + 0.10 * (grain - 0.5) + 0.14 * vesicle + 0.05 * peck - 0.06 * bleach
+    return albedo, height, occ, np.clip(rough, 0.05, 1.0), np.zeros_like(v)
+
+
+def tezontle(rng, n):
+    """Tezontle: the red volcanic scoria the Mexica built with. Almost all hole:
+    big ragged vesicles, thin walls between them, a dry red-brown body."""
+    s = n / 1024
+    body = fbm(rng, n, 16, 1.7)
+    grain = fbm(rng, n, 64, 1.0)
+    d1, gap, ident = voronoi(rng, n, 900)
+    (d1, gap) = warp([d1, gap], rng, n, 6 * s, octaves=24)
+    big = np.clip(1.0 - d1 / ((3.0 + 7.0 * ident) * s), 0, 1) ** 0.5 * (ident > 0.42)
+    d2, _, id2 = voronoi(rng, n, 5200)
+    small = np.clip(1.0 - d2 / ((1.0 + 2.0 * id2) * s), 0, 1) ** 0.7 * (id2 > 0.70)
+    pores = np.clip(big + 0.7 * small, 0, 1)
+    height = norm(0.40 * body + 0.18 * grain - 0.72 * pores)
+    hollow = np.clip((blur(height, max(1, int(7 * s))) - height) * 6, 0, 1)
+    v = 0.36 + 0.07 * (body - 0.5) + 0.07 * (grain - 0.5) - 0.10 * pores
+    albedo = rgb(v, (1.22, 0.72, 0.58))
+    albedo = mix(albedo, rgb(0.24 + 0.05 * grain, (1.1, 0.80, 0.70)), hollow * 0.5)
+    albedo = mix(albedo, rgb(0.50 + 0.05 * grain, (1.0, 0.97, 0.92)),
+                 np.clip((fbm(rng, n, 30, 1.2) - 0.66) * 4, 0, 1) * (1 - hollow) * 0.35)
+    occ = cavity(height, max(1, int(5 * s))) * (1 - 0.45 * pores)
+    rough = 0.86 + 0.08 * (grain - 0.5) + 0.08 * pores
+    return albedo, height, occ, np.clip(rough, 0.05, 1.0), np.zeros_like(v)
+
+
+def andesite(rng, n):
+    """Andesite: the fine grey-green volcanic stone the best Mexica sculpture is
+    cut from. Dense, with pale feldspar laths through it and a ground surface
+    that still shows the abrasive."""
+    s = n / 1024
+    body = fbm(rng, n, 12, 1.9)
+    grain = fbm(rng, n, 64, 1.0)
+    grind = fbm(rng, n, 56, 0.9, stretch=(1.0, 0.12))
+    d1, _, ident = voronoi(rng, n, 7000)
+    laths = np.clip(1.0 - d1 / (1.3 * s), 0, 1) * (ident > 0.72)
+    (laths,) = warp([laths], rng, n, 3 * s, octaves=30)
+    chip = np.clip((fbm(rng, n, 40, 1.2) - 0.70) * 5, 0, 1)
+    height = norm(0.5 * body + 0.2 * grain + 0.14 * grind + 0.05 * laths - 0.3 * chip)
+    hollow = np.clip((blur(height, max(1, int(8 * s))) - height) * 6, 0, 1)
+    v = 0.45 + 0.05 * (body - 0.5) + 0.05 * (grain - 0.5) + 0.03 * (grind - 0.5) - 0.06 * chip
+    albedo = rgb(v, (0.97, 1.0, 0.96))
+    albedo = mix(albedo, rgb(0.72 + 0.06 * grain, (1.0, 1.0, 0.98)), laths * 0.55)
+    albedo = mix(albedo, rgb(0.30 + 0.06 * grain, (1.0, 1.0, 0.97)), hollow * 0.35)
+    occ = cavity(height, max(1, int(6 * s)))
+    rough = 0.60 + 0.10 * (grain - 0.5) + 0.10 * (grind - 0.5) + 0.22 * chip
+    return albedo, height, occ, np.clip(rough, 0.05, 1.0), np.zeros_like(v)
+
+
+def stucco(rng, n):
+    """Burnished lime plaster over masonry: a smooth polished skin with crazing
+    cracks, patches spalled off down to the coarse render under it, run-off
+    staining and growth wherever it stays damp."""
+    s = n / 1024
+    large = fbm(rng, n, 6, 2.3)
+    fine = fbm(rng, n, 48, 1.1)
+    trowel = fbm(rng, n, 16, 1.7, stretch=(1.0, 0.25))
+    _, gap, _ = voronoi(rng, n, 420)
+    (gap,) = warp([gap], rng, n, 6 * s, octaves=20)
+    craze = np.clip(1.0 - gap / (1.0 * s), 0, 1) * np.clip((fbm(rng, n, 12, 1.8) - 0.40) * 3, 0, 1)
+    spall = np.clip((fbm(rng, n, 9, 2.0) - 0.58) * 5, 0, 1)
+    spall = np.clip(spall - 0.5 * np.clip((fbm(rng, n, 30, 1.2) - 0.60) * 3, 0, 1), 0, 1)
+    render = fbm(rng, n, 56, 1.0)       # the coarse coat the skin sits on
+    height = norm(0.55 * large + 0.16 * trowel + 0.08 * fine - 0.22 * craze
+                  - 0.50 * spall + 0.12 * spall * render)
+    hollow = np.clip((blur(height, max(1, int(10 * s))) - height) * 6, 0, 1)
+    (streak,) = warp([fbm(rng, n, 20, 1.5, stretch=(0.05, 1.0))], rng, n, 10 * s, octaves=14)
+    stain = np.clip((streak - 0.50) * 2.5, 0, 1) * np.clip((large - 0.30) * 2, 0, 1)
+    growth = np.clip(hollow * 1.6 + 0.8 * (fbm(rng, n, 26, 1.2) - 0.55) - 0.30, 0, 1)
+    v = 0.82 + 0.05 * (large - 0.5) + 0.05 * (fine - 0.5) + 0.04 * (trowel - 0.5) - 0.07 * craze
+    albedo = rgb(v, (1.0, 0.985, 0.95))
+    albedo = mix(albedo, rgb(0.52 + 0.10 * render, (1.02, 0.97, 0.88)), spall * 0.85)
+    albedo = mix(albedo, albedo * np.array([0.85, 0.80, 0.70], np.float32), stain * 0.6)
+    albedo = mix(albedo, rgb(0.28 + 0.08 * fine, (0.72, 1.0, 0.56)), growth * 0.5)
+    occ = cavity(height, max(1, int(6 * s))) * (1 - 0.30 * spall)
+    rough = 0.52 + 0.10 * (fine - 0.5) + 0.30 * spall + 0.12 * growth
+    rough -= 0.12 * np.clip(large - 0.55, 0, 1)
+    return albedo, height, occ, np.clip(rough, 0.05, 1.0), np.zeros_like(v)
+
+
+def polychrome(rng, n):
+    """Paint over lime plaster, worn down to it.
+
+    The field colours are the five the Mexica palette is limited to - red, wine
+    red, ochre, white, black - plus Maya blue, which the lowland palette adds
+    (docs/reference/mesoamerican-reference.md). No motif is drawn: a triplanar
+    map lands on a prop in an arbitrary place, so a glyph or a fret would cut
+    across the form. The geometry carries the motif, the texture the colour and
+    the loss.
+    """
+    s = n / 1024
+    base, height, occ, rough, _ = stucco(rng, n)
+    _, _, ident = voronoi(rng, n, 26, spread=0.9)
+    band = fbm(rng, n, 7, 2.0, stretch=(0.10, 1.0))
+    ident, band = warp([ident, band], rng, n, 26 * s, octaves=12)
+    key = (ident * 3.0 + band * 2.0) % 1.0
+    palette = ((0.52, 0.12, 0.10), (0.34, 0.09, 0.13), (0.66, 0.42, 0.13),
+               (0.17, 0.43, 0.52), (0.86, 0.84, 0.78), (0.17, 0.16, 0.16))
+    fine = fbm(rng, n, 56, 1.0)
+    paint = np.zeros((n, n, 3), np.float32)
+    for i, c in enumerate(palette):
+        field = ((key >= i / len(palette)) & (key < (i + 1) / len(palette))).astype(np.float32)
+        paint += field[..., None] * np.array(c, np.float32)
+    paint *= (0.88 + 0.22 * fine)[..., None]
+    # Loss: paint goes first from the high ground, then in patches, and it is
+    # already gone wherever the plaster under it has spalled.
+    highs = np.clip((height - 0.58) * 3, 0, 1)
+    patchy = np.clip((fbm(rng, n, 14, 1.7) - 0.34) * 2.6, 0, 1)
+    flaking = np.clip((fbm(rng, n, 36, 1.1) - 0.46) * 3, 0, 1)
+    keep = np.clip(patchy * (1.0 - 0.85 * highs) * (0.45 + 0.75 * flaking), 0, 1)
+    albedo = mix(base, paint, keep)
+    rough = np.clip(rough * (1 - 0.40 * keep) + 0.16 * keep, 0.05, 1.0)
+    return albedo, height, occ, rough, np.zeros_like(height)
+
+
+def bronze(rng, n):
+    """Cast bronze gone to patina: the casting skin, planishing on the high
+    ground, and green carbonate in everything the rain does not wash.
+
+    Metal is 1 where the metal shows and 0 on the patina, which is an oxide and
+    so a dielectric; only the thin line between them is in between, which is
+    what the asset validator asks of a metallic channel.
+    """
+    s = n / 1024
+    cast = fbm(rng, n, 22, 1.5)
+    fine = fbm(rng, n, 56, 1.0)
+    d1, _, _ = voronoi(rng, n, 320)
+    dimple = np.clip(d1 / (34 * s), 0, 1) ** 1.4
+    scratch = np.clip((fbm(rng, n, 64, 0.7, stretch=(0.06, 1.0)) - 0.76) * 6, 0, 1)
+    height = norm(0.46 * cast + 0.34 * dimple + 0.14 * fine - 0.10 * scratch)
+    hollow = np.clip((blur(height, max(1, int(7 * s))) - height) * 6, 0, 1)
+    patina = (np.clip(hollow * 1.9 + 1.2 * (fbm(rng, n, 12, 1.8) - 0.50), 0, 1) > 0.45)
+    patina = patina.astype(np.float32)
+    # The metallic channel stays strictly 0 or 1 - a blurred mask would put a
+    # band of pixels in between, which is both wrong and what the validator
+    # rejects. Only the colour and the roughness soften across the edge.
+    metal = 1.0 - patina
+    edge = blur(patina, max(1, int(1 * s)))
+    bare = rgb(0.95 - 0.06 * (1 - cast) - 0.03 * scratch, (1.0, 0.82, 0.58))
+    green = np.stack([0.22 + 0.06 * fine, 0.40 + 0.07 * fine, 0.34 + 0.05 * fine], axis=-1)
+    albedo = mix(bare, green, edge)
+    occ = cavity(height, max(1, int(5 * s)))
+    rough = 0.20 + 0.14 * (1 - cast) + 0.10 * scratch + 0.48 * edge
+    return albedo, height, occ, np.clip(rough, 0.05, 1.0), metal
+
+
+def clay(rng, n):
+    """Fired earthenware: a burnished slip over a tempered body, the grey fire
+    clouds an open firing leaves, and chips where the slip is off."""
+    s = n / 1024
+    body = fbm(rng, n, 18, 1.7)
+    fine = fbm(rng, n, 64, 1.0)
+    burnish = fbm(rng, n, 20, 1.5, stretch=(1.0, 0.18))
+    d1, _, ident = voronoi(rng, n, 9000)
+    temper = np.clip(1.0 - d1 / (1.2 * s), 0, 1) * (ident > 0.78)
+    chip = np.clip((fbm(rng, n, 34, 1.2) - 0.68) * 5, 0, 1)
+    cloud = np.clip((fbm(rng, n, 7, 2.2) - 0.50) * 2.6, 0, 1)
+    height = norm(0.55 * body + 0.2 * fine + 0.1 * burnish + 0.06 * temper - 0.35 * chip)
+    v = 0.56 + 0.06 * (body - 0.5) + 0.05 * (fine - 0.5)
+    albedo = rgb(v, (1.0, 0.60, 0.40))
+    albedo = mix(albedo, rgb(0.70 + 0.06 * fine, (1.0, 0.72, 0.55)), chip * 0.75)   # paler core
+    albedo = mix(albedo, rgb(0.85, (1.0, 0.97, 0.92)), temper * 0.5)                # temper grit
+    albedo = mix(albedo, rgb(0.26 + 0.05 * fine, (1.0, 0.94, 0.88)), cloud * 0.55)  # fire clouds
+    occ = cavity(height, max(1, int(5 * s)))
+    rough = 0.46 + 0.10 * (fine - 0.5) - 0.18 * np.clip(burnish - 0.45, 0, 1) + 0.30 * chip
+    return albedo, height, occ, np.clip(rough, 0.05, 1.0), np.zeros_like(v)
+
+
+def moss(rng, n):
+    """A moss mat on stone: clumps of different green at different heights, the
+    fine fuzz over all of it, and the dark litter you see down between them."""
+    s = n / 1024
+    d1, _, ident = voronoi(rng, n, 160, spread=0.9)
+    (d1, ident) = warp([d1, ident], rng, n, 10 * s, octaves=16)
+    clump = np.clip(1.0 - d1 / (26 * s), 0, 1) ** 0.7
+    fuzz = fbm(rng, n, 64, 0.8)
+    mid = fbm(rng, n, 22, 1.5)
+    sporophyte = np.clip((fbm(rng, n, 64, 0.6) - 0.76) * 6, 0, 1)
+    height = norm(0.55 * clump * (0.6 + 0.5 * ident) + 0.26 * fuzz + 0.12 * mid + 0.1 * sporophyte)
+    gapped = 1.0 - np.clip(clump * 1.4, 0, 1)
+    v = 0.34 + 0.10 * (ident - 0.5) + 0.10 * (fuzz - 0.5) + 0.08 * (mid - 0.5)
+    albedo = np.stack([v * 0.56, v * 1.0, v * 0.40], axis=-1)
+    albedo = mix(albedo, rgb(0.34 + 0.08 * fuzz, (0.80, 1.0, 0.42)), np.clip(clump - 0.5, 0, 1) * 0.6)
+    albedo = mix(albedo, rgb(0.26 + 0.06 * fuzz, (1.0, 0.78, 0.46)), sporophyte * 0.5)
+    albedo = mix(albedo, rgb(0.20 + 0.05 * fuzz, (1.0, 0.92, 0.80)), gapped * 0.55)
+    occ = cavity(height, max(1, int(6 * s))) * (1 - 0.35 * gapped)
+    rough = 0.90 + 0.08 * (fuzz - 0.5) - 0.06 * np.clip(clump - 0.6, 0, 1)
+    return albedo, height, occ, np.clip(rough, 0.05, 1.0), np.zeros_like(v)
+
+
+def wetstone(rng, n):
+    """Stone under running water: flow-polished and dark, algae in the slower
+    lines, pale travertine where lime comes back out of the water."""
+    s = n / 1024
+    body = fbm(rng, n, 14, 1.8)
+    (flow,) = warp([fbm(rng, n, 26, 1.3, stretch=(0.04, 1.0))], rng, n, 8 * s, octaves=16)
+    fine = fbm(rng, n, 56, 1.1)
+    scallop = np.clip((fbm(rng, n, 18, 1.6, stretch=(0.5, 1.0)) - 0.52) * 3, 0, 1)
+    height = norm(0.5 * body + 0.22 * flow + 0.14 * fine - 0.26 * scallop)
+    hollow = np.clip((blur(height, max(1, int(9 * s))) - height) * 6, 0, 1)
+    algae = np.clip((flow - 0.46) * 3, 0, 1) * np.clip(hollow + 0.35, 0, 1)
+    sinter = np.clip((fbm(rng, n, 22, 1.5) - 0.64) * 4, 0, 1) * (1 - hollow)
+    v = 0.30 + 0.06 * (body - 0.5) + 0.05 * (fine - 0.5) - 0.05 * hollow
+    albedo = rgb(v, (1.0, 0.99, 0.95))
+    albedo = mix(albedo, rgb(0.22 + 0.05 * fine, (0.72, 1.0, 0.62)), algae * 0.6)
+    albedo = mix(albedo, rgb(0.74 + 0.06 * fine, (1.0, 0.98, 0.90)), sinter * 0.55)
+    occ = cavity(height, max(1, int(6 * s)))
+    # Wet stone is smooth where the water runs and rougher where sinter grows.
+    rough = 0.16 + 0.12 * (fine - 0.5) + 0.10 * algae + 0.35 * sinter
+    return albedo, height, occ, np.clip(rough, 0.05, 1.0), np.zeros_like(v)
+
+
+def water(rng, n):
+    """A still surface: a slow swell with two crossed ripple trains on it.
+
+    The colour is the material's, so this is nearly white; what the set is for
+    is the normal map, which is what makes the sun break on the water instead
+    of sitting on it as one highlight.
+    """
+    swell = fbm(rng, n, 6, 2.4)
+    rip1 = fbm(rng, n, 26, 1.3, stretch=(1.0, 0.35))
+    rip2 = fbm(rng, n, 34, 1.3, stretch=(0.32, 1.0))
+    chop = fbm(rng, n, 64, 1.1)
+    height = norm(0.46 * swell + 0.26 * rip1 + 0.20 * rip2 + 0.08 * chop)
+    v = 0.90 + 0.02 * (swell - 0.5)
+    albedo = rgb(v, (1.0, 1.0, 1.0))
+    rough = 0.05 + 0.06 * np.clip((0.5 * (rip1 + rip2)) - 0.45, 0, 1) * 2
+    return albedo, height, np.ones_like(v) * 0.99, np.clip(rough, 0.04, 1.0), np.zeros_like(v)
+
+
+def bark(rng, n):
+    """Rainforest bark on a trunk that is going over: deep vertical fissures
+    between the ridges, lenticels, and the lichen and moss that take anything
+    here that stands still."""
+    s = n / 1024
+    ridge_src = fbm(rng, n, 18, 1.5, stretch=(1.0, 0.07))
+    (ridge,) = warp([ridge_src], rng, n, 14 * s, octaves=10)
+    fine = fbm(rng, n, 64, 1.0)
+    cross = np.clip((fbm(rng, n, 30, 1.3, stretch=(0.25, 1.0)) - 0.60) * 4, 0, 1)
+    fissure = np.clip((0.52 - ridge) * 4, 0, 1)
+    d1, _, ident = voronoi(rng, n, 3000)
+    lenticel = np.clip(1.0 - d1 / (1.6 * s), 0, 1) * (ident > 0.80)
+    height = norm(0.60 * ridge + 0.16 * fine - 0.40 * fissure - 0.18 * cross - 0.08 * lenticel)
+    hollow = np.clip((blur(height, max(1, int(9 * s))) - height) * 6, 0, 1)
+    lichen = np.clip((fbm(rng, n, 36, 1.0) - 0.56) * 6, 0, 1) * (1 - hollow)
+    growth = np.clip(hollow * 1.5 + 0.8 * (fbm(rng, n, 24, 1.3) - 0.56) - 0.28, 0, 1)
+    v = 0.34 + 0.08 * (ridge - 0.5) + 0.07 * (fine - 0.5) - 0.08 * fissure
+    albedo = rgb(v, (1.0, 0.86, 0.68))
+    albedo = mix(albedo, rgb(0.24 + 0.05 * fine, (1.0, 0.92, 0.80)), hollow * 0.5)
+    albedo = mix(albedo, rgb(0.66 + 0.08 * fine, (0.94, 1.0, 0.88)), lichen * 0.5)
+    albedo = mix(albedo, rgb(0.26 + 0.07 * fine, (0.64, 1.0, 0.44)), growth * 0.55)
+    occ = cavity(height, max(1, int(6 * s))) * (1 - 0.3 * fissure)
+    rough = 0.88 + 0.08 * (fine - 0.5) + 0.06 * fissure - 0.05 * lichen
+    return albedo, height, occ, np.clip(rough, 0.05, 1.0), np.zeros_like(v)
+
+
 RECIPES = {"stone": stone, "ground": ground, "gold": gold, "gem": gem, "lapis": lapis, "jade": jade,
-           "moonstone": moonstone}
+           "moonstone": moonstone,
+           # Prop library
+           "limestone": limestone, "basalt": basalt, "tezontle": tezontle, "andesite": andesite,
+           "stucco": stucco, "polychrome": polychrome, "bronze": bronze, "clay": clay,
+           "moss": moss, "wetstone": wetstone, "water": water, "bark": bark}
 
 
 def normal_from_height(h, strength):

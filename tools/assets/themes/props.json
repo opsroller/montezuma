@@ -1,0 +1,72 @@
+{
+  "_comment": "Texture sets for the shared prop library (tools/assets/props.py). SPDX-License-Identifier: GPL-2.0-or-later. This is NOT a board theme: it has no board, artifacts, environment or manifest entry, and gen_theme_scenes.py is never run on it. It sits in tools/assets/themes/ only so gen_theme_textures.py (which generates every file in that folder) builds its sets into game/assets/textures/props/ from CMake and CI with no extra wiring. The materials that use these sets are written by tools/assets/props.py.",
+  "theme": "props",
+  "seed": 20261027,
+  "textures": {
+    "size": 1024,
+    "hi_size": 2048,
+    "sets": {
+      "Limestone_01": {
+        "recipe": "limestone",
+        "hi": true,
+        "height": true,
+        "normal_strength": 8.0
+      },
+      "Basalt_01": {
+        "recipe": "basalt",
+        "height": true,
+        "normal_strength": 7.0
+      },
+      "Tezontle_01": {
+        "recipe": "tezontle",
+        "height": true,
+        "normal_strength": 9.0
+      },
+      "Andesite_01": {
+        "recipe": "andesite",
+        "height": true,
+        "normal_strength": 6.0
+      },
+      "Stucco_01": {
+        "recipe": "stucco",
+        "height": true,
+        "normal_strength": 5.0
+      },
+      "Polychrome_01": {
+        "recipe": "polychrome",
+        "height": true,
+        "normal_strength": 5.0
+      },
+      "Bronze_01": {
+        "recipe": "bronze",
+        "normal_strength": 2.5
+      },
+      "Clay_01": {
+        "recipe": "clay",
+        "normal_strength": 3.0
+      },
+      "Moss_01": {
+        "recipe": "moss",
+        "normal_strength": 6.0
+      },
+      "WetStone_01": {
+        "recipe": "wetstone",
+        "height": true,
+        "normal_strength": 5.0
+      },
+      "Water_01": {
+        "recipe": "water",
+        "normal_strength": 2.0
+      },
+      "Bark_01": {
+        "recipe": "bark",
+        "height": true,
+        "normal_strength": 7.0
+      },
+      "Plaza_01": {
+        "recipe": "ground",
+        "normal_strength": 4.5
+      }
+    }
+  }
+}
