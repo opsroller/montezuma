@@ -216,7 +216,11 @@ class LeafTex:
     outline: str = "ovate"         # ovate | strap | pinnule | lobed | fan | heart | wedge
     green: tuple = hsv(112, 60, 31)        # mature upper surface, sRGB albedo
     young: tuple = hsv(98, 74, 46)         # young flush
-    dead: tuple = hsv(36, 46, 40)          # the dead tile and the litter skirt
+    # The dead tile and the litter skirt. The measured floor is two materials: dry
+    # sunlit litter at 39-43% saturation and value 37-41, and wet or shaded floor that
+    # is almost neutral (10%). 46% sat sat just above the dry figure and rendered as a
+    # ring of ochre slabs, so this sits inside the measured band.
+    dead: tuple = hsv(36, 41, 39)
     under: float = 1.6             # how much paler the underside is (1.5-2.5 measured)
     vein: float = 0.5              # how strongly veins show, 0..1
     vein_count: int = 14           # secondary veins per side (pinnate) or per blade (parallel)
@@ -771,18 +775,30 @@ def disc(b, cx, cy, z, radius, rng, sides=9, bump=0.25, u_repeat=1.0):
     return rim
 
 
-def flat_leaf(b, cx, cy, z, azim, length, width, rng, curl=0.1):
+def flat_leaf(b, cx, cy, z, azim, length, width, rng, curl=0.1, tilt=0.45):
     """A single fallen leaf lying on the ground: two triangles, one atlas tile.
 
     Wound base-to-tip then across, so the face looks up out of the ground.
+
+    `tilt` is how far out of the horizontal it can lie, in radians. A skirt of leaves
+    all lying perfectly flat is the most sun-facing surface in a frame, so it came back
+    as the brightest thing in it - a ring of ochre slabs round the base of every plant,
+    brighter than any living leaf. Real litter is a jumbled mat: leaves propped on each
+    other, cupped, standing on edge. Tilting each one is what breaks that up, and it
+    costs nothing.
     """
     ca, sa = math.cos(azim), math.sin(azim)
     nx, ny = -sa, ca
+    # One random slope per leaf, as a rise across the blade and along it.
+    pitch, roll = rng.uniform(-tilt, tilt), rng.uniform(-tilt, tilt)
     corners, uvs = [], []
     for t, s in ((0.0, -0.35), (1.0, -0.35), (1.0, 0.35), (0.0, 0.35)):
         x = cx + ca * length * (t - 0.5) + nx * width * s
         y = cy + sa * length * (t - 0.5) + ny * width * s
-        corners.append(b.vert(x, y, z + abs(s) * width * curl + rng.uniform(0, 0.004)))
+        lift = (length * (t - 0.5) * math.sin(pitch)
+                + width * s * math.sin(roll)
+                + abs(s) * width * curl)
+        corners.append(b.vert(x, y, z + lift + rng.uniform(0, 0.004)))
         uvs.append(b.tile_uv(0.5 + s * 1.15, t))
     b.face(tuple(corners), tuple(uvs))
 
@@ -2392,6 +2408,34 @@ def separate_greens():
             SPECIES[s.key] = replace(s, leaf_tex=replace(tex, **moved))
 
 
+def temper_dead():
+    """Hold every species' dead-leaf colour inside the measured floor.
+
+    The reference measures the forest floor as two materials: dry sunlit litter at
+    39-43% saturation and value 37-42, and wet or shaded floor that is almost neutral
+    at 10%. Seven of the twenty-five species had picked a dead colour above the dry
+    figure - up to 52% saturation and value 52 - and because a shed leaf lies flat and
+    faces straight up, it is the most sun-facing surface in a frame: the skirt came back
+    as a ring of ochre slabs brighter than any living leaf on the plant.
+
+    Each species keeps its own hue, which is what distinguishes a dead palm frond from a
+    dead aroid; only how saturated and how light it may be is held to the measurement.
+    """
+    import colorsys
+    from dataclasses import replace
+
+    for key, s in list(SPECIES.items()):
+        if not s.leaf_tex:
+            continue
+        h, sat, v = _hsv_of(s.leaf_tex.dead)
+        held = (min(sat, 43.0), _clamp(v, 32.0, 42.0))
+        if (sat, v) == held:
+            continue
+        dead = tuple(round(c, 4) for c in
+                     colorsys.hsv_to_rgb(h / 360.0, held[0] / 100.0, held[1] / 100.0))
+        SPECIES[key] = replace(s, leaf_tex=replace(s.leaf_tex, dead=dead))
+
+
 def colour_separation_errors():
     """Neighbouring species must not share a green.
 
@@ -3117,6 +3161,7 @@ def main(argv=None):
 # has to happen here rather than inside a command: `textures`, `build` and an importing
 # caller must all see the same greens.
 separate_greens()
+temper_dead()
 
 
 if __name__ == "__main__":
