@@ -48,6 +48,7 @@ own folder.
 - [Operations](reference/operations.md): cost, flow and quality measures, operations-review findings and the review log.
 - [Style guide](../design/README.md): the visual identity's rendered key art, gold wordmark and flat logo, colour, type, icons, glass UI surfaces, band and imagery rules, approved contrast pairs, font sources and token files.
 - [History: Mexica art, 1502 to 1520](reference/history-mexica-art.md): the sourced reference set and artist brief for the temple's look (stone, codices, featherwork, greenstone, gold), with what is not used and why.
+- [Prop library](reference/prop-library.md): the growing library of set dressing, its files, catalogue, tags, selection rule, materials and budgets.
 
 ## Explanation
 
@@ -63,6 +64,7 @@ own folder.
 - [Cut a release](how-to/cut-a-release.md): tag a version and publish its packages and notes, from CI or your own machine.
 - [Make a board theme](how-to/make-a-board-theme.md): change the temple look or add a new theme.
 - [Use the identity](how-to/use-the-identity.md): swap the game and site tokens, vendor the fonts, add the band, place the logo, rebuild the 3D key art.
+- [Add a prop](how-to/add-a-prop.md): add one piece of set dressing to the shared library, judge it in the engine and record it.
 - [Regenerate or add sounds](how-to/regenerate-or-add-sounds.md): rebuild the generated audio, add a cue.
 - [Play a sound from code](how-to/play-a-sound-from-code.md): call a cue from C++ or a scene, start and stop music.
 - [Run the balance simulator](how-to/run-the-balance-simulator.md): play levels with bots and check them against the targets.
