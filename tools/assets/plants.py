@@ -2906,6 +2906,9 @@ def lookdev_scenes(plants):
 
 
 GROUND_MATERIAL = "res://assets/materials/temple/MI_Ground.tres"
+MATERIAL_RES = "res://assets/materials/plants"
+# What a band's plants grow on, for the look-dev page to lend them.
+HOST_FOR = {"vine": "trunk", "epiphyte": "branch"}
 THEME_PARAMS = ROOT / "tools/assets/themes/temple.json"
 # Atmosphere the theme puts between the player and the temple, which has no business
 # between the camera and a plant that is three metres away. The braziers go too: their
@@ -3023,6 +3026,34 @@ def _closeup_scene(eid, e, empty=False):
                  f"{spread * 0.5 + 0.6:.2f}, 0.9, {-spread * 0.3:.2f})\n"
                  'mesh = SubResource("ref")\n'
                  'surface_material_override/0 = SubResource("grey")\n')
+    # A climber, a vine and an epiphyte are built to grow on something, and on an empty
+    # plaza they render as a bare stem with a leaf on it - the monstera shingle and the
+    # liana came back as a vertical line in the sky. The page lends them a host: a plain
+    # trunk behind a climber, a branch under an epiphyte. It is scenery for the page, not
+    # part of the plant, which is why it is a stock cylinder and not a generated tree.
+    # Climbing variants of understory aroids need one too, and they are named for it.
+    host = ("trunk" if e["variant"] in ("Climber", "Shingle", "Climbing", "Masonry",
+                                        "Enveloping")
+            else HOST_FOR.get(e["band"]))
+    if host == "trunk":
+        h = max(2.5, height * 1.25)
+        subs.append(f'[sub_resource type="CylinderMesh" id="host"]\ntop_radius = 0.17\n'
+                    f"bottom_radius = 0.22\nheight = {h:.2f}\nradial_segments = 12\n")
+        bark_id = resource("Material", f"{MATERIAL_RES}/MI_Plant_CanopyBark.tres")
+        nodes.append('[node name="HostTrunk" type="MeshInstance3D" parent="."]\n'
+                     "transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, "
+                     f"{h / 2:.2f}, -0.30)\n"
+                     'mesh = SubResource("host")\n'
+                     f'surface_material_override/0 = ExtResource("{bark_id}")\n')
+    elif host == "branch":
+        subs.append('[sub_resource type="CylinderMesh" id="host"]\ntop_radius = 0.11\n'
+                    "bottom_radius = 0.13\nheight = 2.4\nradial_segments = 10\n")
+        bark_id = resource("Material", f"{MATERIAL_RES}/MI_Plant_CanopyBark.tres")
+        nodes.append('[node name="HostBranch" type="MeshInstance3D" parent="."]\n'
+                     "transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, -0.07, "
+                     f"{-spread * 0.1:.2f})\n"
+                     'mesh = SubResource("host")\n'
+                     f'surface_material_override/0 = ExtResource("{bark_id}")\n')
     # Frame the plant: 50 degrees vertical over the taller of its height and its spread,
     # with a quarter of a frame of air, from three quarters round so the depth of the
     # mass reads rather than a flat elevation.
