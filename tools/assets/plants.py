@@ -103,7 +103,13 @@ TRI_BUDGET = {
     # the reference measures mats three to five layers deep; that costs 4,400.
     "understory": 5500,
     "mid": 4000,
-    "canopy": 7000,
+    # The canopy band is the one place the library's "leaves are geometry, never alpha
+    # cutouts" rule costs real money. A 30 m crown has hundreds of square metres of
+    # envelope to fill, and a 15 cm leaf covers 0.02 of one: at 7,000 triangles the
+    # crown is about 0.5% covered and a 45 m ceiba renders as a bare winter tree. These
+    # trees are placed once or twice in a level, and the alternative is cutting the look
+    # to buy frame time, so the ceiling is what a crown that reads as foliage measures.
+    "canopy": 60000,
 }
 # Above this many triangles a variant also gets a reduced LOD1 (and LOD2 above the
 # second figure). Godot's OBJ importer generates its own LOD chain by decimation;
@@ -1874,29 +1880,47 @@ def _ceiba(parts, rng, p, s):
     # 5 m leaves on a 45 m tree - which rendered as a bent lamp-post with three paddles.
     # A ceiba leaflet is 5-20 cm, palmately in fives to nines, so the crown is made of
     # thousands of small things and has to be built as limbs, twigs and sprays.
-    tiers = p.detail(4, 3, 2)
+    tiers = p.detail(5, 3, 2)
     for k in range(tiers):
         up = _lerp(0.74, 1.0, k / max(1, tiers - 1))
-        for limb in range(p.detail(4, 3, 2)):
+        for limb in range(p.detail(7, 3, 2)):
             a = rng.uniform(0, 6.28)
             reach = height * _lerp(0.22, 0.38, up) * rng.uniform(0.7, 1.0)
             branch = arc((0, 0, height * up), a, reach, height * 0.04, 0.0, 3,
                          tilt=rng.uniform(0.1, 0.35))
             tube(t, branch, [r0 * 0.30, r0 * 0.22, r0 * 0.15, r0 * 0.10], sides=4, v_scale=1.0)
-            for twig in range(p.detail(3, 2, 1)):
+            for twig in range(p.detail(5, 2, 1)):
                 ta = a + rng.uniform(-1.0, 1.0)
-                sub = arc(branch[1 + twig % 2], ta, reach * rng.uniform(0.25, 0.5),
-                          height * 0.012, height * 0.02, 2, tilt=rng.uniform(0.0, 0.5))
-                tube(t, sub, [r0 * 0.11, r0 * 0.07, r0 * 0.04], sides=3, v_scale=1.6)
-                for node in sub[1:]:
-                    # One palmate leaf: a whorl of five to nine leaflets off one point.
-                    for leaflet in range(p.detail(6, 4, 3)):
-                        size = rng.uniform(0.05, 0.20)
-                        la = ta + leaflet * 2.39996 + rng.uniform(-0.2, 0.2)
-                        blade(c, node, la, size, size * 0.34,
-                              rise=size * 0.06, droop=size * 0.3, fold=0.12, curl=0.2,
-                              twist=rng.uniform(-0.5, 0.5), segs=2, cols=3,
-                              outline="ovate", tilt=rng.uniform(-0.5, 0.2))
+                sub = arc(branch[1 + twig % 3], ta, reach * rng.uniform(0.25, 0.6),
+                          height * 0.012, height * 0.02, 3, tilt=rng.uniform(0.0, 0.5))
+                tube(t, sub, [r0 * 0.11, r0 * 0.08, r0 * 0.06, r0 * 0.04], sides=3, v_scale=1.6)
+                # Leaves go along the whole twig and the limb behind it, not just at the
+                # tip. Hung at the ends only, 2,200 leaves sat in a few dozen pom-poms
+                # and the crown volume between them was empty: a bare tree with green
+                # tips, through three rounds of raising the count.
+                for node in sub + branch[1:]:
+                    # One mesh element is one whole palmate LEAF, 0.3-0.5 m across, and
+                    # the five-to-nine leaflets it divides into are carried by the leaf
+                    # atlas - the same trade the tree fern makes for its pinnules. Built
+                    # leaflet by leaflet instead, each covering 0.014 m2, filling a 27 m
+                    # crown three layers deep needs about 120,000 of them and the better
+                    # part of a million triangles; at any count that fits, the tree
+                    # renders bare. At whole-leaf size the same triangles cover it.
+                    for leaf in range(p.detail(5, 3, 2)):
+                        size = rng.uniform(0.30, 0.52)
+                        la = ta + leaf * 2.39996 + rng.uniform(-0.3, 0.3)
+                        # Scattered off the node, so a whorl is a tuft of foliage with
+                        # depth rather than a flat rosette on one point. Offset from the
+                        # node itself each time, not from the last leaf, or the whorl
+                        # walks away down the branch.
+                        at = (node[0] + rng.uniform(-1, 1) * size * 1.3,
+                              node[1] + rng.uniform(-1, 1) * size * 1.3,
+                              node[2] + rng.uniform(-1, 1) * size * 0.9)
+                        blade(c, at, la, size, size * 0.42,
+                              rise=size * 0.06, droop=size * 0.34, fold=0.14, curl=0.22,
+                              twist=rng.uniform(-0.6, 0.6), segs=3, cols=3,
+                              outline="ovate", lobes=3, ripple=0.2,
+                              tilt=rng.uniform(-0.5, 0.2))
 
 
 @species(
@@ -1992,24 +2016,27 @@ def _canopy_tree(parts, rng, p, s):
     # is what the first frame of this species showed. So: leaves at their own real size,
     # on a branch system big enough to carry a crown, and enough of them that the
     # silhouette is leaves rather than sticks.
-    primaries = p.detail(6, 4, 3)
+    primaries = p.detail(8, 4, 3)
     for k in range(primaries):
         a = 2 * math.pi * k / primaries + rng.uniform(-0.5, 0.5)
         reach = height * rng.uniform(0.18, 0.30)
         branch = arc(top, a, reach, height * rng.uniform(0.06, 0.14), 0.0, 3,
                      tilt=rng.uniform(0.5, 0.9))
         tube(t, branch, [r0 * 0.45, r0 * 0.34, r0 * 0.22, r0 * 0.13], sides=4, v_scale=1.2)
-        for sec in range(p.detail(3, 2, 1)):
+        for sec in range(p.detail(4, 2, 1)):
             sa = a + rng.uniform(-0.9, 0.9)
             start = branch[1 + sec % 2]
             sub = arc(start, sa, reach * rng.uniform(0.4, 0.7), height * 0.04, height * 0.02,
-                      2, tilt=rng.uniform(0.2, 0.8))
-            tube(t, sub, [r0 * 0.18, r0 * 0.12, r0 * 0.07], sides=3, v_scale=1.6)
+                      3, tilt=rng.uniform(0.2, 0.8))
+            tube(t, sub, [r0 * 0.18, r0 * 0.13, r0 * 0.09, r0 * 0.06], sides=3, v_scale=1.6)
             # Leaves sit in sprays along the twig, which is how a crown fills: a spray
-            # of six 10 cm leaves reads as foliage where one 3 m leaf reads as a sail.
+            # of 15 cm leaves reads as foliage where one 3 m leaf reads as a sail.
+            # As on the ceiba: one element is one leaf at its own size, not one leaflet,
+            # because a leaflet-sized element cannot cover a crown at any affordable
+            # count. A ramon leaf is 5-15 cm, so a spray of them is the unit here.
             for node in sub[1:] + branch[2:]:
-                for _ in range(p.detail(5, 3, 2)):
-                    size = rng.uniform(0.06, 0.15)
+                for _ in range(p.detail(7, 3, 2)):
+                    size = rng.uniform(0.22, 0.42)
                     la = sa + rng.uniform(-2.2, 2.2)
                     blade(c, (node[0] + rng.uniform(-1, 1) * size * 1.6,
                               node[1] + rng.uniform(-1, 1) * size * 1.6,

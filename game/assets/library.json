@@ -543,45 +543,58 @@
         "Leaf_Canopy"
       ],
       "tris": [
-        1976,
-        658
+        5846,
+        810,
+        291
       ],
       "bounds_m": {
         "min": [
-          -7.298,
-          -0.08,
-          -6.987
+          -8.384,
+          -0.123,
+          -9.318
         ],
         "max": [
-          7.999,
-          38.917,
-          7.421
+          8.247,
+          37.627,
+          9.701
         ]
       },
-      "budget_triangles": 7000,
+      "budget_triangles": 60000,
       "parts": {
         "0": {
           "canopy": {
             "mesh": "res://assets/models/plants/SM_Plant_CanopyTreeMature_Canopy.obj",
             "material": "res://assets/materials/plants/MI_Plant_CanopyFoliage.tres",
-            "triangles": 1484
+            "triangles": 4928
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_CanopyTreeMature_Trunk.obj",
             "material": "res://assets/materials/plants/MI_Plant_CanopyBark.tres",
-            "triangles": 492
+            "triangles": 918
           }
         },
         "1": {
           "canopy": {
             "mesh": "res://assets/models/plants/SM_Plant_CanopyTreeMature_Canopy_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_CanopyFoliage.tres",
-            "triangles": 398
+            "triangles": 502
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_CanopyTreeMature_Trunk_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_CanopyBark.tres",
-            "triangles": 260
+            "triangles": 308
+          }
+        },
+        "2": {
+          "canopy": {
+            "mesh": "res://assets/models/plants/SM_Plant_CanopyTreeMature_Canopy_LOD2.obj",
+            "material": "res://assets/materials/plants/MI_Plant_CanopyFoliage.tres",
+            "triangles": 130
+          },
+          "trunk": {
+            "mesh": "res://assets/models/plants/SM_Plant_CanopyTreeMature_Trunk_LOD2.obj",
+            "material": "res://assets/materials/plants/MI_Plant_CanopyBark.tres",
+            "triangles": 161
           }
         }
       },
@@ -621,45 +634,58 @@
         "Leaf_Canopy"
       ],
       "tris": [
-        1976,
-        658
+        5846,
+        810,
+        291
       ],
       "bounds_m": {
         "min": [
-          -4.286,
-          -0.075,
-          -3.886
+          -4.399,
+          -0.105,
+          -5.27
         ],
         "max": [
-          4.324,
+          5.288,
           21.7,
-          3.327
+          4.041
         ]
       },
-      "budget_triangles": 7000,
+      "budget_triangles": 60000,
       "parts": {
         "0": {
           "canopy": {
             "mesh": "res://assets/models/plants/SM_Plant_CanopyTreeSapling_Canopy.obj",
             "material": "res://assets/materials/plants/MI_Plant_CanopyFoliage.tres",
-            "triangles": 1484
+            "triangles": 4928
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_CanopyTreeSapling_Trunk.obj",
             "material": "res://assets/materials/plants/MI_Plant_CanopyBark.tres",
-            "triangles": 492
+            "triangles": 918
           }
         },
         "1": {
           "canopy": {
             "mesh": "res://assets/models/plants/SM_Plant_CanopyTreeSapling_Canopy_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_CanopyFoliage.tres",
-            "triangles": 398
+            "triangles": 502
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_CanopyTreeSapling_Trunk_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_CanopyBark.tres",
-            "triangles": 260
+            "triangles": 308
+          }
+        },
+        "2": {
+          "canopy": {
+            "mesh": "res://assets/models/plants/SM_Plant_CanopyTreeSapling_Canopy_LOD2.obj",
+            "material": "res://assets/materials/plants/MI_Plant_CanopyFoliage.tres",
+            "triangles": 130
+          },
+          "trunk": {
+            "mesh": "res://assets/models/plants/SM_Plant_CanopyTreeSapling_Trunk_LOD2.obj",
+            "material": "res://assets/materials/plants/MI_Plant_CanopyBark.tres",
+            "triangles": 161
           }
         }
       },
@@ -699,58 +725,58 @@
         "Leaf_Ceiba"
       ],
       "tris": [
-        3881,
-        1202,
-        325
+        54200,
+        3830,
+        701
       ],
       "bounds_m": {
         "min": [
-          -14.498,
-          -0.081,
-          -11.203
+          -22.386,
+          -0.095,
+          -22.674
         ],
         "max": [
-          12.448,
-          52.247,
-          15.878
+          21.531,
+          54.249,
+          22.709
         ]
       },
-      "budget_triangles": 7000,
+      "budget_triangles": 60000,
       "parts": {
         "0": {
           "canopy": {
             "mesh": "res://assets/models/plants/SM_Plant_CeibaEmergent_Canopy.obj",
             "material": "res://assets/materials/plants/MI_Plant_CeibaCanopy.tres",
-            "triangles": 2372
+            "triangles": 49496
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_CeibaEmergent_Trunk.obj",
             "material": "res://assets/materials/plants/MI_Plant_CeibaBark.tres",
-            "triangles": 1509
+            "triangles": 4704
           }
         },
         "1": {
           "canopy": {
             "mesh": "res://assets/models/plants/SM_Plant_CeibaEmergent_Canopy_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_CeibaCanopy.tres",
-            "triangles": 590
+            "triangles": 3110
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_CeibaEmergent_Trunk_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_CeibaBark.tres",
-            "triangles": 612
+            "triangles": 720
           }
         },
         "2": {
           "canopy": {
             "mesh": "res://assets/models/plants/SM_Plant_CeibaEmergent_Canopy_LOD2.obj",
             "material": "res://assets/materials/plants/MI_Plant_CeibaCanopy.tres",
-            "triangles": 106
+            "triangles": 458
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_CeibaEmergent_Trunk_LOD2.obj",
             "material": "res://assets/materials/plants/MI_Plant_CeibaBark.tres",
-            "triangles": 219
+            "triangles": 243
           }
         }
       },
@@ -790,58 +816,58 @@
         "Leaf_Ceiba"
       ],
       "tris": [
-        3881,
-        1202,
-        325
+        54200,
+        3822,
+        701
       ],
       "bounds_m": {
         "min": [
-          -8.371,
-          -0.062,
-          -7.145
+          -11.243,
+          -0.114,
+          -10.208
         ],
         "max": [
-          6.135,
-          27.9,
-          8.302
+          11.622,
+          28.282,
+          9.621
         ]
       },
-      "budget_triangles": 7000,
+      "budget_triangles": 60000,
       "parts": {
         "0": {
           "canopy": {
             "mesh": "res://assets/models/plants/SM_Plant_CeibaYoung_Canopy.obj",
             "material": "res://assets/materials/plants/MI_Plant_CeibaCanopy.tres",
-            "triangles": 2372
+            "triangles": 49496
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_CeibaYoung_Trunk.obj",
             "material": "res://assets/materials/plants/MI_Plant_CeibaBark.tres",
-            "triangles": 1509
+            "triangles": 4704
           }
         },
         "1": {
           "canopy": {
             "mesh": "res://assets/models/plants/SM_Plant_CeibaYoung_Canopy_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_CeibaCanopy.tres",
-            "triangles": 590
+            "triangles": 3102
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_CeibaYoung_Trunk_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_CeibaBark.tres",
-            "triangles": 612
+            "triangles": 720
           }
         },
         "2": {
           "canopy": {
             "mesh": "res://assets/models/plants/SM_Plant_CeibaYoung_Canopy_LOD2.obj",
             "material": "res://assets/materials/plants/MI_Plant_CeibaCanopy.tres",
-            "triangles": 106
+            "triangles": 458
           },
           "trunk": {
             "mesh": "res://assets/models/plants/SM_Plant_CeibaYoung_Trunk_LOD2.obj",
             "material": "res://assets/materials/plants/MI_Plant_CeibaBark.tres",
-            "triangles": 219
+            "triangles": 243
           }
         }
       },
@@ -897,7 +923,7 @@
           6.062
         ]
       },
-      "budget_triangles": 7000,
+      "budget_triangles": 60000,
       "parts": {
         "0": {
           "leaf": {
@@ -987,7 +1013,7 @@
           6.324
         ]
       },
-      "budget_triangles": 7000,
+      "budget_triangles": 60000,
       "parts": {
         "0": {
           "leaf": {
@@ -4011,6 +4037,6 @@
     "vine": 1000,
     "understory": 5500,
     "mid": 4000,
-    "canopy": 7000
+    "canopy": 60000
   }
 }
