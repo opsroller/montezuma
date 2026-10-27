@@ -57,11 +57,37 @@ object scale, not polygon counts).
 |---|---|---|
 | `litter` | 300 | fallen leaves and frond segments |
 | `groundcover` | 900 | moss, lichen, grasses, spikemoss, the cycad |
-| `understory` | 4,000 | ferns, aroids, heliconia, calathea, small palms |
+| `understory` | 5,500 | ferns, aroids, heliconia, calathea, small palms |
 | `mid` | 4,000 | banana, fan palm, the strangler fig |
-| `canopy` | 7,000 | ceiba, cohune, ramón |
+| `canopy` | 60,000 | ceiba, cohune, ramón — see below |
 | `epiphyte` | 1,200 | bromeliads, air plants, the nest fern |
 | `vine` | 1,000 | lianas, aerial-root curtains |
+
+### The canopy band is unresolved
+
+Everything below the canopy is built from leaves as geometry and is better
+for it. At the top of the forest that rule costs more than a budget can
+pay, and the figures are worth writing down so nobody spends another
+afternoon rediscovering them:
+
+- A 27 m crown is about **570 m² projected**. A true ceiba leaflet
+  (5–20 cm) covers **0.014 m²**, so filling that crown three layers deep
+  needs roughly **120,000 leaflets** — near a million triangles.
+- Raising the leaflet count from 300 to 2,200 changed nothing a frame
+  could see. The tree rendered as a bare winter tree either way.
+- Making one mesh element one whole **palmate leaf** rather than one
+  leaflet, and letting the atlas carry the leaflets — the same trade the
+  tree fern makes for its pinnules — multiplies covered area about
+  thirtyfold for the same triangles.
+- Hanging leaves at twig ends only leaves the crown hollow. They have to
+  run along the whole twig and the limb behind it.
+
+With all of that, the ceiba reads as **a tree leafing out, not a closed
+crown**, at 54,200 triangles. Closing it needs about another order of
+magnitude. The ways out are alpha-tested foliage sprays for this band
+only, a crown shell, or a budget in the hundreds of thousands for a tree
+placed once or twice in a level — a decision for the owner, not a
+parameter to nudge.
 
 A variant over 900 triangles also gets an authored LOD1, and over 3,000 an
 LOD2. They are authored rather than decimated because decimation eats whole
@@ -222,6 +248,15 @@ carries three live readings from one material and one draw call, and no two
 plants read identically. `Params.health` biases that choice toward the old
 tile.
 
+> **If a plant renders white or untextured, check its `.import` file for
+> `valid=false` before anything else.** Godot writes that when an import fails
+> — here, when a generation run read a PNG that was still being written — and
+> then skips the file on every later import pass, so the material loads with no
+> map at all and nothing in any log says why. One leaf atlas sat like that for
+> hours and the fan palm was pure white in every frame. `validate_assets.py`
+> now rejects it; the fix is to delete the `.import` file and re-run the
+> generator, which rewrites it.
+
 Sets are 4096 px (2048 px per tile), `_BC` + `_N` + `_ORM`, no `hi/` variant,
 per the quality floor in `CLAUDE.md`: across a real 0.6–0.9 m blade that is
 23–34 px/cm, which is what the vein net and the 1–2 mm pale halo on a chewed
@@ -318,7 +353,16 @@ Both pages give the camera its own `CameraAttributesPractical`: the theme's
 exposure, without the theme's depth of field, whose far blur starts at 0.5 m
 because it exists to push the backdrop away from the board and which otherwise
 blurs the subject of the page. They also hide the theme's atmosphere fog, dust,
-light shafts and braziers.
+light shafts and braziers, and pull the sun's shadow range in around the
+subject — the theme casts over 40 m, which leaves a 3 m plant too few
+shadow-map texels for a leaf's shadow on the leaf below it, and a plant's own
+shadow on itself is most of what makes a leaf mass read as a mass.
+
+A climbing variant gets a plain trunk behind it and an epiphyte gets a branch
+under it, because both are built to grow on something and on an empty plaza
+they render as a vertical line in the sky with one leaf on it. That host is
+scenery for the page, not part of the plant, which is why it is a stock
+cylinder rather than a generated tree.
 
 Capture them with the headless recipe in
 [Capture the effects showcase](../how-to/capture-the-effects-showcase.md), at
