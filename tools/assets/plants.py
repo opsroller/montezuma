@@ -99,8 +99,9 @@ TRI_BUDGET = {
     "vine": 1000,
     # A 6 m tree fern with bipinnate fronds is not a 0.5 m calathea, and holding both
     # to one number is what made five variants read as over budget when they were
-    # simply the big end of their band.
-    "understory": 4000,
+    # simply the big end of their band. A heliconia clump is six shoots deep because
+    # the reference measures mats three to five layers deep; that costs 4,400.
+    "understory": 5500,
     "mid": 4000,
     "canopy": 7000,
 }
@@ -1292,15 +1293,28 @@ def _heliconia(parts, rng, p, s):
     age = p.age * (0.45 if kind == "Young" else 1.0)
     height = s.height_at(age) * p.scale
     st, b = parts("stem"), parts("leaf")
-    shoots = (3 if kind == "Clump" else 2) if not p.lod else 1
+    # A Heliconia stand is a thicket, not a bouquet: the reference measures mats three
+    # to five layers deep with no leaf in any photograph fully visible, and each leaf
+    # 30-60% occluded. Six shoots of four to seven blades gets the clump to that; three
+    # shoots of five read as a potted plant from any distance. The band's triangle
+    # ceiling has the room, and a plant that needs geometry to read as a plant gets it.
+    shoots = (6 if kind == "Clump" else 3) if not p.lod else 1
     for shoot in range(shoots):
         sa = rng.uniform(0, 6.28)
-        sr = height * 0.06 * shoot
+        # Shoots of one clump come off one rhizome: 10-40 cm apart, not metres. Spaced
+        # by a fraction of the plant's height they drifted to 2.6 m and read as three
+        # separate plants standing near each other.
+        sr = min(0.40, height * 0.05 * shoot) * rng.uniform(0.6, 1.0)
         base = (math.cos(sa) * sr, math.sin(sa) * sr, 0.0)
-        blades = int(_lerp(3, 5, age))
+        blades = int(_lerp(4, 7, age))
+        # Shoots of one clump are of very different ages - the reference puts a x3.5 to
+        # x6 size range inside one species in one frame, and a clump is where that
+        # starts - so each shoot after the first is a fraction of the leader's size.
+        shoot_scale = 1.0 if shoot == 0 else rng.uniform(0.35, 0.85)
         for i, a in enumerate(rosette(blades, start=sa + shoot)):
             old = i / max(1, blades - 1)
-            length = height * _lerp(0.85, 0.60, old) * rng.uniform(0.9, 1.05)
+            length = (height * shoot_scale
+                      * _lerp(0.85, 0.60, old) * rng.uniform(0.9, 1.05))
             stalk = arc(base, a, length * 0.12, length * 0.45, 0.0, 3, tilt=1.25)
             tube(st, stalk, [0.022 * height / 2, 0.020 * height / 2, 0.017 * height / 2,
                              0.014 * height / 2], sides=4, v_scale=2.0)
@@ -1315,7 +1329,8 @@ def _heliconia(parts, rng, p, s):
                   twist=rng.uniform(-0.5, 0.5), tilt=_lerp(0.8, 0.15, old),
                   segs=p.detail(8, 5, 3), cols=p.detail(7, 5, 3), outline="strap", ripple=0.16,
                   tears=tears, tear_from=_lerp(0.6, 0.3, old), sag=0.5)
-        litter_skirt(b, rng, max(0.6, height * 0.3), 5, height * 0.14, p)
+        # 10-25 cm of shed blade, deep enough that no stone reads through it.
+        litter_skirt(b, rng, max(0.6, height * 0.3), 14, height * 0.16, p)
         if kind == "Flowering" and shoot == 0 and not p.lod:
             br = parts("bract")
             spike = arc(base, sa, height * 0.1, height * 0.95, 0.0, 5, tilt=1.3)
@@ -2357,7 +2372,12 @@ def separate_greens():
             hue = lo + width * (i / (n - 1))
             sat = (sat_lo if (i + phase) % 2 == 0 else sat_hi)
             moved = {}
-            for field_name in ("green", "young", "dead"):
+            # `dead` is deliberately not in this list. It is not a green, so separating
+            # the greens must not drag it: pushed along with heliconia's hue it came out
+            # at 48 degrees and 55% saturation - an acid yellow - and the frame showed a
+            # chrome-yellow mat at the base of the plant. A dead leaf is tan whatever
+            # green the living one was.
+            for field_name in ("green", "young"):
                 ch, cs, cv = _hsv_of(getattr(tex, field_name))
                 # Keep each state's own offset from the mature green.
                 dh = ((ch - h0 + 180) % 360) - 180
@@ -2800,6 +2820,20 @@ def _hide_atmosphere():
             for name in HIDE_IN_LOOKDEV]
 
 
+def _sun_for(extent):
+    """Pull the sun's shadow range in around the subject of the page.
+
+    The theme casts directional shadows over 40 m, which is right for a temple and
+    wrong for one plant: spread over that range the shadow map has so few texels on a
+    3 m heliconia that a leaf's shadow on the leaf below it comes back as hard black
+    rectangles with stepped edges. A plant's own shadow on itself is most of what makes
+    a leaf mass read as a mass, so the page gives it the texels.
+    """
+    return (f'[node name="Sun" parent="Environment"]\n'
+            f"directional_shadow_max_distance = {max(8.0, extent * 3.0):.1f}\n"
+            "directional_shadow_blend_splits = true\n")
+
+
 def closeup_scenes(plants, only=None, empty=False):
     """One scene per specimen, framed so a leaf is big enough to judge.
 
@@ -2877,6 +2911,7 @@ def _closeup_scene(eid, e, empty=False):
     # mass reads rather than a flat elevation.
     extent = max(height, spread * 0.75)
     distance = max(1.2, extent * 1.34)          # the plant fills about 80% of the frame
+    nodes.append(_sun_for(extent))
     eye = max(1.65, height * 0.55)
     target = (0.0, height * 0.5, 0.0)
     yaw = math.radians(35.0)

@@ -10,7 +10,7 @@
 [ext_resource type="Material" path="res://assets/materials/plants/MI_Plant_MonsteraStem.tres" id="6"]
 
 [sub_resource type="BoxMesh" id="ground"]
-size = Vector3(12.0, 0.1, 12.0)
+size = Vector3(25.0, 0.1, 25.0)
 
 [sub_resource type="BoxMesh" id="ref"]
 size = Vector3(0.45, 1.8, 0.25)
@@ -63,11 +63,15 @@ mesh = SubResource("ground")
 surface_material_override/0 = ExtResource("2")
 
 [node name="GreyCard" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.04, 0.9, -0.27)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.86, 0.9, -0.76)
 mesh = SubResource("ref")
 surface_material_override/0 = SubResource("grey")
 
+[node name="Sun" parent="Environment"]
+directional_shadow_max_distance = 22.3
+directional_shadow_blend_splits = true
+
 [node name="Camera" type="Camera3D" parent="."]
-transform = Transform3D(0.819152, -0.323176, 0.473864, 0.000000, 0.826157, 0.563440, -0.573576, -0.461543, 0.676748, 0.896947, 1.650000, 1.280974)
+transform = Transform3D(0.819152, -0.021387, 0.573178, 0.000000, 0.999305, 0.037287, -0.573576, -0.030544, 0.818582, 5.718328, 4.092000, 8.166618)
 fov = 50.0
 attributes = SubResource("camera")

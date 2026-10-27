@@ -8,7 +8,7 @@
 [ext_resource type="Material" path="res://assets/materials/plants/MI_Plant_Litter.tres" id="4"]
 
 [sub_resource type="BoxMesh" id="ground"]
-size = Vector3(13.4, 0.1, 13.4)
+size = Vector3(12.0, 0.1, 12.0)
 
 [sub_resource type="BoxMesh" id="ref"]
 size = Vector3(0.45, 1.8, 0.25)
@@ -57,11 +57,15 @@ mesh = SubResource("ground")
 surface_material_override/0 = ExtResource("2")
 
 [node name="GreyCard" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.22, 0.9, -0.97)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.76, 0.9, -0.70)
 mesh = SubResource("ref")
 surface_material_override/0 = SubResource("grey")
 
+[node name="Sun" parent="Environment"]
+directional_shadow_max_distance = 8.0
+directional_shadow_blend_splits = true
+
 [node name="Camera" type="Camera3D" parent="."]
-transform = Transform3D(0.819152, -0.243454, 0.519346, 0.000000, 0.905451, 0.424450, -0.573576, -0.347689, 0.741702, 1.865950, 1.650000, 2.664853)
+transform = Transform3D(0.819152, -0.314055, 0.479958, 0.000000, 0.836781, 0.547538, -0.573576, -0.448517, 0.685450, 1.336774, 1.650000, 1.909112)
 fov = 50.0
 attributes = SubResource("camera")

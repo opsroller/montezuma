@@ -61,6 +61,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.17, 0.9, -0.34)
 mesh = SubResource("ref")
 surface_material_override/0 = SubResource("grey")
 
+[node name="Sun" parent="Environment"]
+directional_shadow_max_distance = 8.0
+directional_shadow_blend_splits = true
+
 [node name="Camera" type="Camera3D" parent="."]
 transform = Transform3D(0.819152, -0.258104, 0.512223, 0.000000, 0.893033, 0.449991, -0.573576, -0.368611, 0.731530, 1.079104, 1.650000, 1.541120)
 fov = 50.0

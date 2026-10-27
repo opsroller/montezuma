@@ -57,11 +57,15 @@ mesh = SubResource("ground")
 surface_material_override/0 = ExtResource("2")
 
 [node name="GreyCard" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.88, 0.9, -0.77)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.87, 0.9, -0.76)
 mesh = SubResource("ref")
 surface_material_override/0 = SubResource("grey")
 
+[node name="Sun" parent="Environment"]
+directional_shadow_max_distance = 8.0
+directional_shadow_blend_splits = true
+
 [node name="Camera" type="Camera3D" parent="."]
-transform = Transform3D(0.819152, -0.104090, 0.564053, 0.000000, 0.983396, 0.181475, -0.573576, -0.148656, 0.805550, 1.697052, 1.650000, 2.423642)
+transform = Transform3D(0.819152, -0.106587, 0.563586, 0.000000, 0.982582, 0.185829, -0.573576, -0.152222, 0.804884, 1.683217, 1.650000, 2.403884)
 fov = 50.0
 attributes = SubResource("camera")

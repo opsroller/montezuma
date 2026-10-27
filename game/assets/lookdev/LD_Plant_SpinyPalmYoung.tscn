@@ -10,7 +10,7 @@
 [ext_resource type="Material" path="res://assets/materials/plants/MI_Plant_SpinyPalmTrunk.tres" id="6"]
 
 [sub_resource type="BoxMesh" id="ground"]
-size = Vector3(12.0, 0.1, 12.0)
+size = Vector3(12.6, 0.1, 12.6)
 
 [sub_resource type="BoxMesh" id="ref"]
 size = Vector3(0.45, 1.8, 0.25)
@@ -67,7 +67,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.33, 0.9, -0.44)
 mesh = SubResource("ref")
 surface_material_override/0 = SubResource("grey")
 
+[node name="Sun" parent="Environment"]
+directional_shadow_max_distance = 10.2
+directional_shadow_blend_splits = true
+
 [node name="Camera" type="Camera3D" parent="."]
-transform = Transform3D(0.819152, -0.071020, 0.569163, 0.000000, 0.992305, 0.123820, -0.573576, -0.101428, 0.812848, 1.900729, 1.650000, 2.714522)
+transform = Transform3D(0.819152, -0.021387, 0.573178, 0.000000, 0.999305, 0.037287, -0.573576, -0.030544, 0.818582, 2.620900, 1.875500, 3.743033)
 fov = 50.0
 attributes = SubResource("camera")

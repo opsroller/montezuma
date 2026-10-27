@@ -314,7 +314,7 @@
           1.255
         ]
       },
-      "budget_triangles": 4000,
+      "budget_triangles": 5500,
       "parts": {
         "0": {
           "leaf": {
@@ -372,7 +372,7 @@
           1.342
         ]
       },
-      "budget_triangles": 4000,
+      "budget_triangles": 5500,
       "parts": {
         "0": {
           "leaf": {
@@ -430,7 +430,7 @@
           1.116
         ]
       },
-      "budget_triangles": 4000,
+      "budget_triangles": 5500,
       "parts": {
         "0": {
           "leaf": {
@@ -493,7 +493,7 @@
           1.316
         ]
       },
-      "budget_triangles": 4000,
+      "budget_triangles": 5500,
       "parts": {
         "0": {
           "leaf": {
@@ -1362,45 +1362,58 @@
         "Leaf_Heliconia"
       ],
       "tris": [
-        1566,
-        293
+        4375,
+        414,
+        250
       ],
       "bounds_m": {
         "min": [
-          -1.409,
-          -0.005,
-          -1.661
+          -1.346,
+          -0.125,
+          -1.549
         ],
         "max": [
-          1.536,
-          3.296,
-          1.637
+          1.353,
+          3.305,
+          1.434
         ]
       },
-      "budget_triangles": 4000,
+      "budget_triangles": 5500,
       "parts": {
         "0": {
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_HeliconiaClump_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_HeliconiaLeaf.tres",
-            "triangles": 1176
+            "triangles": 3283
           },
           "stem": {
             "mesh": "res://assets/models/plants/SM_Plant_HeliconiaClump_Stem.obj",
             "material": "res://assets/materials/plants/MI_Plant_HeliconiaStem.tres",
-            "triangles": 390
+            "triangles": 1092
           }
         },
         "1": {
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_HeliconiaClump_Leaf_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_HeliconiaLeaf.tres",
-            "triangles": 163
+            "triangles": 232
           },
           "stem": {
             "mesh": "res://assets/models/plants/SM_Plant_HeliconiaClump_Stem_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_HeliconiaStem.tres",
-            "triangles": 130
+            "triangles": 182
+          }
+        },
+        "2": {
+          "leaf": {
+            "mesh": "res://assets/models/plants/SM_Plant_HeliconiaClump_Leaf_LOD2.obj",
+            "material": "res://assets/materials/plants/MI_Plant_HeliconiaLeaf.tres",
+            "triangles": 68
+          },
+          "stem": {
+            "mesh": "res://assets/models/plants/SM_Plant_HeliconiaClump_Stem_LOD2.obj",
+            "material": "res://assets/materials/plants/MI_Plant_HeliconiaStem.tres",
+            "triangles": 182
           }
         }
       },
@@ -1438,22 +1451,22 @@
         "Leaf_Heliconia"
       ],
       "tris": [
-        1120,
-        290
+        2277,
+        420
       ],
       "bounds_m": {
         "min": [
-          -1.404,
+          -1.539,
           -0.005,
-          -1.375
+          -1.378
         ],
         "max": [
-          1.434,
+          1.128,
           3.14,
-          1.478
+          1.501
         ]
       },
-      "budget_triangles": 4000,
+      "budget_triangles": 5500,
       "parts": {
         "0": {
           "bract": {
@@ -1464,24 +1477,24 @@
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_HeliconiaFlowering_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_HeliconiaLeaf.tres",
-            "triangles": 797
+            "triangles": 1668
           },
           "stem": {
             "mesh": "res://assets/models/plants/SM_Plant_HeliconiaFlowering_Stem.obj",
             "material": "res://assets/materials/plants/MI_Plant_HeliconiaStem.tres",
-            "triangles": 260
+            "triangles": 546
           }
         },
         "1": {
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_HeliconiaFlowering_Leaf_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_HeliconiaLeaf.tres",
-            "triangles": 160
+            "triangles": 238
           },
           "stem": {
             "mesh": "res://assets/models/plants/SM_Plant_HeliconiaFlowering_Stem_LOD1.obj",
             "material": "res://assets/materials/plants/MI_Plant_HeliconiaStem.tres",
-            "triangles": 130
+            "triangles": 182
           }
         }
       },
@@ -1519,32 +1532,45 @@
         "Leaf_Heliconia"
       ],
       "tris": [
-        682
+        1606,
+        306
       ],
       "bounds_m": {
         "min": [
-          -1.048,
-          -0.111,
-          -0.836
+          -0.968,
+          -0.113,
+          -0.87
         ],
         "max": [
-          0.534,
-          2.15,
-          0.957
+          0.778,
+          1.94,
+          0.964
         ]
       },
-      "budget_triangles": 4000,
+      "budget_triangles": 5500,
       "parts": {
         "0": {
           "leaf": {
             "mesh": "res://assets/models/plants/SM_Plant_HeliconiaYoung_Leaf.obj",
             "material": "res://assets/materials/plants/MI_Plant_HeliconiaLeaf.tres",
-            "triangles": 526
+            "triangles": 1216
           },
           "stem": {
             "mesh": "res://assets/models/plants/SM_Plant_HeliconiaYoung_Stem.obj",
             "material": "res://assets/materials/plants/MI_Plant_HeliconiaStem.tres",
-            "triangles": 156
+            "triangles": 390
+          }
+        },
+        "1": {
+          "leaf": {
+            "mesh": "res://assets/models/plants/SM_Plant_HeliconiaYoung_Leaf_LOD1.obj",
+            "material": "res://assets/materials/plants/MI_Plant_HeliconiaLeaf.tres",
+            "triangles": 176
+          },
+          "stem": {
+            "mesh": "res://assets/models/plants/SM_Plant_HeliconiaYoung_Stem_LOD1.obj",
+            "material": "res://assets/materials/plants/MI_Plant_HeliconiaStem.tres",
+            "triangles": 130
           }
         }
       },
@@ -2133,7 +2159,7 @@
           1.381
         ]
       },
-      "budget_triangles": 4000,
+      "budget_triangles": 5500,
       "parts": {
         "0": {
           "leaf": {
@@ -2196,7 +2222,7 @@
           1.244
         ]
       },
-      "budget_triangles": 4000,
+      "budget_triangles": 5500,
       "parts": {
         "0": {
           "leaf": {
@@ -2259,7 +2285,7 @@
           1.331
         ]
       },
-      "budget_triangles": 4000,
+      "budget_triangles": 5500,
       "parts": {
         "0": {
           "leaf": {
@@ -2557,7 +2583,7 @@
           0.978
         ]
       },
-      "budget_triangles": 4000,
+      "budget_triangles": 5500,
       "parts": {
         "0": {
           "leaf": {
@@ -2623,7 +2649,7 @@
           1.108
         ]
       },
-      "budget_triangles": 4000,
+      "budget_triangles": 5500,
       "parts": {
         "0": {
           "leaf": {
@@ -2700,7 +2726,7 @@
           0.546
         ]
       },
-      "budget_triangles": 4000,
+      "budget_triangles": 5500,
       "parts": {
         "0": {
           "leaf": {
@@ -2765,7 +2791,7 @@
           1.289
         ]
       },
-      "budget_triangles": 4000,
+      "budget_triangles": 5500,
       "parts": {
         "0": {
           "leaf": {
@@ -2840,7 +2866,7 @@
           1.293
         ]
       },
-      "budget_triangles": 4000,
+      "budget_triangles": 5500,
       "parts": {
         "0": {
           "leaf": {
@@ -2904,7 +2930,7 @@
           1.565
         ]
       },
-      "budget_triangles": 4000,
+      "budget_triangles": 5500,
       "parts": {
         "0": {
           "leaf": {
@@ -3270,7 +3296,7 @@
           1.542
         ]
       },
-      "budget_triangles": 4000,
+      "budget_triangles": 5500,
       "parts": {
         "0": {
           "leaf": {
@@ -3347,7 +3373,7 @@
           0.776
         ]
       },
-      "budget_triangles": 4000,
+      "budget_triangles": 5500,
       "parts": {
         "0": {
           "leaf": {
@@ -3692,7 +3718,7 @@
           2.883
         ]
       },
-      "budget_triangles": 4000,
+      "budget_triangles": 5500,
       "parts": {
         "0": {
           "leaf": {
@@ -3770,7 +3796,7 @@
           2.797
         ]
       },
-      "budget_triangles": 4000,
+      "budget_triangles": 5500,
       "parts": {
         "0": {
           "leaf": {
@@ -3848,7 +3874,7 @@
           1.566
         ]
       },
-      "budget_triangles": 4000,
+      "budget_triangles": 5500,
       "parts": {
         "0": {
           "leaf": {
@@ -3905,7 +3931,7 @@
     "groundcover": 900,
     "epiphyte": 1200,
     "vine": 1000,
-    "understory": 4000,
+    "understory": 5500,
     "mid": 4000,
     "canopy": 7000
   }

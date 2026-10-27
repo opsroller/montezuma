@@ -52,9 +52,21 @@ TARGETS = {
     # Alocasia at 16% to a sunlit banana at 92%, so the frame-wide median is held to
     # the span rather than to the narrowest subset.
     "lamina_sat": (0.20, 0.80, "median saturation of lit foliage"),
-    "sheen_sat": (None, 0.25, "saturation of the brightest 1% of foliage"),
+    # Not 0.25. The page's materials are translucent (`backlight_enabled`), so the
+    # brightest pixels in the frame are backlit lamina rather than the specular band,
+    # and the reference is explicit that a backlit leaf is "flat, bright and saturated"
+    # - its own swatch, #87AD47, measures 59%. What the page must not show is a bright
+    # green *specular*, which would be both saturated and clipping; `clipped` catches
+    # that from the other side. So this is a ceiling at the reference's own backlit
+    # figure, and a frame over it is showing something brighter than a backlit leaf.
+    "sheen_sat": (None, 0.62, "saturation of the brightest 1% of foliage"),
     "sheen_value": (1.15, 1.60, "value of the brightest 1% over the lamina median"),
-    "dead_area": (0.10, 0.20, "fraction of foliage area that is dead or dying"),
+    # The reference's 10-20% is dead leaf *on the plant*. A close-up page frames the
+    # litter skirt as well, and there the same page says there is "often more dead
+    # material by area than green at ground level", so the two together run higher. The
+    # band below is the two together; a frame under it has no skirt or no dying leaves,
+    # and a frame over it is mostly litter.
+    "dead_area": (0.10, 0.45, "dead or dying fraction of the plant and its skirt"),
     "clipped": (None, 0.002, "fraction of foliage at or above value 99/100"),
     # Only measurable with --against: how far the plant darkens the ground it stands on.
     "contact_shadow": (0.30, 0.55, "shaded ground over the same ground unshaded"),
@@ -94,7 +106,8 @@ def measure(path, against=None):
             raise SystemExit(f"{against}: {bare.shape[1]}x{bare.shape[0]} does not match "
                              f"{path}: {img.shape[1]}x{img.shape[0]}")
         changed = np.abs(img - bare).max(axis=-1) > 0.02
-        leaf = leaf & changed
+        green, dead = green & changed, dead & changed
+        leaf = green | dead
         _, _, bare_v = rgb_to_hsv(bare)
         # Ground the plant darkened but did not cover: its contact shadow.
         shade = changed & ~leaf & (bare_v > 0.02)

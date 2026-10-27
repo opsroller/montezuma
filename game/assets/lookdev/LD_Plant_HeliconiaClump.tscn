@@ -10,7 +10,7 @@
 [ext_resource type="Material" path="res://assets/materials/plants/MI_Plant_HeliconiaStem.tres" id="6"]
 
 [sub_resource type="BoxMesh" id="ground"]
-size = Vector3(19.0, 0.1, 19.0)
+size = Vector3(21.5, 0.1, 21.5)
 
 [sub_resource type="BoxMesh" id="ref"]
 size = Vector3(0.45, 1.8, 0.25)
@@ -63,11 +63,15 @@ mesh = SubResource("ground")
 surface_material_override/0 = ExtResource("2")
 
 [node name="GreyCard" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.15, 0.9, -0.93)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.46, 0.9, -1.12)
 mesh = SubResource("ref")
 surface_material_override/0 = SubResource("grey")
 
+[node name="Sun" parent="Environment"]
+directional_shadow_max_distance = 9.9
+directional_shadow_blend_splits = true
+
 [node name="Camera" type="Camera3D" parent="."]
-transform = Transform3D(0.819152, -0.021387, 0.573178, 0.000000, 0.999305, 0.037287, -0.573576, -0.030544, 0.818582, 2.533281, 1.812800, 3.617900)
+transform = Transform3D(0.819152, -0.021387, 0.573178, 0.000000, 0.999305, 0.037287, -0.573576, -0.030544, 0.818582, 2.540198, 1.817750, 3.627779)
 fov = 50.0
 attributes = SubResource("camera")
