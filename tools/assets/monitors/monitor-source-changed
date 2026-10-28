@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0
+"""Monitor: one species' source was edited, so that one species is reprocessed.
+
+Subscribes to `plant.source.changed` and nothing else. This is the monitor that
+chains back into the work: hearing that one plant's source changed, it submits that
+plant's chain - build it, write its scenes, import, shoot its three or four pages,
+make the sheets - and says what it submitted.
+
+That is the whole shape the queue is for. An agent edits `heliconia` in plants.py and
+saves it; the hook publishes the topic; this submits four jobs. Nothing rebuilds
+twenty-six species, nothing reshoots fifty-nine frames, and nobody waits for a build
+they did not ask for. The pipeline is not consulted about what to do next: a stage
+finishing is an event, and what follows it is whoever subscribed.
+
+One job is submitted per species per edit, and a species already in flight is left
+alone - a plant saved four times while its build runs is one rebuild, not four.
+"""
+
+import sys
+
+from plants_stream import main, pipeline, speaker, subscribe
+
+say = speaker("source")
+
+
+def watch(root):
+    pipeline(root)
+    sys.path.insert(0, str(root / "tools/assets"))
+    import tasks                                          # noqa: PLC0415
+
+    running = {}
+
+    def handle(event):
+        key = event.get("species")
+        if not key:
+            say(f"source changed but no species was named: {event.get('path', '?')}")
+            return
+        pending = running.get(key)
+        if pending is not None and not pending.ready():
+            say(f"{key} changed again while its last rebuild is still running; "
+                f"leaving the one job in flight")
+            return
+        try:
+            work = tasks.species_work(key)
+        except ValueError as why:
+            say(f"{key} changed, but nothing was submitted: {why}")
+            return
+        result = work.apply_async()
+        running[key] = result
+        pages = tasks.species_pages(key)
+        say(f"{key} changed: submitted build, pages, import and {len(pages)} frame(s) "
+            f"({', '.join(p.removeprefix('LD_Plant_') for p in pages)}) as {result.id}")
+
+    return subscribe(root, "plant.source.changed", handle, say)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(watch))

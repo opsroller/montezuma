@@ -1,0 +1,46 @@
+# SPDX-License-Identifier: GPL-2.0
+#
+# The Python packages the asset tools need, on top of the python3 the flake
+# delivers. `.envrc` enters this environment with `layout pipenv`, so `python3`
+# in the checkout has them and no command needs an interpreter path in front of
+# it.
+#
+# The wheels are binary and link against native libraries - numpy and Pillow
+# want the C++ runtime and zlib - which come from the flake's LD_LIBRARY_PATH:
+# packages here, what they link against there.
+#
+# Blender is deliberately NOT here. `bpy`, the pip wheel that ships Blender as a
+# Python module, would be a second Blender at its own version racing the flake's
+# to generate the same committed meshes, and the version is part of the asset:
+# two committed backdrop meshes do not reproduce byte for byte across versions.
+# The geometry tools run under the flake's pinned binary instead:
+#
+#     blender -b --factory-startup -P tools/assets/plants.py -- build
+
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[packages]
+# gen_theme_textures.py draws every map in numpy; validate_assets.py,
+# measure_foliage.py and contact_sheet.py read and write PNGs with Pillow.
+# Pinned to the same versions .github/requirements/assets.txt pins for CI, which
+# installs with --require-hashes.
+numpy = "==2.5.3"
+pillow = "==12.3.0"
+# The asset pipeline's job queue (tools/assets/tasks.py): which stages may run at
+# once (one Godot on the GPU, many Blenders on the CPU), what runs after what, and
+# what happens to a stage that fails. Celery's events are also what the plugin's
+# queue monitor subscribes to - the broker pushes them, so nothing polls for a job's
+# state. `redis` is the client for the broker the flake provides.
+celery = "==5.6.3"
+redis = "==8.1.0"
+# python-dateutil 3.0.0 declares `six` as a requirement but the resolver does not
+# bring it in, and a celery worker dies on `import six` as it starts - with the
+# traceback in its own log, where nothing is watching. Pinned here so the worker
+# starts.
+six = "==1.17.0"
+
+[requires]
+python_version = "3.13"

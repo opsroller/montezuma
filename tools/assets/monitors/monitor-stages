@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0
+"""Monitor: a stage of the pipeline produced something.
+
+Subscribes to the six topics that mean a thing now exists:
+
+    plant.params.written     themes/plants.json is current with the species
+    plant.atlases.drawn      the leaf and bark atlases are at 4096
+    plant.mesh.built         one species' meshes and materials exist
+    plant.pages.written      one species' look-dev scenes exist
+    plant.assets.imported    Godot's import pass finished
+    plant.sheets.ready       the contact sheets are current
+
+These are published whether the stage ran by hand or off the queue, and this is what
+makes a long run legible: a species' meshes landing is the point at which its frames
+become worth shooting, and the point at which anything waiting on that plant can
+start. A stage that produced nothing publishes nothing, so silence here means
+nothing was finished - not that something finished quietly.
+
+It reports and does not submit. What follows a stage is decided by whoever
+subscribed to it: `monitor-source-changed` submits a species' chain, `monitor-frames`
+asks for a review. Adding another consequence means adding another subscriber, not
+editing this one.
+"""
+
+from plants_stream import clock, main, speaker, subscribe
+
+SAID = {
+    "plant.params.written": "plants.json written from the species",
+    "plant.atlases.drawn": "atlases drawn at 4096",
+    "plant.mesh.built": "meshes and materials built",
+    "plant.pages.written": "look-dev scenes written",
+    "plant.assets.imported": "Godot imported the assets",
+    "plant.sheets.ready": "contact sheets are current",
+}
+
+say = speaker("stages")
+
+
+def watch(root):
+    def handle(event):
+        topic = event.get("topic", "")
+        what = SAID.get(topic, topic)
+        who = event.get("species") or ""
+        took = clock(event.get("seconds"))
+        say(f"{who + ': ' if who else ''}{what} ({took})")
+
+    return subscribe(root, sorted(SAID), handle, say)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(watch))

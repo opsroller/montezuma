@@ -41,3 +41,11 @@ game/assets/textures/*/fx/hi/T_*.png
 game/assets/textures/*/fx/.inputs
 # CMake build folders (build/, build-ext/, build-asan/ ...).
 build-*/
+# Scratch: look-dev captures, contact sheets, movie-maker working directories, tool
+# logs. Work stays in the workspace rather than spraying /tmp: the system temp
+# directory is not scratch space for a project, it is shared with every other process
+# on the machine, and work left there is outside the checkout it belongs to. Make
+# per-run directories under it with `mktemp -d -p .scratch`, and keep nothing here
+# that matters - it is never committed and safe to delete whole.
+.scratch/
+.direnv/

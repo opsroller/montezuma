@@ -48,6 +48,10 @@ own folder.
 - [Operations](reference/operations.md): cost, flow and quality measures, operations-review findings and the review log.
 - [Style guide](../design/README.md): the visual identity's rendered key art, gold wordmark and flat logo, colour, type, icons, glass UI surfaces, band and imagery rules, approved contrast pairs, font sources and token files.
 - [History: Mexica art, 1502 to 1520](reference/history-mexica-art.md): the sourced reference set and artist brief for the temple's look (stone, codices, featherwork, greenstone, gold), with what is not used and why.
+- [Mesoamerican reference](reference/mesoamerican-reference.md): sourced architecture, stone, stucco, pigment, water, rainforest and light figures, by site and period, with the accuracy checklist and the gaps.
+- [Foliage reference](reference/foliage-reference.md): measured leaf shape, colour, value range, damage and lighting figures a plant is authored and judged against.
+- [Asset library](reference/asset-library.md): the shared catalogue a level selects set dressing and planting from, its schema and its seeded selection rule.
+- [Plant library](reference/plant-library.md): the jungle species a level can plant, their sourced proportions, bands, budgets, leaf atlases and colour rules.
 
 ## Explanation
 
@@ -62,6 +66,7 @@ own folder.
 - [Export the web demo](how-to/export-a-web-build.md): get or make the web package and run it in a browser.
 - [Cut a release](how-to/cut-a-release.md): tag a version and publish its packages and notes, from CI or your own machine.
 - [Make a board theme](how-to/make-a-board-theme.md): change the temple look or add a new theme.
+- [Add a plant species](how-to/add-a-plant-species.md): source a species, write its generator and textures, keep it in budget and judge it in the engine.
 - [Use the identity](how-to/use-the-identity.md): swap the game and site tokens, vendor the fonts, add the band, place the logo, rebuild the 3D key art.
 - [Regenerate or add sounds](how-to/regenerate-or-add-sounds.md): rebuild the generated audio, add a cue.
 - [Play a sound from code](how-to/play-a-sound-from-code.md): call a cue from C++ or a scene, start and stop music.

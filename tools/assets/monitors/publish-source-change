@@ -1,0 +1,157 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0
+"""Hook: a species was edited and saved, so say which one.
+
+Runs after Write or Edit, in the background (`async`), and publishes
+`plant.source.changed` naming the species whose block in `tools/assets/plants.py`
+differs from the committed file. `monitor-source-changed` hears it and submits that
+one plant's chain.
+
+Which species changed is read from the diff rather than guessed: the file is one
+module of twenty-six `@species(...)` decorators, each followed by the builder it
+decorates, so the line numbers git reports are enough to say which blocks the edit
+fell inside.
+
+A block has an end as well as a start, and that matters more than it sounds. Shared
+code - a colour table, the leaf geometry every plant uses, the shed-litter pass that
+runs for all twenty-six - lives between and after those blocks, and attributing it to
+the nearest preceding species is how a change to every plant in the library comes out
+as "root_curtain changed". So a block runs from its decorator to the end of its
+builder, and an edit outside every block publishes nothing. That is the honest
+answer: a change to shared code is a change to the whole library, and the whole
+library is resubmitted with `plants-queue library`.
+
+Nothing here runs the pipeline. It publishes a fact, and the monitors decide.
+"""
+
+import json
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+SOURCE = "tools/assets/plants.py"
+DECORATOR = re.compile(r"^@species\(")
+KEY = re.compile(r'^\s*key="([a-z0-9_]+)",')
+TOP_LEVEL = re.compile(r"^\S")
+HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
+
+
+def root():
+    found = subprocess.run(["git", "rev-parse", "--show-toplevel"],
+                           capture_output=True, text=True, check=False)
+    if found.returncode == 0 and found.stdout.strip():
+        return Path(found.stdout.strip())
+    return Path(os.environ.get("CLAUDE_PROJECT_DIR", "."))
+
+
+def blocks(lines):
+    """Each species' key against the span of lines that belong to it.
+
+    A span runs from the `@species(` decorator to the last line of the builder it
+    decorates. The builder's body is indented, so the span ends at the next line that
+    starts in column one - the next decorator, the next top-level `def`, or the
+    comment banner between sections. Anything outside every span is shared code and
+    belongs to no species.
+    """
+    spans = []
+    for index, line in enumerate(lines):
+        if not DECORATOR.match(line):
+            continue
+        key = None
+        for ahead in lines[index:]:
+            found = KEY.match(ahead)
+            if found:
+                key = found.group(1)
+                break
+        if key is None:
+            continue
+        # Past the decorator's own closing `)` and the builder's `def`, then on to
+        # the first line that leaves the builder's body.
+        end = len(lines)
+        seen_def = False
+        for after in range(index + 1, len(lines)):
+            text = lines[after]
+            if not TOP_LEVEL.match(text):
+                continue
+            if not seen_def:
+                # The decorator's closing paren, then `def _builder(...):`.
+                if text.startswith("def "):
+                    seen_def = True
+                continue
+            end = after
+            break
+        spans.append((index + 1, end, key))
+    return spans
+
+
+def changed_lines(where):
+    """The lines of the working file that differ from the committed one."""
+    diff = subprocess.run(
+        ["git", "diff", "--unified=0", "--", SOURCE],
+        cwd=where, capture_output=True, text=True, check=False,
+    ).stdout
+    touched = set()
+    for line in diff.splitlines():
+        hunk = HUNK.match(line)
+        if hunk:
+            start = int(hunk.group(1))
+            count = int(hunk.group(2) or 1)
+            touched.update(range(start, start + count))
+    return touched
+
+
+def main():
+    # The hook's JSON arrives on stdin whether or not it is wanted; reading it keeps
+    # Claude Code from blocking on a pipe nobody drained.
+    try:
+        payload = json.load(sys.stdin)
+    except (json.JSONDecodeError, ValueError):
+        payload = {}
+    edited = (payload.get("tool_input") or {}).get("file_path", "")
+    if edited and not edited.endswith("plants.py"):
+        return 0
+
+    where = root()
+    source = where / SOURCE
+    if not source.exists():
+        return 0
+    lines = source.read_text(errors="replace").splitlines()
+    touched = changed_lines(where)
+    if not touched:
+        return 0
+
+    spans = blocks(lines)
+    if not spans:
+        return 0
+    species = {key for start, end, key in spans
+               if any(start <= line <= end for line in touched)}
+    shared = [line for line in touched
+              if not any(start <= line <= end for start, end, _ in spans)]
+
+    sys.path.insert(0, str(where / "tools/assets"))
+    import events                                         # noqa: PLC0415
+
+    socket = where / ".scratch/redis.sock"
+    stream = events.Stream(where / ".scratch/lookdev-events.jsonl",
+                           broker=f"redis+socket://{socket}" if socket.exists() else None)
+    for key in sorted(species):
+        stream.publish("plant.source.changed", species=key, path=SOURCE)
+
+    said = []
+    if species:
+        said.append(f"{', '.join(sorted(species))} changed; the queue was told")
+    if shared:
+        # Not attributed to a species, and deliberately not submitted: code outside
+        # every block is code every plant runs, and rebuilding one of them proves
+        # nothing about the other twenty-five.
+        said.append(f"{len(shared)} line(s) of shared code changed, which affects "
+                    f"every species - run `plants-queue library` to resubmit the lot")
+    if said:
+        print(json.dumps({"systemMessage": f"plants.py: {'; '.join(said)}"}))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

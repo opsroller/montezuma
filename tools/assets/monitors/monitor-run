@@ -1,0 +1,85 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0
+"""Monitor: a run started, a run ended, and a run that did neither.
+
+Subscribes to `plant.run.*`.
+
+The third thing this does has no topic of its own, because the run cannot publish it:
+a run that is killed - out of memory, a lost GPU, somebody's `pkill godot`, a
+segfault in Blender - never gets to say so. A monitor that only listened would stay
+quiet, which looks exactly like a run still going.
+
+So `plant.run.started` carries the run's process id, and this opens a pidfd on it and
+blocks a thread in `select`. The kernel wakes that thread the moment the process
+dies, child or not, cleanly or not. It is the one mechanism Linux has for being told,
+rather than asking, that a process somewhere else is gone - and when it fires without
+a `plant.run.finished` having arrived, this publishes `plant.run.died` and says so.
+"""
+
+import os
+import select
+import threading
+
+from plants_stream import clock, main, pipeline, speaker, subscribe
+
+say = speaker("run")
+
+
+def watch(root):
+    events = pipeline(root)
+    stream = events.Stream(None, broker=f"redis+socket://{root}/.scratch/redis.sock")
+    finished = set()
+    watching = set()
+    lock = threading.Lock()
+
+    def gone(pid, how):
+        with lock:
+            if pid in finished:
+                return
+            finished.add(pid)
+        stream.publish("plant.run.died", pid=pid, how=how)
+        say(f"RUN DIED: pid {pid} {how} and never reported an ending. Nothing after "
+            f"its last event ran; its output is in .scratch/lookdev.log")
+
+    def wait_on(pid):
+        try:
+            fd = os.pidfd_open(pid)
+        except ProcessLookupError:
+            gone(pid, "was already gone")
+            return
+        except OSError as refused:
+            say(f"note: cannot watch pid {pid} for death ({refused.strerror}); its "
+                f"events are still reported")
+            return
+        try:
+            select.select([fd], [], [])
+        finally:
+            os.close(fd)
+        gone(pid, "is gone")
+
+    def handle(event):
+        topic, pid = event.get("topic", ""), event.get("pid")
+        if topic == "plant.run.started":
+            scope = f" scope={event['scope']}" if event.get("scope") else ""
+            only = f" species={event['species']}" if event.get("species") else ""
+            say(f"{event.get('step', '?')}{scope}{only} started (pid {pid})")
+            if pid and hasattr(os, "pidfd_open"):
+                with lock:
+                    if pid in watching:
+                        return
+                    watching.add(pid)
+                threading.Thread(target=wait_on, args=(pid,), daemon=True).start()
+        elif topic == "plant.run.finished":
+            with lock:
+                finished.add(pid)
+            code, why = event.get("code"), event.get("why")
+            tail = f" - {why}" if why else ""
+            took = clock(event.get("t"))
+            say(f"{event.get('step', '?')} finished in {took}{tail}" if code == 0
+                else f"{event.get('step', '?')} FAILED rc={code} in {took}{tail}")
+
+    return subscribe(root, "plant.run.*", handle, say)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(watch))

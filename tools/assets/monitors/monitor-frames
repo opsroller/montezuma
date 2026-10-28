@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0
+"""Monitor: a frame landed, and a species whose frames are all in wants looking at.
+
+Subscribes to `plant.frame.captured` and nothing else.
+
+The second place the chain runs through a monitor. A frame is the end of the machine
+part of this pipeline and the start of the part only looking can do, so when the last
+of a species' pages lands this publishes `plant.review.wanted` - which the look-dev
+skill answers by handing those frames to the frame-reviewer agent. The capture tasks
+know nothing about reviewing; they publish that a frame exists.
+
+Individual frames are reported at a stride. Fifty-nine frames would be fifty-nine
+notifications and a flooding monitor gets stopped; a species completing is always
+worth one.
+"""
+
+import sys
+from collections import defaultdict
+
+from plants_stream import clock, main, pipeline, speaker, subscribe
+
+STRIDE = 10
+
+say = speaker("frames")
+
+
+def watch(root):
+    events = pipeline(root)
+    sys.path.insert(0, str(root / "tools/assets"))
+    import lookdev                                        # noqa: PLC0415
+
+    stream = events.Stream(None, broker=f"redis+socket://{root}/.scratch/redis.sock")
+    seen = defaultdict(set)
+    counted = [0]
+
+    def species_of(page):
+        """Which species a page belongs to, asked of the pipeline rather than guessed
+        off the name: the page is named for the variant, and only the library knows
+        which variants belong to which plant."""
+        for key in lookdev.species_keys():
+            if page in lookdev.page_names("species", key):
+                return key
+        return None
+
+    def handle(event):
+        page = event.get("page")
+        if not page:
+            return
+        counted[0] += 1
+        if counted[0] % STRIDE == 1 or counted[0] % STRIDE == 0:
+            say(f"{page} captured in {clock(event.get('seconds'))} "
+                f"({event.get('width')}x{event.get('height')})")
+        key = species_of(page)
+        if key is None:
+            return
+        seen[key].add(page)
+        wanted = set(lookdev.page_names("species", key))
+        if wanted and seen[key] >= wanted:
+            seen[key].clear()
+            stream.publish("plant.review.wanted", species=key,
+                           pages=sorted(wanted),
+                           why="every frame of this species is captured")
+            say(f"{key}: all {len(wanted)} frame(s) captured - asked for a review")
+
+    return subscribe(root, "plant.frame.captured", handle, say)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(watch))

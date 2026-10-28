@@ -33,6 +33,8 @@ normal maps), on every run, since git and the CI texture cache keep neither.
 
 import hashlib
 import json
+import multiprocessing
+import os
 import sys
 from pathlib import Path
 
@@ -119,6 +121,12 @@ def cavity(height, radius):
 def mix(a, b, t):
     t = t[..., None] if a.ndim == 3 and t.ndim == 2 else t
     return a * (1 - t) + b * t
+
+
+def norm(a):
+    """Stretch a field to the full 0..1 range (a _H map needs its whole range)."""
+    lo, hi = float(a.min()), float(a.max())
+    return (a - lo) / (hi - lo) if hi - lo > 1e-9 else np.zeros_like(a)
 
 
 def rgb(value, tint):
@@ -370,8 +378,209 @@ def moonstone(rng, n):
     return albedo, height, np.ones_like(v) * 0.98, rough, np.zeros_like(v)
 
 
+# --- Plant library recipes (tools/assets/themes/plants.json, tools/assets/plants.py) ---
+#
+# These two are parameterised, because a leaf is the same recipe with a different
+# venation, outline, colour and amount of damage for every species, and 25 near-copies
+# of one function would rot. The parameters come from `Species.leaf_tex` and
+# `Species.bark_tex` in tools/assets/plants.py, which is the single place a species is
+# described; plants.py writes them into themes/plants.json, and `spec["args"]` below
+# hands them to the recipe.
+#
+# A leaf set is an ATLAS, not a tiling surface: 2x2 tiles, each the surface of one
+# leaf in blade-local coordinates - u across the blade with the midrib at 0.5 and the
+# margins at 0 and 1, v from base to tip - because the blade's outline is geometry
+# here, not an alpha cutout. Tile (0,0) is mature, (1,0) the young flush, (0,1) an old
+# blotched leaf and (1,1) a dead one. A specimen samples one tile, so a stand of one
+# species carries four readings off one material and one draw call.
+#
+# Measured colour rules these follow (reference sampling, docs/reference/plant-library.md):
+# gloss reads as saturation collapsing toward a NEUTRAL sheen band about 1.35x the
+# lamina value, never as a bright highlight, and it never clips; midribs are about
+# 1.7x the lamina value; damage carries a 1-2 mm pale halo; lamina saturation is lower
+# and its value range wider than the usual guess. Nothing here is drawn from a
+# photograph: the leaf is numpy, like every other surface in this file.
+
+
+def _vein_field(venation, u, v, count):
+    """Distance, in vein spacings, to the nearest secondary vein. 0 is on a vein."""
+    s = (u - 0.5) * 2
+    if venation == "parallel":
+        # Along the blade: the straps and the palms. Veins run base to tip.
+        phase = s * count * 0.5
+    elif venation == "palmate":
+        # Out of one point at the base: the ceiba's leaflets, a Bauhinia blade.
+        phase = np.arctan2(np.maximum(v, 1e-3), s) / np.pi * count
+    elif venation == "dichotomous":
+        # Moss, lichen, spikemoss: no order at all, so this is noise, not a vein.
+        return np.abs(np.sin(s * count * 0.7 + v * count * 0.9)) * 0.5
+    else:
+        # Pinnate: off the midrib at an angle, the angle opening toward the base.
+        phase = v * count - np.abs(s) * (0.35 + 0.35 * v) * count / 3.0
+    return np.abs(phase - np.round(phase))
+
+
+def plant_leaf(rng, n, venation="pinnate", outline="ovate", green=(0.26, 0.42, 0.16),
+               young=(0.42, 0.60, 0.18), dead=(0.40, 0.30, 0.18), vein=0.5, vein_count=14,
+               midrib=1.7, blotch=0.3, damage=0.25, gloss=0.5, grid=(2, 2)):
+    """One species' leaf atlas: the same leaf surface in four states."""
+    gx, gy = int(grid[0]), int(grid[1])
+    m = n // gy
+    albedo = np.zeros((n, n, 3), np.float32)
+    height = np.zeros((n, n), np.float32)
+    occ = np.zeros((n, n), np.float32)
+    rough = np.zeros((n, n), np.float32)
+    states = [
+        # (base colour, age 0..1, extra blotching, extra damage)
+        (green, 0.5, 1.0, 1.0),
+        (young, 0.0, 0.3, 0.3),
+        (green, 1.0, 1.9, 1.8),
+        (dead, 1.0, 2.4, 2.6),
+    ]
+    for index, (base, age, blotch_k, damage_k) in enumerate(states[:gx * gy]):
+        tx, ty = index % gx, index // gx
+        maps = _leaf_tile(rng, m, np.array(base, np.float32), age, venation, vein, vein_count,
+                          midrib, blotch * blotch_k, damage * damage_k, gloss,
+                          is_dead=index == 3)
+        ys, xs = slice(ty * m, (ty + 1) * m), slice(tx * m, (tx + 1) * m)
+        albedo[ys, xs], height[ys, xs], occ[ys, xs], rough[ys, xs] = maps
+    return albedo, height, occ, np.clip(rough, 0.05, 1.0), np.zeros((n, n), np.float32)
+
+
+def _leaf_tile(rng, m, base, age, venation, vein, vein_count, midrib, blotch, damage, gloss,
+               is_dead=False):
+    s_ratio = m / 512
+    yy, xx = np.mgrid[0:m, 0:m].astype(np.float32)
+    u, v = xx / (m - 1), yy / (m - 1)
+    s = (u - 0.5) * 2
+    across = np.abs(s)
+    # Midrib: a pale raised keel on the centre line, narrowing toward the tip.
+    rib_w = 0.05 * (1.25 - 0.6 * v)
+    rib = np.exp(-(across / rib_w) ** 2)
+    # Secondary veins, and a finer net between them.
+    dist = _vein_field(venation, u, v, vein_count)
+    sec = np.exp(-(dist / 0.13) ** 2) * (1 - rib)
+    net = np.exp(-(_vein_field(venation, u, v, vein_count * 3) / 0.22) ** 2) * 0.35
+    grain = fbm(rng, m, 64, 1.1)
+    # Quilting: the lamina sits lower between the veins, 5-10 mm of it.
+    quilt = (1 - np.clip(sec + 0.5 * net, 0, 1)) * 0.5
+    height_f = norm(0.55 * rib + 0.22 * sec + 0.08 * net - 0.18 * quilt + 0.06 * grain)
+    # Margin: browned and nicked, with the pale halo a healing edge carries.
+    margin = np.clip((across - 0.86) / 0.14, 0, 1)
+    nicks = np.clip((fbm(rng, m, 26, 1.3) - 0.52) * 4, 0, 1) * margin * damage
+    holes = np.clip((fbm(rng, m, 40, 1.2) - 0.76) * 6, 0, 1) * damage * (1 - rib)
+    halo = np.clip(blur(holes + nicks, max(1, int(3 * s_ratio))) * 2.2 - (holes + nicks), 0, 1)
+    spots = np.clip((fbm(rng, m, 14, 1.6) - 0.56) * 3, 0, 1) * blotch
+    chlorosis = np.clip((fbm(rng, m, 8, 2.0) - 0.5) * 2, 0, 1) * blotch * 0.8
+    # Lamina value: shade shifts green bluer as well as darker, so the shaded side of
+    # the quilting loses a little red and gains no green.
+    body = base[None, None, :] * (0.92 + 0.16 * grain)[..., None]
+    shade = (0.86 + 0.14 * (1 - quilt))[..., None]
+    body = body * shade
+    body[..., 0] *= 1.0 - 0.10 * quilt
+    body[..., 2] *= 1.0 + 0.08 * quilt
+    lamina = body
+    # Veins: the midrib reads about 1.7x the lamina, the secondaries a little over 1.2x.
+    lamina = mix(lamina, np.clip(body * midrib, 0, 0.92), rib * (0.35 + 0.5 * vein))
+    lamina = mix(lamina, np.clip(body * (1.0 + 0.35 * (midrib - 1.0)), 0, 0.92),
+                 sec * vein * 0.7 + net * vein * 0.3)
+    # Age: yellowing between the veins first, then brown blotches and a dry margin.
+    yellow = np.array([0.52, 0.46, 0.14], np.float32)
+    brown = np.array([0.34, 0.24, 0.13], np.float32)
+    lamina = mix(lamina, yellow[None, None, :], chlorosis * (0.3 + 0.7 * age) * (1 - rib))
+    lamina = mix(lamina, brown[None, None, :], spots * 0.75)
+    lamina = mix(lamina, brown[None, None, :] * 0.8, np.clip(margin * age * 0.8, 0, 1) * 0.7)
+    # Damage: a hole is drawn, not cut (the blade's outline is geometry, and an alpha
+    # cutout would cost the whole sorting and shadow-bias problem for nothing).
+    lamina = mix(lamina, brown[None, None, :] * 0.55, np.clip(holes + nicks, 0, 1) * 0.85)
+    lamina = mix(lamina, np.clip(base[None, None, :] * 2.1, 0, 0.88), halo * 0.5)
+    # Sheen: saturation collapses toward a neutral band, it does not brighten.
+    sheen_band = np.exp(-((v - 0.42) / 0.35) ** 2) * np.exp(-((s - 0.35) / 0.7) ** 2)
+    sheen = sheen_band * gloss * (0.3 if is_dead else 1.0)
+    grey = lamina.mean(axis=-1, keepdims=True) * 1.12
+    lamina = mix(lamina, np.minimum(grey.repeat(3, axis=-1), 0.86), sheen * 0.45)
+    occ_f = cavity(height_f, max(1, int(4 * s_ratio))) * (1 - 0.25 * np.clip(holes, 0, 1))
+    rough_f = (0.86 - 0.42 * gloss) + 0.08 * (grain - 0.5) + 0.10 * spots + 0.12 * margin * age
+    rough_f -= 0.18 * sheen
+    # Base colour holds no light, so it holds no black and no white either: the floor
+    # and ceiling keep the map inside the 30-240 sRGB window the validator enforces,
+    # whatever a species' own colours are.
+    return np.clip(lamina, 0.13, 0.94), height_f, occ_f, rough_f
+
+
+def plant_bark(rng, n, style="fissured", colour=(0.30, 0.26, 0.21), lichen=0.3, moss=0.25):
+    """Bark and root for the plant library, as a tiling surface.
+
+    One recipe, six habits: a palm's leaf-scar rings, a dicot's vertical fissures, a
+    tree fern's root-matted fibre, a spine-armed palm, the lenticelled grey-green of a
+    ceiba, and smooth. The crustose lichen is the important part and the easy one to
+    get wrong: at 150-300 m a trunk is a mottled, map-like patchwork of pale cream and
+    off-white crust with irregular dark edges, LIGHTER than the bark, with moss only in
+    the bottom metre or two. There is no beard lichen here at all.
+    """
+    s = n / 1024
+    base = np.array(colour, np.float32)
+    fine = fbm(rng, n, 64, 1.0)
+    mid = fbm(rng, n, 22, 1.5)
+    if style == "ringed":
+        # Palm leaf scars: horizontal rings at a real spacing, not a sine wave.
+        rings = np.abs(np.sin(np.mgrid[0:n, 0:n][0].astype(np.float32) / n * np.pi * 14))
+        (rings,) = warp([rings], rng, n, 6 * s, octaves=12)
+        relief = 0.55 * rings + 0.2 * mid
+        gap = np.clip((0.35 - rings) * 3, 0, 1)
+        height = norm(relief - 0.3 * gap + 0.12 * fine)
+    elif style == "fibrous":
+        # A tree fern's trunk is a mat of old root and frond base, all vertical.
+        strands = fbm(rng, n, 40, 1.1, stretch=(1.0, 0.05))
+        (strands,) = warp([strands], rng, n, 8 * s, octaves=14)
+        hairs = fbm(rng, n, 64, 0.9, stretch=(1.0, 0.12))
+        height = norm(0.5 * strands + 0.3 * hairs + 0.14 * fine)
+        gap = np.clip((0.45 - strands) * 3, 0, 1)
+    elif style == "spiny":
+        d1, _, ident = voronoi(rng, n, 150)
+        spine = np.clip(1.0 - d1 / (14 * s), 0, 1) ** 0.6 * (ident > 0.45)
+        height = norm(0.3 * mid + 0.16 * fine + 0.9 * spine)
+        gap = np.zeros_like(fine)
+    elif style == "lenticel":
+        d1, _, ident = voronoi(rng, n, 2600)
+        lenticel = np.clip(1.0 - d1 / (2.2 * s), 0, 1) * (ident > 0.72)
+        bumps = np.clip((fbm(rng, n, 30, 1.3) - 0.66) * 5, 0, 1)      # old prickle bases
+        height = norm(0.45 * mid + 0.2 * fine + 0.3 * bumps - 0.2 * lenticel)
+        gap = lenticel * 0.6
+    elif style == "smooth":
+        height = norm(0.6 * mid + 0.3 * fine)
+        gap = np.zeros_like(fine)
+    else:                                   # fissured
+        ridge_src = fbm(rng, n, 16, 1.5, stretch=(1.0, 0.08))
+        (ridge,) = warp([ridge_src], rng, n, 14 * s, octaves=10)
+        cross = np.clip((fbm(rng, n, 28, 1.3, stretch=(0.25, 1.0)) - 0.6) * 4, 0, 1)
+        gap = np.clip((0.5 - ridge) * 4, 0, 1)
+        height = norm(0.6 * ridge + 0.16 * fine - 0.4 * gap - 0.16 * cross)
+    hollow = np.clip((blur(height, max(1, int(8 * s))) - height) * 6, 0, 1)
+    v = 1.0 + 0.22 * (fine - 0.5) + 0.18 * (mid - 0.5) - 0.22 * gap
+    albedo = base[None, None, :] * v[..., None]
+    albedo = mix(albedo, albedo * 0.6, hollow * 0.5)
+    # Crustose lichen: ragged map-like colonies on the exposed faces, a few ochre.
+    crust = np.clip((fbm(rng, n, 30, 1.0) + 0.3 * (fine - 0.5) - 0.52) * 6, 0, 1) * (1 - hollow)
+    crust *= np.clip((fbm(rng, n, 11, 1.8) - 0.38) * 3, 0, 1) * lichen
+    ochre = crust * np.clip((fbm(rng, n, 18, 1.6) - 0.62) * 6, 0, 1)
+    albedo = mix(albedo, rgb(0.74 + 0.08 * fine, (1.0, 0.99, 0.93)), np.clip(crust - ochre, 0, 1) * 0.75)
+    albedo = mix(albedo, rgb(0.66 + 0.06 * fine, (1.0, 0.86, 0.52)), ochre * 0.65)
+    # Moss: only what gathers in the fissures and hollows, never a furry trunk.
+    growth = np.clip(hollow * 1.4 + 0.8 * (fbm(rng, n, 26, 1.3) - 0.58) - 0.3, 0, 1) * moss
+    albedo = mix(albedo, rgb(0.30 + 0.07 * fine, (0.70, 1.0, 0.52)), growth * 0.6)
+    height = np.clip(height + 0.03 * crust + 0.05 * growth, 0, 1)
+    occ = cavity(height, max(1, int(6 * s))) * (1 - 0.3 * gap)
+    rough = 0.88 + 0.08 * (fine - 0.5) + 0.06 * gap - 0.06 * crust + 0.04 * growth
+    # As for the leaf: no baked light means no black, and the darkest barks here
+    # (the spiny palms) would otherwise dip under the validator's floor in a fissure.
+    return np.clip(albedo, 0.14, 0.94), height, occ, np.clip(rough, 0.05, 1.0), np.zeros_like(v)
+
+
 RECIPES = {"stone": stone, "ground": ground, "gold": gold, "gem": gem, "lapis": lapis, "jade": jade,
-           "moonstone": moonstone}
+           "moonstone": moonstone,
+           # Plant library (parameterised by the set's "args")
+           "leaf": plant_leaf, "plant_bark": plant_bark}
 
 
 def normal_from_height(h, strength):
@@ -399,13 +608,30 @@ def quantise(a):
 
 
 def save(img, path, mode):
+    """Write one map.
+
+    compress_level 1, not the default 6. On a 4096 map that is 0.8 s instead of 4.8 s
+    and costs 3 MB of a file that is a build output, gitignored, and read exactly once
+    by Godot's importer before it becomes a .ctex. Over a 36-set library that is seven
+    minutes a run spent making an intermediate file smaller.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
-    Image.fromarray(img, mode).save(path, compress_level=6)
+    Image.fromarray(img, mode).save(path, compress_level=1)
 
 
 def write_set(out, name, maps, n, spec):
     albedo, height, occ, rough, metal = maps
-    strength = spec.get("normal_strength", 1.0) * NORMAL_REF / n
+    # Scaled UP with the texture, not down. `normal_from_height` takes a central
+    # difference between neighbouring texels, so a feature of fixed width across the
+    # tile spreads over more texels as the texture grows and its per-texel slope
+    # falls as 1/n. Keeping the relief constant therefore means multiplying by
+    # n/NORMAL_REF; dividing by it doubles the loss. At 4096 against a reference of
+    # 1024 that came to 16x flatter than the strength each species was tuned for, and
+    # every normal map in the library was a flat sheet - the leaves rendered as green
+    # planes with no surface at any resolution, which is the whole of "the textures
+    # are barely visible". Raising the quality floor from 1024 to 4096 is what
+    # erased them.
+    strength = spec.get("normal_strength", 1.0) * n / NORMAL_REF
     save(quantise(albedo), out / f"T_{name}_BC.png", "RGB")
     save(normal_from_height(height.astype(np.float32), strength), out / f"T_{name}_N.png", "RGB")
     save(quantise(np.stack([occ, rough, metal], axis=-1)), out / f"T_{name}_ORM.png", "RGB")
@@ -448,20 +674,43 @@ def generate(params_path):
         if old not in expected:
             old.unlink()
             old.with_name(old.name + ".import").unlink(missing_ok=True)
-    for index, (name, spec) in enumerate(sorted(tex["sets"].items())):
-        rng = np.random.default_rng([p["seed"], index])
-        recipe = RECIPES[spec["recipe"]]
-        if spec.get("hi"):
-            maps = recipe(rng, hi_n)
-            write_set(out / "hi", name, maps, hi_n, spec)
-            maps = [downsample(m, hi_n // base_n) for m in maps]
-            sizes = f"{hi_n} (hi) + {base_n}"
-        else:
-            maps = recipe(rng, base_n)
-            sizes = f"{base_n}"
-        write_set(out, name, maps, base_n, spec)
-        print(f"T_{name}: {sizes}, BC/N/ORM{'/H' if spec.get('height') else ''}")
+    jobs = [(index, name, spec, out, base_n, hi_n, p["seed"])
+            for index, (name, spec) in enumerate(sorted(tex["sets"].items()))]
+    # Every set is independent and seeded from its own index, so the bytes do not depend
+    # on the order they are built in, and a machine with 32 cores has no business
+    # building 36 of them one at a time: the plant library took forty minutes a run and
+    # blocked every look at it behind that. Workers are capped well under the core count
+    # because each 4096 set holds several hundred megabytes of float arrays at once.
+    workers = min(len(jobs), max(1, (os.cpu_count() or 4) // 3), 12)
+    if workers > 1:
+        with multiprocessing.get_context("fork").Pool(workers) as pool:
+            for line in pool.imap_unordered(_build_set, jobs):
+                print(line)
+    else:
+        for job in jobs:
+            print(_build_set(job))
     stamp.write_text(digest + "\n")
+
+
+def _build_set(job):
+    """Build and write one texture set. Must stay self-contained: it runs in a worker,
+    and returning the maps rather than writing them would pickle hundreds of megabytes."""
+    index, name, spec, out, base_n, hi_n, seed = job
+    rng = np.random.default_rng([seed, index])
+    recipe = RECIPES[spec["recipe"]]
+    # A set may carry "args": the parameters of a parameterised recipe (the plant
+    # library's leaf and bark sets, one per species). Recipes without them see none.
+    args = spec.get("args", {})
+    if spec.get("hi"):
+        maps = recipe(rng, hi_n, **args)
+        write_set(out / "hi", name, maps, hi_n, spec)
+        maps = [downsample(m, hi_n // base_n) for m in maps]
+        sizes = f"{hi_n} (hi) + {base_n}"
+    else:
+        maps = recipe(rng, base_n, **args)
+        sizes = f"{base_n}"
+    write_set(out, name, maps, base_n, spec)
+    return f"T_{name}: {sizes}, BC/N/ORM{'/H' if spec.get('height') else ''}"
 
 
 def main():

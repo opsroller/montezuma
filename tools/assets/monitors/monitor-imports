@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0
+"""Monitor: Godot's import pass failing, the moment it fails.
+
+A different event source from the look-dev stream: Godot's own log. An import can be
+triggered by something other than the pipeline - the editor, another worktree of this
+checkout, a session that is not this one - and when it goes wrong it does so quietly.
+
+This is the fault that has cost this library the most. Godot serves meshes and
+textures from `.godot/imported`, not from the files on disk. A failed import leaves
+`valid=false` in the asset's `.import` file; every later pass then skips that asset
+without a word, the plant renders white or untextured, and the first anybody knows is
+a contact sheet twenty minutes later with a hole in it. The error is printed once, in
+this log, at the moment it happens, and then never again.
+
+    game/.godot + godot --import  ->  .scratch/import.log  ->  this
+
+Every line matched here is one Godot prints: `ERROR:` for an import it could not
+complete, `Failed to load` and `Cannot open` for a file it could not read, and
+`valid=false`, which the pipeline's own import step prints for each asset it finds
+poisoned after the pass.
+"""
+
+import re
+
+from plants_stream import main, speaker, tail
+
+LOG = ".scratch/import.log"
+# Only the lines worth waking somebody for. Godot's import log is thousands of
+# progress lines; these are the ones that mean an asset did not make it in.
+BAD = re.compile(
+    r"\bERROR\b|\bSCRIPT ERROR\b|Failed to load|Cannot open|valid=false"
+    r"|\bFailed to import\b|\bImport failed\b",
+    re.IGNORECASE,
+)
+# Godot repeats the same error once per dependent resource. Collapsing repeats keeps
+# one bad atlas from being thirty-six notifications.
+REPEAT_CAP = 3
+
+say = speaker("imports")
+
+
+def watch(root):
+    (root / ".scratch").mkdir(parents=True, exist_ok=True)
+    seen = {}
+    for line in tail(root / LOG, root):
+        line = line.strip()
+        if not line or not BAD.search(line):
+            continue
+        # Godot colours its log. The escape codes are noise in a notification.
+        plain = re.sub(r"\x1b\[[0-9;]*m", "", line)[:200]
+        count = seen.get(plain, 0) + 1
+        seen[plain] = count
+        if count < REPEAT_CAP:
+            say(plain)
+        elif count == REPEAT_CAP:
+            say(f"{plain}  (repeating; further copies of this line are not reported)")
+    say(f"stopped following {LOG}; import failures are no longer reported")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(watch))
