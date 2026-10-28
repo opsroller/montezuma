@@ -1,7 +1,14 @@
 {
   "name": "montezuma-plants",
   "version": "0.1.0",
-  "description": "Deterministic tools for the Montezuma jungle plant library: parameters, atlases, meshes, pages, import, 4K capture, mesh checks, contact sheets and measurement.",
-  "author": { "name": "Montezuma contributors (Claude)" },
-  "license": "GPL-2.0-or-later"
+  "description": "The plant look-dev pipeline: params, atlases, meshes, pages, import, checks, validation, 4K capture, contact sheets and measurement.",
+  "author": { "name": "opsroller" },
+  "license": "GPL-2.0-or-later",
+  "commands": "./commands",
+  "mcpServers": {
+    "plants": {
+      "command": "python3",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/servers/plants_mcp.py"]
+    }
+  }
 }

@@ -1,9 +1,8 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
-# Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
 """Lay rendered look-dev frames out as a labelled contact sheet.
 
-    .venv/bin/python tools/assets/contact_sheet.py <frames dir> <sheet.png> [--per 9]
-    .venv/bin/python tools/assets/contact_sheet.py <dir> <out.png> --only Heliconia,Ceiba
+    python3 tools/assets/contact_sheet.py <frames dir> <sheet.png> [--per 9]
+    python3 tools/assets/contact_sheet.py <dir> <out.png> --only Heliconia,Ceiba
 
 A 4K frame per specimen is the right thing to judge one plant on and the wrong thing
 to judge a library on. Nearly every fault in the plant library was found by seeing

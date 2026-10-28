@@ -185,15 +185,25 @@ same step makes them for the Godot editor. A CMake build does it too
 (target `textures`) when it finds numpy and Pillow.
 
 ```sh
-python3 -m venv .venv
-.venv/bin/pip install --require-hashes -r .github/requirements/assets.txt
-.venv/bin/python tools/assets/gen_theme_textures.py # skips themes whose inputs did not change
-.venv/bin/python tools/assets/validate_assets.py    # exits 1 on any error
+direnv allow                                 # once per checkout
+python3 tools/assets/gen_theme_textures.py   # skips themes whose inputs did not change
+python3 tools/assets/validate_assets.py      # exits 1 on any error
 ```
 
-The hashes in `assets.txt` cover every platform numpy and Pillow ship wheels for,
-so the same commands work on Linux, macOS and Windows. On Windows the
-venv's programs are in `.venv\Scripts\`.
+`.envrc` is `use flake` then `layout pipenv`: the flake delivers `python3`, the
+build tools and the native libraries the wheels link against, and the `Pipfile`
+delivers numpy and Pillow on top. Inside the checkout `python3` has them, so no
+command takes an interpreter path in front of it.
+
+Without direnv — another platform, or CI — make the same environment by hand:
+
+```sh
+pipenv install            # from the Pipfile
+pipenv run python tools/assets/gen_theme_textures.py
+```
+
+CI installs from `.github/requirements/assets.txt`, which pins the same two
+packages with hashes covering every platform they ship wheels for.
 
 ## Bake the lightmaps
 

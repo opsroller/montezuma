@@ -113,13 +113,15 @@ that base colour may not carry baked light.
 Then regenerate, in this order:
 
 ```sh
-python3 tools/assets/plants.py textures          # themes/plants.json
-.venv/bin/python tools/assets/gen_theme_textures.py tools/assets/themes/plants.json
-.venv/bin/python tools/assets/plants.py build    # meshes, materials, catalogue
-.venv/bin/python tools/assets/validate_assets.py
+python3 tools/assets/lookdev.py params     # themes/plants.json
+python3 tools/assets/lookdev.py atlases    # the 36 sets at 4096, in parallel
+python3 tools/assets/lookdev.py build      # meshes, materials, catalogue
+python3 tools/assets/validate_assets.py
 ```
 
-The 36 sets take about forty minutes at 4096 px, so put the kettle on.
+The 36 sets take about three minutes at 4096 px. No interpreter path in front of
+anything: `.envrc` is `use flake` then `layout pipenv`, so `python3` in the
+checkout has numpy and Pillow (`direnv allow` once).
 
 `build` prints the triangle chain per variant and fails if one goes over its
 band's ceiling. That ceiling catches a builder that has run away, not a plant
@@ -142,24 +144,18 @@ spreads, so its camera stands tens of metres back and nothing about a keel or a
 margin survives the frame.
 
 ```sh
-python3 tools/assets/plants.py closeups --only <species> --empty
-flock /home/claude/work/montezuma/.godot-gpu.lock \
-  gamescope --backend headless -W 3840 -H 2160 -- \
-  godot --path game --rendering-driver vulkan \
-  res://assets/lookdev/LD_Plant_<Species><Variant>.tscn \
-  --write-movie /tmp/plants/f.png --fixed-fps 30 --quit-after 10 -- --start-screen=
-.venv/bin/python tools/assets/measure_foliage.py /tmp/plants/f00000009.png \
-  --against /tmp/plants-empty/f00000009.png
+python3 tools/assets/lookdev.py all --species <species>
 ```
 
+That writes the pages, imports them, captures at 3840×2160 into `.scratch/lookdev`,
+lays the contact sheets out and measures each frame against the reference. The
+resolution, the scratch location, the GPU lock and the step order are decided in
+`lookdev.py`, so none of them is retyped or forgotten.
+
 **3840×2160 or larger, always** — that is the project's quality floor, and a
-1080p frame will not show you what you are deciding. Window size comes from the
-gitignored `game/override.cfg`; there is no xvfb on the build host, so use
-`gamescope --backend headless`. A 4K frame costs about two seconds to encode, so
-ten frames is plenty for a static page. If you pass `--import`, run `git checkout
-game/project.godot` afterwards, because the import rewrites it. The grey block in
-the frame is 1.8 m tall and an 18% grey card: check the plant against it for
-scale and the frame against it for exposure.
+1080p frame will not show you what you are deciding. The grey block in the frame is
+1.8 m tall and an 18% grey card: check the plant against it for scale and the frame
+against it for exposure.
 
 `measure_foliage.py` reads the reference's figures back off the frame; `--against`
 takes the matching `_Empty` page and masks the plant exactly, which also gives

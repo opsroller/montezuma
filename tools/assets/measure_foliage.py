@@ -1,9 +1,8 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
-# Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
 """Measure a look-dev frame against docs/reference/foliage-reference.md.
 
-    .venv/bin/python tools/assets/measure_foliage.py <frame.png> [<frame.png> ...]
-    .venv/bin/python tools/assets/measure_foliage.py --json <frame.png>
+    python3 tools/assets/measure_foliage.py <frame.png> [<frame.png> ...]
+    python3 tools/assets/measure_foliage.py --json <frame.png>
 
 The reference page is a list of numbers sampled off photographs, and a frame
 either hits them or does not. Judging that by eye is how a plant ends up a
