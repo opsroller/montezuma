@@ -39,24 +39,40 @@ python3 tools/assets/plants.py lookdev
 # 5. import.  REQUIRED after any mesh or texture change.
 flock /home/claude/work/montezuma/.godot-gpu.lock godot --path game --import --headless
 
-# 6. capture at the quality floor, 4 frames is plenty for a static page
+# 6. capture at the quality floor, 4 frames is plenty for a static page.
+#    Scratch lives in .scratch/ in the workspace, never /tmp - see "Scratch" below.
+work=$(mktemp -d -p .scratch)
 flock /home/claude/work/montezuma/.godot-gpu.lock \
   gamescope --backend headless -W 3840 -H 2160 -- \
   godot --path game --rendering-driver vulkan \
   res://assets/lookdev/LD_Plant_HeliconiaClump.tscn \
-  --write-movie /tmp/plantshots/h/f.png --fixed-fps 30 --quit-after 4 -- --start-screen=
+  --write-movie "$work/f.png" --fixed-fps 30 --quit-after 4 -- --start-screen=
+cp "$work"/f*.png .scratch/lookdev/LD_Plant_HeliconiaClump.png   # keep the last frame
 
 # 7. check the meshes for what a frame cannot show: degenerate faces, winding against
 #    a neighbour, normals facing the wrong way, UVs straddling an atlas tile, orphans
 python3 tools/assets/check_plant_meshes.py
 
 # 8. look at it, as a sheet when there is more than one
-.venv/bin/python tools/assets/contact_sheet.py /tmp/plantshots /tmp/plantshots/sheet.png
+.venv/bin/python tools/assets/contact_sheet.py .scratch/lookdev .scratch/lookdev/sheet.png
 
 # 9. read the reference's figures back off the frame
-.venv/bin/python tools/assets/measure_foliage.py /tmp/plantshots/h/f00000003.png \
-  --against /tmp/plantshots/h_empty/f00000003.png
+.venv/bin/python tools/assets/measure_foliage.py \
+  .scratch/lookdev/LD_Plant_HeliconiaClump.png \
+  --against .scratch/lookdev/LD_Plant_HeliconiaClump_Empty.png
 ```
+
+## Scratch
+
+Captures, contact sheets, movie-maker working directories and tool logs go in
+**`.scratch/`** in the workspace, which is gitignored. Not `/tmp`: the system temp
+directory is shared with every other process on the machine, it is not scratch space
+for one project, and work left there sits outside the checkout it belongs to — which
+also means another session, or a reboot, can take it out from under you. Make per-run
+directories with `mktemp -d -p .scratch` and clean them up; keep nothing in
+`.scratch/` that matters, because it is safe to delete whole.
+
+Paths you hand to a person should be inside the workspace for the same reason.
 
 ## Traps that cost hours
 
