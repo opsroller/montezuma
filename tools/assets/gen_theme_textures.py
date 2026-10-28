@@ -33,6 +33,8 @@ normal maps), on every run, since git and the CI texture cache keep neither.
 
 import hashlib
 import json
+import multiprocessing
+import os
 import sys
 from pathlib import Path
 
@@ -606,8 +608,15 @@ def quantise(a):
 
 
 def save(img, path, mode):
+    """Write one map.
+
+    compress_level 1, not the default 6. On a 4096 map that is 0.8 s instead of 4.8 s
+    and costs 3 MB of a file that is a build output, gitignored, and read exactly once
+    by Godot's importer before it becomes a .ctex. Over a 36-set library that is seven
+    minutes a run spent making an intermediate file smaller.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
-    Image.fromarray(img, mode).save(path, compress_level=6)
+    Image.fromarray(img, mode).save(path, compress_level=1)
 
 
 def write_set(out, name, maps, n, spec):
@@ -655,23 +664,43 @@ def generate(params_path):
         if old not in expected:
             old.unlink()
             old.with_name(old.name + ".import").unlink(missing_ok=True)
-    for index, (name, spec) in enumerate(sorted(tex["sets"].items())):
-        rng = np.random.default_rng([p["seed"], index])
-        recipe = RECIPES[spec["recipe"]]
-        # A set may carry "args": the parameters of a parameterised recipe (the plant
-        # library's leaf and bark sets, one per species). Recipes without them see none.
-        args = spec.get("args", {})
-        if spec.get("hi"):
-            maps = recipe(rng, hi_n, **args)
-            write_set(out / "hi", name, maps, hi_n, spec)
-            maps = [downsample(m, hi_n // base_n) for m in maps]
-            sizes = f"{hi_n} (hi) + {base_n}"
-        else:
-            maps = recipe(rng, base_n, **args)
-            sizes = f"{base_n}"
-        write_set(out, name, maps, base_n, spec)
-        print(f"T_{name}: {sizes}, BC/N/ORM{'/H' if spec.get('height') else ''}")
+    jobs = [(index, name, spec, out, base_n, hi_n, p["seed"])
+            for index, (name, spec) in enumerate(sorted(tex["sets"].items()))]
+    # Every set is independent and seeded from its own index, so the bytes do not depend
+    # on the order they are built in, and a machine with 32 cores has no business
+    # building 36 of them one at a time: the plant library took forty minutes a run and
+    # blocked every look at it behind that. Workers are capped well under the core count
+    # because each 4096 set holds several hundred megabytes of float arrays at once.
+    workers = min(len(jobs), max(1, (os.cpu_count() or 4) // 3), 12)
+    if workers > 1:
+        with multiprocessing.get_context("fork").Pool(workers) as pool:
+            for line in pool.imap_unordered(_build_set, jobs):
+                print(line)
+    else:
+        for job in jobs:
+            print(_build_set(job))
     stamp.write_text(digest + "\n")
+
+
+def _build_set(job):
+    """Build and write one texture set. Must stay self-contained: it runs in a worker,
+    and returning the maps rather than writing them would pickle hundreds of megabytes."""
+    index, name, spec, out, base_n, hi_n, seed = job
+    rng = np.random.default_rng([seed, index])
+    recipe = RECIPES[spec["recipe"]]
+    # A set may carry "args": the parameters of a parameterised recipe (the plant
+    # library's leaf and bark sets, one per species). Recipes without them see none.
+    args = spec.get("args", {})
+    if spec.get("hi"):
+        maps = recipe(rng, hi_n, **args)
+        write_set(out / "hi", name, maps, hi_n, spec)
+        maps = [downsample(m, hi_n // base_n) for m in maps]
+        sizes = f"{hi_n} (hi) + {base_n}"
+    else:
+        maps = recipe(rng, base_n, **args)
+        sizes = f"{base_n}"
+    write_set(out, name, maps, base_n, spec)
+    return f"T_{name}: {sizes}, BC/N/ORM{'/H' if spec.get('height') else ''}"
 
 
 def main():
