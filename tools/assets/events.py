@@ -22,8 +22,6 @@ and knows what it has without asking anyone:
     plant.frame.captured        one page is on disk at 3840x2160               <- a stage
     plant.frame.missing         a page rendered no frame
     plant.sheets.ready          the contact sheets are current                <- a stage
-    plant.gpu.waiting           this run is queued behind another worktree's Godot
-    plant.gpu.held              it has the GPU, after waiting that long
     plant.run.started           a pipeline run began
     plant.run.finished          it ended, with its code
     plant.run.died              it stopped without ending (reported by the monitor
@@ -68,8 +66,6 @@ TOPICS = {
     "plant.frame.captured",
     "plant.frame.missing",
     "plant.sheets.ready",
-    "plant.gpu.waiting",
-    "plant.gpu.held",
     "plant.run.started",
     "plant.run.finished",
     "plant.run.died",

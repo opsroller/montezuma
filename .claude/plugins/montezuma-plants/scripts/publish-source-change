@@ -8,12 +8,18 @@ differs from the committed file. `monitor-source-changed` hears it and submits t
 one plant's chain.
 
 Which species changed is read from the diff rather than guessed: the file is one
-module of twenty-six `@species(key=...)` blocks, so the line numbers git reports are
-enough to say which blocks the edit fell inside. An edit above the first block - a
-shared helper, a colour table, the leaf geometry every plant uses - is not one
-species and is deliberately not reported as one: it publishes nothing, and the whole
-library is rebuilt by hand with `plants-queue library`, which is the honest answer
-for a change that touches everything.
+module of twenty-six `@species(...)` decorators, each followed by the builder it
+decorates, so the line numbers git reports are enough to say which blocks the edit
+fell inside.
+
+A block has an end as well as a start, and that matters more than it sounds. Shared
+code - a colour table, the leaf geometry every plant uses, the shed-litter pass that
+runs for all twenty-six - lives between and after those blocks, and attributing it to
+the nearest preceding species is how a change to every plant in the library comes out
+as "root_curtain changed". So a block runs from its decorator to the end of its
+builder, and an edit outside every block publishes nothing. That is the honest
+answer: a change to shared code is a change to the whole library, and the whole
+library is resubmitted with `plants-queue library`.
 
 Nothing here runs the pipeline. It publishes a fact, and the monitors decide.
 """
@@ -26,7 +32,9 @@ import sys
 from pathlib import Path
 
 SOURCE = "tools/assets/plants.py"
-BLOCK = re.compile(r'^\s*key="([a-z0-9_]+)",')
+DECORATOR = re.compile(r"^@species\(")
+KEY = re.compile(r'^\s*key="([a-z0-9_]+)",')
+TOP_LEVEL = re.compile(r"^\S")
 HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
 
 
@@ -39,13 +47,43 @@ def root():
 
 
 def blocks(lines):
-    """Each species' key against the line it is declared on, in file order."""
-    found = []
-    for number, line in enumerate(lines, 1):
-        match = BLOCK.match(line)
-        if match:
-            found.append((number, match.group(1)))
-    return found
+    """Each species' key against the span of lines that belong to it.
+
+    A span runs from the `@species(` decorator to the last line of the builder it
+    decorates. The builder's body is indented, so the span ends at the next line that
+    starts in column one - the next decorator, the next top-level `def`, or the
+    comment banner between sections. Anything outside every span is shared code and
+    belongs to no species.
+    """
+    spans = []
+    for index, line in enumerate(lines):
+        if not DECORATOR.match(line):
+            continue
+        key = None
+        for ahead in lines[index:]:
+            found = KEY.match(ahead)
+            if found:
+                key = found.group(1)
+                break
+        if key is None:
+            continue
+        # Past the decorator's own closing `)` and the builder's `def`, then on to
+        # the first line that leaves the builder's body.
+        end = len(lines)
+        seen_def = False
+        for after in range(index + 1, len(lines)):
+            text = lines[after]
+            if not TOP_LEVEL.match(text):
+                continue
+            if not seen_def:
+                # The decorator's closing paren, then `def _builder(...):`.
+                if text.startswith("def "):
+                    seen_def = True
+                continue
+            end = after
+            break
+        spans.append((index + 1, end, key))
+    return spans
 
 
 def changed_lines(where):
@@ -84,14 +122,13 @@ def main():
     if not touched:
         return 0
 
-    declared = blocks(lines)
-    if not declared:
+    spans = blocks(lines)
+    if not spans:
         return 0
-    species = set()
-    for line in touched:
-        inside = [key for start, key in declared if start <= line]
-        if inside:
-            species.add(inside[-1])
+    species = {key for start, end, key in spans
+               if any(start <= line <= end for line in touched)}
+    shared = [line for line in touched
+              if not any(start <= line <= end for start, end, _ in spans)]
 
     sys.path.insert(0, str(where / "tools/assets"))
     import events                                         # noqa: PLC0415
@@ -101,10 +138,18 @@ def main():
                            broker=f"redis+socket://{socket}" if socket.exists() else None)
     for key in sorted(species):
         stream.publish("plant.source.changed", species=key, path=SOURCE)
+
+    said = []
     if species:
-        print(json.dumps({"systemMessage":
-                          f"plants.py: {', '.join(sorted(species))} changed; the queue "
-                          f"was told"}))
+        said.append(f"{', '.join(sorted(species))} changed; the queue was told")
+    if shared:
+        # Not attributed to a species, and deliberately not submitted: code outside
+        # every block is code every plant runs, and rebuilding one of them proves
+        # nothing about the other twenty-five.
+        said.append(f"{len(shared)} line(s) of shared code changed, which affects "
+                    f"every species - run `plants-queue library` to resubmit the lot")
+    if said:
+        print(json.dumps({"systemMessage": f"plants.py: {'; '.join(said)}"}))
     return 0
 
 

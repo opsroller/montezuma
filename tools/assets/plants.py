@@ -1018,11 +1018,20 @@ def _moss_patch(parts, rng, p, s):
 def _lichen_crust(parts, rng, p, s):
     b = parts("lichen")
     radius = s.spread_at(p.age) / 2 * p.scale
-    for _ in range(3 if p.lod else 6):
+    # "Patches 2-15 cm, merging into mottled sheets": the crust is continuous, with
+    # irregular dark edges and no free margin anywhere. Six discs scattered inside the
+    # patch radius is not a crust - it is three pale blobs on a stone with bare rock
+    # between them, which is exactly how this rendered. The colonies have to overlap
+    # into one sheet, so there are enough of them to close and they are placed out to
+    # the rim rather than clustered at the middle.
+    colonies = 8 if p.lod else rng.randint(22, 36)
+    for n in range(colonies):
         a = rng.uniform(0, 2 * math.pi)
-        r = radius * rng.uniform(0.0, 0.8)
+        # sqrt keeps the placement even across the disc instead of piling up at the
+        # centre, which is what a uniform radius does.
+        r = radius * math.sqrt(rng.uniform(0.0, 1.0)) * 0.92
         disc(b, math.cos(a) * r, math.sin(a) * r, rng.uniform(0.001, 0.004),
-             radius * rng.uniform(0.2, 0.55), rng, sides=7, bump=0.05, u_repeat=1.0)
+             radius * rng.uniform(0.28, 0.58), rng, sides=7, bump=0.05, u_repeat=1.0)
 
 
 @species(
@@ -1286,10 +1295,18 @@ def _philodendron(parts, rng, p, s):
 )
 def _monstera(parts, rng, p, s):
     kind = s.variants[p.variant]
-    height = s.height_at(p.age) * p.scale * (0.35 if kind == "Ground" else 1.0)
+    # The species range runs to 12 m because one of these three climbs. Taking it
+    # whole gave Shingle - M. tuberculata's juvenile phase, which is pressed flat to
+    # bark with 5-10 cm leathery blades - a twelve-metre spine carrying 9 cm leaves,
+    # and it rendered as a bare pole with specks on it. Each variant is sized from
+    # what it actually is.
+    reach = {"Climber": 1.0, "Shingle": 0.22, "Ground": 0.35}[kind]
+    height = s.height_at(p.age) * p.scale * reach
     st, b = parts("stem"), parts("leaf")
     climb_h = height if kind != "Ground" else height * 0.2
-    steps = int(_lerp(3, 8, p.age) * p.detail(1.0, 0.6, 0.4))
+    # A node every 25-40 cm of climb, not three to eight for any length of vine: the
+    # tell is "a short vertical file of sickle blades", and a file needs blades in it.
+    steps = max(3, int(climb_h / rng.uniform(0.25, 0.40) * p.detail(1.0, 0.6, 0.4)))
     spine = arc((0, 0, 0), rng.uniform(0, 6.28), climb_h * 0.06, climb_h, 0.0,
                 max(3, steps), tilt=1.45, wobble=0.01, rng=rng)
     tube(st, spine, [0.022 * (1 - 0.3 * i / max(1, len(spine) - 1)) for i in range(len(spine))],
@@ -1376,8 +1393,6 @@ def _heliconia(parts, rng, p, s):
                   twist=rng.uniform(-0.5, 0.5), tilt=_lerp(0.8, 0.15, old),
                   segs=p.detail(8, 5, 3), cols=p.detail(7, 5, 3), outline="strap", ripple=0.16,
                   tears=tears, tear_from=_lerp(0.6, 0.3, old), sag=0.5)
-        # 10-25 cm of shed blade, deep enough that no stone reads through it.
-        litter_skirt(b, rng, max(0.6, height * 0.3), 14, height * 0.16, p)
         if kind == "Flowering" and shoot == 0 and not p.lod:
             br = parts("bract")
             spike = arc(base, sa, height * 0.1, height * 0.95, 0.0, 5, tilt=1.3)
@@ -1388,6 +1403,12 @@ def _heliconia(parts, rng, p, s):
                 blade(br, node, sa + side * 1.2, length, length * 0.30,
                       rise=length * 0.35, droop=length * 0.1, fold=0.5, curl=-0.2,
                       segs=3, cols=3, outline="pinnule", tilt=0.5)
+    # One skirt for the clump, not one per shoot. Inside the loop above, a six-shoot
+    # clump shed six skirts of fourteen half-metre blades: eighty-four pieces of dead
+    # heliconia around one plant, measured at 63% of the frame against the 10-45% the
+    # reference allows, with the mass reading brown at hue 38 instead of green. The
+    # shoots come off one rhizome and the blades they drop land in one pile.
+    litter_skirt(b, rng, max(0.6, height * 0.3), 16, height * 0.16, p)
 
 
 @species(
@@ -2375,6 +2396,15 @@ def _shed(parts, rng, p, s):
     # because the skirt goes into the same bmesh and would otherwise swamp the dead-leaf
     # budget below.
     live_area = sum(f.calc_area() for f in b.bm.faces)
+    # Where this plant's leaves actually are. A dead leaf hangs off the crown that
+    # grew it, and the only honest way to know where that is, for twenty-six builders
+    # with nothing in common, is to look at the leaves this one just built. Sampled
+    # rather than kept whole: a ceiba crown is thousands of faces and one in a hundred
+    # describes the volume just as well.
+    live_faces = b.bm.faces[:]
+    stride = max(1, len(live_faces) // 200)
+    live_spots = [tuple(live_faces[i].calc_center_median())
+                  for i in range(0, len(live_faces), stride)]
     xs = [v.co[0] for v in b.bm.verts]
     ys = [v.co[1] for v in b.bm.verts]
     zs = [v.co[2] for v in b.bm.verts]
@@ -2399,7 +2429,12 @@ def _shed(parts, rng, p, s):
         # living blade. So measure the live leaf area first and add dead leaves until
         # they are about 15% of it, which self-corrects for a plant with one big leaf
         # and for one with forty small ones.
-        base = (0.0, 0.0, height * (0.18 if height < 1.2 else 0.62))
+        # Hung among the live leaves, not on the trunk axis at a fraction of the
+        # plant's height. On a rosette the two are the same place and this was never
+        # visibly wrong; on anything with a trunk they are nowhere near each other,
+        # and a ceiba got a dead leaf at eleven metres on bare wood, three metres
+        # under a crown it was supposed to be hanging from - a pale leaf alone in the
+        # sky, in every tree frame in the library.
         # Narrow, and no longer than the plant is wide. One wide slab of a dead leaf
         # reads as a sail hanging beside the crown - which is what a palm looked like -
         # where several narrow ones read as a plant shedding. Narrower also means each
@@ -2410,7 +2445,10 @@ def _shed(parts, rng, p, s):
             dead_so_far = sum(f.calc_area() for f in b.bm.faces) - after_litter
             if dead_so_far >= live_area * 0.15:
                 break
-            dying_leaves(b, rng, base, 1, length * rng.uniform(0.7, 1.0), length * 0.12, p)
+            spot = live_spots[rng.randrange(len(live_spots))] if live_spots else \
+                (0.0, 0.0, height * 0.5)
+            dying_leaves(b, rng, spot, 1, length * rng.uniform(0.7, 1.0),
+                         length * 0.12, p)
 
 
 def merge_into(dst, src, free=True):

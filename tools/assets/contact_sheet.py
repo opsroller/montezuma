@@ -65,7 +65,11 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("directory", type=Path, help="where the captured frames are")
     ap.add_argument("out", type=Path, help="sheet to write (gets -1, -2 ... if split)")
-    ap.add_argument("--per", type=int, default=9, help="frames per sheet (default 9)")
+    ap.add_argument("--per", type=int, default=4,
+                    help="frames per sheet (default 4). Nine panes of a 3840x2160 "
+                         "frame land at about 600 px each, which is too small to "
+                         "judge a leaf edge, a tear or a contact shadow - the things "
+                         "the sheet exists to compare")
     ap.add_argument("--only", help="comma-separated substrings of the frame names")
     ap.add_argument("--empties", action="store_true",
                     help="include the _Empty pages, which are normally measurement only")

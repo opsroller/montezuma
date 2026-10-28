@@ -1,0 +1,15 @@
+{
+  "name": "montezuma",
+  "description": "Plugins this project supplies for its own work, as opposed to the generic job-function plugins it installs from opsroller/claude-plugins.",
+  "owner": {
+    "name": "opsroller"
+  },
+  "plugins": [
+    {
+      "name": "montezuma-plants",
+      "source": "./.claude/plugins/montezuma-plants",
+      "description": "The jungle plant library's queue, events and monitors: per-species build, per-page 4K capture, and a monitor subscribed to each topic the pipeline publishes.",
+      "category": "assets"
+    }
+  ]
+}

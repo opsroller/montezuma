@@ -75,7 +75,7 @@ app.conf.update(
 
 def _args(**over):
     """lookdev.py's steps read an argparse namespace; this is that namespace."""
-    return SimpleNamespace(**{"species": None, "scope": "species", "per": 9, **over})
+    return SimpleNamespace(**{"species": None, "scope": "species", "per": 4, **over})
 
 
 def _stream():
@@ -144,7 +144,7 @@ def check(_=None):
 
 
 @app.task(name="plants.sheets")
-def sheets(_=None, per=9):
+def sheets(_=None, per=4):
     """The contact sheets. Whole-set by nature - the point of a sheet is the
     comparison between plants."""
     _stream()
@@ -178,17 +178,29 @@ def species_work(key):
 
 
 def library(scope="all"):
-    """Every plant. The stages that must come first come first; the pages fan out
-    across the GPU queue; the sheets are the chord's callback."""
+    """Every plant, as one job per plant rather than one job for all of them.
+
+    `build` and `pages` can each take a species, so there is no reason for the
+    library to go through them in one lump: twenty-six builds are twenty-six items
+    the cpu queue runs ten at a time, each finishing and publishing on its own, and a
+    single species that fails is one red item rather than a whole stage. A chord
+    gates the import on all of them, because Godot's import pass walks the tree and
+    there is no point running it twice.
+    """
     frames = lookdev.page_names(scope, None)
     if not frames:
         raise ValueError(f"no look-dev page matches scope={scope}")
+    plants = lookdev.species_keys()
     return chain(
         params.si(),
         atlases.si(),
-        build.si(),
-        pages.si(),
-        import_assets.si(),
-        check.si(),
-        chord([capture.si(page) for page in frames], sheets.si()),
+        # One build per species, then one scene-writing job per species, each gated
+        # on the whole previous round.
+        chord([build.si(species=key) for key in plants],
+              chord([pages.si(species=key) for key in plants],
+                    chain(
+                        import_assets.si(),
+                        check.si(),
+                        chord([capture.si(page) for page in frames], sheets.si()),
+                    ))),
     )

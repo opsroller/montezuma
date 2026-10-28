@@ -22,12 +22,12 @@ What it holds fixed, because each has one right answer and was got wrong by hand
 
 - 3840x2160 captures. The project's quality floor; not a flag.
 - Scratch is `.scratch/` in the workspace, never the system temp directory.
-- The GPU lock is derived from `git rev-parse --git-common-dir`, the one directory
-  every worktree of this checkout agrees on, so no path to a home directory is
-  written down anywhere. It is taken here rather than by wrapping each command in
-  `flock(1)`, because the process that waits is the only one that knows it is
-  waiting: waiting and acquiring are events, not something to be discovered later by
-  reading /proc/locks on a timer.
+- There is no GPU lock. A capture is one Godot on one GPU, and the queue the capture
+  runs on is declared at a concurrency of one: that is the whole of the
+  serialisation. An advisory lock as well was a second mechanism for the same job,
+  and the one that made a queued capture sit in `flock` printing nothing while it
+  waited - a wait invisible to everything watching, to protect against a contention
+  the queue had already made impossible.
 - `import` runs before any capture. Godot serves meshes from `.godot/imported`, so
   a rebuilt mesh does not reach a frame until it has.
 - Every subprocess is an argument vector. There is no shell, so there is nothing to
@@ -44,8 +44,6 @@ a virtual environment.
 """
 
 import argparse
-import contextlib
-import fcntl
 import os
 import re
 import shutil
@@ -142,52 +140,6 @@ def run(argv, timeout=None):
     return child.wait(timeout=timeout)
 
 
-def gpu_lock():
-    """Beside the directory every worktree of this checkout shares."""
-    out = subprocess.run(
-        ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
-        cwd=ROOT, capture_output=True, text=True, check=True,
-    ).stdout.strip()
-    if not out:
-        raise RuntimeError("not a git repository: cannot place the shared GPU lock")
-    return str(Path(out.removesuffix("/.git")) / ".godot-gpu.lock")
-
-
-@contextlib.contextmanager
-def gpu(path):
-    """Hold the shared GPU lock, and say so.
-
-    The same advisory lock `flock(1)` takes, taken here instead of by wrapping the
-    command in `flock` - because the process that waits is the only one that knows it
-    is waiting. Asking the kernel afterwards who holds a lock means parsing
-    /proc/locks on a timer, which is a poll invented to recover something this
-    process had all along.
-
-    A flock belongs to the open file description, and a child inherits it across
-    fork, so holding it here for the length of the child is exactly what wrapping the
-    child in `flock` did - and a worktree still using `flock(1)` on the same file
-    still serialises against this one, because it is the same lock on the same inode.
-
-    Taken per page rather than per run: twenty minutes of exclusive GPU would starve
-    every other worktree of the checkout.
-    """
-    handle = open(path, "a+")
-    waited = 0.0
-    try:
-        try:
-            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError:
-            began = time.monotonic()
-            EV.publish("plant.gpu.waiting", lock=Path(path).name)
-            fcntl.flock(handle, fcntl.LOCK_EX)
-            waited = round(time.monotonic() - began, 1)
-            EV.publish("plant.gpu.held", lock=Path(path).name, waited=waited)
-        yield waited
-    finally:
-        fcntl.flock(handle, fcntl.LOCK_UN)
-        handle.close()
-
-
 def only_args(species):
     return ["--only", species] if species else []
 
@@ -249,8 +201,7 @@ def step_pages(args):
 
 def step_import(args):
     need("godot")
-    with gpu(gpu_lock()):
-        code = run(["godot", "--path", "game", "--import", "--headless"])
+    code = run(["godot", "--path", "game", "--import", "--headless"])
     # Godot reports a failed import on its way past and then exits 0. The asset is
     # left with valid=false in its .import file and is skipped, silently, by every
     # later pass - which is how a plant comes to render white. Finding them is two
@@ -297,14 +248,13 @@ def capture_page(page):
     work.mkdir(parents=True, exist_ok=True)
     began = time.monotonic()
     try:
-        with gpu(gpu_lock()):
-            run(["gamescope", "--backend", "headless",
-                 "-W", str(WIDTH), "-H", str(HEIGHT), "--",
-                 "godot", "--path", "game", "--rendering-driver", "vulkan",
-                 f"res://assets/lookdev/{page}.tscn",
-                 "--write-movie", str(work / "f.png"),
-                 "--fixed-fps", "30", "--quit-after", str(FRAMES),
-                 "--", "--start-screen="])
+        run(["gamescope", "--backend", "headless",
+             "-W", str(WIDTH), "-H", str(HEIGHT), "--",
+             "godot", "--path", "game", "--rendering-driver", "vulkan",
+             f"res://assets/lookdev/{page}.tscn",
+             "--write-movie", str(work / "f.png"),
+             "--fixed-fps", "30", "--quit-after", str(FRAMES),
+             "--", "--start-screen="])
         # Movie Maker numbers its frames; the last one is the settled image.
         frames = sorted(work.glob("f*.png"))
         took = round(time.monotonic() - began, 1)
@@ -394,7 +344,7 @@ def main():
     ap.add_argument("step", choices=sorted(STEPS))
     ap.add_argument("--species", help='comma-separated keys, e.g. "heliconia,ceiba"')
     ap.add_argument("--scope", choices=("species", "rows", "all"), default="species")
-    ap.add_argument("--per", type=int, default=9, help="frames per contact sheet")
+    ap.add_argument("--per", type=int, default=4, help="frames per contact sheet")
     # On by default. A monitor that reports nothing because somebody left a flag off
     # is worse than no monitor: it reads as a quiet, healthy run.
     ap.add_argument("--events", default=str(EVENTS), metavar="PATH",

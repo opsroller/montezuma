@@ -90,10 +90,9 @@ run is readable afterwards and the pipeline still records itself with no broker 
 - **No absolute paths.** The checkout comes from `git rev-parse --show-toplevel` and
   the shared GPU lock from `git rev-parse --git-common-dir`, the one directory every
   worktree agrees on, so nothing here names anyone's home directory.
-- **The GPU lock is taken in-process**, not by wrapping commands in `flock(1)`,
-  because the process that waits is the only one that knows it is waiting. It stays
-  as the backstop for captures started outside the queue; inside it, the `gpu`
-  queue's concurrency of one is what serialises them.
+- **There is no GPU lock.** The `gpu` queue's concurrency of one is the
+  serialisation. A lock as well was a second mechanism for the same job, and the one
+  that made a queued capture sit in `flock` printing nothing.
 - **argv only.** No shell, so nothing to quote, chain or escape, and no loop or
   conditional hidden in a command string.
 

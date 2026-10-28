@@ -161,6 +161,20 @@ class Queue:
         print(f"submitted the library ({args.scope}) as {result.id}")
         return 0
 
+    def purge(self, args):
+        """Throw away everything waiting, and stop what is running.
+
+        Submitting is cheap and a full library is sixty-six captures on a queue that
+        runs one at a time, so it is easy to queue half an hour of work twice and
+        then need the GPU for the one frame that answers the question. This drops the
+        waiting jobs; what is already running is left to finish, because killing a
+        Godot mid-write leaves a half-written frame that looks like a captured one.
+        """
+        tasks = self.tasks()
+        dropped = tasks.app.control.purge()
+        print(f"dropped {dropped} waiting job(s); anything already running will finish")
+        return 0
+
     def status(self, args):
         tasks = self.tasks()
         control = tasks.app.control.inspect(timeout=2)
