@@ -27,11 +27,11 @@ Nothing polls, and nothing waits on anything. A stage finishing is an event; wha
 follows it is whoever subscribed to that event.
 
 ```sh
-plants-queue up                  # broker and workers; a SessionStart hook does it too
-plants-queue species heliconia   # one plant: build, pages, import, its 3 frames
-plants-queue library             # all of them, fanned out
-plants-queue status              # what is running and queued
-plants-queue down
+python3 tools/assets/plants_queue.py up                  # broker and workers; a SessionStart hook does it too
+python3 tools/assets/plants_queue.py species heliconia   # one plant: build, pages, import, its 3 frames
+python3 tools/assets/plants_queue.py library             # all of them, fanned out
+python3 tools/assets/plants_queue.py status              # what is running and queued
+python3 tools/assets/plants_queue.py down
 ```
 
 Editing a species submits that species on its own: a `PostToolUse` hook reads which

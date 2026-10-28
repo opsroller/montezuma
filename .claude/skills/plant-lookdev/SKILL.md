@@ -34,9 +34,9 @@ from `lookdev.species_keys()`, which reads `plants.SPECIES`.
 Submit it and let the monitors report:
 
 ```sh
-plants-queue up                  # once a session; a SessionStart hook does it too
-plants-queue species heliconia   # one plant: build, pages, import, its 3 frames
-plants-queue library             # all of them, fanned out
+python3 tools/assets/plants_queue.py up                  # once a session; a SessionStart hook does it too
+python3 tools/assets/plants_queue.py species heliconia   # one plant: build, pages, import, its 3 frames
+python3 tools/assets/plants_queue.py library             # all of them, fanned out
 ```
 
 Editing a species in `plants.py` submits that species on its own — the `PostToolUse`
