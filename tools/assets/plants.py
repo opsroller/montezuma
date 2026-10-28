@@ -92,19 +92,28 @@ SPDX = "SPDX-License-Identifier: GPL-2.0-or-later"
 # needs more geometry to read as a plant is more geometry. Nothing here is cut to buy
 # frame time. Measured counts per variant are in game/assets/library.json.
 BANDS = ("litter", "groundcover", "understory", "mid", "canopy", "epiphyte", "vine")
+# These were an order of magnitude too low, and the claim above that they are a guard
+# rather than a quality lever did not survive contact with the measurements: a
+# heliconia clump measures 4,400 against a ceiling of 5,500, so the builder was
+# authored to fit under the number rather than to the reference. The whole
+# twenty-six-species library came to 209,300 triangles - less than one character in a
+# current game - and it rendered as flat-sided stems and folded-paper blades because
+# there was no geometry to be round with. The target hardware runs current titles at
+# 8K, every variant above the LOD thresholds carries an authored LOD1 and LOD2, and
+# the project's standing rule is that nothing is cut to buy frame time. So the
+# ceilings are what a plant that reads as a plant at 3840x2160 costs.
 TRI_BUDGET = {
-    "litter": 300,
-    # A Zamia rosette of 3-8 pinnate fronds measures 1,440 - it is the big end of this
-    # band by a long way, and a mat of moss is 40.
-    "groundcover": 1800,
-    "epiphyte": 1200,
-    "vine": 1000,
+    "litter": 3000,
+    # A Zamia rosette of 3-8 pinnate fronds measured 1,440 under the old ceiling of
+    # 1800 - the big end of this band by a long way, and a mat of moss is 40.
+    "groundcover": 14000,
+    "epiphyte": 12000,
+    "vine": 12000,
     # A 6 m tree fern with bipinnate fronds is not a 0.5 m calathea, and holding both
     # to one number is what made five variants read as over budget when they were
-    # simply the big end of their band. A heliconia clump is six shoots deep because
-    # the reference measures mats three to five layers deep; that costs 4,400.
-    "understory": 5500,
-    "mid": 4000,
+    # simply the big end of their band.
+    "understory": 45000,
+    "mid": 45000,
     # The canopy band is the one place the library's "leaves are geometry, never alpha
     # cutouts" rule costs real money. A 30 m crown has hundreds of square metres of
     # envelope to fill, and a 15 cm leaf covers 0.02 of one: at 7,000 triangles the
@@ -610,7 +619,13 @@ def _bitten(bite, t, side):
 
 
 def blade(b, base, azim, length, width, *, rise=0.0, droop=0.0, fold=0.2, curl=0.0,
-          twist=0.0, tilt=0.0, segs=7, cols=3, outline="ovate", lobes=0, ripple=0.0,
+          # Tessellation, not anatomy: how finely the blade's curve, keel fold and
+          # ripple are sampled, with no effect on its size or shape. cols=3 made the
+          # fold two flat facets and the ripple invisible, so a 2 m musoid blade came
+          # back as folded paper - at 3840x2160 the facet edges are plainly visible
+          # along every leaf in the library. A caller that wants a cheaper LOD passes
+          # p.detail() as it did before.
+          twist=0.0, tilt=0.0, segs=14, cols=9, outline="ovate", lobes=0, ripple=0.0,
           holes=(), tears=(), tear_from=0.35, sag=0.0, phase=0.0, u0=0.0, u1=1.0,
           bite=None):
     """One leaf blade as a curved, folded, twisted surface.
@@ -702,7 +717,7 @@ def frond(b, base, azim, length, *, rise, droop, leaflets, leaflet_len, leaflet_
     spine = arc(base, azim, length, rise, droop, segs, tilt=tilt)
     # The rachis shares the species' leaf atlas, so it reads off the midrib band.
     tube(b, spine, [rachis_r * (1 - 0.75 * i / segs) for i in range(segs + 1)],
-         sides=4, cap_end=True, tile=(0.46, 0.54))
+         sides=12, cap_end=True, tile=(0.46, 0.54))
     fr = frames(spine)
     for i in range(1, leaflets + 1):
         t = _lerp(bare, 1.0, i / (leaflets + 1))
@@ -851,7 +866,7 @@ def dying_leaves(b, rng, base, count, length, width, p, **kw):
         blade(d, base, a, length * rng.uniform(0.7, 1.0), width,
               rise=-length * 0.15, droop=length * rng.uniform(0.85, 1.1),
               fold=0.15, curl=0.35, twist=rng.uniform(-0.8, 0.8), tilt=-0.9,
-              segs=p.detail(4, 3, 2), cols=3, **kw)
+              segs=p.detail(12, 3, 2), cols=3, **kw)
 
 
 def lean_all(bm, lean, lean_dir):
@@ -940,7 +955,7 @@ def _leaf_litter(parts, rng, p, s):
             blade(d, (math.cos(a) * r, math.sin(a) * r, 0.01), rng.uniform(0, 6.28),
                   length, length * 0.045, rise=length * 0.02, droop=0.0,
                   fold=(0.4, 0.1, 0.0), curl=(0.0, 0.2, 0.5), twist=rng.uniform(-0.6, 0.6),
-                  segs=p.detail(5, 4, 3), cols=3, outline="strap", ripple=0.25)
+                  segs=p.detail(14, 4, 3), cols=3, outline="strap", ripple=0.25)
 
 
 @species(
@@ -1062,12 +1077,12 @@ def _forest_grass(parts, rng, p, s):
     for a in rosette(culms, start=rng.uniform(0, 2 * math.pi)):
         h = height * rng.uniform(0.6, 1.0)
         cane = arc((0, 0, 0), a, h * 0.25, h * 0.9, h * 0.1, 3, tilt=1.1)
-        tube(b, cane, [0.006 * h, 0.005 * h, 0.004 * h, 0.003 * h], sides=3, tile=(0.47, 0.53))
+        tube(b, cane, [0.006 * h, 0.005 * h, 0.004 * h, 0.003 * h], sides=p.detail(10, 5, 3), tile=(0.47, 0.53))
         for i, node in enumerate(cane[1:], 1):
             length = h * rng.uniform(0.16, 0.26)
             blade(b, node, a + rng.uniform(-2.6, 2.6) + i, length, length * 0.19,
                   rise=length * 0.25, droop=length * 0.5, fold=0.22, curl=0.08,
-                  segs=p.detail(4, 3, 2), cols=3, outline="strap", twist=0.5 * rng.uniform(-1, 1))
+                  segs=p.detail(12, 3, 2), cols=3, outline="strap", twist=0.5 * rng.uniform(-1, 1))
 
 
 @species(
@@ -1103,13 +1118,13 @@ def _shade_grass(parts, rng, p, s):
     for i, a in enumerate(rosette(blades, start=rng.uniform(0, 6.28))):
         z = height * rng.uniform(0.1, 0.55)
         stalk = arc((0, 0, 0), a, height * 0.08, z, 0.0, 2, tilt=1.3)
-        tube(b, stalk, [0.0018, 0.0016, 0.0014], sides=3, tile=(0.47, 0.53))
+        tube(b, stalk, [0.0018, 0.0016, 0.0014], sides=p.detail(10, 5, 3), tile=(0.47, 0.53))
         length = rng.uniform(0.15, 0.30)
         # Held almost flat, and twisted: the blade shows its underside to the sky.
         blade(b, stalk[-1], a + rng.uniform(-0.5, 0.5), length, length * 0.14,
               rise=length * 0.12, droop=length * 0.18, fold=-0.1, curl=0.05,
               twist=math.pi * rng.uniform(0.8, 1.0), tilt=-0.1,
-              segs=p.detail(4, 3, 2), cols=3, outline="strap", ripple=0.08)
+              segs=p.detail(12, 3, 2), cols=3, outline="strap", ripple=0.08)
 
 
 @species(
@@ -1141,7 +1156,7 @@ def _spikemoss(parts, rng, p, s):
         length = spread * rng.uniform(0.5, 0.9)
         blade(b, base, a + rng.uniform(-0.4, 0.4), length, length * 0.45,
               rise=height * 0.5, droop=height * 0.2, fold=0.08, curl=-0.05,
-              segs=p.detail(4, 3, 2), cols=3, outline="pinnule", lobes=4)
+              segs=p.detail(12, 3, 2), cols=3, outline="pinnule", lobes=4)
 
 
 # --- Understory -----------------------------------------------------------
@@ -1199,13 +1214,13 @@ def _tree_fern(parts, rng, p, s):
         frond(b, crown, a, length,
               rise=length * _lerp(0.55, 0.22, old), droop=length * _lerp(0.25, 0.75, old),
               leaflets=p.detail(9, 6, 4), leaflet_len=length * 0.26, leaflet_w=0.3,
-              rachis_r=0.012 * height / 3, tilt=_lerp(0.5, -0.1, old), segs=p.detail(6, 4, 3),
+              rachis_r=0.012 * height / 3, tilt=_lerp(0.5, -0.1, old), segs=p.detail(16, 4, 3),
               rng=rng, outline="pinnule", fold=0.35)
     if age > 0.3 and not p.lod:
         # Two croziers standing in the middle of the crown: the tell of a living fern.
         for a in (rng.uniform(0, 6.28), rng.uniform(0, 6.28)):
             c = arc(crown, a, height * 0.05, height * 0.16, 0.0, 4, tilt=1.3)
-            tube(b, c, [0.012, 0.011, 0.010, 0.013, 0.016], sides=3, cap_end=True,
+            tube(b, c, [0.012, 0.011, 0.010, 0.013, 0.016], sides=p.detail(10, 5, 3), cap_end=True,
                  tile=(0.44, 0.56))
 
 
@@ -1246,7 +1261,7 @@ def _philodendron(parts, rng, p, s):
         rise = petiole * _lerp(0.9, 0.5, old)
         spine = arc((0, 0, z), a, petiole, rise, petiole * 0.12, 4, tilt=0.6)
         tube(st, spine, [0.016 * height ** 0.6 * (1 - 0.4 * k / 4) for k in range(5)],
-             sides=4, v_scale=3.0)
+             sides=p.detail(12, 6, 4), v_scale=3.0)
         tip = spine[-1]
         blade_len = min(1.0, height * _lerp(0.26, 0.42, old))
         # Half width 0.45 of the length: the blade is almost as wide as it is long.
@@ -1254,7 +1269,7 @@ def _philodendron(parts, rng, p, s):
               rise=blade_len * 0.05, droop=blade_len * 0.45,
               fold=(0.55, 0.15, 0.3), curl=(0.0, 0.1, 0.35),
               twist=rng.uniform(-0.35, 0.35), tilt=-0.5, phase=rng.uniform(0, 3.0),
-              segs=p.detail(7, 5, 3), cols=p.detail(7, 5, 3), outline="heart",
+              segs=p.detail(18, 5, 3), cols=p.detail(14, 5, 3), outline="heart",
               lobes=0 if kind == "Juvenile" else p.detail(9, 5, 0), ripple=0.12)
     if climb and not p.lod:
         # Cord roots hanging free of the stem: the tell that it is climbing, not standing.
@@ -1265,7 +1280,7 @@ def _philodendron(parts, rng, p, s):
             pts = [(math.cos(a) * 0.05, math.sin(a) * 0.05, z),
                    (math.cos(a) * 0.09, math.sin(a) * 0.09, z - drop * 0.5),
                    (math.cos(a) * 0.10, math.sin(a) * 0.10, z - drop)]
-            tube(st, pts, [0.008, 0.007, 0.006], sides=3, v_scale=2.0, cap_end=True)
+            tube(st, pts, [0.008, 0.007, 0.006], sides=p.detail(10, 5, 3), v_scale=2.0, cap_end=True)
 
 
 @species(
@@ -1310,7 +1325,7 @@ def _monstera(parts, rng, p, s):
     spine = arc((0, 0, 0), rng.uniform(0, 6.28), climb_h * 0.06, climb_h, 0.0,
                 max(3, steps), tilt=1.45, wobble=0.01, rng=rng)
     tube(st, spine, [0.022 * (1 - 0.3 * i / max(1, len(spine) - 1)) for i in range(len(spine))],
-         sides=4, v_scale=2.0)
+         sides=p.detail(12, 6, 4), v_scale=2.0)
     for i in range(1, len(spine)):
         up = i / (len(spine) - 1)
         if kind == "Shingle":
@@ -1325,11 +1340,11 @@ def _monstera(parts, rng, p, s):
                           if rng.random() < 0.8)      # 1-6 holes, not a regular grid
         a = 2.39996 * i + rng.uniform(-0.2, 0.2)
         stalk = arc(spine[i], a, size * 0.7, size * 0.35, size * 0.05, 3, tilt=0.5)
-        tube(st, stalk, [0.012, 0.011, 0.010, 0.009], sides=3, v_scale=3.0)
+        tube(st, stalk, [0.012, 0.011, 0.010, 0.009], sides=p.detail(10, 5, 3), v_scale=3.0)
         blade(b, stalk[-1], a, size, size * 0.25,     # 0.35-0.72 long by 0.15-0.40 wide
               rise=size * 0.04, droop=size * 0.5, fold=(0.5, 0.15, 0.25), curl=(0.0, 0.1, 0.3),
               tilt=-0.55, phase=rng.uniform(0, 3.0),
-              segs=p.detail(7, 5, 3), cols=p.detail(5, 5, 3), outline="heart",
+              segs=p.detail(18, 5, 3), cols=p.detail(12, 5, 3), outline="heart",
               holes=() if p.lod > 1 else holes, ripple=0.08)
 
 
@@ -1381,7 +1396,7 @@ def _heliconia(parts, rng, p, s):
                       * _lerp(0.85, 0.60, old) * rng.uniform(0.9, 1.05))
             stalk = arc(base, a, length * 0.12, length * 0.45, 0.0, 3, tilt=1.25)
             tube(st, stalk, [0.022 * height / 2, 0.020 * height / 2, 0.017 * height / 2,
-                             0.014 * height / 2], sides=4, v_scale=2.0)
+                             0.014 * height / 2], sides=p.detail(12, 6, 4), v_scale=2.0)
             # The keel is the whole read of a musoid leaf: 20-60 degrees of fold at the
             # base, flat across the middle, curling over again at the tip. Older blades
             # tear along the secondary veins; the newest one is still whole.
@@ -1391,12 +1406,12 @@ def _heliconia(parts, rng, p, s):
                   rise=length * _lerp(0.40, 0.18, old), droop=length * _lerp(0.25, 0.6, old),
                   fold=(0.95, 0.18, 0.5), curl=(0.0, 0.05, 0.25),
                   twist=rng.uniform(-0.5, 0.5), tilt=_lerp(0.8, 0.15, old),
-                  segs=p.detail(8, 5, 3), cols=p.detail(7, 5, 3), outline="strap", ripple=0.16,
+                  segs=p.detail(20, 5, 3), cols=p.detail(14, 5, 3), outline="strap", ripple=0.16,
                   tears=tears, tear_from=_lerp(0.6, 0.3, old), sag=0.5)
         if kind == "Flowering" and shoot == 0 and not p.lod:
             br = parts("bract")
             spike = arc(base, sa, height * 0.1, height * 0.95, 0.0, 5, tilt=1.3)
-            tube(br, spike, [0.012, 0.011, 0.010, 0.009, 0.008, 0.006], sides=3, v_scale=4.0)
+            tube(br, spike, [0.012, 0.011, 0.010, 0.009, 0.008, 0.006], sides=p.detail(10, 5, 3), v_scale=4.0)
             for i, node in enumerate(spike[1:5], 1):
                 side = 1 if i % 2 else -1
                 length = height * 0.10
@@ -1441,14 +1456,14 @@ def _calathea(parts, rng, p, s):
         old = i / max(1, leaves - 1)
         petiole = height * _lerp(0.55, 0.40, old)
         spine = arc((0, 0, 0), a, petiole * 0.25, petiole, 0.0, 4, tilt=1.35)
-        tube(st, spine, [0.020, 0.018, 0.016, 0.014, 0.012], sides=4, v_scale=2.5)
+        tube(st, spine, [0.020, 0.018, 0.016, 0.014, 0.012], sides=p.detail(12, 6, 4), v_scale=2.5)
         length = height * _lerp(0.40, 0.30, old)
         # A paddle over 1 m long and 0.6 m wide, keeled where it leaves the petiole,
         # flat across the middle, tipping over at the end.
         blade(b, spine[-1], a, length, length * 0.30,
               rise=length * 0.3, droop=length * 0.35, fold=(0.7, 0.12, 0.35), curl=(0.0, 0.05, 0.2),
               tilt=_lerp(0.9, 0.4, old), twist=rng.uniform(-0.3, 0.3),
-              segs=p.detail(7, 5, 3), cols=p.detail(5, 3, 3), outline="strap", ripple=0.1)
+              segs=p.detail(18, 5, 3), cols=p.detail(12, 3, 3), outline="strap", ripple=0.1)
 
 
 @species(
@@ -1484,7 +1499,7 @@ def _bromeliad_ground(parts, rng, p, s):
             blade(b, base, a, length, length * 0.055,
                   rise=length * _lerp(0.72, 0.42, old), droop=length * _lerp(0.4, 0.85, old),
                   fold=0.5, curl=0.0, tilt=_lerp(1.1, 0.55, old),
-                  segs=p.detail(6, 4, 3), cols=3, outline="strap", twist=rng.uniform(-0.3, 0.3))
+                  segs=p.detail(16, 4, 3), cols=3, outline="strap", twist=rng.uniform(-0.3, 0.3))
 
 
 @species(
@@ -1527,7 +1542,7 @@ def _cycad(parts, rng, p, s):
               leaflets=p.detail(7, 5, 4),           # 3-12 pairs; the texture carries the teeth
               leaflet_len=length * 0.26, leaflet_w=0.20 if sun else 0.26,
               rachis_r=0.008 * height, tilt=0.95 if sun else 0.6,
-              segs=p.detail(5, 4, 3), rng=rng, angle=(1.1, 1.35),
+              segs=p.detail(14, 4, 3), rng=rng, angle=(1.1, 1.35),
               outline="wedge", droop_leaflet=0.06, fold=0.18 if sun else 0.1, bare=0.3)
 
 
@@ -1576,7 +1591,7 @@ def _pacaya(parts, rng, p, s):
             frond(parts("leaf"), crown, a, length,
                   rise=length * _lerp(0.5, 0.15, old), droop=length * _lerp(0.2, 0.6, old),
                   leaflets=p.detail(5, 4, 3), leaflet_len=length * 0.38, leaflet_w=0.26,
-                  rachis_r=0.009, tilt=_lerp(0.4, -0.15, old), segs=p.detail(5, 4, 3), rng=rng,
+                  rachis_r=0.009, tilt=_lerp(0.4, -0.15, old), segs=p.detail(14, 4, 3), rng=rng,
                   outline="pinnule", fold=0.3, bare=0.2)
         litter_skirt(parts("leaf"), rng, max(0.5, h * 0.18), 4, h * 0.10, p)
 
@@ -1626,7 +1641,7 @@ def _fan_palm(parts, rng, p, s):
         petiole = rng.uniform(0.70, 1.10) * p.scale
         spine = arc(crown, a, petiole, petiole * _lerp(0.8, 0.25, old), petiole * 0.1, 3,
                     tilt=_lerp(0.9, 0.1, old))
-        tube(parts("trunk"), spine, [0.012, 0.011, 0.010, 0.009], sides=4, v_scale=2.0)
+        tube(parts("trunk"), spine, [0.012, 0.011, 0.010, 0.009], sides=p.detail(12, 6, 4), v_scale=2.0)
         hub = spine[-1]
         # Palmate: segments radiate from one hub, cleft almost to the petiole, each with its
         # own V-fold, the outer ones sagging. About 9 divisions a side over 170 degrees.
@@ -1638,7 +1653,7 @@ def _fan_palm(parts, rng, p, s):
             blade(b, hub, ka, radius * _lerp(1.0, 0.78, edge), radius * 0.055,
                   rise=radius * 0.12 * (1 - edge), droop=radius * _lerp(0.3, 0.75, edge),
                   fold=(0.9, 0.5, 0.2), curl=0.0,
-                  tilt=_lerp(0.3, -0.25, max(old, edge)), segs=p.detail(4, 3, 2), cols=3,
+                  tilt=_lerp(0.3, -0.25, max(old, edge)), segs=p.detail(12, 3, 2), cols=3,
                   outline="fan")
     litter_skirt(parts("leaf"), rng, max(0.7, height * 0.2), 6, 0.5, p, frond=True)
 
@@ -1706,7 +1721,7 @@ def _banana(parts, rng, p, s):
                   rise=length * _lerp(0.55, 0.15, old), droop=length * _lerp(0.3, 0.95, old),
                   fold=(0.9, 0.2, 0.45), curl=(0.0, 0.1 * side, 0.3),
                   twist=side * rng.uniform(0.1, 0.5),
-                  tilt=_lerp(0.85, 0.0, old), segs=p.detail(8, 5, 3), cols=cols,
+                  tilt=_lerp(0.85, 0.0, old), segs=p.detail(20, 5, 3), cols=cols,
                   outline="strap", ripple=0.22 * (0.4 + old), u0=u0, u1=u1,
                   tears=tears, tear_from=_lerp(0.72, 0.45, old), sag=0.6)
     litter_skirt(parts("leaf"), rng, max(0.8, height * 0.25), 7, height * 0.12, p, frond=True)
@@ -1762,7 +1777,7 @@ def _spiny_palm(parts, rng, p, s):
               rise=length * _lerp(0.5, 0.1, old), droop=length * _lerp(0.25, 0.7, old),
               leaflets=p.detail(7, 5, 4),           # few, very long segments, not a fine comb
               leaflet_len=length * 0.5, leaflet_w=0.09,
-              rachis_r=0.014, tilt=_lerp(0.45, -0.2, old), segs=p.detail(6, 4, 3), rng=rng,
+              rachis_r=0.014, tilt=_lerp(0.45, -0.2, old), segs=p.detail(16, 4, 3), rng=rng,
               outline="wedge", fold=0.25, droop_leaflet=0.35, bare=0.2)
     litter_skirt(parts("leaf"), rng, max(0.6, height * 0.2), 5, height * 0.14, p, frond=True)
 
@@ -1833,7 +1848,7 @@ def _strangler_fig(parts, rng, p, s):
             link = [(math.cos(a) * host_r, math.sin(a) * host_r, z),
                     (math.cos(a + 0.9) * host_r * 1.05, math.sin(a + 0.9) * host_r * 1.05,
                      z + height * 0.04)]
-            tube(r, link, [host_r * 0.1, host_r * 0.08], sides=4, v_scale=2.0, cap_end=True)
+            tube(r, link, [host_r * 0.1, host_r * 0.08], sides=p.detail(12, 6, 4), v_scale=2.0, cap_end=True)
     b = parts("leaf")
     tufts = p.detail(6, 4, 2)
     for k in range(tufts):
@@ -1896,14 +1911,14 @@ def _ceiba(parts, rng, p, s):
         a = 2 * math.pi * k / max(1, buttresses) + rng.uniform(-0.15, 0.15)
         reach = r0 * rng.uniform(4.0, 6.5)
         fin(t, (0, 0, 0), reach, a, height * rng.uniform(0.15, 0.21),
-            r0 * 0.25, segs=p.detail(5, 3, 2), curve=1.5, v_scale=2.0)
+            r0 * 0.25, segs=p.detail(14, 3, 2), curve=1.5, v_scale=2.0)
         if not p.lod:
             # The plank does not stop: on karst the root runs on over the litter.
             run = reach * rng.uniform(1.4, 2.4)
             pts = [(math.cos(a) * reach, math.sin(a) * reach, 0.05 * r0),
                    (math.cos(a) * run * 0.7, math.sin(a) * run * 0.7, 0.03 * r0),
                    (math.cos(a + 0.2) * run, math.sin(a + 0.2) * run, 0.0)]
-            tube(t, pts, [r0 * 0.22, r0 * 0.13, r0 * 0.07], sides=4, v_scale=1.0,
+            tube(t, pts, [r0 * 0.22, r0 * 0.13, r0 * 0.07], sides=p.detail(12, 6, 4), v_scale=1.0,
                  cap_end=True, squash=(1.0, 0.6))
     c = parts("canopy")
     # A ceiba crown is horizontal and layered: a few tiers of long, nearly level limbs.
@@ -1919,12 +1934,12 @@ def _ceiba(parts, rng, p, s):
             reach = height * _lerp(0.22, 0.38, up) * rng.uniform(0.7, 1.0)
             branch = arc((0, 0, height * up), a, reach, height * 0.04, 0.0, 3,
                          tilt=rng.uniform(0.1, 0.35))
-            tube(t, branch, [r0 * 0.30, r0 * 0.22, r0 * 0.15, r0 * 0.10], sides=4, v_scale=1.0)
+            tube(t, branch, [r0 * 0.30, r0 * 0.22, r0 * 0.15, r0 * 0.10], sides=p.detail(12, 6, 4), v_scale=1.0)
             for twig in range(p.detail(5, 2, 1)):
                 ta = a + rng.uniform(-1.0, 1.0)
                 sub = arc(branch[1 + twig % 3], ta, reach * rng.uniform(0.25, 0.6),
                           height * 0.012, height * 0.02, 3, tilt=rng.uniform(0.0, 0.5))
-                tube(t, sub, [r0 * 0.11, r0 * 0.08, r0 * 0.06, r0 * 0.04], sides=3, v_scale=1.6)
+                tube(t, sub, [r0 * 0.11, r0 * 0.08, r0 * 0.06, r0 * 0.04], sides=p.detail(10, 5, 3), v_scale=1.6)
                 # Leaves go along the whole twig and the limb behind it, not just at the
                 # tip. Hung at the ends only, 2,200 leaves sat in a few dozen pom-poms
                 # and the crown volume between them was empty: a bare tree with green
@@ -2000,7 +2015,7 @@ def _corozo(parts, rng, p, s):
         frond(parts("leaf"), crown, a, length,
               rise=length * _lerp(0.85, 0.35, old), droop=length * _lerp(0.3, 0.95, old),
               leaflets=p.detail(12, 8, 5), leaflet_len=length * 0.16, leaflet_w=0.2,
-              rachis_r=0.035, tilt=_lerp(1.0, 0.15, old), segs=p.detail(7, 5, 3), rng=rng,
+              rachis_r=0.035, tilt=_lerp(1.0, 0.15, old), segs=p.detail(18, 5, 3), rng=rng,
               outline="pinnule", fold=0.4, droop_leaflet=0.45, bare=0.12)
     # A cohune stands in a raft of its own shed fronds, and the 1-3 m frond segments
     # weather pale straw to silver-grey: the largest and palest shapes on the floor.
@@ -2053,13 +2068,13 @@ def _canopy_tree(parts, rng, p, s):
         reach = height * rng.uniform(0.18, 0.30)
         branch = arc(top, a, reach, height * rng.uniform(0.06, 0.14), 0.0, 3,
                      tilt=rng.uniform(0.5, 0.9))
-        tube(t, branch, [r0 * 0.45, r0 * 0.34, r0 * 0.22, r0 * 0.13], sides=4, v_scale=1.2)
+        tube(t, branch, [r0 * 0.45, r0 * 0.34, r0 * 0.22, r0 * 0.13], sides=p.detail(12, 6, 4), v_scale=1.2)
         for sec in range(p.detail(4, 2, 1)):
             sa = a + rng.uniform(-0.9, 0.9)
             start = branch[1 + sec % 2]
             sub = arc(start, sa, reach * rng.uniform(0.4, 0.7), height * 0.04, height * 0.02,
                       3, tilt=rng.uniform(0.2, 0.8))
-            tube(t, sub, [r0 * 0.18, r0 * 0.13, r0 * 0.09, r0 * 0.06], sides=3, v_scale=1.6)
+            tube(t, sub, [r0 * 0.18, r0 * 0.13, r0 * 0.09, r0 * 0.06], sides=p.detail(10, 5, 3), v_scale=1.6)
             # Leaves sit in sprays along the twig, which is how a crown fills: a spray
             # of 15 cm leaves reads as foliage where one 3 m leaf reads as a sail.
             # As on the ceiba: one element is one leaf at its own size, not one leaflet,
@@ -2113,7 +2128,7 @@ def _bromeliad_epiphyte(parts, rng, p, s):
             blade(b, base, a, length, length * 0.14,
                   rise=length * _lerp(0.85, 0.5, old), droop=length * _lerp(0.3, 0.9, old),
                   fold=0.6, curl=-0.05, tilt=_lerp(1.2, 0.5, old),
-                  segs=p.detail(5, 4, 3), cols=3, outline="strap")
+                  segs=p.detail(14, 4, 3), cols=3, outline="strap")
 
 
 @species(
@@ -2143,7 +2158,7 @@ def _tillandsia(parts, rng, p, s):
         blade(b, (0, 0, 0), a, length, length * 0.08,
               rise=length * rng.uniform(0.5, 0.9), droop=length * rng.uniform(0.2, 0.6),
               fold=0.7, curl=-0.1, tilt=rng.uniform(0.5, 1.2), twist=rng.uniform(-0.8, 0.8),
-              segs=p.detail(4, 3, 2), cols=3, outline="strap")
+              segs=p.detail(12, 3, 2), cols=3, outline="strap")
 
 
 @species(
@@ -2176,7 +2191,7 @@ def _nest_fern(parts, rng, p, s):
         blade(b, (0, 0, 0), a, length, length * 0.13,
               rise=length * _lerp(0.8, 0.45, old), droop=length * _lerp(0.25, 0.85, old),
               fold=0.45, curl=0.05, tilt=_lerp(1.15, 0.45, old), ripple=0.18,
-              segs=p.detail(6, 4, 3), cols=3, outline="strap")
+              segs=p.detail(16, 4, 3), cols=3, outline="strap")
 
 
 # --- Vines ----------------------------------------------------------------
@@ -2286,7 +2301,7 @@ def _root_curtain(parts, rng, p, s):
                 h * (1 - i / segs)) for i in range(segs + 1)]
         thick = rng.uniform(0.006, 0.018)
         tube(r, pts, [thick * (0.8 + 0.5 * i / segs) for i in range(segs + 1)],
-             sides=3, v_scale=2.0, cap_end=True)
+             sides=p.detail(10, 5, 3), v_scale=2.0, cap_end=True)
 
 
 # ==========================================================================

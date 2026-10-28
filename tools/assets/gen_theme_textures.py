@@ -621,7 +621,17 @@ def save(img, path, mode):
 
 def write_set(out, name, maps, n, spec):
     albedo, height, occ, rough, metal = maps
-    strength = spec.get("normal_strength", 1.0) * NORMAL_REF / n
+    # Scaled UP with the texture, not down. `normal_from_height` takes a central
+    # difference between neighbouring texels, so a feature of fixed width across the
+    # tile spreads over more texels as the texture grows and its per-texel slope
+    # falls as 1/n. Keeping the relief constant therefore means multiplying by
+    # n/NORMAL_REF; dividing by it doubles the loss. At 4096 against a reference of
+    # 1024 that came to 16x flatter than the strength each species was tuned for, and
+    # every normal map in the library was a flat sheet - the leaves rendered as green
+    # planes with no surface at any resolution, which is the whole of "the textures
+    # are barely visible". Raising the quality floor from 1024 to 4096 is what
+    # erased them.
+    strength = spec.get("normal_strength", 1.0) * n / NORMAL_REF
     save(quantise(albedo), out / f"T_{name}_BC.png", "RGB")
     save(normal_from_height(height.astype(np.float32), strength), out / f"T_{name}_N.png", "RGB")
     save(quantise(np.stack([occ, rough, metal], axis=-1)), out / f"T_{name}_ORM.png", "RGB")
