@@ -88,6 +88,14 @@
               pipenv
               git
               gamescope
+              # The broker behind the asset pipeline's job queue. A capture is one
+              # Godot on one GPU and a build is one Blender; which of them may run at
+              # once, in what order, and what happens when one finishes is a
+              # scheduling problem that already has an answer, and the answer in this
+              # language is Celery. Celery and its client come from the Pipfile like
+              # every other Python package; this is the server they talk to, and it
+              # is spoken to over a unix socket in .scratch/, never a port.
+              redis
               gh
               wl-clipboard
               which

@@ -1,0 +1,196 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0
+"""`plants-queue` - the broker and the workers behind the plant pipeline.
+
+    plants-queue up                 start the broker and both workers
+    plants-queue species heliconia  rebuild one plant and reshoot its frames
+    plants-queue library            all of them, fanned out across the queues
+    plants-queue status             what is running, queued and failed
+    plants-queue down               stop the workers and the broker
+
+Submitting is fire and forget: `species` and `library` return as soon as the work is
+accepted, and the plugin's monitors report it from there. Nothing here waits, and
+nothing here asks whether a job is done.
+
+The broker is redis on a unix socket inside `.scratch/` - no port, nothing listening
+on the network, and it goes away with the directory. The workers are two: one on the
+`gpu` queue at a concurrency of one, because a capture is one Godot on one GPU, and
+one on `cpu` at several, because atlases and builds do not care what the GPU is
+doing.
+"""
+
+import argparse
+import os
+import signal
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+PIPELINE = Path("tools/assets/lookdev.py")
+
+
+def project_root():
+    found = subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"],
+        capture_output=True, text=True, check=False,
+    )
+    if found.returncode == 0 and found.stdout.strip():
+        root = Path(found.stdout.strip())
+        if (root / PIPELINE).exists():
+            return root
+    project = os.environ.get("CLAUDE_PROJECT_DIR")
+    if project and (Path(project) / PIPELINE).exists():
+        return Path(project)
+    sys.exit(f"error: {PIPELINE} not found. Run this inside the montezuma checkout.")
+
+
+class Queue:
+    def __init__(self, root):
+        self.root = root
+        self.scratch = root / ".scratch"
+        self.socket = self.scratch / "redis.sock"
+        self.pids = self.scratch / "queue"
+        sys.path.insert(0, str(root / "tools/assets"))
+
+    def tasks(self):
+        import tasks                                      # noqa: PLC0415
+        return tasks
+
+    # --- processes -----------------------------------------------------------
+
+    def _alive(self, name):
+        pidfile = self.pids / f"{name}.pid"
+        if not pidfile.exists():
+            return None
+        try:
+            pid = int(pidfile.read_text().strip())
+            os.kill(pid, 0)
+        except (ValueError, ProcessLookupError, PermissionError, OSError):
+            return None
+        return pid
+
+    def _spawn(self, name, argv, env=None):
+        running = self._alive(name)
+        if running:
+            print(f"{name} already running (pid {running})")
+            return running
+        self.pids.mkdir(parents=True, exist_ok=True)
+        log = (self.scratch / f"{name}.log").open("a")
+        child = subprocess.Popen(
+            argv, cwd=self.root, stdout=log, stderr=subprocess.STDOUT,
+            start_new_session=True, env={**os.environ, **(env or {})},
+        )
+        (self.pids / f"{name}.pid").write_text(str(child.pid))
+        print(f"{name} started (pid {child.pid})")
+        return child.pid
+
+    def up(self, args):
+        self.scratch.mkdir(parents=True, exist_ok=True)
+        tasks = self.tasks()
+        # Redis with no TCP listener at all: a port is an invitation, and nothing
+        # outside this checkout has any business talking to this queue.
+        self._spawn("redis", [
+            "redis-server",
+            "--port", "0",
+            "--unixsocket", str(self.socket),
+            "--unixsocketperm", "600",
+            "--save", "",
+            "--appendonly", "no",
+            "--dir", str(self.scratch),
+        ])
+        for _ in range(50):
+            if self.socket.exists():
+                break
+            time.sleep(0.1)
+        if not self.socket.exists():
+            return print(f"error: redis did not open {self.socket}; see "
+                         f".scratch/redis.log") or 1
+        # The workers run from the checkout root, because that is where every step
+        # expects to be; `tasks` lives beside the rest of the asset tools, so that is
+        # what the interpreter has to be told, once, here.
+        #
+        # Added to PYTHONPATH, never set over it: the flake's python3 carries its own
+        # entries, and replacing them took `six` out from under python-dateutil,
+        # which celery imports as it starts. The worker then died in its own log with
+        # nothing watching - which is the failure this whole event stream exists to
+        # make impossible, arrived at by overwriting one environment variable.
+        where = {"PYTHONPATH": os.pathsep.join(
+            [str(self.root / "tools/assets"), *filter(None, [os.environ.get("PYTHONPATH")])]
+        )}
+        self._spawn("worker-gpu", [
+            sys.executable, "-m", "celery", "-A", "tasks", "worker",
+            "--queues", tasks.GPU, "--concurrency", "1",
+            "--hostname", "gpu@%h", "--loglevel", "info", "--events",
+        ], env=where)
+        self._spawn("worker-cpu", [
+            sys.executable, "-m", "celery", "-A", "tasks", "worker",
+            "--queues", tasks.CPU, "--concurrency", str(tasks.CPU_SLOTS),
+            "--hostname", "cpu@%h", "--loglevel", "info", "--events",
+        ], env=where)
+        print(f"\nbroker on {self.socket.relative_to(self.root)}; "
+              f"gpu x1, cpu x{tasks.CPU_SLOTS}")
+        return 0
+
+    def down(self, args):
+        for name in ("worker-cpu", "worker-gpu", "redis"):
+            pid = self._alive(name)
+            if not pid:
+                print(f"{name} not running")
+                continue
+            os.kill(pid, signal.SIGTERM)
+            print(f"{name} stopped (pid {pid})")
+            (self.pids / f"{name}.pid").unlink(missing_ok=True)
+        return 0
+
+    # --- work ----------------------------------------------------------------
+
+    def species(self, args):
+        tasks = self.tasks()
+        for key in args.species:
+            work = tasks.species_work(key)
+            result = work.apply_async()
+            pages = tasks.species_pages(key)
+            print(f"{key}: submitted build, pages, import and {len(pages)} frame(s) "
+                  f"as {result.id}")
+        return 0
+
+    def library(self, args):
+        tasks = self.tasks()
+        result = tasks.library(scope=args.scope).apply_async()
+        print(f"submitted the library ({args.scope}) as {result.id}")
+        return 0
+
+    def status(self, args):
+        tasks = self.tasks()
+        control = tasks.app.control.inspect(timeout=2)
+        active, reserved = control.active() or {}, control.reserved() or {}
+        if not active and not reserved:
+            print("no worker answered: run `plants-queue up`")
+            return 1
+        for worker in sorted(set(active) | set(reserved)):
+            running = active.get(worker, [])
+            waiting = reserved.get(worker, [])
+            print(f"{worker}: {len(running)} running, {len(waiting)} queued")
+            for job in running:
+                print(f"    {job['name']} {job.get('args', '')}")
+        return 0
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    sub = ap.add_subparsers(dest="what", required=True)
+    sub.add_parser("up", help="start the broker and the workers")
+    sub.add_parser("down", help="stop the workers and the broker")
+    sub.add_parser("status", help="what is running and queued")
+    one = sub.add_parser("species", help="rebuild one plant and reshoot its frames")
+    one.add_argument("species", nargs="+", metavar="KEY")
+    whole = sub.add_parser("library", help="every plant, fanned out")
+    whole.add_argument("--scope", choices=("species", "rows", "all"), default="all")
+    args = ap.parse_args()
+    queue = Queue(project_root())
+    return getattr(queue, args.what)(args) or 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,49 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0
+"""Monitor: a mesh or an import came out wrong.
+
+Subscribes to `plant.fault.mesh` and `plant.fault.import` - the two topics for a
+fault that a step prints and then exits 0 over.
+
+Both are things the pipeline finds and carries on past, deliberately: a degenerate
+face or a flipped winding does not make the rest of the run worthless, and the frames
+are still worth looking at. That is exactly why they need a monitor. A fault reported
+only in the middle of four thousand lines of Blender output is a fault nobody reads,
+and `valid=false` in particular has cost this library whole afternoons - the plant
+renders white, every later pass skips it in silence, and the first sign is a hole in
+a contact sheet twenty minutes later.
+
+Capped, because one bad atlas poisons every mesh that samples it and thirty-six
+notifications of the same cause are thirty-five too many.
+"""
+
+from plants_stream import main, speaker, subscribe
+
+CAP = 12
+
+say = speaker("faults")
+
+
+def watch(root):
+    counted = [0]
+
+    def handle(event):
+        counted[0] += 1
+        if counted[0] > CAP:
+            if counted[0] == CAP + 1:
+                say(f"more than {CAP} faults; the rest are in the step's own report "
+                    f"and in .scratch/lookdev-events.jsonl")
+            return
+        topic = event.get("topic", "")
+        if topic == "plant.fault.import":
+            say(f"POISONED {event.get('asset')}: {event.get('why')}")
+        else:
+            say(event.get("line", str(event)))
+
+    # Both topics are faults and both want the same cap, so this monitor binds the
+    # pattern rather than running two subscriptions that cannot count together.
+    return subscribe(root, "plant.fault.*", handle, say)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(watch))

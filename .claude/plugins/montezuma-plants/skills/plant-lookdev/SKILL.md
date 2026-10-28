@@ -22,7 +22,32 @@ A shell that shows no prompt never fires direnv's hook, so a tool-spawned shell 
 land outside the environment. If `import numpy` fails, that is why — load it, don't
 paper over it with a path.
 
+## What is in the library
+
+26 species in 59 variants, built as 162 meshes. The bands hold understory 8 species,
+groundcover 6, canopy 3, mid 3, epiphyte 3, vine 2 and litter 1 — so a band row shows
+three to eight plants, not the library. `python3 -c` is not how to ask: the keys come
+from `lookdev.species_keys()`, which reads `plants.SPECIES`.
+
 ## The loop
+
+Submit it and let the monitors report:
+
+```sh
+plants-queue up                  # once a session; a SessionStart hook does it too
+plants-queue species heliconia   # one plant: build, pages, import, its 3 frames
+plants-queue library             # all of them, fanned out
+```
+
+Editing a species in `plants.py` submits that species on its own — the `PostToolUse`
+hook reads which `@species` block the diff fell inside and publishes
+`plant.source.changed`, and the `source-changed` monitor submits the chain. Three
+frames, not fifty-nine. Nothing needs asking afterwards: the `run`, `frames` and
+`faults` monitors report it, and when a species' last frame lands the `frames`
+monitor publishes `plant.review.wanted` — that is the cue to hand those frames to
+the `frame-reviewer` agent.
+
+The same work by hand, with no queue:
 
 ```sh
 python3 tools/assets/lookdev.py all --species heliconia

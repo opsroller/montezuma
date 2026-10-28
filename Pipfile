@@ -29,6 +29,18 @@ verify_ssl = true
 # installs with --require-hashes.
 numpy = "==2.5.3"
 pillow = "==12.3.0"
+# The asset pipeline's job queue (tools/assets/tasks.py): which stages may run at
+# once (one Godot on the GPU, many Blenders on the CPU), what runs after what, and
+# what happens to a stage that fails. Celery's events are also what the plugin's
+# queue monitor subscribes to - the broker pushes them, so nothing polls for a job's
+# state. `redis` is the client for the broker the flake provides.
+celery = "==5.6.3"
+redis = "==8.1.0"
+# python-dateutil 3.0.0 declares `six` as a requirement but the resolver does not
+# bring it in, and a celery worker dies on `import six` as it starts - with the
+# traceback in its own log, where nothing is watching. Pinned here so the worker
+# starts.
+six = "==1.17.0"
 
 [requires]
 python_version = "3.13"

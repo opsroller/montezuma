@@ -48,3 +48,4 @@ build-*/
 # per-run directories under it with `mktemp -d -p .scratch`, and keep nothing here
 # that matters - it is never committed and safe to delete whole.
 .scratch/
+.direnv/

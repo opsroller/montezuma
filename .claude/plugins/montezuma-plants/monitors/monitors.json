@@ -1,0 +1,38 @@
+[
+  {
+    "name": "run",
+    "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/monitor-run",
+    "description": "A look-dev run starting, finishing, or dying without saying so",
+    "when": "always"
+  },
+  {
+    "name": "stages",
+    "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/monitor-stages",
+    "description": "A stage finishing: params, atlases, meshes, scenes, imports, sheets",
+    "when": "always"
+  },
+  {
+    "name": "faults",
+    "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/monitor-faults",
+    "description": "A mesh or an import that came out wrong and was carried past",
+    "when": "always"
+  },
+  {
+    "name": "frames",
+    "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/monitor-frames",
+    "description": "Frames landing, and a species whose frames are all in",
+    "when": "always"
+  },
+  {
+    "name": "source-changed",
+    "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/monitor-source-changed",
+    "description": "One species edited, so that one species is sent to the queue",
+    "when": "always"
+  },
+  {
+    "name": "imports",
+    "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/monitor-imports",
+    "description": "Godot import failures, which silently render a plant white",
+    "when": "always"
+  }
+]

@@ -1,0 +1,112 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0
+"""Hook: a species was edited and saved, so say which one.
+
+Runs after Write or Edit, in the background (`async`), and publishes
+`plant.source.changed` naming the species whose block in `tools/assets/plants.py`
+differs from the committed file. `monitor-source-changed` hears it and submits that
+one plant's chain.
+
+Which species changed is read from the diff rather than guessed: the file is one
+module of twenty-six `@species(key=...)` blocks, so the line numbers git reports are
+enough to say which blocks the edit fell inside. An edit above the first block - a
+shared helper, a colour table, the leaf geometry every plant uses - is not one
+species and is deliberately not reported as one: it publishes nothing, and the whole
+library is rebuilt by hand with `plants-queue library`, which is the honest answer
+for a change that touches everything.
+
+Nothing here runs the pipeline. It publishes a fact, and the monitors decide.
+"""
+
+import json
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+SOURCE = "tools/assets/plants.py"
+BLOCK = re.compile(r'^\s*key="([a-z0-9_]+)",')
+HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
+
+
+def root():
+    found = subprocess.run(["git", "rev-parse", "--show-toplevel"],
+                           capture_output=True, text=True, check=False)
+    if found.returncode == 0 and found.stdout.strip():
+        return Path(found.stdout.strip())
+    return Path(os.environ.get("CLAUDE_PROJECT_DIR", "."))
+
+
+def blocks(lines):
+    """Each species' key against the line it is declared on, in file order."""
+    found = []
+    for number, line in enumerate(lines, 1):
+        match = BLOCK.match(line)
+        if match:
+            found.append((number, match.group(1)))
+    return found
+
+
+def changed_lines(where):
+    """The lines of the working file that differ from the committed one."""
+    diff = subprocess.run(
+        ["git", "diff", "--unified=0", "--", SOURCE],
+        cwd=where, capture_output=True, text=True, check=False,
+    ).stdout
+    touched = set()
+    for line in diff.splitlines():
+        hunk = HUNK.match(line)
+        if hunk:
+            start = int(hunk.group(1))
+            count = int(hunk.group(2) or 1)
+            touched.update(range(start, start + count))
+    return touched
+
+
+def main():
+    # The hook's JSON arrives on stdin whether or not it is wanted; reading it keeps
+    # Claude Code from blocking on a pipe nobody drained.
+    try:
+        payload = json.load(sys.stdin)
+    except (json.JSONDecodeError, ValueError):
+        payload = {}
+    edited = (payload.get("tool_input") or {}).get("file_path", "")
+    if edited and not edited.endswith("plants.py"):
+        return 0
+
+    where = root()
+    source = where / SOURCE
+    if not source.exists():
+        return 0
+    lines = source.read_text(errors="replace").splitlines()
+    touched = changed_lines(where)
+    if not touched:
+        return 0
+
+    declared = blocks(lines)
+    if not declared:
+        return 0
+    species = set()
+    for line in touched:
+        inside = [key for start, key in declared if start <= line]
+        if inside:
+            species.add(inside[-1])
+
+    sys.path.insert(0, str(where / "tools/assets"))
+    import events                                         # noqa: PLC0415
+
+    socket = where / ".scratch/redis.sock"
+    stream = events.Stream(where / ".scratch/lookdev-events.jsonl",
+                           broker=f"redis+socket://{socket}" if socket.exists() else None)
+    for key in sorted(species):
+        stream.publish("plant.source.changed", species=key, path=SOURCE)
+    if species:
+        print(json.dumps({"systemMessage":
+                          f"plants.py: {', '.join(sorted(species))} changed; the queue "
+                          f"was told"}))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
