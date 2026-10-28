@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (C) 2026 Charles (opsroller) and Montezuma contributors
+#
+# The Python packages the asset tools need, on top of the python3 the flake
+# delivers. `.envrc` enters this environment with `layout pipenv`, so `python3`
+# in the checkout has them and no command needs an interpreter path in front of
+# it.
+#
+# The wheels are binary and link against native libraries - numpy and Pillow
+# want the C++ runtime and zlib, and `bpy` (Blender as a Python module) links
+# the X client libraries even when it runs headless. Those come from the
+# flake's LD_LIBRARY_PATH: packages here, what they link against there.
+
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[packages]
+# gen_theme_textures.py draws every map in numpy; validate_assets.py,
+# measure_foliage.py and contact_sheet.py read and write PNGs with Pillow.
+# Pinned to the same versions .github/requirements/assets.txt pins for CI, which
+# installs with --require-hashes.
+numpy = "==2.5.3"
+pillow = "==12.3.0"
+# plants.py and gen_theme_meshes.py build geometry with bmesh. The version is
+# part of the asset: two committed backdrop meshes were found not to reproduce
+# byte for byte under a different Blender, so this tracks the flake's blender.
+bpy = "==5.2.2"
+
+[requires]
+python_version = "3.13"
