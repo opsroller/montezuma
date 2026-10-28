@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: GPL-2.0
 """Check the generated plant meshes for the faults a frame will not show you.
 
     python3 tools/assets/check_plant_meshes.py            # game/assets/models/plants

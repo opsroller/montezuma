@@ -50,4 +50,4 @@ Python with numpy and Pillow.
 
 ## Licence
 
-GPL-2.0-or-later, as the repository it serves.
+GPL-2.0.

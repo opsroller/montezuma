@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: GPL-2.0
 #
 # The Python packages the asset tools need, on top of the python3 the flake
 # delivers. `.envrc` enters this environment with `layout pipenv`, so `python3`

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: GPL-2.0
 """Lay rendered look-dev frames out as a labelled contact sheet.
 
     python3 tools/assets/contact_sheet.py <frames dir> <sheet.png> [--per 9]

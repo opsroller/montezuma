@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: GPL-2.0
 """The plant library's look-dev pipeline: one program, in the same language as the rest.
 
     python3 tools/assets/lookdev.py all --species heliconia

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: GPL-2.0
 """Measure a look-dev frame against docs/reference/foliage-reference.md.
 
     python3 tools/assets/measure_foliage.py <frame.png> [<frame.png> ...]
