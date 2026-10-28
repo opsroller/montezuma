@@ -11,6 +11,13 @@ These are plain commands on purpose: this machine bans run/build wrapper scripts
 (CLAUDE.md, "Working on this machine" — `flock` is the only wrapper), so this page
 is the recipe, not a script that hides it. Type them; don't wrap them.
 
+And don't reach for `python3 -c` or a heredoc either. If a check is worth running
+twice it belongs in `tools/assets/` with a name, a docstring and an SPDX header —
+`check_plant_meshes.py`, `measure_foliage.py`, `contact_sheet.py` all started as
+throwaway one-liners, and as one-liners they were unreadable, unreviewable and
+re-derived from scratch every round. A Bash call whose argument is a Python program
+is a nested interpreter, which is the thing the wrapper rule exists to stop.
+
 ## The order, and why it is this order
 
 ```sh
@@ -39,10 +46,14 @@ flock /home/claude/work/montezuma/.godot-gpu.lock \
   res://assets/lookdev/LD_Plant_HeliconiaClump.tscn \
   --write-movie /tmp/plantshots/h/f.png --fixed-fps 30 --quit-after 4 -- --start-screen=
 
-# 7. look at it, as a sheet when there is more than one
+# 7. check the meshes for what a frame cannot show: degenerate faces, winding against
+#    a neighbour, normals facing the wrong way, UVs straddling an atlas tile, orphans
+python3 tools/assets/check_plant_meshes.py
+
+# 8. look at it, as a sheet when there is more than one
 .venv/bin/python tools/assets/contact_sheet.py /tmp/plantshots /tmp/plantshots/sheet.png
 
-# 8. read the reference's figures back off the frame
+# 9. read the reference's figures back off the frame
 .venv/bin/python tools/assets/measure_foliage.py /tmp/plantshots/h/f00000003.png \
   --against /tmp/plantshots/h_empty/f00000003.png
 ```
