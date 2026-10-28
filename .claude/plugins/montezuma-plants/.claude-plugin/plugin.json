@@ -1,0 +1,7 @@
+{
+  "name": "montezuma-plants",
+  "version": "0.1.0",
+  "description": "Deterministic tools for the Montezuma jungle plant library: parameters, atlases, meshes, pages, import, 4K capture, mesh checks, contact sheets and measurement.",
+  "author": { "name": "Montezuma contributors (Claude)" },
+  "license": "GPL-2.0-or-later"
+}
