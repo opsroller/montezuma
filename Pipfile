@@ -7,9 +7,16 @@
 # it.
 #
 # The wheels are binary and link against native libraries - numpy and Pillow
-# want the C++ runtime and zlib, and `bpy` (Blender as a Python module) links
-# the X client libraries even when it runs headless. Those come from the
-# flake's LD_LIBRARY_PATH: packages here, what they link against there.
+# want the C++ runtime and zlib - which come from the flake's LD_LIBRARY_PATH:
+# packages here, what they link against there.
+#
+# Blender is deliberately NOT here. `bpy`, the pip wheel that ships Blender as a
+# Python module, would be a second Blender at its own version racing the flake's
+# to generate the same committed meshes, and the version is part of the asset:
+# two committed backdrop meshes do not reproduce byte for byte across versions.
+# The geometry tools run under the flake's pinned binary instead:
+#
+#     blender -b --factory-startup -P tools/assets/plants.py -- build
 
 [[source]]
 name = "pypi"
@@ -23,10 +30,6 @@ verify_ssl = true
 # installs with --require-hashes.
 numpy = "==2.5.3"
 pillow = "==12.3.0"
-# plants.py and gen_theme_meshes.py build geometry with bmesh. The version is
-# part of the asset: two committed backdrop meshes were found not to reproduce
-# byte for byte under a different Blender, so this tracks the flake's blender.
-bpy = "==5.2.2"
 
 [requires]
 python_version = "3.13"
